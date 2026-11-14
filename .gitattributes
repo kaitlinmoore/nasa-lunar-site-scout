@@ -1,0 +1,26 @@
+# Normalize all text files to LF in the repo, regardless of OS
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Binary files: never touch line endings or attempt diffs
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.pdf  binary
+*.tif  binary
+*.tiff binary
+*.jp2  binary
+*.npy  binary
+*.npz  binary
+*.parquet binary
+*.bsp  binary
+*.bpc  binary
+*.glb  binary
+*.mp4  binary

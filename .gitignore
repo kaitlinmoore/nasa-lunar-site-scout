@@ -1,0 +1,50 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Local working notes and handoffs (never committed)
+reference/
+
+# Secrets (Cesium ion token, LLM API keys, Earthdata creds)
+.env
+.env.*
+!.env.example
+
+# Downloaded / generated data (link to sources instead of committing)
+data/
+cache/
+kernels/
+*.tif
+*.tiff
+*.bsp
+*.bpc
+
+# Python tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Frontend
+node_modules/
+web/dist/
+.vite/
+
+# Editors and OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Logs
+*.log
