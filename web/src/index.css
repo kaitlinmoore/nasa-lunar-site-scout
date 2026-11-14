@@ -1,0 +1,15 @@
+/* SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage". */
+:root {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: #e6e8ec;
+  background: #0d1117;
+}
+body { margin: 0; }
+main { max-width: 40rem; margin: 4rem auto; padding: 0 1.5rem; }
+h1 { font-weight: 600; letter-spacing: 0.01em; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.5rem 1.5rem; }
+dt { color: #8b949e; }
+dd { margin: 0; font-variant-numeric: tabular-nums; }
+.muted { color: #8b949e; }
+.error { color: #f85149; }
+footer { margin-top: 3rem; font-size: 0.85rem; }
