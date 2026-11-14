@@ -1,0 +1,2147 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Lunar Site Scout API",
+    "description": "Contract v0. Not affiliated with or endorsed by NASA.",
+    "version": "0.1.0",
+    "x-contract-version": "0.1.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sites": {
+      "get": {
+        "summary": "Sites",
+        "operationId": "sites_api_sites_get",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SiteCategory"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SitesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BodyTrack": {
+        "additionalProperties": false,
+        "description": "Per-sample values for one body; every list has the length of `SeriesResponse.time`.",
+        "properties": {
+          "azimuth_deg": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Azimuth Deg",
+            "type": "array"
+          },
+          "elevation_deg": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Elevation Deg",
+            "type": "array"
+          },
+          "visible_fraction": {
+            "description": "Visible fraction of the disc, 0..1",
+            "items": {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            "title": "Visible Fraction",
+            "type": "array"
+          },
+          "clearance_deg": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Disc centre elevation above the terrain horizon, deg",
+            "title": "Clearance Deg"
+          }
+        },
+        "required": [
+          "azimuth_deg",
+          "elevation_deg",
+          "visible_fraction"
+        ],
+        "title": "BodyTrack",
+        "type": "object"
+      },
+      "CommsMetrics": {
+        "additionalProperties": false,
+        "description": "F4 (direct-to-Earth at the unit height). Nullable: null = not computed.",
+        "properties": {
+          "earth_visibility_fraction": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Time fraction with any part of the Earth disc visible",
+            "title": "Earth Visibility Fraction"
+          },
+          "earth_full_disc_fraction": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Earth Full Disc Fraction"
+          },
+          "longest_earth_gap_h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Longest Earth Gap H"
+          },
+          "earth_elevation_deg": {
+            "$ref": "#/components/schemas/Stat"
+          },
+          "earth_clearance_deg": {
+            "$ref": "#/components/schemas/Stat",
+            "description": "Earth centre above the terrain horizon, deg"
+          },
+          "sun_earth_overlap_fraction": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Time fraction with Sun and Earth both visible",
+            "title": "Sun Earth Overlap Fraction"
+          },
+          "time_to_earthset_h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "From window_start to the first Earthset, h",
+            "title": "Time To Earthset H"
+          }
+        },
+        "title": "CommsMetrics",
+        "type": "object"
+      },
+      "CompareRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/Scenario"
+            },
+            "minItems": 1,
+            "title": "Scenarios",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scenarios"
+        ],
+        "title": "CompareRequest",
+        "type": "object"
+      },
+      "CompareResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_version": {
+            "default": "0.1.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "items": {
+            "description": "Same order as the request's scenarios",
+            "items": {
+              "$ref": "#/components/schemas/MetricsResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "CompareResponse",
+        "type": "object"
+      },
+      "Coverage": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "lat_min": {
+            "anyOf": [
+              {
+                "description": "Planetocentric latitude, deg",
+                "maximum": 90.0,
+                "minimum": -90.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lat Min"
+          },
+          "lat_max": {
+            "anyOf": [
+              {
+                "description": "Planetocentric latitude, deg",
+                "maximum": 90.0,
+                "minimum": -90.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lat Max"
+          },
+          "lon_min": {
+            "anyOf": [
+              {
+                "description": "East-positive longitude, deg, -180..180",
+                "maximum": 180.0,
+                "minimum": -180.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lon Min"
+          },
+          "lon_max": {
+            "anyOf": [
+              {
+                "description": "East-positive longitude, deg, -180..180",
+                "maximum": 180.0,
+                "minimum": -180.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lon Max"
+          },
+          "sites_only": {
+            "default": false,
+            "description": "Covers listed sites only, not an area",
+            "title": "Sites Only",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "title": "Coverage",
+        "type": "object"
+      },
+      "DatasetCapability": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "terrain",
+              "illumination",
+              "thermal",
+              "features",
+              "ephemeris",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/Coverage"
+          },
+          "resolution_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Nominal ground resolution, m",
+            "title": "Resolution M"
+          },
+          "resolution_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Resolution Note"
+          },
+          "can_answer": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Can Answer",
+            "type": "array"
+          },
+          "cannot_answer": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cannot Answer",
+            "type": "array"
+          },
+          "citation": {
+            "title": "Citation",
+            "type": "string"
+          },
+          "license": {
+            "title": "License",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DatasetStatus",
+            "default": "planned"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "provider",
+          "url",
+          "coverage",
+          "citation",
+          "license"
+        ],
+        "title": "DatasetCapability",
+        "type": "object"
+      },
+      "DatasetStatus": {
+        "enum": [
+          "planned",
+          "used",
+          "dropped"
+        ],
+        "title": "DatasetStatus",
+        "type": "string"
+      },
+      "DatasetsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_version": {
+            "default": "0.1.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "datasets": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetCapability"
+            },
+            "title": "Datasets",
+            "type": "array"
+          }
+        },
+        "required": [
+          "datasets"
+        ],
+        "title": "DatasetsResponse",
+        "type": "object"
+      },
+      "Event": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/EventKind"
+          },
+          "time": {
+            "format": "date-time",
+            "title": "Time",
+            "type": "string"
+          },
+          "refined": {
+            "default": false,
+            "description": "Refined between samples by root-finding",
+            "title": "Refined",
+            "type": "boolean"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          }
+        },
+        "required": [
+          "kind",
+          "time"
+        ],
+        "title": "Event",
+        "type": "object"
+      },
+      "EventKind": {
+        "enum": [
+          "sunrise",
+          "sunset",
+          "earthrise",
+          "earthset"
+        ],
+        "title": "EventKind",
+        "type": "string"
+      },
+      "Feature": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/FeatureType"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "diameter_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Diameter M"
+          },
+          "dataset_id": {
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": true,
+            "title": "Properties"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "location",
+          "dataset_id"
+        ],
+        "title": "Feature",
+        "type": "object"
+      },
+      "FeatureDistance": {
+        "additionalProperties": false,
+        "properties": {
+          "feature": {
+            "$ref": "#/components/schemas/Feature"
+          },
+          "distance_m": {
+            "description": "Straight-line surface distance, m (not a drive route)",
+            "title": "Distance M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "feature",
+          "distance_m"
+        ],
+        "title": "FeatureDistance",
+        "type": "object"
+      },
+      "FeatureType": {
+        "enum": [
+          "crater",
+          "psr",
+          "ice_detection",
+          "hazard",
+          "landing_site",
+          "named_feature"
+        ],
+        "title": "FeatureType",
+        "type": "string"
+      },
+      "FeaturesResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_version": {
+            "default": "0.1.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/Feature"
+            },
+            "title": "Features",
+            "type": "array"
+          }
+        },
+        "required": [
+          "features"
+        ],
+        "title": "FeaturesResponse",
+        "type": "object"
+      },
+      "FidelityLabel": {
+        "additionalProperties": false,
+        "properties": {
+          "tier": {
+            "$ref": "#/components/schemas/FidelityTier"
+          },
+          "summary": {
+            "description": "Short user-facing text, e.g. '5 m polar DEM near field'",
+            "title": "Summary",
+            "type": "string"
+          },
+          "near_field_resolution_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Near Field Resolution M"
+          },
+          "far_field_resolution_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Far Field Resolution M"
+          }
+        },
+        "required": [
+          "tier",
+          "summary"
+        ],
+        "title": "FidelityLabel",
+        "type": "object"
+      },
+      "FidelityTier": {
+        "enum": [
+          "high",
+          "medium",
+          "low"
+        ],
+        "title": "FidelityTier",
+        "type": "string"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "title": "Contract Version",
+            "default": "0.1.0"
+          },
+          "_placeholder": {
+            "type": "boolean",
+            "title": "Placeholder",
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "status": {
+            "type": "string",
+            "const": "ok",
+            "title": "Status",
+            "default": "ok"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "HealthResponse"
+      },
+      "HorizonProfile": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_version": {
+            "default": "0.1.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "unit_height_m": {
+            "title": "Unit Height M",
+            "type": "number"
+          },
+          "azimuth_deg": {
+            "description": "Azimuths, deg clockwise from north",
+            "items": {
+              "type": "number"
+            },
+            "title": "Azimuth Deg",
+            "type": "array"
+          },
+          "elevation_deg": {
+            "description": "Terrain horizon elevation per azimuth, deg",
+            "items": {
+              "type": "number"
+            },
+            "title": "Elevation Deg",
+            "type": "array"
+          },
+          "max_range_km": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Range Km"
+          },
+          "terrain_stack": {
+            "items": {
+              "$ref": "#/components/schemas/TerrainLayer"
+            },
+            "title": "Terrain Stack",
+            "type": "array"
+          },
+          "fidelity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FidelityLabel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "location",
+          "unit_height_m",
+          "azimuth_deg",
+          "elevation_deg"
+        ],
+        "title": "HorizonProfile",
+        "type": "object"
+      },
+      "HorizonRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "unit_height_m": {
+            "exclusiveMinimum": 0.0,
+            "title": "Unit Height M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "location",
+          "unit_height_m"
+        ],
+        "title": "HorizonRequest",
+        "type": "object"
+      },
+      "Job": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_version": {
+            "default": "0.1.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "progress": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Progress",
+            "type": "number"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Updated At"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SearchResult"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Error"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "created_at"
+        ],
+        "title": "Job",
+        "type": "object"
+      },
+      "JobStatus": {
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed"
+        ],
+        "title": "JobStatus",
+        "type": "string"
+      },
+      "Limitation": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "datasets_considered": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Datasets Considered",
+            "type": "array"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "Limitation",
+        "type": "object"
+      },
+      "LocateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "lat": {
+            "description": "Planetocentric latitude, deg",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "description": "East-positive longitude, deg, -180..180",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lon",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lon"
+        ],
+        "title": "LocateRequest",
+        "type": "object"
+      },
+      "LocateResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_version": {
+            "default": "0.1.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "terrain_stack": {
+            "items": {
+              "$ref": "#/components/schemas/TerrainLayer"
+            },
+            "title": "Terrain Stack",
+            "type": "array"
+          },
+          "fidelity": {
+            "$ref": "#/components/schemas/FidelityLabel"
+          }
+        },
+        "required": [
+          "location",
+          "terrain_stack",
+          "fidelity"
+        ],
+        "title": "LocateResponse",
+        "type": "object"
+      },
+      "Location": {
+        "properties": {
+          "lat": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat",
+            "description": "Planetocentric latitude, deg"
+          },
+          "lon": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lon",
+            "description": "East-positive longitude, deg, -180..180"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "lat",
+          "lon"
+        ],
+        "title": "Location"
+      },
+      "MaskArea": {
+        "additionalProperties": false,
+        "description": "A raster mask defined by a polygon (user-drawn or listed area), sampled at `resolution_m`.",
+        "properties": {
+          "kind": {
+            "const": "mask",
+            "default": "mask",
+            "title": "Kind",
+            "type": "string"
+          },
+          "polygon": {
+            "items": {
+              "$ref": "#/components/schemas/Location"
+            },
+            "minItems": 3,
+            "title": "Polygon",
+            "type": "array"
+          },
+          "resolution_m": {
+            "exclusiveMinimum": 0.0,
+            "title": "Resolution M",
+            "type": "number"
+          },
+          "area_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Id of a listed area, if any",
+            "title": "Area Id"
+          }
+        },
+        "required": [
+          "polygon",
+          "resolution_m"
+        ],
+        "title": "MaskArea",
+        "type": "object"
+      },
+      "MetricsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_version": {
+            "default": "0.1.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "scenario": {
+            "$ref": "#/components/schemas/Scenario"
+          },
+          "scenario_key": {
+            "title": "Scenario Key",
+            "type": "string"
+          },
+          "power": {
+            "$ref": "#/components/schemas/PowerMetrics"
+          },
+          "comms": {
+            "$ref": "#/components/schemas/CommsMetrics"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "fidelity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FidelityLabel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "scenario",
+          "scenario_key",
+          "power",
+          "comms"
+        ],
+        "title": "MetricsResponse",
+        "type": "object"
+      },
+      "NLAnswer": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_version": {
+            "default": "0.1.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "interpretation": {
+            "description": "Echo of how the request was understood",
+            "title": "Interpretation",
+            "type": "string"
+          },
+          "structured_query": {
+            "$ref": "#/components/schemas/StructuredQuery"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The operation's response body, as the endpoint returns it",
+            "title": "Result"
+          },
+          "limitations": {
+            "description": "For partial answers: what was not answered and why",
+            "items": {
+              "$ref": "#/components/schemas/Limitation"
+            },
+            "title": "Limitations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "interpretation",
+          "structured_query"
+        ],
+        "title": "NLAnswer",
+        "type": "object"
+      },
+      "NLRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          },
+          "selected_site_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Selected Site Id"
+          },
+          "selected_scenario": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Scenario"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "NLRequest",
+        "type": "object"
+      },
+      "NLUnsupported": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_version": {
+            "default": "0.1.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "unsupported": {
+            "$ref": "#/components/schemas/Limitation"
+          }
+        },
+        "required": [
+          "unsupported"
+        ],
+        "title": "NLUnsupported",
+        "type": "object"
+      },
+      "Operation": {
+        "description": "API operations a structured query can target; `params` = that endpoint's request.",
+        "enum": [
+          "sites",
+          "locate",
+          "horizon",
+          "series",
+          "metrics",
+          "compare",
+          "features",
+          "proximity",
+          "search"
+        ],
+        "title": "Operation",
+        "type": "string"
+      },
+      "PointsArea": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "points",
+            "default": "points",
+            "title": "Kind",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/Location"
+            },
+            "minItems": 1,
+            "title": "Points",
+            "type": "array"
+          }
+        },
+        "required": [
+          "points"
+        ],
+        "title": "PointsArea",
+        "type": "object"
+      },
+      "PowerMetrics": {
+        "additionalProperties": false,
+        "description": "F3. Nullable: null = not computed.",
+        "properties": {
+          "illumination_fraction": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Time fraction with any part of the solar disc visible",
+            "title": "Illumination Fraction"
+          },
+          "mean_visible_disk_fraction": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Time-averaged visible fraction of the solar disc",
+            "title": "Mean Visible Disk Fraction"
+          },
+          "sunlit_duration_h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Total sunlit time, h",
+            "title": "Sunlit Duration H"
+          },
+          "longest_sunlit_period_h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Longest Sunlit Period H"
+          },
+          "longest_shadow_h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Longest shadow period, h",
+            "title": "Longest Shadow H"
+          },
+          "shadow_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Shadow Count"
+          },
+          "sun_elevation_deg": {
+            "$ref": "#/components/schemas/Stat"
+          },
+          "sun_azimuth_deg": {
+            "$ref": "#/components/schemas/Stat"
+          },
+          "time_to_sunset_h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "From window_start to the first sunset, h",
+            "title": "Time To Sunset H"
+          }
+        },
+        "title": "PowerMetrics",
+        "type": "object"
+      },
+      "ProximityRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "types": {
+            "items": {
+              "$ref": "#/components/schemas/FeatureType"
+            },
+            "minItems": 1,
+            "title": "Types",
+            "type": "array"
+          },
+          "radius_m": {
+            "exclusiveMinimum": 0.0,
+            "title": "Radius M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "location",
+          "types",
+          "radius_m"
+        ],
+        "title": "ProximityRequest",
+        "type": "object"
+      },
+      "ProximityResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_version": {
+            "default": "0.1.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/FeatureDistance"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "location",
+          "results"
+        ],
+        "title": "ProximityResponse",
+        "type": "object"
+      },
+      "Scenario": {
+        "additionalProperties": false,
+        "description": "The unit of everything (plan section 3.1): results are keyed by `Scenario.key()`.",
+        "properties": {
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "unit_height_m": {
+            "description": "Observer height above the DEM surface, m",
+            "exclusiveMinimum": 0.0,
+            "title": "Unit Height M",
+            "type": "number"
+          },
+          "window_start": {
+            "format": "date-time",
+            "title": "Window Start",
+            "type": "string"
+          },
+          "window_end": {
+            "format": "date-time",
+            "title": "Window End",
+            "type": "string"
+          },
+          "step": {
+            "default": "PT1H",
+            "description": "Sampling step (ISO 8601)",
+            "format": "duration",
+            "title": "Step",
+            "type": "string"
+          }
+        },
+        "required": [
+          "location",
+          "unit_height_m",
+          "window_start",
+          "window_end"
+        ],
+        "title": "Scenario",
+        "type": "object"
+      },
+      "ScenarioRequest": {
+        "additionalProperties": false,
+        "description": "Body of POST /api/series and POST /api/metrics.",
+        "properties": {
+          "scenario": {
+            "$ref": "#/components/schemas/Scenario"
+          }
+        },
+        "required": [
+          "scenario"
+        ],
+        "title": "ScenarioRequest",
+        "type": "object"
+      },
+      "SearchCandidate": {
+        "additionalProperties": false,
+        "properties": {
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "slope_deg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Slope Deg"
+          },
+          "flat_area_m2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flat Area M2"
+          },
+          "nearest_feature_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Nearest Feature M"
+          }
+        },
+        "required": [
+          "location"
+        ],
+        "title": "SearchCandidate",
+        "type": "object"
+      },
+      "SearchCriteria": {
+        "additionalProperties": false,
+        "description": "Terrain-only in v0; time-dependent criteria are added later (plan section 3.3).",
+        "properties": {
+          "max_slope_deg": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Slope Deg"
+          },
+          "min_flat_area_m2": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Min Flat Area M2"
+          },
+          "near_feature_types": {
+            "items": {
+              "$ref": "#/components/schemas/FeatureType"
+            },
+            "title": "Near Feature Types",
+            "type": "array"
+          },
+          "max_feature_distance_m": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Feature Distance M"
+          }
+        },
+        "title": "SearchCriteria",
+        "type": "object"
+      },
+      "SearchRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "area": {
+            "discriminator": {
+              "mapping": {
+                "mask": "#/components/schemas/MaskArea",
+                "points": "#/components/schemas/PointsArea"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PointsArea"
+              },
+              {
+                "$ref": "#/components/schemas/MaskArea"
+              }
+            ],
+            "title": "Area"
+          },
+          "criteria": {
+            "$ref": "#/components/schemas/SearchCriteria"
+          }
+        },
+        "required": [
+          "area",
+          "criteria"
+        ],
+        "title": "SearchRequest",
+        "type": "object"
+      },
+      "SearchResult": {
+        "additionalProperties": false,
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/SearchCandidate"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "fidelity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FidelityLabel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "candidates"
+        ],
+        "title": "SearchResult",
+        "type": "object"
+      },
+      "SeriesResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_version": {
+            "default": "0.1.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "scenario": {
+            "$ref": "#/components/schemas/Scenario"
+          },
+          "scenario_key": {
+            "title": "Scenario Key",
+            "type": "string"
+          },
+          "time": {
+            "items": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "title": "Time",
+            "type": "array"
+          },
+          "sun": {
+            "$ref": "#/components/schemas/BodyTrack"
+          },
+          "earth": {
+            "$ref": "#/components/schemas/BodyTrack"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "downsampled": {
+            "default": false,
+            "description": "Plotted series thinned for display",
+            "title": "Downsampled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "scenario",
+          "scenario_key",
+          "time",
+          "sun",
+          "earth"
+        ],
+        "title": "SeriesResponse",
+        "type": "object"
+      },
+      "Site": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "category": {
+            "$ref": "#/components/schemas/SiteCategory"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "dataset_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Dataset Ids",
+            "description": "Registry ids of DEMs etc."
+          },
+          "has_dem_clones": {
+            "type": "boolean",
+            "title": "Has Dem Clones",
+            "default": false
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source",
+            "description": "Citation or URL for the coordinates"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "category",
+          "location"
+        ],
+        "title": "Site"
+      },
+      "SiteCategory": {
+        "type": "string",
+        "enum": [
+          "pgda",
+          "apollo",
+          "artemis_iii",
+          "clps",
+          "commercial",
+          "international",
+          "custom"
+        ],
+        "title": "SiteCategory"
+      },
+      "SitesResponse": {
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "title": "Contract Version",
+            "default": "0.1.0"
+          },
+          "_placeholder": {
+            "type": "boolean",
+            "title": "Placeholder",
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "sites": {
+            "items": {
+              "$ref": "#/components/schemas/Site"
+            },
+            "type": "array",
+            "title": "Sites"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "sites"
+        ],
+        "title": "SitesResponse"
+      },
+      "Stat": {
+        "additionalProperties": false,
+        "properties": {
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Min"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max"
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mean"
+          }
+        },
+        "title": "Stat",
+        "type": "object"
+      },
+      "StructuredQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "$ref": "#/components/schemas/Operation"
+          },
+          "params": {
+            "additionalProperties": true,
+            "description": "Request body or query for the operation's endpoint",
+            "title": "Params",
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation"
+        ],
+        "title": "StructuredQuery",
+        "type": "object"
+      },
+      "TerrainLayer": {
+        "additionalProperties": false,
+        "properties": {
+          "dataset_id": {
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "near_field",
+              "far_field"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "resolution_m": {
+            "title": "Resolution M",
+            "type": "number"
+          },
+          "max_range_km": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Range Km"
+          }
+        },
+        "required": [
+          "dataset_id",
+          "role",
+          "resolution_m"
+        ],
+        "title": "TerrainLayer",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

@@ -1,0 +1,282 @@
+# SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
+#
+# Dataset capability registry (plan section 3.4). One entry per dataset.
+# Drives: fidelity labels in the UI, the NL layer's "can't answer, because..." responses,
+# and the submission's References / NASA Data fields. Mirrored in reference/challenge-resources.md Part 2.
+#
+# Schema: lss.contract.DatasetCapability. Coordinates: planetocentric deg, east-positive lon.
+# status: planned | used | dropped.  "VERIFY:" marks facts not yet checked against the source.
+
+datasets:
+  - id: pgda_78_site_dems
+    name: High-Resolution LOLA Topography for South Pole Sites (5 m site DEMs + 100 clones)
+    kind: terrain
+    provider: NASA GSFC PGDA (M. K. Barker)
+    url: https://pgda.gsfc.nasa.gov/products/78
+    coverage:
+      description: ~27 south-pole sites (Mazarico et al. 2011 numbering), each a local DEM tile
+      sites_only: true
+    resolution_m: 5
+    can_answer:
+      - Near-field horizon at listed PGDA sites
+      - Slope and terrain at listed PGDA sites
+      - DEM uncertainty spread at sites with clones (Site01, 04, 06, 07, 11, 20, 20v2, 23 confirmed)
+    cannot_answer:
+      - Anything outside the site tiles
+      - Far-field horizon (tiles are too small; combine with product 90)
+    citation: >-
+      Barker, M. K., et al. (2021). Improved LOLA elevation maps for south pole landing sites:
+      Error estimates and their impact on illumination conditions. Planetary and Space Science 203,
+      105119. doi:10.1016/j.pss.2020.105119
+    license: NASA-produced data (U.S. Government work); cite Barker et al. 2021. VERIFY terms on page.
+    status: planned
+    notes: South polar stereographic X/Y m, MOON_ME / DE421. VERIFY which sites beyond the 8 listed have clones.
+
+  - id: pgda_81_mosaic_5m
+    name: South Pole LOLA 5 m/pix DEM mosaic, 87-90 S
+    kind: terrain
+    provider: NASA GSFC PGDA (M. K. Barker)
+    url: https://pgda.gsfc.nasa.gov/products/81
+    coverage:
+      description: South polar cap poleward of 87 S
+      lat_min: -90
+      lat_max: -87
+    resolution_m: 5
+    resolution_note: ~90% of 5 m pixels are interpolated (Barker); small-scale features are low confidence
+    can_answer:
+      - Near-field horizon anywhere poleward of 87 S
+      - Slope / flat-area screening poleward of 87 S (low confidence at single-pixel scale)
+    cannot_answer:
+      - Terrain equatorward of 87 S
+      - Hazards smaller than a few pixels (e.g. sub-meter boulders)
+    citation: >-
+      Barker, M. K., et al. (2021). Planetary and Space Science 203, 105119.
+      doi:10.1016/j.pss.2020.105119
+    license: NASA-produced data (U.S. Government work); cite Barker et al. 2021. VERIFY terms on page.
+    status: planned
+    notes: Data at https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/87S/. MOON_ME / DE421.
+
+  - id: pgda_90_south_pole_dems
+    name: A New View of the Lunar South Pole from LOLA (large-area south polar DEMs)
+    kind: terrain
+    provider: NASA GSFC PGDA (M. K. Barker)
+    url: https://pgda.gsfc.nasa.gov/products/90
+    coverage:
+      description: >-
+        South polar DEMs to 60 S (60/120/240 m), 75 S (30 m), 80 S (20/40/80 m), 83 S (10 m);
+        the 20 m product covers 80-90 S
+      lat_min: -90
+      lat_max: -60
+    resolution_m: 20
+    resolution_note: 20 m for 80-90 S; 10 m to 83 S; coarser products farther out
+    can_answer:
+      - Far-field horizon for south-pole sites (terrain >100 km away)
+      - Near-field terrain where no 5 m product exists (80-87 S at 20 m)
+    cannot_answer:
+      - Northern hemisphere or mid-latitude terrain
+    citation: >-
+      Barker, M. K., et al. (2023). Planetary Science Journal 4, 183. doi:10.3847/PSJ/acf3e1.
+      Data: doi:10.60903/gsfcpgda-lola-spole
+    license: NASA-produced data (U.S. Government work); cite Barker et al. 2023. VERIFY terms on page.
+    status: planned
+    notes: Cloud-optimized GeoTIFFs (windowed remote reads), south polar stereographic, MOON_ME / DE421.
+
+  - id: pgda_69_polar_illumination
+    name: Lunar Polar Illumination (18.6-year averaged solar illumination, Earth and sky visibility)
+    kind: illumination
+    provider: NASA GSFC PGDA (E. Mazarico)
+    url: https://pgda.gsfc.nasa.gov/products/69
+    coverage:
+      description: Both poles, 65-90 (240 m), 75-90 (120 m), 85-90 (60 m); sky visibility 65-90 only
+      lat_min: -90
+      lat_max: -65
+    resolution_m: 60
+    resolution_note: 60 m (85-90), 120 m (75-90), 240 m (65-90). Northern counterparts also exist.
+    can_answer:
+      - Validation of long-term average illumination and Earth visibility at sample points
+      - Permanent shadow (PSR) maps
+    cannot_answer:
+      - Conditions for a specific date window (these are 18.6-year averages)
+      - Heights other than the product's assumed observer height (VERIFY height)
+    citation: >-
+      Mazarico, E., et al. (2011). Illumination conditions of the lunar polar regions using LOLA
+      topography. Icarus 211(2), 1066-1081. doi:10.1016/j.icarus.2010.10.030
+    license: NASA-produced data (U.S. Government work); cite Mazarico et al. 2011.
+    status: planned
+    notes: Polar stereographic, reference radius 1737.4 km. Hourly steps over 18.6 years.
+
+  - id: pgda_98_polar_roughness
+    name: Large-Scale Roughness Properties of the Lunar Poles
+    kind: terrain
+    provider: NASA GSFC PGDA (M. K. Barker)
+    url: https://pgda.gsfc.nasa.gov/products/98
+    coverage:
+      description: Lunar polar regions; roughness at baselines ~50-1000 m. VERIFY south-pole coverage (98 vs 90)
+    resolution_m: 50
+    resolution_note: Multiple roughness baselines (~50-1000 m). VERIFY grid spacing.
+    can_answer:
+      - Hazard context from LOLA roughness at tens-of-meters to km baselines
+    cannot_answer:
+      - Individual boulders or meter-scale hazards
+    citation: >-
+      Barker, M. K., et al. (2025). Large-Scale Roughness Properties of the Lunar North and South
+      Polar Regions as Measured by LOLA. Planetary Science Journal 6, 83. doi:10.3847/PSJ/adbc9d.
+      Data: doi:10.60903/gsfcpgda-lola-poles
+    license: NASA-produced data (U.S. Government work); cite Barker et al. 2025. VERIFY terms on page.
+    status: planned
+
+  - id: lola_ldem_128
+    name: LOLA global gridded DEM, LDEM_128 (candidate coarse global layer)
+    kind: terrain
+    provider: NASA LRO LOLA / PDS Geosciences Node
+    url: https://pds-geosciences.wustl.edu/missions/lro/lola.htm
+    coverage:
+      description: Global
+      lat_min: -90
+      lat_max: 90
+    resolution_m: 237
+    resolution_note: 128 pixels/degree (~237 m at the equator)
+    can_answer:
+      - Coarse horizon and terrain anywhere on the Moon (fidelity label "low")
+    cannot_answer:
+      - Fine-scale horizon or slope at sub-kilometer scale
+    citation: >-
+      Smith, D. E., et al. (2010). Initial observations from the Lunar Orbiter Laser Altimeter
+      (LOLA). Geophysical Research Letters 37, L18204. doi:10.1029/2010GL043751. VERIFY preferred
+      citation for LDEM_128.
+    license: NASA PDS data (U.S. Government work).
+    status: planned
+    notes: Candidate only (plan section 4.2); confirm product choice and frame in C7.
+
+  - id: sldem2015
+    name: SLDEM2015 (LOLA + SELENE Terrain Camera merged DEM)
+    kind: terrain
+    provider: NASA GSFC (M. K. Barker et al.) / PDS
+    url: https://pgda.gsfc.nasa.gov/products/54
+    coverage:
+      description: 60 S to 60 N
+      lat_min: -60
+      lat_max: 60
+    resolution_m: 59
+    resolution_note: 512 pixels/degree (~59 m at the equator)
+    can_answer:
+      - Mid-latitude horizon and slope at ~60 m (Strong tier, S2a)
+    cannot_answer:
+      - Polar terrain poleward of 60
+    citation: >-
+      Barker, M. K., et al. (2016). A new lunar digital elevation model from the Lunar Orbiter Laser
+      Altimeter and SELENE Terrain Camera. Icarus 273, 346-355. doi:10.1016/j.icarus.2015.07.039
+    license: NASA-produced data (U.S. Government work). VERIFY URL and terms.
+    status: planned
+    notes: VERIFY SLDEM2015 frame vs MOON_ME (plan section 9).
+
+  - id: diviner_polar_temperature
+    name: LRO Diviner polar temperature products (PCP / PRP)
+    kind: thermal
+    provider: NASA LRO Diviner / PDS Geosciences Node
+    url: https://pds-geosciences.wustl.edu/missions/lro/diviner.htm
+    coverage:
+      description: Polar regions poleward of 80 (both poles)
+      lat_min: -90
+      lat_max: -80
+    resolution_m: 240
+    resolution_note: VERIFY grid spacing and seasonal/local-time binning
+    can_answer:
+      - Typical surface temperature range by season and time of day poleward of 80 (S5)
+    cannot_answer:
+      - Temperatures between 60 and 80 latitude (no product identified)
+      - Spacecraft thermal or battery-heating requirements (needs a spacecraft thermal model)
+    citation: >-
+      Williams, J.-P., et al. (2019). Seasonal polar temperatures on the Moon. JGR Planets 124,
+      2505-2521. doi:10.1029/2019JE006028. VERIFY product names and citation.
+    license: NASA PDS data (U.S. Government work).
+    status: planned
+
+  - id: robbins_craters
+    name: Robbins global lunar crater database (craters >1-2 km)
+    kind: features
+    provider: S. J. Robbins / USGS Astrogeology
+    url: https://astrogeology.usgs.gov/search/map/moon_crater_database_v1_robbins
+    coverage:
+      description: Global
+      lat_min: -90
+      lat_max: 90
+    resolution_m: 1000
+    resolution_note: Complete for craters >=1-2 km diameter
+    can_answer:
+      - Crater locations and diameters >=1-2 km; proximity to craters
+    cannot_answer:
+      - Craters smaller than ~1 km
+    citation: >-
+      Robbins, S. J. (2019). A new global database of lunar impact craters >1-2 km: 1. Crater
+      locations and sizes, comparisons with published databases, and global analysis. JGR Planets
+      124, 871-892. doi:10.1029/2018JE005592
+    license: VERIFY (USGS Astrogeology distribution terms).
+    status: planned
+
+  - id: m3_surface_ice
+    name: M3 surface-exposed water ice detections (Li et al. 2018)
+    kind: features
+    provider: Li et al. (Chandrayaan-1 Moon Mineralogy Mapper data)
+    url: https://doi.org/10.1073/pnas.1802345115
+    coverage:
+      description: Polar regions poleward of ~70 (both poles), mostly in permanently shadowed areas
+      lat_min: -90
+      lat_max: -70
+    resolution_m: 280
+    can_answer:
+      - Locations of surface-exposed ice detections (~280 m pixels), as a labeled stand-in for "water"
+    cannot_answer:
+      - Subsurface hydrogen at km scale (neutron data are far coarser)
+      - Ice abundance or depth
+    citation: >-
+      Li, S., et al. (2018). Direct evidence of surface exposed water ice in the lunar polar
+      regions. PNAS 115(36), 8907-8912. doi:10.1073/pnas.1802345115
+    license: VERIFY (paper supplementary data terms).
+    status: planned
+
+  - id: aussel_2025_boulders
+    name: Global lunar boulder map from LRO NAC images (Aussel et al. 2025)
+    kind: features
+    provider: Aussel et al. (University of Muenster)
+    url: https://zenodo.org/records/15520275
+    coverage:
+      description: 60 S to 60 N only (does not cover the poles)
+      lat_min: -60
+      lat_max: 60
+    resolution_m: null
+    resolution_note: Boulder density maps by size bin; detection limited by NAC resolution (VERIFY minimum size)
+    can_answer:
+      - Boulder density and mean boulder size between 60 S and 60 N
+    cannot_answer:
+      - Any boulder information at the poles
+      - Individual sub-meter boulders in a landing ellipse
+    citation: >-
+      Aussel, B., et al. (2025). Global lunar boulder map from LRO NAC optical images using deep
+      learning: Implications for regolith and protolith. JGR Planets 130, e2025JE008981.
+    license: VERIFY (Zenodo record license).
+    status: planned
+
+  - id: spice_de421
+    name: NAIF SPICE kernels, DE421 era (planetary ephemeris + lunar orientation)
+    kind: ephemeris
+    provider: NASA JPL NAIF
+    url: https://naif.jpl.nasa.gov/pub/naif/generic_kernels/
+    coverage:
+      description: >-
+        Sun/Earth/Moon geometry in MOON_ME; lunar orientation kernel spans 1900-2050
+        (VERIFY exact end date)
+    resolution_m: null
+    can_answer:
+      - Sun and Earth direction at any site and time through ~2050, in the DEMs' MOON_ME frame
+    cannot_answer:
+      - Dates after the orientation kernel's end (~2050); needs newer kernels + frame alignment (X5)
+    citation: >-
+      Folkner, W. M., et al. (2008). The Planetary and Lunar Ephemeris DE 421. JPL IOM 343R-08-003.
+      Acton, C. H. (1996). Ancillary data services of NASA's Navigation and Ancillary Information
+      Facility. Planetary and Space Science 44(1), 65-70.
+    license: NAIF generic kernels are freely available (U.S. Government work).
+    status: planned
+    notes: >-
+      Expected files: de421.bsp, moon_pa_de421_1900-2050.bpc, moon_080317.tf, moon_assoc_me.tf,
+      naif0012.tls, pck00010.tpc. Stored in LSS_DATA_DIR/kernels (gitignored).

@@ -1,0 +1,25 @@
+{
+  "contract_version": "0.1.0",
+  "_placeholder": true,
+  "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real. Location approximate (Connecting ridge, PGDA Site01); stream A replaces it with the DEM tile centre.",
+  "sites": [
+    {
+      "id": "pgda-site01",
+      "name": "Connecting ridge",
+      "category": "pgda",
+      "location": {
+        "lat": -89.45,
+        "lon": -137.31,
+        "name": "Connecting ridge (Site01)"
+      },
+      "description": "PGDA south-pole site 01 (Mazarico et al. 2011 numbering).",
+      "dataset_ids": [
+        "pgda_78_site_dems",
+        "pgda_81_mosaic_5m",
+        "pgda_90_south_pole_dems"
+      ],
+      "has_dem_clones": true,
+      "source": "https://pgda.gsfc.nasa.gov/products/78"
+    }
+  ]
+}

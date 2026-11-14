@@ -1,0 +1,30 @@
+{
+  "contract_version": "0.1.0",
+  "_placeholder": true,
+  "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
+  "location": {
+    "lat": -89.45,
+    "lon": -137.31,
+    "name": "Connecting ridge (Site01)"
+  },
+  "terrain_stack": [
+    {
+      "dataset_id": "pgda_78_site_dems",
+      "role": "near_field",
+      "resolution_m": 5.0,
+      "max_range_km": 10.0
+    },
+    {
+      "dataset_id": "pgda_90_south_pole_dems",
+      "role": "far_field",
+      "resolution_m": 20.0,
+      "max_range_km": 300.0
+    }
+  ],
+  "fidelity": {
+    "tier": "high",
+    "summary": "5 m PGDA site DEM near field, 20 m polar DEM far field",
+    "near_field_resolution_m": 5.0,
+    "far_field_resolution_m": 20.0
+  }
+}

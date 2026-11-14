@@ -1,0 +1,102 @@
+{
+  "contract_version": "0.1.0",
+  "_placeholder": true,
+  "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
+  "interpretation": "Power and Earth-visibility metrics for Connecting ridge (Site01) at 2 m height, 2028-11-15 to 2028-11-29 UTC.",
+  "structured_query": {
+    "operation": "metrics",
+    "params": {
+      "scenario": {
+        "location": {
+          "lat": -89.45,
+          "lon": -137.31,
+          "name": "Connecting ridge (Site01)"
+        },
+        "unit_height_m": 2.0,
+        "window_start": "2028-11-15T00:00:00Z",
+        "window_end": "2028-11-29T00:00:00Z",
+        "step": "PT6H"
+      }
+    }
+  },
+  "result": {
+    "contract_version": "0.1.0",
+    "_placeholder": true,
+    "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
+    "scenario": {
+      "location": {
+        "lat": -89.45,
+        "lon": -137.31,
+        "name": "Connecting ridge (Site01)"
+      },
+      "unit_height_m": 2.0,
+      "window_start": "2028-11-15T00:00:00Z",
+      "window_end": "2028-11-29T00:00:00Z",
+      "step": "PT6H"
+    },
+    "scenario_key": "320afec8301ba622",
+    "power": {
+      "illumination_fraction": 0.5,
+      "mean_visible_disk_fraction": 0.4,
+      "sunlit_duration_h": 168.0,
+      "longest_sunlit_period_h": 150.0,
+      "longest_shadow_h": 100.0,
+      "shadow_count": 2,
+      "sun_elevation_deg": {
+        "min": -0.8,
+        "max": 1.6,
+        "mean": 0.4
+      },
+      "sun_azimuth_deg": {
+        "min": 0.0,
+        "max": 170.0,
+        "mean": 85.0
+      },
+      "time_to_sunset_h": 198.0
+    },
+    "comms": {
+      "earth_visibility_fraction": 0.6,
+      "earth_full_disc_fraction": 0.5,
+      "longest_earth_gap_h": 120.0,
+      "earth_elevation_deg": {
+        "min": -5.0,
+        "max": 8.0,
+        "mean": 1.5
+      },
+      "earth_clearance_deg": {
+        "min": -5.8,
+        "max": 7.2,
+        "mean": 0.7
+      },
+      "sun_earth_overlap_fraction": 0.3,
+      "time_to_earthset_h": 324.0
+    },
+    "events": [
+      {
+        "kind": "sunset",
+        "time": "2028-11-23T06:00:00Z",
+        "refined": false,
+        "note": null
+      },
+      {
+        "kind": "sunrise",
+        "time": "2028-11-28T18:00:00Z",
+        "refined": false,
+        "note": null
+      },
+      {
+        "kind": "earthset",
+        "time": "2028-11-28T12:00:00Z",
+        "refined": false,
+        "note": null
+      }
+    ],
+    "fidelity": {
+      "tier": "high",
+      "summary": "5 m PGDA site DEM near field, 20 m polar DEM far field",
+      "near_field_resolution_m": 5.0,
+      "far_field_resolution_m": 20.0
+    }
+  },
+  "limitations": []
+}

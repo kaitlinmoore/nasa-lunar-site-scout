@@ -1,0 +1,20 @@
+{
+  "contract_version": "0.1.0",
+  "_placeholder": true,
+  "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
+  "features": [
+    {
+      "id": "placeholder-crater-1",
+      "type": "crater",
+      "name": "Placeholder crater",
+      "location": {
+        "lat": -89.4,
+        "lon": -140.0,
+        "name": null
+      },
+      "diameter_m": 2500.0,
+      "dataset_id": "robbins_craters",
+      "properties": {}
+    }
+  ]
+}

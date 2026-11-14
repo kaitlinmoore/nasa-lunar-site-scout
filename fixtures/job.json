@@ -1,0 +1,34 @@
+{
+  "contract_version": "0.1.0",
+  "_placeholder": true,
+  "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
+  "id": "placeholder-job-1",
+  "status": "succeeded",
+  "progress": 1.0,
+  "created_at": "2028-11-15T00:00:00Z",
+  "updated_at": "2028-11-15T00:00:30Z",
+  "result": {
+    "candidates": [
+      {
+        "location": {
+          "lat": -89.46,
+          "lon": -137.0,
+          "name": null
+        },
+        "slope_deg": 3.0,
+        "flat_area_m2": 400.0,
+        "nearest_feature_m": 1800.0
+      }
+    ],
+    "fidelity": {
+      "tier": "high",
+      "summary": "5 m PGDA site DEM near field, 20 m polar DEM far field",
+      "near_field_resolution_m": 5.0,
+      "far_field_resolution_m": 20.0
+    },
+    "limitations": [
+      "~90% of 5 m mosaic pixels are interpolated; flat-area results are low confidence."
+    ]
+  },
+  "error": null
+}
