@@ -6,7 +6,7 @@ Terrain-aware lunar south pole landing site planner. Compare sites and dates for
 
 ## Data sources
 
-Every dataset the tool uses or plans to use is listed in the dataset registry, [`lss/registry/datasets.yaml`](lss/registry/datasets.yaml). Each entry gives coverage, resolution, what the dataset can and cannot answer, its citation and its license. The API serves the same list at `GET /api/datasets`.
+Every dataset the tool uses or plans to use is listed in the dataset registry, [`lss/registry/datasets.yaml`](lss/registry/datasets.yaml). Each entry gives coverage, resolution, what the dataset can and cannot answer, its citation and its license. The API will serve the same list at `GET /api/datasets`.
 
 Methodology: [`docs/methodology.md`](docs/methodology.md).
 
