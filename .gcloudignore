@@ -1,0 +1,20 @@
+# Files NOT uploaded to Cloud Build by `gcloud run deploy --source`.
+# Never upload secrets, local notes, data or node_modules.
+.git
+.gitignore
+.env
+.env.*
+reference/
+.venv/
+web/
+data/
+cache/
+kernels/
+tests/
+docs/
+scripts/
+deploy/
+**/__pycache__/
+*.tif
+*.bsp
+*.bpc

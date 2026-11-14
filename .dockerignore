@@ -1,0 +1,9 @@
+# Keep the build context small and secret-free.
+*
+!pyproject.toml
+!uv.lock
+!.python-version
+!README.md
+!lss/
+!fixtures/
+**/__pycache__
