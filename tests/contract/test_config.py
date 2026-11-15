@@ -33,3 +33,18 @@ def test_default_data_dir(monkeypatch, tmp_path):
         assert config.get_settings().data_dir == Path(r"C:\dev\GitHub\lss-data")
     finally:
         config.get_settings.cache_clear()
+
+
+def test_empty_values_fall_back_to_defaults(monkeypatch, tmp_path):
+    env = tmp_path / "blank.env"
+    env.write_text("LSS_DATA_DIR=\nLSS_CORS_ORIGINS=\n")
+    monkeypatch.setenv("LSS_ENV_FILE", str(env))
+    monkeypatch.delenv("LSS_DATA_DIR", raising=False)
+    monkeypatch.delenv("LSS_CORS_ORIGINS", raising=False)
+    config.get_settings.cache_clear()
+    try:
+        s = config.get_settings()
+        assert s.data_dir == config.DEFAULT_DATA_DIR
+        assert s.cors_origins == ("http://localhost:5173",)
+    finally:
+        config.get_settings.cache_clear()

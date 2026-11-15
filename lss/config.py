@@ -70,7 +70,7 @@ class Settings:
 def get_settings() -> Settings:
     env_file = load_env()
     data_dir = Path(os.environ.get("LSS_DATA_DIR") or DEFAULT_DATA_DIR).expanduser()
-    origins = os.environ.get("LSS_CORS_ORIGINS", "http://localhost:5173")
+    origins = os.environ.get("LSS_CORS_ORIGINS") or "http://localhost:5173"
     return Settings(
         env_file=env_file,
         data_dir=data_dir,

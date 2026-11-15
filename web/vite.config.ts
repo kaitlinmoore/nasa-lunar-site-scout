@@ -18,6 +18,11 @@ const fileEnv: Record<string, string | undefined> = existsSync(envFile)
   ? parseEnv(readFileSync(envFile, 'utf-8'))
   : {}
 const cesiumToken = process.env.CESIUM_ION_TOKEN ?? fileEnv.CESIUM_ION_TOKEN ?? ''
+console.info(
+  cesiumToken
+    ? `Cesium ion token: set (${cesiumToken.length} chars) from ${process.env.CESIUM_ION_TOKEN ? 'process env' : envFile}`
+    : `Cesium ion token: NOT set (looked in ${envFile})`,
+)
 
 const openapi = JSON.parse(readFileSync(resolve(repoRoot, 'fixtures/openapi.json'), 'utf-8'))
 const contractVersion: string = openapi.info['x-contract-version']
