@@ -2,179 +2,30 @@
 // C1 thin-slice site screen: one scenario's metrics, events and fidelity, exactly as the API
 // (or fixture) sent them. null = "not computed", never 0. Definitions come from the contract.
 import type { ReactNode } from 'react'
-import type {
-  CommsMetrics,
-  FidelityLabel,
-  MetricEvent,
-  MetricsResponse,
-  PowerMetrics,
-  Stat,
-} from './api/client'
+import type { FidelityLabel, MetricEvent, MetricsResponse } from './api/client'
+import { EVENT_LABELS, formatDuration, formatHeight, formatLatLon, formatUtc, midSentence } from './format'
+import { MetricValue, Value } from './metrics'
 import {
-  EVENT_LABELS,
-  CLIPPED_NOTE,
-  CLIPPED_UNKNOWN_NOTE,
-  NO_EARTHSET_IN_WINDOW,
-  NO_SUNSET_IN_WINDOW,
-  formatDuration,
-  formatHeight,
-  formatLatLon,
-  formatUtc,
-  formatWindowQualifier,
-  midSentence,
-  unitOf,
-} from './format'
-import { NotComputed, Num } from './Value'
-
-const DOCS = __FIELD_DOCS__
-
-// Boolean flags that qualify another metric rather than being shown as their own row.
-type PowerClippedFlag = 'longest_shadow_clipped'
-type CommsClippedFlag = 'longest_earth_gap_clipped'
-type PowerInWindowFlag = 'sunset_in_window'
-type CommsInWindowFlag = 'earthset_in_window'
-type PowerFlag = PowerClippedFlag | PowerInWindowFlag
-type CommsFlag = CommsClippedFlag | CommsInWindowFlag
-
-// Labels are keyed by the contract types (minus the flags): a renamed or added field is a
-// type error here.
-const POWER_LABELS: Record<Exclude<keyof PowerMetrics, PowerFlag>, string> = {
-  illumination_fraction: 'Illumination',
-  mean_visible_disk_fraction: 'Mean visible solar disc',
-  sunlit_duration_h: 'Sunlit duration',
-  longest_sunlit_period_h: 'Longest sunlit period',
-  longest_shadow_h: 'Longest shadow',
-  shadow_count: 'Shadow periods',
-  sun_elevation_deg: 'Sun elevation',
-  sun_azimuth_deg: 'Sun azimuth',
-  time_to_sunset_h: 'Time to sunset',
-}
-
-const COMMS_LABELS: Record<Exclude<keyof CommsMetrics, CommsFlag>, string> = {
-  earth_visibility_fraction: 'Earth visibility',
-  earth_full_disc_fraction: 'Earth full disc',
-  longest_earth_gap_h: 'Longest Earth gap',
-  earth_elevation_deg: 'Earth elevation',
-  earth_clearance_deg: 'Earth clearance',
-  sun_earth_overlap_fraction: 'Sun + Earth overlap',
-  time_to_earthset_h: 'Time to Earthset',
-}
-
-// Which "clipped to the window" flag qualifies which duration (every flag must be placed).
-const POWER_CLIPPED: Record<PowerClippedFlag, keyof PowerMetrics> = {
-  longest_shadow_clipped: 'longest_shadow_h',
-}
-const COMMS_CLIPPED: Record<CommsClippedFlag, keyof CommsMetrics> = {
-  longest_earth_gap_clipped: 'longest_earth_gap_h',
-}
-
-/** An "event occurs in the window" flag: when false, its time-to field is null by contract. */
-type InWindow<T> = { field: keyof T; none: string }
-
-// Contract 0.4.0: when the flag is false the time-to value is null because the event doesn't
-// happen in the window. That's a result ("no sunset in this window"), not "not computed".
-const POWER_IN_WINDOW: Record<PowerInWindowFlag, InWindow<PowerMetrics>> = {
-  sunset_in_window: { field: 'time_to_sunset_h', none: NO_SUNSET_IN_WINDOW },
-}
-const COMMS_IN_WINDOW: Record<CommsInWindowFlag, InWindow<CommsMetrics>> = {
-  earthset_in_window: { field: 'time_to_earthset_h', none: NO_EARTHSET_IN_WINDOW },
-}
-
-/**
- * Note under a duration whose period may run past the window edges. Shown only when the
- * duration has a value: true -> "clipped …"; null -> "not computed"; false -> nothing.
- */
-function ClippedNote({ flag, doc }: { flag: boolean | null | undefined; doc?: string }) {
-  if (flag === false) return null
-  return (
-    <div className="definition" title={doc}>
-      {flag === true ? CLIPPED_NOTE : CLIPPED_UNKNOWN_NOTE}
-    </div>
-  )
-}
-
-/** Scenario window, for values (counts) that only make sense with the window they cover. */
-type ScenarioWindow = { start: string; end: string }
-
-function WindowQualifier({ start, end }: ScenarioWindow) {
-  const q = formatWindowQualifier(start, end)
-  return (
-    <div className="definition">
-      {q.lead} <span className="nowrap">{q.start}</span> – <span className="nowrap">{q.end}</span>
-    </div>
-  )
-}
-
-function Value({
-  value,
-  field,
-  scenarioWindow,
-}: {
-  value: number | null | undefined
-  field: string
-  scenarioWindow?: ScenarioWindow
-}) {
-  if (value === null || value === undefined) return <NotComputed />
-  return (
-    <>
-      <Num value={value} field={field} />
-      {unitOf(field) === 'count' && scenarioWindow && <WindowQualifier {...scenarioWindow} />}
-    </>
-  )
-}
-
-function StatValue({ stat, field }: { stat: Stat | undefined; field: string }) {
-  const parts = [
-    ['min', stat?.min],
-    ['mean', stat?.mean],
-    ['max', stat?.max],
-  ] as const
-  return (
-    <span className="stat">
-      {parts.map(([name, v]) => (
-        <span key={name}>
-          <span className="stat-name">{name}</span> <Value value={v} field={field} />
-        </span>
-      ))}
-    </span>
-  )
-}
-
-function isStat(v: unknown): v is Stat {
-  return typeof v === 'object' && v !== null
-}
+  COMMS_SPEC,
+  DOCS,
+  fieldDoc,
+  type MetricSpec,
+  metricFields,
+  POWER_SPEC,
+  type ScenarioWindow,
+} from './metricSpec'
 
 function MetricTable<T extends object>({
   title,
-  schema,
   metrics,
-  labels,
-  clipped,
-  inWindow,
+  spec,
   scenarioWindow,
 }: {
   title: string
-  schema: string
   metrics: T
-  labels: Partial<Record<keyof T, string>>
-  /** flag field -> the duration field it qualifies */
-  clipped: Partial<Record<keyof T, keyof T>>
-  /** "in window" flag field -> the time-to field it explains when null */
-  inWindow: Partial<Record<keyof T, InWindow<T>>>
+  spec: MetricSpec<T>
   scenarioWindow: ScenarioWindow
 }) {
-  const docs = DOCS[schema] ?? {}
-  // duration field -> its clipped flag field
-  const flagFor = new Map(
-    (Object.entries(clipped) as [keyof T & string, keyof T & string][]).map(([flag, field]) => [field, flag]),
-  )
-  // time-to field -> its in-window flag field and the "none" text
-  const inWindowFor = new Map(
-    (Object.entries(inWindow) as [keyof T & string, InWindow<T>][]).map(([flag, w]) => [
-      w.field,
-      { flag, none: w.none },
-    ]),
-  )
   return (
     <section className="card">
       <h2>{title}</h2>
@@ -186,42 +37,21 @@ function MetricTable<T extends object>({
           </tr>
         </thead>
         <tbody>
-          {(Object.keys(labels) as (keyof T & string)[]).map((field) => {
-            const v = metrics[field] as unknown
-            const flag = flagFor.get(field)
-            const presence = inWindowFor.get(field)
-            const noEvent = v == null && presence !== undefined && metrics[presence.flag] === false
-            return (
-              <tr key={field}>
-                <th scope="row">
-                  {labels[field]}
-                  <div className="definition">
-                    {docs[field] ?? <span className="no-def">No definition in the contract yet.</span>}
-                  </div>
-                </th>
-                <td>
-                  {isStat(v) ? (
-                    <StatValue stat={v} field={field} />
-                  ) : noEvent && presence ? (
-                    <span className="value" title={docs[presence.flag]}>
-                      {presence.none}
-                    </span>
-                  ) : (
-                    <>
-                      <Value
-                        value={v as number | null | undefined}
-                        field={field}
-                        scenarioWindow={scenarioWindow}
-                      />
-                      {flag && v != null && (
-                        <ClippedNote flag={metrics[flag] as boolean | null | undefined} doc={docs[flag]} />
-                      )}
-                    </>
+          {metricFields(spec).map((field) => (
+            <tr key={field}>
+              <th scope="row">
+                {spec.labels[field]}
+                <div className="definition">
+                  {fieldDoc(spec.schema, field) ?? (
+                    <span className="no-def">No definition in the contract yet.</span>
                   )}
-                </td>
-              </tr>
-            )
-          })}
+                </div>
+              </th>
+              <td>
+                <MetricValue metrics={metrics} field={field} spec={spec} scenarioWindow={scenarioWindow} />
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </section>
@@ -328,22 +158,11 @@ export default function SiteScreen({ data, children }: { data: MetricsResponse; 
       </section>
       {children}
       <div className="grid-2">
-        <MetricTable
-          title="Power"
-          schema="PowerMetrics"
-          metrics={data.power}
-          labels={POWER_LABELS}
-          clipped={POWER_CLIPPED}
-          inWindow={POWER_IN_WINDOW}
-          scenarioWindow={scenarioWindow}
-        />
+        <MetricTable title="Power" metrics={data.power} spec={POWER_SPEC} scenarioWindow={scenarioWindow} />
         <MetricTable
           title="Comms (direct to Earth)"
-          schema="CommsMetrics"
           metrics={data.comms}
-          labels={COMMS_LABELS}
-          clipped={COMMS_CLIPPED}
-          inWindow={COMMS_IN_WINDOW}
+          spec={COMMS_SPEC}
           scenarioWindow={scenarioWindow}
         />
       </div>
