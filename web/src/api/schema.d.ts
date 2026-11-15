@@ -113,10 +113,16 @@ export interface components {
             sun_earth_overlap_fraction: number | null;
             /**
              * Time To Earthset H
-             * @description From window_start to the first Earthset (the last part of the Earth disc going below the terrain horizon), h
+             * @description From window_start to the first Earthset (the last part of the Earth disc going below the terrain horizon), h. Null if not computed, or if there is no Earthset in the window (earthset_in_window false)
              * @default null
              */
             time_to_earthset_h: number | null;
+            /**
+             * Earthset In Window
+             * @description True if at least one Earthset occurs in the window, false if none does (time_to_earthset_h is then null). Null only if not computed
+             * @default null
+             */
+            earthset_in_window: boolean | null;
         };
         /** CompareRequest */
         CompareRequest: {
@@ -127,7 +133,7 @@ export interface components {
         CompareResponse: {
             /**
              * Contract Version
-             * @default 0.3.0
+             * @default 0.4.0
              */
             contract_version: string;
             /**
@@ -230,7 +236,7 @@ export interface components {
         DatasetsResponse: {
             /**
              * Contract Version
-             * @default 0.3.0
+             * @default 0.4.0
              */
             contract_version: string;
             /**
@@ -313,7 +319,7 @@ export interface components {
         FeaturesResponse: {
             /**
              * Contract Version
-             * @default 0.3.0
+             * @default 0.4.0
              */
             contract_version: string;
             /**
@@ -363,7 +369,7 @@ export interface components {
         HealthResponse: {
             /**
              * Contract Version
-             * @default 0.3.0
+             * @default 0.4.0
              */
             contract_version: string;
             /**
@@ -385,7 +391,7 @@ export interface components {
         HorizonProfile: {
             /**
              * Contract Version
-             * @default 0.3.0
+             * @default 0.4.0
              */
             contract_version: string;
             /**
@@ -432,7 +438,7 @@ export interface components {
         Job: {
             /**
              * Contract Version
-             * @default 0.3.0
+             * @default 0.4.0
              */
             contract_version: string;
             /**
@@ -501,7 +507,7 @@ export interface components {
         LocateResponse: {
             /**
              * Contract Version
-             * @default 0.3.0
+             * @default 0.4.0
              */
             contract_version: string;
             /**
@@ -560,7 +566,7 @@ export interface components {
         MetricsResponse: {
             /**
              * Contract Version
-             * @default 0.3.0
+             * @default 0.4.0
              */
             contract_version: string;
             /**
@@ -588,7 +594,7 @@ export interface components {
         NLAnswer: {
             /**
              * Contract Version
-             * @default 0.3.0
+             * @default 0.4.0
              */
             contract_version: string;
             /**
@@ -638,7 +644,7 @@ export interface components {
         NLUnsupported: {
             /**
              * Contract Version
-             * @default 0.3.0
+             * @default 0.4.0
              */
             contract_version: string;
             /**
@@ -727,10 +733,16 @@ export interface components {
             sun_azimuth_deg?: components["schemas"]["Stat"];
             /**
              * Time To Sunset H
-             * @description From window_start to the first sunset (the last part of the solar disc going below the terrain horizon), h
+             * @description From window_start to the first sunset (the last part of the solar disc going below the terrain horizon), h. Null if not computed, or if there is no sunset in the window (sunset_in_window false)
              * @default null
              */
             time_to_sunset_h: number | null;
+            /**
+             * Sunset In Window
+             * @description True if at least one sunset occurs in the window, false if none does (time_to_sunset_h is then null). Null only if not computed
+             * @default null
+             */
+            sunset_in_window: boolean | null;
         };
         /** ProximityRequest */
         ProximityRequest: {
@@ -744,7 +756,7 @@ export interface components {
         ProximityResponse: {
             /**
              * Contract Version
-             * @default 0.3.0
+             * @default 0.4.0
              */
             contract_version: string;
             /**
@@ -859,7 +871,7 @@ export interface components {
         SeriesResponse: {
             /**
              * Contract Version
-             * @default 0.3.0
+             * @default 0.4.0
              */
             contract_version: string;
             /**
@@ -924,7 +936,7 @@ export interface components {
         SitesResponse: {
             /**
              * Contract Version
-             * @default 0.3.0
+             * @default 0.4.0
              */
             contract_version: string;
             /**

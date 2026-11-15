@@ -14,6 +14,8 @@ import {
   EVENT_LABELS,
   CLIPPED_NOTE,
   CLIPPED_UNKNOWN_NOTE,
+  NO_EARTHSET_IN_WINDOW,
+  NO_SUNSET_IN_WINDOW,
   formatDuration,
   formatHeight,
   formatLatLon,
@@ -27,8 +29,12 @@ import { NotComputed, Num } from './Value'
 const DOCS = __FIELD_DOCS__
 
 // Boolean flags that qualify another metric rather than being shown as their own row.
-type PowerFlag = 'longest_shadow_clipped'
-type CommsFlag = 'longest_earth_gap_clipped'
+type PowerClippedFlag = 'longest_shadow_clipped'
+type CommsClippedFlag = 'longest_earth_gap_clipped'
+type PowerInWindowFlag = 'sunset_in_window'
+type CommsInWindowFlag = 'earthset_in_window'
+type PowerFlag = PowerClippedFlag | PowerInWindowFlag
+type CommsFlag = CommsClippedFlag | CommsInWindowFlag
 
 // Labels are keyed by the contract types (minus the flags): a renamed or added field is a
 // type error here.
@@ -55,11 +61,23 @@ const COMMS_LABELS: Record<Exclude<keyof CommsMetrics, CommsFlag>, string> = {
 }
 
 // Which "clipped to the window" flag qualifies which duration (every flag must be placed).
-const POWER_CLIPPED: Record<PowerFlag, keyof PowerMetrics> = {
+const POWER_CLIPPED: Record<PowerClippedFlag, keyof PowerMetrics> = {
   longest_shadow_clipped: 'longest_shadow_h',
 }
-const COMMS_CLIPPED: Record<CommsFlag, keyof CommsMetrics> = {
+const COMMS_CLIPPED: Record<CommsClippedFlag, keyof CommsMetrics> = {
   longest_earth_gap_clipped: 'longest_earth_gap_h',
+}
+
+/** An "event occurs in the window" flag: when false, its time-to field is null by contract. */
+type InWindow<T> = { field: keyof T; none: string }
+
+// Contract 0.4.0: when the flag is false the time-to value is null because the event doesn't
+// happen in the window. That's a result ("no sunset in this window"), not "not computed".
+const POWER_IN_WINDOW: Record<PowerInWindowFlag, InWindow<PowerMetrics>> = {
+  sunset_in_window: { field: 'time_to_sunset_h', none: NO_SUNSET_IN_WINDOW },
+}
+const COMMS_IN_WINDOW: Record<CommsInWindowFlag, InWindow<CommsMetrics>> = {
+  earthset_in_window: { field: 'time_to_earthset_h', none: NO_EARTHSET_IN_WINDOW },
 }
 
 /**
@@ -132,6 +150,7 @@ function MetricTable<T extends object>({
   metrics,
   labels,
   clipped,
+  inWindow,
   scenarioWindow,
 }: {
   title: string
@@ -140,12 +159,21 @@ function MetricTable<T extends object>({
   labels: Partial<Record<keyof T, string>>
   /** flag field -> the duration field it qualifies */
   clipped: Partial<Record<keyof T, keyof T>>
+  /** "in window" flag field -> the time-to field it explains when null */
+  inWindow: Partial<Record<keyof T, InWindow<T>>>
   scenarioWindow: ScenarioWindow
 }) {
   const docs = DOCS[schema] ?? {}
-  // duration field -> its flag field
+  // duration field -> its clipped flag field
   const flagFor = new Map(
     (Object.entries(clipped) as [keyof T & string, keyof T & string][]).map(([flag, field]) => [field, flag]),
+  )
+  // time-to field -> its in-window flag field and the "none" text
+  const inWindowFor = new Map(
+    (Object.entries(inWindow) as [keyof T & string, InWindow<T>][]).map(([flag, w]) => [
+      w.field,
+      { flag, none: w.none },
+    ]),
   )
   return (
     <section className="card">
@@ -161,6 +189,8 @@ function MetricTable<T extends object>({
           {(Object.keys(labels) as (keyof T & string)[]).map((field) => {
             const v = metrics[field] as unknown
             const flag = flagFor.get(field)
+            const presence = inWindowFor.get(field)
+            const noEvent = v == null && presence !== undefined && metrics[presence.flag] === false
             return (
               <tr key={field}>
                 <th scope="row">
@@ -172,6 +202,10 @@ function MetricTable<T extends object>({
                 <td>
                   {isStat(v) ? (
                     <StatValue stat={v} field={field} />
+                  ) : noEvent && presence ? (
+                    <span className="value" title={docs[presence.flag]}>
+                      {presence.none}
+                    </span>
                   ) : (
                     <>
                       <Value
@@ -300,6 +334,7 @@ export default function SiteScreen({ data, children }: { data: MetricsResponse; 
           metrics={data.power}
           labels={POWER_LABELS}
           clipped={POWER_CLIPPED}
+          inWindow={POWER_IN_WINDOW}
           scenarioWindow={scenarioWindow}
         />
         <MetricTable
@@ -308,6 +343,7 @@ export default function SiteScreen({ data, children }: { data: MetricsResponse; 
           metrics={data.comms}
           labels={COMMS_LABELS}
           clipped={COMMS_CLIPPED}
+          inWindow={COMMS_IN_WINDOW}
           scenarioWindow={scenarioWindow}
         />
       </div>

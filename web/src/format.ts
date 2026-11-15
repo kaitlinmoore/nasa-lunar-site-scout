@@ -141,3 +141,8 @@ export const EVENT_LABELS: Record<'sunrise' | 'sunset' | 'earthrise' | 'earthset
 export const CLIPPED_NOTE = 'clipped to the window; the full period is longer'
 /** Under a longest-period duration whose `_clipped` flag is null. */
 export const CLIPPED_UNKNOWN_NOTE = 'whether it runs past the window: not computed'
+
+/** time_to_sunset_h is null because sunset_in_window is false (contract 0.4.0). */
+export const NO_SUNSET_IN_WINDOW = 'no sunset in this window'
+/** time_to_earthset_h is null because earthset_in_window is false (contract 0.4.0). */
+export const NO_EARTHSET_IN_WINDOW = 'no Earthset in this window'

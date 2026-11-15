@@ -39,6 +39,7 @@ The horizon/sky plot and timeline use `fixtures/horizon.json` and `fixtures/seri
 - Units come from the contract's field-name convention (`_h` hours, `_deg` degrees, `_fraction` shown as %, `_m` meters). Counts (`_count`) name what they count and the scenario window they cover ("2 shadow periods, in the window …").
 - Metric definitions are the contract's own field descriptions, read from `fixtures/openapi.json` at build time.
 - `_clipped` flags (contract 0.3.0) aren't rows of their own: each is a note under the longest-period duration it qualifies. `true` → "clipped to the window; the full period is longer"; `null` → "not computed"; `false` → no note.
+- `sunset_in_window` / `earthset_in_window` (contract 0.4.0): when the flag is `false`, `time_to_sunset_h` / `time_to_earthset_h` is null because the event doesn't happen in the window, and the value shows "no sunset in this window" / "no Earthset in this window". A null time with the flag `null` (or `true`) still shows "not computed".
 - A contract version mismatch between the web build and the data shows a warning.
 
 ## Code layout: style, formatting, layout
