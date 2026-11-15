@@ -32,7 +32,7 @@ from pydantic import (
     model_validator,
 )
 
-CONTRACT_VERSION = "0.4.0"
+CONTRACT_VERSION = "0.5.0"
 
 Latitude = Annotated[float, Field(ge=-90.0, le=90.0, description="Planetocentric latitude, deg")]
 Longitude = Annotated[

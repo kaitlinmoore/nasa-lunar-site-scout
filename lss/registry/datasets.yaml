@@ -28,7 +28,7 @@ datasets:
       Barker, M. K., et al. (2021). Improved LOLA elevation maps for south pole landing sites:
       Error estimates and their impact on illumination conditions. Planetary and Space Science 203,
       105119. doi:10.1016/j.pss.2020.105119
-    license: NASA-produced data (U.S. Government work); cite Barker et al. 2021. VERIFY terms on page.
+    license: NASA-produced data (U.S. Government work). No license stated; the PGDA Data Usage Policy asks users to cite the paper (Barker et al. 2021) (checked 2026-11-15).
     status: used
     notes: >-
       South polar stereographic X/Y m, MOON_ME / DE421. VERIFY which sites beyond the 8 listed have clones.
@@ -55,7 +55,7 @@ datasets:
     citation: >-
       Barker, M. K., et al. (2021). Planetary and Space Science 203, 105119.
       doi:10.1016/j.pss.2020.105119
-    license: NASA-produced data (U.S. Government work); cite Barker et al. 2021. VERIFY terms on page.
+    license: NASA-produced data (U.S. Government work). No license stated; the PGDA Data Usage Policy asks users to cite the paper (Barker et al. 2021) (checked 2026-11-15).
     status: planned
     notes: Data at https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/87S/. MOON_ME / DE421.
 
@@ -78,9 +78,10 @@ datasets:
     cannot_answer:
       - Northern hemisphere or mid-latitude terrain
     citation: >-
-      Barker, M. K., et al. (2023). Planetary Science Journal 4, 183. doi:10.3847/PSJ/acf3e1.
+      Barker, M. K., et al. (2023). A New View of the Lunar South Pole from the Lunar Orbiter Laser
+      Altimeter (LOLA). Planetary Science Journal 4(9), 183. doi:10.3847/PSJ/acf3e1.
       Data: doi:10.60903/gsfcpgda-lola-spole
-    license: NASA-produced data (U.S. Government work); cite Barker et al. 2023. VERIFY terms on page.
+    license: NASA-produced data (U.S. Government work). No license stated; the PGDA Data Usage Policy asks users to cite the paper (Barker et al. 2023) (checked 2026-11-15).
     status: used
     notes: >-
       Cloud-optimized GeoTIFFs (windowed remote reads), south polar stereographic, MOON_ME / DE421.
@@ -116,7 +117,9 @@ datasets:
       PDS labels (2016 release, from LDEM_85S_060M): value = fraction of time steps with any part of the
       solar (or Earth) disc visible; DN x 0.00004. No observer height or averaging dates are stated in
       the page, labels or README (checked 2026-11-14). The product page says "hourly timesteps spanning
-      18.6 years"; VERIFY the averaging period against Mazarico et al. 2011 (see docs/methodology.md).
+      18.6 years" (the citable source for the period; Mazarico et al. 2011 used several 18.6-year cycles at
+      6 h on 240 m maps). Dates not stated: the validation measures the start-date sensitivity with two
+      starts, 2000-01-01 and 2024-01-01 (docs/methodology.md sections 4.2 and 6.3).
 
   - id: pgda_98_polar_roughness
     name: Large-Scale Roughness Properties of the Lunar Poles
@@ -135,7 +138,7 @@ datasets:
       Barker, M. K., et al. (2025). Large-Scale Roughness Properties of the Lunar North and South
       Polar Regions as Measured by LOLA. Planetary Science Journal 6, 83. doi:10.3847/PSJ/adbc9d.
       Data: doi:10.60903/gsfcpgda-lola-poles
-    license: NASA-produced data (U.S. Government work); cite Barker et al. 2025. VERIFY terms on page.
+    license: NASA-produced data (U.S. Government work). No license stated; the PGDA Data Usage Policy asks users to cite the paper (Barker et al. 2025) (checked 2026-11-15).
     status: planned
 
   - id: lola_ldem_128
@@ -155,8 +158,8 @@ datasets:
       - Fine-scale horizon or slope at sub-kilometer scale
     citation: >-
       Smith, D. E., et al. (2010). Initial observations from the Lunar Orbiter Laser Altimeter
-      (LOLA). Geophysical Research Letters 37, L18204. doi:10.1029/2010GL043751. VERIFY preferred
-      citation for LDEM_128.
+      (LOLA). Geophysical Research Letters 37(18). doi:10.1029/2010GL043751. VERIFY the article id
+      (Crossref gives 2010GL043751; L18204 not confirmed) and the preferred citation for LDEM_128.
     license: NASA PDS data (U.S. Government work).
     status: planned
     notes: Candidate only (plan section 4.2); confirm product choice and frame in C7.
@@ -179,7 +182,7 @@ datasets:
     citation: >-
       Barker, M. K., et al. (2016). A new lunar digital elevation model from the Lunar Orbiter Laser
       Altimeter and SELENE Terrain Camera. Icarus 273, 346-355. doi:10.1016/j.icarus.2015.07.039
-    license: NASA-produced data (U.S. Government work). VERIFY URL and terms.
+    license: NASA-produced data (U.S. Government work). No license stated; the PGDA Data Usage Policy asks users to cite the paper (Barker et al. 2016) (checked 2026-11-15). URL checked (page title "High-resolution Lunar Topography (SLDEM2015)").
     status: planned
     notes: VERIFY SLDEM2015 frame vs MOON_ME (plan section 9).
 
@@ -224,7 +227,7 @@ datasets:
       Robbins, S. J. (2019). A new global database of lunar impact craters >1-2 km: 1. Crater
       locations and sizes, comparisons with published databases, and global analysis. JGR Planets
       124, 871-892. doi:10.1029/2018JE005592
-    license: VERIFY (USGS Astrogeology distribution terms).
+    license: VERIFY (USGS Astrogeology distribution terms; the page refuses automated requests, check by hand).
     status: planned
 
   - id: m3_surface_ice
@@ -266,8 +269,9 @@ datasets:
       - Individual sub-meter boulders in a landing ellipse
     citation: >-
       Aussel, B., et al. (2025). Global lunar boulder map from LRO NAC optical images using deep
-      learning: Implications for regolith and protolith. JGR Planets 130, e2025JE008981.
-    license: VERIFY (Zenodo record license).
+      learning: Implications for regolith and protolith. JGR Planets 130(7), e2025JE008981.
+      doi:10.1029/2025JE008981. Data: doi:10.5281/zenodo.15520275 (Zenodo, version 3)
+    license: CC BY 4.0 (Zenodo record page)
     status: planned
 
   - id: spice_de421
@@ -286,9 +290,12 @@ datasets:
     cannot_answer:
       - Dates after 2050-12-31 23:58:50 UTC (orientation kernel end); needs newer kernels + frame alignment (X5)
     citation: >-
-      Folkner, W. M., et al. (2008). The Planetary and Lunar Ephemeris DE 421. JPL IOM 343R-08-003.
-      Acton, C. H. (1996). Ancillary data services of NASA's Navigation and Ancillary Information
-      Facility. Planetary and Space Science 44(1), 65-70.
+      Folkner, W. M., Williams, J. G., & Boggs, D. H. (2008). The Planetary and Lunar Ephemeris DE 421.
+      JPL IOM 343R-08-003. Acton, C. H. (1996). Ancillary data services of NASA's Navigation and
+      Ancillary Information Facility. Planetary and Space Science 44(1), 65-70.
+      doi:10.1016/0032-0633(95)00107-7. Acton, C., Bachman, N., Semenov, B., & Wright, E. (2018). A look
+      towards the future in the handling of space science mission geometry. Planetary and Space Science
+      150, 9-12. doi:10.1016/j.pss.2017.02.013
     license: NAIF generic kernels are freely available (U.S. Government work).
     status: used
     notes: >-

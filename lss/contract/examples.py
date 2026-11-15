@@ -118,8 +118,13 @@ def sites() -> SitesResponse:
         category=SiteCategory.pgda,
         location=SITE01,
         description=(
-            "PGDA south-pole site 01 (Connecting ridge; Mazarico et al. 2011 numbering), at the centroid of "
-            "Barker et al. (2021) region of interest 4."
+            "A ridge at the Moon's south pole, about 17 km from the pole, connecting the rims of Shackleton "
+            "crater and de Gerlache crater (Barker et al. 2021). Because it is high and close to the pole, "
+            "where the Sun always stays near the horizon, parts of it see the Sun most of the time: Mazarico "
+            "et al. (2011) ranked it first of the south polar sites for average illumination (their site 1), "
+            "and Barker et al. (2021) studied it as a potential landing site. They found seven regions on it "
+            "where, at 1 m above the ground in 2024-2025, more than 70% of the Sun's disc is in view on "
+            "average. The point used here is the centre of the largest, region 4."
         ),
         dataset_ids=["pgda_78_site_dems", "pgda_81_mosaic_5m", "pgda_90_south_pole_dems"],
         has_dem_clones=True,

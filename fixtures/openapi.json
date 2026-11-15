@@ -3,8 +3,8 @@
   "info": {
     "title": "Lunar Site Scout API",
     "description": "Contract v0. Not affiliated with or endorsed by NASA.",
-    "version": "0.4.0",
-    "x-contract-version": "0.4.0"
+    "version": "0.5.0",
+    "x-contract-version": "0.5.0"
   },
   "paths": {
     "/api/health": {
@@ -70,39 +70,105 @@
           }
         }
       }
+    },
+    "/api/metrics": {
+      "post": {
+        "summary": "Metrics",
+        "operationId": "metrics_api_metrics_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "No precomputed result for this scenario (detail.reason, detail.served)"
+          },
+          "503": {
+            "description": "No usable precomputed results are installed (detail.reason)"
+          }
+        }
+      }
+    },
+    "/api/series": {
+      "post": {
+        "summary": "Series",
+        "operationId": "series_api_series_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "No precomputed result for this scenario (detail.reason, detail.served)"
+          },
+          "503": {
+            "description": "No usable precomputed results are installed (detail.reason)"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
       "BodyTrack": {
-        "additionalProperties": false,
-        "description": "Per-sample values for one body; every list has the length of `SeriesResponse.time`.",
         "properties": {
           "azimuth_deg": {
-            "description": "Apparent azimuth of the disc centre (light time + stellar aberration), deg, 0-360, clockwise from north, in the site's topocentric frame (east-north-up at the site, from the normal to the 1737.4 km reference sphere, MOON_ME_DE421); the same frame as the horizon profile (HorizonProfile.azimuth_deg)",
             "items": {
               "type": "number"
             },
+            "type": "array",
             "title": "Azimuth Deg",
-            "type": "array"
+            "description": "Apparent azimuth of the disc centre (light time + stellar aberration), deg, 0-360, clockwise from north, in the site's topocentric frame (east-north-up at the site, from the normal to the 1737.4 km reference sphere, MOON_ME_DE421); the same frame as the horizon profile (HorizonProfile.azimuth_deg)"
           },
           "elevation_deg": {
-            "description": "Apparent elevation of the disc centre (light time + stellar aberration), deg, measured from the local horizontal plane: the plane through the observer (DEM surface + unit height) normal to the reference sphere's radius at the site; the same plane as the horizon profile (HorizonProfile.elevation_deg). Not the elevation above the terrain: see clearance_deg",
             "items": {
               "type": "number"
             },
+            "type": "array",
             "title": "Elevation Deg",
-            "type": "array"
+            "description": "Apparent elevation of the disc centre (light time + stellar aberration), deg, measured from the local horizontal plane: the plane through the observer (DEM surface + unit height) normal to the reference sphere's radius at the site; the same plane as the horizon profile (HorizonProfile.elevation_deg). Not the elevation above the terrain: see clearance_deg"
           },
           "visible_fraction": {
-            "description": "Visible fraction of the disc, 0..1, against the terrain horizon: Sun = share of the disc's light (limb-darkened, 550 nm), Earth = share of its area (methodology section 5.1)",
             "items": {
+              "type": "number",
               "maximum": 1.0,
-              "minimum": 0.0,
-              "type": "number"
+              "minimum": 0.0
             },
+            "type": "array",
             "title": "Visible Fraction",
-            "type": "array"
+            "description": "Visible fraction of the disc, 0..1, against the terrain horizon: Sun = share of the disc's light (limb-darkened, 550 nm), Earth = share of its area (methodology section 5.1)"
           },
           "clearance_deg": {
             "anyOf": [
@@ -116,52 +182,49 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "Disc centre elevation minus the terrain horizon elevation at its azimuth, deg",
-            "title": "Clearance Deg"
+            "title": "Clearance Deg",
+            "description": "Disc centre elevation minus the terrain horizon elevation at its azimuth, deg"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "azimuth_deg",
           "elevation_deg",
           "visible_fraction"
         ],
         "title": "BodyTrack",
-        "type": "object"
+        "description": "Per-sample values for one body; every list has the length of `SeriesResponse.time`."
       },
       "CommsMetrics": {
-        "additionalProperties": false,
-        "description": "F4 (direct-to-Earth at the unit height). Nullable: null = not computed. See methodology section 5.\n\nEarth visible = any part of the Earth disc above the terrain horizon; a gap = no part of it above.\nGaps that start before window_start or run past window_end are clipped to the window.",
         "properties": {
           "earth_visibility_fraction": {
             "anyOf": [
               {
+                "type": "number",
                 "maximum": 1.0,
-                "minimum": 0.0,
-                "type": "number"
+                "minimum": 0.0
               },
               {
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "Fraction of the window with any part of the Earth disc visible",
-            "title": "Earth Visibility Fraction"
+            "title": "Earth Visibility Fraction",
+            "description": "Fraction of the window with any part of the Earth disc visible"
           },
           "earth_full_disc_fraction": {
             "anyOf": [
               {
+                "type": "number",
                 "maximum": 1.0,
-                "minimum": 0.0,
-                "type": "number"
+                "minimum": 0.0
               },
               {
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "Fraction of the window with the whole Earth disc above the terrain horizon",
-            "title": "Earth Full Disc Fraction"
+            "title": "Earth Full Disc Fraction",
+            "description": "Fraction of the window with the whole Earth disc above the terrain horizon"
           },
           "longest_earth_gap_h": {
             "anyOf": [
@@ -172,9 +235,8 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "Longest continuous period with no part of the Earth disc visible, clipped to the window, h",
-            "title": "Longest Earth Gap H"
+            "title": "Longest Earth Gap H",
+            "description": "Longest continuous period with no part of the Earth disc visible, clipped to the window, h"
           },
           "longest_earth_gap_clipped": {
             "anyOf": [
@@ -185,9 +247,8 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "True if the longest Earth gap starts before window_start or runs past window_end, so its full length is longer than longest_earth_gap_h; false if it lies inside the window or there is none",
-            "title": "Longest Earth Gap Clipped"
+            "title": "Longest Earth Gap Clipped",
+            "description": "True if the longest Earth gap starts before window_start or runs past window_end, so its full length is longer than longest_earth_gap_h; false if it lies inside the window or there is none"
           },
           "earth_elevation_deg": {
             "$ref": "#/components/schemas/Stat",
@@ -200,17 +261,16 @@
           "sun_earth_overlap_fraction": {
             "anyOf": [
               {
+                "type": "number",
                 "maximum": 1.0,
-                "minimum": 0.0,
-                "type": "number"
+                "minimum": 0.0
               },
               {
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "Fraction of the window with any part of both the solar and the Earth disc visible",
-            "title": "Sun Earth Overlap Fraction"
+            "title": "Sun Earth Overlap Fraction",
+            "description": "Fraction of the window with any part of both the solar and the Earth disc visible"
           },
           "time_to_earthset_h": {
             "anyOf": [
@@ -221,9 +281,8 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "From window_start to the first Earthset (the last part of the Earth disc going below the terrain horizon), h. Null if not computed, or if there is no Earthset in the window (earthset_in_window false)",
-            "title": "Time To Earthset H"
+            "title": "Time To Earthset H",
+            "description": "From window_start to the first Earthset (the last part of the Earth disc going below the terrain horizon), h. Null if not computed, or if there is no Earthset in the window (earthset_in_window false)"
           },
           "earthset_in_window": {
             "anyOf": [
@@ -234,13 +293,14 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "True if at least one Earthset occurs in the window, false if none does (time_to_earthset_h is then null). Null only if not computed",
-            "title": "Earthset In Window"
+            "title": "Earthset In Window",
+            "description": "True if at least one Earthset occurs in the window, false if none does (time_to_earthset_h is then null). Null only if not computed"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "title": "CommsMetrics",
-        "type": "object"
+        "description": "F4 (direct-to-Earth at the unit height). Nullable: null = not computed. See methodology section 5.\n\nEarth visible = any part of the Earth disc above the terrain horizon; a gap = no part of it above.\nGaps that start before window_start or run past window_end are clipped to the window."
       },
       "CompareRequest": {
         "additionalProperties": false,
@@ -264,7 +324,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.4.0",
+            "default": "0.5.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -505,7 +565,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.4.0",
+            "default": "0.5.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -542,21 +602,20 @@
         "type": "object"
       },
       "Event": {
-        "additionalProperties": false,
         "properties": {
           "kind": {
             "$ref": "#/components/schemas/EventKind"
           },
           "time": {
+            "type": "string",
             "format": "date-time",
-            "title": "Time",
-            "type": "string"
+            "title": "Time"
           },
           "refined": {
-            "default": false,
-            "description": "Refined between samples by root-finding",
+            "type": "boolean",
             "title": "Refined",
-            "type": "boolean"
+            "description": "Refined between samples by root-finding",
+            "default": false
           },
           "note": {
             "anyOf": [
@@ -567,26 +626,26 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Note"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "kind",
           "time"
         ],
-        "title": "Event",
-        "type": "object"
+        "title": "Event"
       },
       "EventKind": {
+        "type": "string",
         "enum": [
           "sunrise",
           "sunset",
           "earthrise",
           "earthset"
         ],
-        "title": "EventKind",
-        "type": "string"
+        "title": "EventKind"
       },
       "Feature": {
         "additionalProperties": false,
@@ -679,7 +738,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.4.0",
+            "default": "0.5.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -716,15 +775,14 @@
         "type": "object"
       },
       "FidelityLabel": {
-        "additionalProperties": false,
         "properties": {
           "tier": {
             "$ref": "#/components/schemas/FidelityTier"
           },
           "summary": {
-            "description": "Short user-facing text, e.g. '5 m polar DEM near field'",
+            "type": "string",
             "title": "Summary",
-            "type": "string"
+            "description": "Short user-facing text, e.g. '5 m polar DEM near field'"
           },
           "near_field_resolution_m": {
             "anyOf": [
@@ -735,7 +793,6 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Near Field Resolution M"
           },
           "far_field_resolution_m": {
@@ -747,25 +804,25 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Far Field Resolution M"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "tier",
           "summary"
         ],
-        "title": "FidelityLabel",
-        "type": "object"
+        "title": "FidelityLabel"
       },
       "FidelityTier": {
+        "type": "string",
         "enum": [
           "high",
           "medium",
           "low"
         ],
-        "title": "FidelityTier",
-        "type": "string"
+        "title": "FidelityTier"
       },
       "HTTPValidationError": {
         "properties": {
@@ -785,7 +842,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.4.0"
+            "default": "0.5.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -819,7 +876,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.4.0",
+            "default": "0.5.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -927,7 +984,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.4.0",
+            "default": "0.5.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1073,7 +1130,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.4.0",
+            "default": "0.5.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1198,18 +1255,17 @@
         "type": "object"
       },
       "MetricsResponse": {
-        "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.4.0",
+            "type": "string",
             "title": "Contract Version",
-            "type": "string"
+            "default": "0.5.0"
           },
           "_placeholder": {
-            "default": false,
-            "description": "True when the values are placeholders, not computed results.",
+            "type": "boolean",
             "title": "Placeholder",
-            "type": "boolean"
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
           },
           "_note": {
             "anyOf": [
@@ -1220,15 +1276,14 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Note"
           },
           "scenario": {
             "$ref": "#/components/schemas/Scenario"
           },
           "scenario_key": {
-            "title": "Scenario Key",
-            "type": "string"
+            "type": "string",
+            "title": "Scenario Key"
           },
           "power": {
             "$ref": "#/components/schemas/PowerMetrics"
@@ -1240,8 +1295,8 @@
             "items": {
               "$ref": "#/components/schemas/Event"
             },
-            "title": "Events",
-            "type": "array"
+            "type": "array",
+            "title": "Events"
           },
           "fidelity": {
             "anyOf": [
@@ -1251,24 +1306,24 @@
               {
                 "type": "null"
               }
-            ],
-            "default": null
+            ]
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "scenario",
           "scenario_key",
           "power",
           "comms"
         ],
-        "title": "MetricsResponse",
-        "type": "object"
+        "title": "MetricsResponse"
       },
       "NLAnswer": {
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.4.0",
+            "default": "0.5.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1370,7 +1425,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.4.0",
+            "default": "0.5.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1443,38 +1498,34 @@
         "type": "object"
       },
       "PowerMetrics": {
-        "additionalProperties": false,
-        "description": "F3. Nullable: null = not computed. Exact definitions: docs/methodology.md section 5.\n\nSunlit = any part of the solar disc above the terrain horizon; shadow = no part of it above. Sunlit and\nshadow periods tile the window. Periods that start before window_start or run past window_end are\nclipped to the window and still counted.",
         "properties": {
           "illumination_fraction": {
             "anyOf": [
               {
+                "type": "number",
                 "maximum": 1.0,
-                "minimum": 0.0,
-                "type": "number"
+                "minimum": 0.0
               },
               {
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "Fraction of the window that is sunlit (any part of the solar disc visible)",
-            "title": "Illumination Fraction"
+            "title": "Illumination Fraction",
+            "description": "Fraction of the window that is sunlit (any part of the solar disc visible)"
           },
           "mean_visible_disk_fraction": {
             "anyOf": [
               {
+                "type": "number",
                 "maximum": 1.0,
-                "minimum": 0.0,
-                "type": "number"
+                "minimum": 0.0
               },
               {
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "Time average over the window of the visible share of the solar disc's light, weighted by limb darkening at 550 nm (a light-weighted fraction, not a geometric area fraction)",
-            "title": "Mean Visible Disk Fraction"
+            "title": "Mean Visible Disk Fraction",
+            "description": "Time average over the window of the visible share of the solar disc's light, weighted by limb darkening at 550 nm (a light-weighted fraction, not a geometric area fraction)"
           },
           "sunlit_duration_h": {
             "anyOf": [
@@ -1485,9 +1536,8 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "Total sunlit time in the window (any part of the solar disc visible), h",
-            "title": "Sunlit Duration H"
+            "title": "Sunlit Duration H",
+            "description": "Total sunlit time in the window (any part of the solar disc visible), h"
           },
           "longest_sunlit_period_h": {
             "anyOf": [
@@ -1498,9 +1548,8 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "Longest continuous sunlit period (any part of the solar disc visible), clipped to the window, h",
-            "title": "Longest Sunlit Period H"
+            "title": "Longest Sunlit Period H",
+            "description": "Longest continuous sunlit period (any part of the solar disc visible), clipped to the window, h"
           },
           "longest_shadow_h": {
             "anyOf": [
@@ -1511,9 +1560,8 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "Longest continuous shadow period (no part of the solar disc visible), clipped to the window, h",
-            "title": "Longest Shadow H"
+            "title": "Longest Shadow H",
+            "description": "Longest continuous shadow period (no part of the solar disc visible), clipped to the window, h"
           },
           "longest_shadow_clipped": {
             "anyOf": [
@@ -1524,9 +1572,8 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "True if the longest shadow period starts before window_start or runs past window_end, so its full length is longer than longest_shadow_h; false if it lies inside the window or there is none",
-            "title": "Longest Shadow Clipped"
+            "title": "Longest Shadow Clipped",
+            "description": "True if the longest shadow period starts before window_start or runs past window_end, so its full length is longer than longest_shadow_h; false if it lies inside the window or there is none"
           },
           "shadow_count": {
             "anyOf": [
@@ -1537,9 +1584,8 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "Number of shadow periods (no part of the solar disc visible) in the window, with no minimum duration; periods clipped to the window count. Partial loss of the disc is not a shadow",
-            "title": "Shadow Count"
+            "title": "Shadow Count",
+            "description": "Number of shadow periods (no part of the solar disc visible) in the window, with no minimum duration; periods clipped to the window count. Partial loss of the disc is not a shadow"
           },
           "sun_elevation_deg": {
             "$ref": "#/components/schemas/Stat",
@@ -1558,9 +1604,8 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "From window_start to the first sunset (the last part of the solar disc going below the terrain horizon), h. Null if not computed, or if there is no sunset in the window (sunset_in_window false)",
-            "title": "Time To Sunset H"
+            "title": "Time To Sunset H",
+            "description": "From window_start to the first sunset (the last part of the solar disc going below the terrain horizon), h. Null if not computed, or if there is no sunset in the window (sunset_in_window false)"
           },
           "sunset_in_window": {
             "anyOf": [
@@ -1571,13 +1616,14 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "True if at least one sunset occurs in the window, false if none does (time_to_sunset_h is then null). Null only if not computed",
-            "title": "Sunset In Window"
+            "title": "Sunset In Window",
+            "description": "True if at least one sunset occurs in the window, false if none does (time_to_sunset_h is then null). Null only if not computed"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "title": "PowerMetrics",
-        "type": "object"
+        "description": "F3. Nullable: null = not computed. Exact definitions: docs/methodology.md section 5.\n\nSunlit = any part of the solar disc above the terrain horizon; shadow = no part of it above. Sunlit and\nshadow periods tile the window. Periods that start before window_start or run past window_end are\nclipped to the window and still counted."
       },
       "ProximityRequest": {
         "additionalProperties": false,
@@ -1611,7 +1657,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.4.0",
+            "default": "0.5.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1652,36 +1698,36 @@
         "type": "object"
       },
       "Scenario": {
-        "additionalProperties": false,
-        "description": "The unit of everything (plan section 3.1): results are keyed by `Scenario.key()`.",
         "properties": {
           "location": {
             "$ref": "#/components/schemas/Location"
           },
           "unit_height_m": {
-            "description": "Observer height above the DEM surface, m",
+            "type": "number",
             "exclusiveMinimum": 0.0,
             "title": "Unit Height M",
-            "type": "number"
+            "description": "Observer height above the DEM surface, m"
           },
           "window_start": {
+            "type": "string",
             "format": "date-time",
-            "title": "Window Start",
-            "type": "string"
+            "title": "Window Start"
           },
           "window_end": {
+            "type": "string",
             "format": "date-time",
-            "title": "Window End",
-            "type": "string"
+            "title": "Window End"
           },
           "step": {
-            "default": "PT1H",
-            "description": "Sampling step (ISO 8601)",
+            "type": "string",
             "format": "duration",
             "title": "Step",
-            "type": "string"
+            "description": "Sampling step (ISO 8601)",
+            "default": "PT1H"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "location",
           "unit_height_m",
@@ -1689,21 +1735,21 @@
           "window_end"
         ],
         "title": "Scenario",
-        "type": "object"
+        "description": "The unit of everything (plan section 3.1): results are keyed by `Scenario.key()`."
       },
       "ScenarioRequest": {
-        "additionalProperties": false,
-        "description": "Body of POST /api/series and POST /api/metrics.",
         "properties": {
           "scenario": {
             "$ref": "#/components/schemas/Scenario"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "scenario"
         ],
         "title": "ScenarioRequest",
-        "type": "object"
+        "description": "Body of POST /api/series and POST /api/metrics."
       },
       "SearchCandidate": {
         "additionalProperties": false,
@@ -1876,18 +1922,17 @@
         "type": "object"
       },
       "SeriesResponse": {
-        "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.4.0",
+            "type": "string",
             "title": "Contract Version",
-            "type": "string"
+            "default": "0.5.0"
           },
           "_placeholder": {
-            "default": false,
-            "description": "True when the values are placeholders, not computed results.",
+            "type": "boolean",
             "title": "Placeholder",
-            "type": "boolean"
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
           },
           "_note": {
             "anyOf": [
@@ -1898,23 +1943,22 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Note"
           },
           "scenario": {
             "$ref": "#/components/schemas/Scenario"
           },
           "scenario_key": {
-            "title": "Scenario Key",
-            "type": "string"
+            "type": "string",
+            "title": "Scenario Key"
           },
           "time": {
             "items": {
-              "format": "date-time",
-              "type": "string"
+              "type": "string",
+              "format": "date-time"
             },
-            "title": "Time",
-            "type": "array"
+            "type": "array",
+            "title": "Time"
           },
           "sun": {
             "$ref": "#/components/schemas/BodyTrack"
@@ -1926,16 +1970,18 @@
             "items": {
               "$ref": "#/components/schemas/Event"
             },
-            "title": "Events",
-            "type": "array"
+            "type": "array",
+            "title": "Events"
           },
           "downsampled": {
-            "default": false,
-            "description": "Plotted series thinned for display",
+            "type": "boolean",
             "title": "Downsampled",
-            "type": "boolean"
+            "description": "Plotted series thinned for display",
+            "default": false
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "scenario",
           "scenario_key",
@@ -1943,8 +1989,7 @@
           "sun",
           "earth"
         ],
-        "title": "SeriesResponse",
-        "type": "object"
+        "title": "SeriesResponse"
       },
       "Site": {
         "properties": {
@@ -2027,7 +2072,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.4.0"
+            "default": "0.5.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2062,7 +2107,6 @@
         "title": "SitesResponse"
       },
       "Stat": {
-        "additionalProperties": false,
         "properties": {
           "min": {
             "anyOf": [
@@ -2073,7 +2117,6 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Min"
           },
           "max": {
@@ -2085,7 +2128,6 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Max"
           },
           "mean": {
@@ -2097,12 +2139,12 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Mean"
           }
         },
-        "title": "Stat",
-        "type": "object"
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Stat"
       },
       "StructuredQuery": {
         "additionalProperties": false,
