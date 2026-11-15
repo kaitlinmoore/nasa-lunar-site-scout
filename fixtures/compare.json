@@ -13,12 +13,12 @@
           "lon": -137.31,
           "name": "Connecting ridge (Site01)"
         },
-        "unit_height_m": 2.0,
+        "unit_height_m": 1.0,
         "window_start": "2028-11-15T00:00:00Z",
-        "window_end": "2028-11-29T00:00:00Z",
+        "window_end": "2028-12-15T00:00:00Z",
         "step": "PT6H"
       },
-      "scenario_key": "320afec8301ba622",
+      "scenario_key": "6c0d719ab8c6698e",
       "power": {
         "illumination_fraction": 0.5,
         "mean_visible_disk_fraction": 0.4,

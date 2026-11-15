@@ -20,11 +20,23 @@ def test_fixture_round_trip(name):
     assert data["contract_version"] == CONTRACT_VERSION
 
 
-@pytest.mark.parametrize("name", sorted(set(EXAMPLES) - {"health.json", "datasets.json"}))
+# Real (non-placeholder) fixtures: health, the registry, and the curated site list.
+REAL_FIXTURES = {"health.json", "datasets.json", "sites.json"}
+
+
+@pytest.mark.parametrize("name", sorted(set(EXAMPLES) - REAL_FIXTURES))
 def test_examples_are_marked_placeholder(name):
     data = json.loads((FIXTURES_DIR / name).read_text(encoding="utf-8"))
     assert data["_placeholder"] is True
     assert "PLACEHOLDER" in data["_note"]
+
+
+@pytest.mark.parametrize("name", sorted(REAL_FIXTURES))
+def test_real_fixtures_not_placeholder(name):
+    assert name in EXAMPLES, f"REAL_FIXTURES lists {name}, which is not an example"
+    data = json.loads((FIXTURES_DIR / name).read_text(encoding="utf-8"))
+    assert data["_placeholder"] is False
+    assert "PLACEHOLDER" not in (data.get("_note") or "")
 
 
 def test_fixtures_up_to_date():

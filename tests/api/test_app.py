@@ -17,8 +17,11 @@ def test_sites_serves_fixture():
     r = client.get("/api/sites")
     assert r.status_code == 200
     body = r.json()
-    assert body["_placeholder"] is True
-    assert body["sites"][0]["id"] == "pgda-site01"
+    assert body["_placeholder"] is False
+    site = body["sites"][0]
+    assert site["id"] == "pgda-site01"
+    assert (site["location"]["lat"], site["location"]["lon"]) == (-89.45, -137.31)
+    assert "Mazarico" in site["source"]
 
 
 def test_sites_category_filter():

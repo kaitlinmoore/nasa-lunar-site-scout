@@ -2,13 +2,16 @@
 
 Example responses for `fixtures/` (contract v0).
 
-Every example except the dataset registry is PLACEHOLDER data: synthetic curves and
+Every example except health, the dataset registry and the site list is PLACEHOLDER data: synthetic curves and
 round numbers, flagged with `_placeholder: true` and a `_note`. They exist so the web
 and NL streams can build against the contract before the engine produces real results.
 They are NOT computed results and must never be presented as such.
 
-Scope (handoff 02, section 2.5): one PGDA site (Site01, Connecting ridge), one unit
-height (2 m), one window (2 weeks from 2028-11-15 UTC).
+Scope (C1 thin slice, handoff 03): one PGDA site (Site01, Connecting ridge), one unit
+height (1 m, chosen by Kaitlin to match Barker et al. 2021), one window (30 days from
+2028-11-15 UTC, covering one full 29.53-day synodic month).
+
+The Site01 location is real (Mazarico et al. 2011), so `sites.json` is not a placeholder.
 """
 
 from __future__ import annotations
@@ -59,17 +62,20 @@ PLACEHOLDER_NOTE = (
     "PLACEHOLDER: synthetic example values for contract v0, not computed results. "
     "Do not use for any analysis or display them as real."
 )
-LOCATION_NOTE = (
-    "Location approximate (Connecting ridge, PGDA Site01); stream A replaces it with the DEM tile centre."
+SITE01_SOURCE = (
+    "Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030: Connecting "
+    "ridge (site 1 in their Table 3 numbering, used by PGDA product 78) at 89.45 S, 222.69 E, as "
+    "reported in Glaser, P., et al. (2018), Planet. Space Sci. 162, 170-178, Table 1. "
+    "Inside the PGDA product 78 Site01 DEM tile (polar stereographic x = -11.31 km, y = -12.26 km)."
 )
 
 SITE01 = Location(lat=-89.45, lon=-137.31, name="Connecting ridge (Site01)")
 WINDOW_START = datetime(2028, 11, 15, tzinfo=UTC)
-WINDOW_END = WINDOW_START + timedelta(days=14)
+WINDOW_END = WINDOW_START + timedelta(days=30)
 STEP = timedelta(hours=6)
 SCENARIO = Scenario(
     location=SITE01,
-    unit_height_m=2.0,
+    unit_height_m=1.0,
     window_start=WINDOW_START,
     window_end=WINDOW_END,
     step=STEP,
@@ -104,9 +110,9 @@ def sites() -> SitesResponse:
         description="PGDA south-pole site 01 (Mazarico et al. 2011 numbering).",
         dataset_ids=["pgda_78_site_dems", "pgda_81_mosaic_5m", "pgda_90_south_pole_dems"],
         has_dem_clones=True,
-        source="https://pgda.gsfc.nasa.gov/products/78",
+        source=SITE01_SOURCE,
     )
-    return SitesResponse(sites=[site], **{**MARK, "_note": f"{PLACEHOLDER_NOTE} {LOCATION_NOTE}"})
+    return SitesResponse(sites=[site], _note="Curated site list (C1: Site01 only).")
 
 
 def datasets() -> DatasetsResponse:
@@ -262,8 +268,8 @@ def job() -> Job:
 def nl_answer() -> NLAnswer:
     return NLAnswer(
         interpretation=(
-            "Power and Earth-visibility metrics for Connecting ridge (Site01) at 2 m height, "
-            "2028-11-15 to 2028-11-29 UTC."
+            "Power and Earth-visibility metrics for Connecting ridge (Site01) at 1 m height, "
+            "2028-11-15 to 2028-12-15 UTC."
         ),
         structured_query=StructuredQuery(
             operation=Operation.metrics,
