@@ -27,6 +27,7 @@ The header shows which source is in use. Fixture data goes through the same gene
 ## Views and URLs
 
 - `/` (plus any `?source=`): the **globe** (C7a), the start page.
+- `?view=saved`: saved items and the comparison (C6).
 - `?site=<id>`: that curated site's screen. Back/forward work, and other query params (like `?source=fixtures`) are kept when moving between views. No router dependency (`src/route.ts`).
 - A site's screen shows results only when they're for that site's location. So far only the C1 thin-slice scenario (Site01) has results; any other site says "No computed scenario for this site yet".
 
@@ -40,6 +41,12 @@ Cesium Moon (ion asset 2684829, imagery + LOLA terrain as one 3D tileset), **dis
 - **Token:** `CESIUM_ION_TOKEN` from the repo's `.env` (or `LSS_ENV_FILE`), injected at build time; the build logs only whether it's set and its length. It ships in the bundle, so it's restricted in Cesium ion (allowed URLs, the Cesium Moon asset, `assets:read`). Local dev needs a token whose allowed URLs include `http://localhost:5173`. Without a token the page says so and the site list still works. Note: changing a token's permissions in ion can generate a new token value; update `.env` when that happens.
 - **Build:** Cesium's runtime files (Workers, ThirdParty, Assets, Widgets) are copied to `/cesium/` (`vite-plugin-static-copy`; `CESIUM_BASE_URL`). Cesium is a separate lazy chunk (~4.2 MB, ~1.1 MB gzipped) loaded only on the globe, so the build prints Vite's "chunks larger than 500 kB" notice for it; that's expected.
 - **Credits:** Cesium's credit bar stays visible (Cesium ion logo, "Upgrade for commercial use.", and "Data attribution" → "NASA and the USGS Astrogeology Science Center", text only).
+
+## Save and compare (C6, comparison in fixture mode only for now)
+
+- **Saved items** (plan §3.7, F8): pinned sites and saved scenarios, kept in this browser (`localStorage`) as one portable JSON document (`format: "lunar-site-scout.saved"`, `version: 1`). **Export** downloads that document; **Import** reads one, checks every scenario against the contract's rules (unknown fields rejected, as the API does), adds what's new, and lists anything it didn't import with the reason. Nothing already saved is overwritten. If stored data can't be read, a backup copy is kept in browser storage and the page says so.
+- **Making scenarios:** "Save this scenario" and "Pin site" on a site screen, or the small form on the saved page (curated site, unit height, UTC window, step) for several sites × several dates. Duplicate scenarios aren't saved twice: scenarios are compared by location, height, UTC window and step (the location name doesn't matter; `PT60M` equals `PT1H`). That id is web-side only, not the server's `scenario_key`.
+- **Comparison** (plan §3.1): the saved scenarios ticked for it, side by side, one column each, with the site screen's metric rows and value rules. In fixture mode a scenario has results only if it's exactly one of the scenarios in `fixtures/compare.json`; any other says "No result in fixture mode". Nothing is borrowed from a nearby scenario. Live mode says it's fixture-only until `POST /api/compare` is available. The saved page works even when the site list can't load (saved items are local).
 
 ## Sky view (C5, fixture mode only for now)
 
@@ -64,5 +71,5 @@ The horizon/sky plot and timeline use `fixtures/horizon.json` and `fixtures/seri
 The current look is a placeholder; the layout and visual style get decided at C5. To keep that pass cheap:
 
 - **Style:** every colour, font, text size, spacing step, radius and plot stroke is a CSS variable (token) at the top of `src/index.css`. Rules below the token block use tokens for all of those; the only literal values are hairline borders (1px) and small fine-tuning offsets.
-- **Formatting:** all value and text formatting (units, precision, dates, durations, counts) is in `src/format.ts`.
+- **Formatting:** all value and text formatting (units, precision, dates, durations, counts) is in `src/format.ts`. Metric rows, labels and flag rules (shared by the site screen and the comparison) are in `src/metricSpec.ts`; the value cell is `MetricValue` in `src/metrics.tsx`.
 - **Layout:** components (`src/SiteScreen.tsx`, `src/App.tsx`, `src/sky/`) arrange values. They call `format.ts` and use CSS classes, never ad-hoc formatting. The only inline style is a data-driven position (event marks on the timeline). SVG plot geometry (plot size, margins) is in `src/sky/HorizonPlot.tsx`; its colours and line widths are tokens.

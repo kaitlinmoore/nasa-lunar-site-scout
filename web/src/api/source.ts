@@ -1,11 +1,14 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 // Data source switch: live API or the committed fixtures/*.json (see web/README.md).
 // Both paths return the same generated contract types, so the screen can't tell them apart.
+import { scenarioId } from '../scenario'
 import {
+  type CompareResponse,
   getSites,
   type HorizonProfile,
   type MetricsResponse,
   postMetrics,
+  type Scenario,
   type SeriesResponse,
   type SitesResponse,
 } from './client'
@@ -26,6 +29,11 @@ export function dataSource(): DataSource {
  */
 async function thinSliceFixture(): Promise<MetricsResponse> {
   return (await import('../../../fixtures/metrics.json')).default as MetricsResponse
+}
+
+/** The thin-slice scenario itself (from the fixture), e.g. as form defaults. Never calls the API. */
+export async function thinSliceScenario(): Promise<Scenario> {
+  return (await thinSliceFixture()).scenario
 }
 
 /**
@@ -62,4 +70,20 @@ export async function loadSites(source: DataSource): Promise<SitesResponse> {
     return (await import('../../../fixtures/sites.json')).default as SitesResponse
   }
   return getSites()
+}
+
+/**
+ * Compare (C6): metrics for each requested scenario, in request order. Fixture mode only for
+ * now: fixtures/compare.json answers a scenario only if it is exactly one of its items (same
+ * location, height, UTC window and step); any other scenario gets null ("no result"), never a
+ * nearby result. Live mode returns null until POST /api/compare is available.
+ */
+export async function loadCompare(
+  source: DataSource,
+  scenarios: Scenario[],
+): Promise<{ response: CompareResponse; items: (MetricsResponse | null)[] } | null> {
+  if (source !== 'fixtures') return null
+  const response = (await import('../../../fixtures/compare.json')).default as CompareResponse
+  const byId = new Map(response.items.map((item) => [scenarioId(item.scenario), item]))
+  return { response, items: scenarios.map((s) => byId.get(scenarioId(s)) ?? null) }
 }

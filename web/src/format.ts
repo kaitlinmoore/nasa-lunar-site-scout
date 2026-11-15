@@ -146,3 +146,14 @@ export const CLIPPED_UNKNOWN_NOTE = 'whether it runs past the window: not comput
 export const NO_SUNSET_IN_WINDOW = 'no sunset in this window'
 /** time_to_earthset_h is null because earthset_in_window is false (contract 0.4.0). */
 export const NO_EARTHSET_IN_WINDOW = 'no Earthset in this window'
+
+/** One-line scenario summary, e.g. "1 m · 2028-05-15 00:00 UTC – 2028-06-14 00:00 UTC · step 1 h". */
+export function formatScenarioSummary(s: {
+  unit_height_m: number
+  window_start: string
+  window_end: string
+  step: string
+}): string {
+  const window = `${formatUtc(s.window_start)} – ${formatUtc(s.window_end)}`
+  return `${formatHeight(s.unit_height_m)} · ${window} · step ${formatDuration(s.step)}`
+}
