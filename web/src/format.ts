@@ -157,3 +157,12 @@ export function formatScenarioSummary(s: {
   const window = `${formatUtc(s.window_start)} – ${formatUtc(s.window_end)}`
   return `${formatHeight(s.unit_height_m)} · ${window} · step ${formatDuration(s.step)}`
 }
+
+/** Plain names for Scenario fields, e.g. in "differs in: unit height, window start". */
+export const SCENARIO_FIELD_LABELS: Record<string, string> = {
+  location: 'location',
+  unit_height_m: 'unit height',
+  window_start: 'window start',
+  window_end: 'window end',
+  step: 'step',
+}

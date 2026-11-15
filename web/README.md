@@ -22,6 +22,15 @@ The app can run against the committed example responses in `../fixtures/*.json` 
 - **URL switch (wins):** add `?source=fixtures` to the URL, e.g. http://localhost:5173/?source=fixtures. `?source=live` forces the API.
 - **Build/dev default:** the env variable `VITE_DATA_SOURCE=fixtures` makes fixtures the default when the URL has no `?source=`. Unset (the default) = live API.
 
+**Live mode (4.4):** the site screen sends the thin-slice scenario (the `scenario` in `fixtures/metrics.json`, which is exactly the one the API serves) to `POST /api/metrics`. The API serves precomputed results only, matched exactly on the scenario. Failures are shown as errors, never as empty values:
+
+- **422, scenario not served** (`detail: {reason, served}`): "No result for this scenario yet", the API's reason, and the scenarios it does serve with what differs.
+- **422, malformed request** (FastAPI's `detail: [{loc, msg}]`): flagged as a bug in this app, with the field and message.
+- **503** (`detail: {reason}`): results aren't available (none installed), with the reason.
+- Any other HTTP error, or no answer at all, gets its own message.
+
+These error bodies aren't in the contract's OpenAPI yet, so `src/api/errors.ts` checks their shape at runtime; anything unexpected is reported as a plain HTTP error. The horizon/sky view and the comparison stay fixture-only until `/api/horizon` and `/api/compare` exist.
+
 The header shows which source is in use. Fixture data goes through the same generated contract types as live data, and fixture files load as a separate chunk, only in fixture mode. The fixtures are placeholders (`_placeholder: true`), so the screen shows the "placeholder data, not a computed result" notice.
 
 ## Views and URLs

@@ -20,6 +20,8 @@ import {
   loadThinSliceSky,
   thinSliceScenario,
 } from './api/source'
+import ApiProblemView from './ApiProblemView'
+import { formatLatLon } from './format'
 import GlobeView from './globe/GlobeView'
 import { navigate, type Route, routeHref, useRoute } from './route'
 import SavedView from './saved/SavedView'
@@ -27,7 +29,12 @@ import { useSaved } from './saved/store'
 import SiteScreen from './SiteScreen'
 import SkyView from './sky/SkyView'
 
-type Load<T> = { kind: 'loading' } | { kind: 'ok'; data: T } | { kind: 'error'; message: string }
+/** An error's message, for short inline text. */
+function errorText(e: unknown): string {
+  return e instanceof Error ? e.message : String(e)
+}
+
+type Load<T> = { kind: 'loading' } | { kind: 'ok'; data: T } | { kind: 'error'; error: unknown }
 
 /**
  * Load data for `source` with a stable, module-level loader; errors become an error state,
@@ -40,22 +47,13 @@ function useLoad<T>(load: (source: DataSource) => Promise<T>, source: DataSource
     load(source)
       .then((data) => !cancelled && setState({ kind: 'ok', data }))
       .catch((e: unknown) => {
-        if (!cancelled) setState({ kind: 'error', message: e instanceof Error ? e.message : String(e) })
+        if (!cancelled) setState({ kind: 'error', error: e })
       })
     return () => {
       cancelled = true
     }
   }, [load, source])
   return state
-}
-
-function LoadError({ what, message }: { what: string; message: string }) {
-  return (
-    <div className="banner error" role="alert">
-      <strong>Could not load {what}.</strong> No values are shown.
-      <div className="mono">{message}</div>
-    </div>
-  )
 }
 
 /** Contract versions of the responses on screen; flags any that differ from the web build's. */
@@ -105,6 +103,21 @@ function Nav({ route }: { route: Route }) {
         Saved and compare
       </NavLink>
     </nav>
+  )
+}
+
+/**
+ * What and where the site is, from its `description` in /api/sites (stream A writes these).
+ * An empty or missing description is simply left out.
+ */
+function SiteIntro({ site }: { site: Site }) {
+  const description = site.description?.trim()
+  return (
+    <section className="site-intro">
+      <h2>{site.name}</h2>
+      {description && <p>{description}</p>}
+      <p className="muted value">{formatLatLon(site.location.lat, site.location.lon)}</p>
+    </section>
   )
 }
 
@@ -159,20 +172,21 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
       <section className="card">
         <h2>Horizon and sky</h2>
         <p className="muted">
-          Fixture mode only for now: the live horizon and series endpoints aren't available yet. Open this
-          page with <span className="mono">?source=fixtures</span> to see it with placeholder data.
+          Fixture mode only for now: the live horizon endpoint isn't available yet. Open this page with{' '}
+          <span className="mono">?source=fixtures</span> to see it with placeholder data.
         </p>
       </section>
     ) : sky.kind === 'loading' ? (
       <p className="muted">Loading horizon and series…</p>
     ) : sky.kind === 'error' ? (
-      <LoadError what="the horizon and series" message={sky.message} />
+      <ApiProblemView what="the horizon and series" error={sky.error} />
     ) : skyForSite && skyData ? (
       <SkyView horizon={skyData.horizon} series={skyData.series} />
     ) : null
 
   return (
     <>
+      <SiteIntro site={site} />
       <SiteActions site={site} scenario={metricsForSite && data ? data.scenario : null} />
       <ContractCheck
         responses={[
@@ -182,7 +196,7 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
         ]}
       />
       {metrics.kind === 'loading' && <p className="muted">Loading metrics…</p>}
-      {metrics.kind === 'error' && <LoadError what="metrics" message={metrics.message} />}
+      {metrics.kind === 'error' && <ApiProblemView what="metrics" error={metrics.error} />}
       {data && !metricsForSite && (
         <section className="card">
           <h2>{site.name}</h2>
@@ -223,7 +237,7 @@ export default function App() {
           sites.kind === 'loading'
             ? 'Loading sites…'
             : sites.kind === 'error'
-              ? `Could not load the curated sites (${sites.message}), so new scenarios can't be added.`
+              ? `Could not load the curated sites (${errorText(sites.error)}), so new scenarios can't be added.`
               : null
         }
         source={source}
@@ -231,7 +245,7 @@ export default function App() {
       />
     )
   } else if (sites.kind === 'loading') body = <p className="muted">Loading sites…</p>
-  else if (sites.kind === 'error') body = <LoadError what="the curated sites" message={sites.message} />
+  else if (sites.kind === 'error') body = <ApiProblemView what="the curated sites" error={sites.error} />
   else if (route.view === 'globe') {
     body = <GlobeView data={sites.data} />
   } else {

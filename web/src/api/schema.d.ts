@@ -38,6 +38,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Metrics */
+        post: operations["metrics_api_metrics_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Series */
+        post: operations["series_api_series_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -65,9 +99,8 @@ export interface components {
             /**
              * Clearance Deg
              * @description Disc centre elevation minus the terrain horizon elevation at its azimuth, deg
-             * @default null
              */
-            clearance_deg: number[] | null;
+            clearance_deg?: number[] | null;
         };
         /**
          * CommsMetrics
@@ -80,27 +113,23 @@ export interface components {
             /**
              * Earth Visibility Fraction
              * @description Fraction of the window with any part of the Earth disc visible
-             * @default null
              */
-            earth_visibility_fraction: number | null;
+            earth_visibility_fraction?: number | null;
             /**
              * Earth Full Disc Fraction
              * @description Fraction of the window with the whole Earth disc above the terrain horizon
-             * @default null
              */
-            earth_full_disc_fraction: number | null;
+            earth_full_disc_fraction?: number | null;
             /**
              * Longest Earth Gap H
              * @description Longest continuous period with no part of the Earth disc visible, clipped to the window, h
-             * @default null
              */
-            longest_earth_gap_h: number | null;
+            longest_earth_gap_h?: number | null;
             /**
              * Longest Earth Gap Clipped
              * @description True if the longest Earth gap starts before window_start or runs past window_end, so its full length is longer than longest_earth_gap_h; false if it lies inside the window or there is none
-             * @default null
              */
-            longest_earth_gap_clipped: boolean | null;
+            longest_earth_gap_clipped?: boolean | null;
             /** @description Apparent elevation of the Earth's disc centre above the local horizontal plane (not the terrain horizon): min, max and time mean over the whole window, whether or not the Earth is visible, deg */
             earth_elevation_deg?: components["schemas"]["Stat"];
             /** @description Earth disc centre elevation minus the terrain horizon elevation at its azimuth: min, max and time mean over the whole window, deg */
@@ -108,21 +137,18 @@ export interface components {
             /**
              * Sun Earth Overlap Fraction
              * @description Fraction of the window with any part of both the solar and the Earth disc visible
-             * @default null
              */
-            sun_earth_overlap_fraction: number | null;
+            sun_earth_overlap_fraction?: number | null;
             /**
              * Time To Earthset H
              * @description From window_start to the first Earthset (the last part of the Earth disc going below the terrain horizon), h. Null if not computed, or if there is no Earthset in the window (earthset_in_window false)
-             * @default null
              */
-            time_to_earthset_h: number | null;
+            time_to_earthset_h?: number | null;
             /**
              * Earthset In Window
              * @description True if at least one Earthset occurs in the window, false if none does (time_to_earthset_h is then null). Null only if not computed
-             * @default null
              */
-            earthset_in_window: boolean | null;
+            earthset_in_window?: boolean | null;
         };
         /** CompareRequest */
         CompareRequest: {
@@ -133,7 +159,7 @@ export interface components {
         CompareResponse: {
             /**
              * Contract Version
-             * @default 0.4.0
+             * @default 0.5.0
              */
             contract_version: string;
             /**
@@ -236,7 +262,7 @@ export interface components {
         DatasetsResponse: {
             /**
              * Contract Version
-             * @default 0.4.0
+             * @default 0.5.0
              */
             contract_version: string;
             /**
@@ -267,11 +293,8 @@ export interface components {
              * @default false
              */
             refined: boolean;
-            /**
-             * Note
-             * @default null
-             */
-            note: string | null;
+            /** Note */
+            note?: string | null;
         };
         /**
          * EventKind
@@ -319,7 +342,7 @@ export interface components {
         FeaturesResponse: {
             /**
              * Contract Version
-             * @default 0.4.0
+             * @default 0.5.0
              */
             contract_version: string;
             /**
@@ -344,16 +367,10 @@ export interface components {
              * @description Short user-facing text, e.g. '5 m polar DEM near field'
              */
             summary: string;
-            /**
-             * Near Field Resolution M
-             * @default null
-             */
-            near_field_resolution_m: number | null;
-            /**
-             * Far Field Resolution M
-             * @default null
-             */
-            far_field_resolution_m: number | null;
+            /** Near Field Resolution M */
+            near_field_resolution_m?: number | null;
+            /** Far Field Resolution M */
+            far_field_resolution_m?: number | null;
         };
         /**
          * FidelityTier
@@ -369,7 +386,7 @@ export interface components {
         HealthResponse: {
             /**
              * Contract Version
-             * @default 0.4.0
+             * @default 0.5.0
              */
             contract_version: string;
             /**
@@ -391,7 +408,7 @@ export interface components {
         HorizonProfile: {
             /**
              * Contract Version
-             * @default 0.4.0
+             * @default 0.5.0
              */
             contract_version: string;
             /**
@@ -438,7 +455,7 @@ export interface components {
         Job: {
             /**
              * Contract Version
-             * @default 0.4.0
+             * @default 0.5.0
              */
             contract_version: string;
             /**
@@ -507,7 +524,7 @@ export interface components {
         LocateResponse: {
             /**
              * Contract Version
-             * @default 0.4.0
+             * @default 0.5.0
              */
             contract_version: string;
             /**
@@ -566,7 +583,7 @@ export interface components {
         MetricsResponse: {
             /**
              * Contract Version
-             * @default 0.4.0
+             * @default 0.5.0
              */
             contract_version: string;
             /**
@@ -575,11 +592,8 @@ export interface components {
              * @default false
              */
             _placeholder: boolean;
-            /**
-             * Note
-             * @default null
-             */
-            _note: string | null;
+            /** Note */
+            _note?: string | null;
             scenario: components["schemas"]["Scenario"];
             /** Scenario Key */
             scenario_key: string;
@@ -587,14 +601,13 @@ export interface components {
             comms: components["schemas"]["CommsMetrics"];
             /** Events */
             events?: components["schemas"]["Event"][];
-            /** @default null */
-            fidelity: components["schemas"]["FidelityLabel"] | null;
+            fidelity?: components["schemas"]["FidelityLabel"] | null;
         };
         /** NLAnswer */
         NLAnswer: {
             /**
              * Contract Version
-             * @default 0.4.0
+             * @default 0.5.0
              */
             contract_version: string;
             /**
@@ -644,7 +657,7 @@ export interface components {
         NLUnsupported: {
             /**
              * Contract Version
-             * @default 0.4.0
+             * @default 0.5.0
              */
             contract_version: string;
             /**
@@ -688,45 +701,38 @@ export interface components {
             /**
              * Illumination Fraction
              * @description Fraction of the window that is sunlit (any part of the solar disc visible)
-             * @default null
              */
-            illumination_fraction: number | null;
+            illumination_fraction?: number | null;
             /**
              * Mean Visible Disk Fraction
              * @description Time average over the window of the visible share of the solar disc's light, weighted by limb darkening at 550 nm (a light-weighted fraction, not a geometric area fraction)
-             * @default null
              */
-            mean_visible_disk_fraction: number | null;
+            mean_visible_disk_fraction?: number | null;
             /**
              * Sunlit Duration H
              * @description Total sunlit time in the window (any part of the solar disc visible), h
-             * @default null
              */
-            sunlit_duration_h: number | null;
+            sunlit_duration_h?: number | null;
             /**
              * Longest Sunlit Period H
              * @description Longest continuous sunlit period (any part of the solar disc visible), clipped to the window, h
-             * @default null
              */
-            longest_sunlit_period_h: number | null;
+            longest_sunlit_period_h?: number | null;
             /**
              * Longest Shadow H
              * @description Longest continuous shadow period (no part of the solar disc visible), clipped to the window, h
-             * @default null
              */
-            longest_shadow_h: number | null;
+            longest_shadow_h?: number | null;
             /**
              * Longest Shadow Clipped
              * @description True if the longest shadow period starts before window_start or runs past window_end, so its full length is longer than longest_shadow_h; false if it lies inside the window or there is none
-             * @default null
              */
-            longest_shadow_clipped: boolean | null;
+            longest_shadow_clipped?: boolean | null;
             /**
              * Shadow Count
              * @description Number of shadow periods (no part of the solar disc visible) in the window, with no minimum duration; periods clipped to the window count. Partial loss of the disc is not a shadow
-             * @default null
              */
-            shadow_count: number | null;
+            shadow_count?: number | null;
             /** @description Apparent elevation of the Sun's disc centre above the local horizontal plane (not the terrain horizon): min, max and time mean over the whole window, whether or not the Sun is visible, deg */
             sun_elevation_deg?: components["schemas"]["Stat"];
             /** @description Apparent azimuth of the Sun's disc centre, deg clockwise from north, over the whole window, whether or not the Sun is visible. min and max are the ends of the smallest arc containing the track, read clockwise from min to max (min > max when the arc crosses north). A full circle is reported as min 0, max 360. mean is always null: an average azimuth has no meaning here */
@@ -734,15 +740,13 @@ export interface components {
             /**
              * Time To Sunset H
              * @description From window_start to the first sunset (the last part of the solar disc going below the terrain horizon), h. Null if not computed, or if there is no sunset in the window (sunset_in_window false)
-             * @default null
              */
-            time_to_sunset_h: number | null;
+            time_to_sunset_h?: number | null;
             /**
              * Sunset In Window
              * @description True if at least one sunset occurs in the window, false if none does (time_to_sunset_h is then null). Null only if not computed
-             * @default null
              */
-            sunset_in_window: boolean | null;
+            sunset_in_window?: boolean | null;
         };
         /** ProximityRequest */
         ProximityRequest: {
@@ -756,7 +760,7 @@ export interface components {
         ProximityResponse: {
             /**
              * Contract Version
-             * @default 0.4.0
+             * @default 0.5.0
              */
             contract_version: string;
             /**
@@ -871,7 +875,7 @@ export interface components {
         SeriesResponse: {
             /**
              * Contract Version
-             * @default 0.4.0
+             * @default 0.5.0
              */
             contract_version: string;
             /**
@@ -880,11 +884,8 @@ export interface components {
              * @default false
              */
             _placeholder: boolean;
-            /**
-             * Note
-             * @default null
-             */
-            _note: string | null;
+            /** Note */
+            _note?: string | null;
             scenario: components["schemas"]["Scenario"];
             /** Scenario Key */
             scenario_key: string;
@@ -936,7 +937,7 @@ export interface components {
         SitesResponse: {
             /**
              * Contract Version
-             * @default 0.4.0
+             * @default 0.5.0
              */
             contract_version: string;
             /**
@@ -952,21 +953,12 @@ export interface components {
         };
         /** Stat */
         Stat: {
-            /**
-             * Min
-             * @default null
-             */
-            min: number | null;
-            /**
-             * Max
-             * @default null
-             */
-            max: number | null;
-            /**
-             * Mean
-             * @default null
-             */
-            mean: number | null;
+            /** Min */
+            min?: number | null;
+            /** Max */
+            max?: number | null;
+            /** Mean */
+            mean?: number | null;
         };
         /** StructuredQuery */
         StructuredQuery: {
@@ -1066,6 +1058,82 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    metrics_api_metrics_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScenarioRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MetricsResponse"];
+                };
+            };
+            /** @description No precomputed result for this scenario (detail.reason, detail.served) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No usable precomputed results are installed (detail.reason) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    series_api_series_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScenarioRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesResponse"];
+                };
+            };
+            /** @description No precomputed result for this scenario (detail.reason, detail.served) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No usable precomputed results are installed (detail.reason) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
