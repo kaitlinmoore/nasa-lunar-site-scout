@@ -19,7 +19,7 @@
         "pgda_90_south_pole_dems"
       ],
       "has_dem_clones": true,
-      "source": "Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030: Connecting ridge (site 1 in their Table 3 numbering, used by PGDA product 78) at 89.45 S, 222.69 E, as reported in Glaser, P., et al. (2018), Planet. Space Sci. 162, 170-178, Table 1. Inside the PGDA product 78 Site01 DEM tile (polar stereographic x = -11.31 km, y = -12.26 km)."
+      "source": "Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030: Connecting ridge (site 1 in their Table 3 numbering, used by PGDA product 78) at 89.45 S, 222.69 E, as reported in Glaser, P., et al. (2018), Planet. Space Sci. 162, doi:10.1016/j.pss.2017.07.006, Table 1. Inside the PGDA product 78 Site01 DEM tile (polar stereographic x = -11.31 km, y = -12.26 km)."
     }
   ]
 }

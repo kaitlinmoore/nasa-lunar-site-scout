@@ -65,7 +65,7 @@ PLACEHOLDER_NOTE = (
 SITE01_SOURCE = (
     "Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030: Connecting "
     "ridge (site 1 in their Table 3 numbering, used by PGDA product 78) at 89.45 S, 222.69 E, as "
-    "reported in Glaser, P., et al. (2018), Planet. Space Sci. 162, 170-178, Table 1. "
+    "reported in Glaser, P., et al. (2018), Planet. Space Sci. 162, doi:10.1016/j.pss.2017.07.006, Table 1. "
     "Inside the PGDA product 78 Site01 DEM tile (polar stereographic x = -11.31 km, y = -12.26 km)."
 )
 
@@ -120,7 +120,7 @@ def datasets() -> DatasetsResponse:
 
     return DatasetsResponse(
         datasets=list(load_datasets()),
-        _note="Generated from lss/registry/datasets.yaml (real registry content, status 'planned').",
+        _note="Generated from lss/registry/datasets.yaml (real registry content).",
     )
 
 
