@@ -5,21 +5,21 @@
   "sites": [
     {
       "id": "pgda-site01",
-      "name": "Connecting ridge",
+      "name": "Site01 Connecting ridge (Barker 2021 RoI 4)",
       "category": "pgda",
       "location": {
-        "lat": -89.45,
-        "lon": -137.31,
-        "name": "Connecting ridge (Site01)"
+        "lat": -89.452675,
+        "lon": -137.148653,
+        "name": "Site01 Connecting ridge (Barker 2021 RoI 4)"
       },
-      "description": "PGDA south-pole site 01 (Mazarico et al. 2011 numbering).",
+      "description": "PGDA south-pole site 01 (Connecting ridge; Mazarico et al. 2011 numbering), at the centroid of Barker et al. (2021) region of interest 4.",
       "dataset_ids": [
         "pgda_78_site_dems",
         "pgda_81_mosaic_5m",
         "pgda_90_south_pole_dems"
       ],
       "has_dem_clones": true,
-      "source": "Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030: Connecting ridge (site 1 in their Table 3 numbering, used by PGDA product 78) at 89.45 S, 222.69 E, as reported in Glaser, P., et al. (2018), Planet. Space Sci. 162, doi:10.1016/j.pss.2017.07.006, Table 1. Inside the PGDA product 78 Site01 DEM tile (polar stereographic x = -11.31 km, y = -12.26 km)."
+      "source": "Barker, M. K., et al. (2021), Planet. Space Sci. 203, 105119, doi:10.1016/j.pss.2020.105119, Table 2: centroid of Site01 region of interest 4, polar stereographic x = -11.2875 km, y = -12.1675 km (89.452675 S, 222.851347 E), in the PGDA product 78 Site01 DEM tile. Site01 (Connecting ridge) is site 1 of Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030."
     }
   ]
 }

@@ -20,8 +20,9 @@ def test_sites_serves_fixture():
     assert body["_placeholder"] is False
     site = body["sites"][0]
     assert site["id"] == "pgda-site01"
-    assert (site["location"]["lat"], site["location"]["lon"]) == (-89.45, -137.31)
-    assert "Mazarico" in site["source"]
+    assert (site["location"]["lat"], site["location"]["lon"]) == (-89.452675, -137.148653)
+    assert site["name"] == "Site01 Connecting ridge (Barker 2021 RoI 4)"
+    assert "Barker" in site["source"] and "Table 2" in site["source"]
 
 
 def test_sites_category_filter():

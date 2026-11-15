@@ -2,15 +2,15 @@
   "contract_version": "0.1.0",
   "_placeholder": true,
   "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
-  "interpretation": "Power and Earth-visibility metrics for Connecting ridge (Site01) at 1 m height, 2028-11-15 to 2028-12-15 UTC.",
+  "interpretation": "Power and Earth-visibility metrics for Site01 Connecting ridge (Barker 2021 RoI 4) at 1 m height, 2028-11-15 to 2028-12-15 UTC.",
   "structured_query": {
     "operation": "metrics",
     "params": {
       "scenario": {
         "location": {
-          "lat": -89.45,
-          "lon": -137.31,
-          "name": "Connecting ridge (Site01)"
+          "lat": -89.452675,
+          "lon": -137.148653,
+          "name": "Site01 Connecting ridge (Barker 2021 RoI 4)"
         },
         "unit_height_m": 1.0,
         "window_start": "2028-11-15T00:00:00Z",
@@ -25,16 +25,16 @@
     "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
     "scenario": {
       "location": {
-        "lat": -89.45,
-        "lon": -137.31,
-        "name": "Connecting ridge (Site01)"
+        "lat": -89.452675,
+        "lon": -137.148653,
+        "name": "Site01 Connecting ridge (Barker 2021 RoI 4)"
       },
       "unit_height_m": 1.0,
       "window_start": "2028-11-15T00:00:00Z",
       "window_end": "2028-12-15T00:00:00Z",
       "step": "PT6H"
     },
-    "scenario_key": "6c0d719ab8c6698e",
+    "scenario_key": "0eb3e0a396d33622",
     "power": {
       "illumination_fraction": 0.5,
       "mean_visible_disk_fraction": 0.4,

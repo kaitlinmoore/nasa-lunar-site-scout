@@ -11,7 +11,10 @@ Scope (C1 thin slice, handoff 03): one PGDA site (Site01, Connecting ridge), one
 height (1 m, chosen by Kaitlin to match Barker et al. 2021), one window (30 days from
 2028-11-15 UTC, covering one full 29.53-day synodic month).
 
-The Site01 location is real (Mazarico et al. 2011), so `sites.json` is not a placeholder.
+The served Site01 point is the centroid of region of interest (RoI) 4 of Barker et al. (2021, Table 2),
+a real published location, so `sites.json` is not a placeholder. It replaces the Mazarico et al. (2011)
+Site01 coordinate (89.45 S, 222.69 E), which was picked on a 240 m map and lies on an 8.6 deg slope on
+the 5 m map (docs/methodology.md section 1.3).
 """
 
 from __future__ import annotations
@@ -62,14 +65,16 @@ PLACEHOLDER_NOTE = (
     "PLACEHOLDER: synthetic example values for contract v0, not computed results. "
     "Do not use for any analysis or display them as real."
 )
+SITE01_NAME = "Site01 Connecting ridge (Barker 2021 RoI 4)"
 SITE01_SOURCE = (
-    "Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030: Connecting "
-    "ridge (site 1 in their Table 3 numbering, used by PGDA product 78) at 89.45 S, 222.69 E, as "
-    "reported in Glaser, P., et al. (2018), Planet. Space Sci. 162, doi:10.1016/j.pss.2017.07.006, Table 1. "
-    "Inside the PGDA product 78 Site01 DEM tile (polar stereographic x = -11.31 km, y = -12.26 km)."
+    "Barker, M. K., et al. (2021), Planet. Space Sci. 203, 105119, doi:10.1016/j.pss.2020.105119, Table 2: "
+    "centroid of Site01 region of interest 4, polar stereographic x = -11.2875 km, y = -12.1675 km "
+    "(89.452675 S, 222.851347 E), in the PGDA product 78 Site01 DEM tile. Site01 (Connecting ridge) is "
+    "site 1 of Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030."
 )
 
-SITE01 = Location(lat=-89.45, lon=-137.31, name="Connecting ridge (Site01)")
+# Barker et al. (2021) Table 2, RoI 4 centroid (PS -11287.5, -12167.5 m), converted on the 1737.4 km sphere.
+SITE01 = Location(lat=-89.452675, lon=-137.148653, name=SITE01_NAME)
 WINDOW_START = datetime(2028, 11, 15, tzinfo=UTC)
 WINDOW_END = WINDOW_START + timedelta(days=30)
 STEP = timedelta(hours=6)
@@ -104,10 +109,13 @@ def health() -> HealthResponse:
 def sites() -> SitesResponse:
     site = Site(
         id="pgda-site01",
-        name="Connecting ridge",
+        name=SITE01_NAME,
         category=SiteCategory.pgda,
         location=SITE01,
-        description="PGDA south-pole site 01 (Mazarico et al. 2011 numbering).",
+        description=(
+            "PGDA south-pole site 01 (Connecting ridge; Mazarico et al. 2011 numbering), at the centroid of "
+            "Barker et al. (2021) region of interest 4."
+        ),
         dataset_ids=["pgda_78_site_dems", "pgda_81_mosaic_5m", "pgda_90_south_pole_dems"],
         has_dem_clones=True,
         source=SITE01_SOURCE,
@@ -268,7 +276,7 @@ def job() -> Job:
 def nl_answer() -> NLAnswer:
     return NLAnswer(
         interpretation=(
-            "Power and Earth-visibility metrics for Connecting ridge (Site01) at 1 m height, "
+            f"Power and Earth-visibility metrics for {SITE01_NAME} at 1 m height, "
             "2028-11-15 to 2028-12-15 UTC."
         ),
         structured_query=StructuredQuery(

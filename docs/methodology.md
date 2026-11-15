@@ -51,7 +51,43 @@ grids were the original LOLA polar maps; ours are the newer, orbit-adjusted prod
 on the same frame. The near/far transition distances and the maximum ray range are set in section 3 by a
 convergence test, not assumed _(to do, step 4.5)_.
 
-Site01 lies at PS (−11.31, −12.26) km, at least 7.7 km from every edge of its 5 m tile.
+The served Site01 point (section 1.3) lies at PS (−11.2875, −12.1675) km, at least 7.7 km from every edge of its
+5 m tile.
+
+### 1.3 The served site: Site01 at Barker et al. (2021) RoI 4
+
+**Served point:** the centroid of region of interest (RoI) 4 at Site01 (Connecting ridge), from Barker et al.
+(2021, Table 2):
+- PS (−11.2875, −12.1675) km, which is 89.452675° S, 222.851347° E (−137.148653°) on the 1737.4 km sphere;
+- named "Site01 Connecting ridge (Barker 2021 RoI 4)", so it can't be mistaken for the Mazarico point.
+
+The served point result is computed at this centroid. The RoI-area average used for the Barker check
+(section 4.1) is a separate, internal result and is never served.
+
+**Why not the Mazarico et al. (2011) coordinate (89.45° S, 222.69° E).** That coordinate was picked on a 240 m
+map. On the 5 m map it lies on an **8.6° slope**:
+- for a 1 m observer, terrain 15–40 m uphill puts the horizon at 4–4.9° over azimuths 120–200°;
+- the Sun's centre never rises above 2.11° there (2.38° for the top of its disc, 2024–2043), so that point
+  would be far darker than Barker's results for the ridge;
+- this was checked against the ray caster with an independent sampling of the map.
+
+The Mazarico point stays on record and may be added later as a second site.
+
+**Why RoI 4 and not another RoI.** It is the RoI nearest the cited Site01 coordinate (94 m; the next nearest,
+RoI 3, is 248 m away), so the served site stays the place the literature calls Site01. It is also the largest
+RoI and is nearly flat.
+
+| RoI | Centroid PS x, y (km) | Distance from the Mazarico point | Slope at centroid (5 m map) | Area (m²) |
+|---|---|---|---|---|
+| 1 | −11.5825, −12.4625 | 342 m | 3.0° | 8,625 |
+| 2 | −11.4875, −12.5575 | 348 m | 1.3° | 7,550 |
+| 3 | −11.3525, −12.5025 | 248 m | 1.8° | 3,825 |
+| **4** | **−11.2875, −12.1675** | **94 m** | **1.4°** | **13,300** |
+| 5 | −11.1025, −11.9425 | 377 m | 2.8° | 10,075 |
+| 6 | −10.8025, −11.7375 | 726 m | 1.1° | 10,000 |
+| 7 | −10.2275, −11.5525 | 1291 m | 1.2° | 7,075 |
+
+Slopes are from central differences over ±10 m on the bilinear 5 m surface.
 
 ## 2. Frames, time scales and topocentric geometry
 
@@ -62,9 +98,9 @@ Implemented in `lss/ephem/core.py`; tested in `tests/engine/test_ephem.py`.
 - **Coordinates.** Planetocentric latitude and east-positive longitude on the 1737.4 km reference sphere, the
   same sphere the PGDA maps use. On a sphere planetocentric and "geodetic" latitude are the same.
 - **Observer.** On the sphere's normal (the radial direction) at radius 1737.4 km + h, where h = DEM surface
-  height at the site + the unit height. For Site01 the 5 m map gives a surface height of 1954.60 m (bilinear
-  between pixel centres). The 80 m map gives 0.26 m less; the 240 m map 4.1 m less, because its pixels
-  average over the ridge.
+  height at the site + the unit height. At the served Site01 point (section 1.3) the 5 m map gives a surface
+  height of 1956.39 m (bilinear between pixel centres). The 80 m map gives 1.32 m less and the 240 m map
+  6.58 m less, because their pixels average over the ridge.
 - **Time.** Inputs are UTC. SPICE converts them to TDB (barycentric dynamical time) using the `naif0012`
   leapseconds kernel. No leap seconds are assumed after 2016-12-31, which only matters for the UTC labels of
   future instants (by whole seconds). The supported span is the kernels' coverage (section 1.1); requests
@@ -93,7 +129,7 @@ Implemented in `lss/ephem/core.py`; tested in `tests/engine/test_ephem.py`.
 ### 4.1 Barker et al. (2021): the served result
 
 - Same terrain: the PGDA product 78 Site01 5 m map. Same unit height: **1 m** (Kaitlin's choice; Barker also
-  reports 5 m).
+  reports 5 m). Same place: the served point is the centroid of Barker's RoI 4 (section 1.3).
 - Barker's method: horizon from every pixel along 720 sight lines (0.5° apart); nested grids as above; 1 h
   steps from 2024-01-01 to 2026-01-01. The Sun is an extended disc with limb darkening at 550 nm. Its visible
   fraction is computed by cutting the disc horizontally at the horizon elevation found at the disc centre's azimuth.
@@ -103,6 +139,18 @@ Implemented in `lss/ephem/core.py`; tested in `tests/engine/test_ephem.py`.
   centroids (PS km) and the **1st/99th percentiles over 100 DEM clones**, not the nominal-DEM values. Barker
   notes that the nominal DEM tends to give *better* illumination than the clone median, so the 1st percentile
   is a lower bound for the nominal value, not a target. The RoI outlines are in `Site01_ROIs.tgz` (product 78).
+- **The check is a bound, not a match.**
+  - We compute the RoI 4 area average on the nominal DEM: the same quantities, averaged over every 5 m pixel in
+    the RoI 4 outline, at 1 m, over Barker's period of 2024-01-01 to 2026-01-01.
+  - We require it to be at least Barker's 1st percentile (Table 2, RoI 4, A rows), within a tolerance stated
+    with the result _(to do, step 4.7)_.
+  - For RoI 4 at z = 1 m, those values are: average illumination 69.61%, LCIP 136.49 days, and LCSP 13.27 days,
+    where LCSP is a 99th percentile, so the expected direction is reversed (our value at most 13.27 days).
+- **No nominal-DEM values are tabulated.**
+  - Barker's Fig. 19 plots them (open circles). He notes they "tend to be better than the mean/median of the
+    clones", because clone height errors are "more likely to raise than lower the horizon elevation".
+  - Values read off a figure are too imprecise for a tolerance, so Fig. 19 is used only as a qualitative
+    cross-check. Table 2 stays the formal bound.
 
 ### 4.2 PGDA product 69: internal-only reproduction (never served)
 
