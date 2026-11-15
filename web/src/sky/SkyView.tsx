@@ -2,7 +2,7 @@
 // Sky view (C5): horizon/sky plot + timeline + state readout, sharing one selected sample.
 // Refuses to plot a horizon and a series that belong to different locations or heights.
 import { useMemo, useState } from 'react'
-import type { HorizonProfile, SeriesResponse } from '../api/client'
+import type { HorizonProfile, MetricEvent, SeriesResponse } from '../api/client'
 import { formatTerrainLayer } from '../format'
 import HorizonPlot from './HorizonPlot'
 import StateReadout from './StateReadout'
@@ -35,6 +35,8 @@ function PlaceholderNotice({ horizon, series }: { horizon: HorizonProfile; serie
 
 export default function SkyView({ horizon, series }: { horizon: HorizonProfile; series: SeriesResponse }) {
   const [index, setIndex] = useState(0)
+  // The event picked on the timeline, if any; moving the slider clears it.
+  const [selectedEvent, setSelectedEvent] = useState<MetricEvent | null>(null)
   const timeMs = useMemo(() => series.time.map((t) => Date.parse(t)), [series])
   const problem = mismatch(horizon, series)
   const placeholder = horizon._placeholder || series._placeholder
@@ -69,7 +71,15 @@ export default function SkyView({ horizon, series }: { horizon: HorizonProfile; 
             timeMs={timeMs}
             events={series.events ?? []}
             index={index}
-            onChange={setIndex}
+            selectedEvent={selectedEvent}
+            onChange={(i) => {
+              setSelectedEvent(null)
+              setIndex(i)
+            }}
+            onSelectEvent={(ev, i) => {
+              setSelectedEvent(ev)
+              setIndex(i)
+            }}
           />
           <StateReadout sun={series.sun} earth={series.earth} index={index} horizon={horizon} />
           <div className="definition sky-notes">

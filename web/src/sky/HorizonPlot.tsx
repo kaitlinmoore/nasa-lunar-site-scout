@@ -63,16 +63,20 @@ export default function HorizonPlot({
     const dom = elevationDomain([horizon.elevation_deg, series.sun.elevation_deg, series.earth.elevation_deg])
     const x = linear(0, 360, X0, X1)
     const y = linear(dom.min, dom.max, Y0, Y1)
-    // Terrain: the profile as sent; the first sample is repeated at +360° only to close the
-    // seam (same direction), so the fill spans the full 0–360° axis.
+    // Terrain: the profile as sent, for any azimuth spacing. To close the 0/360° seam, the
+    // last sample is repeated at -360° and the first at +360° (same directions, no new values);
+    // the plot clips everything outside 0–360°.
     const az = [...horizon.azimuth_deg]
     const el = [...horizon.elevation_deg]
-    if (az.length && az[0] === 0) {
-      az.push(360)
-      el.push(el[0])
+    if (az.length) {
+      const n = az.length
+      az.unshift(az[n - 1] - 360)
+      el.unshift(el[n - 1])
+      az.push(az[1] + 360)
+      el.push(el[1])
     }
     const line = az.map((a, i) => `${x(a).toFixed(1)},${y(el[i]).toFixed(1)}`).join(' ')
-    const fill = `${X0},${Y0} ${line} ${X1},${Y0}`
+    const fill = az.length ? `${x(az[0])},${Y0} ${line} ${x(az[az.length - 1])},${Y0}` : ''
     return {
       x,
       y,
@@ -94,6 +98,12 @@ export default function HorizonPlot({
       role="img"
       aria-label="Terrain horizon profile with Sun and Earth tracks, elevation versus azimuth"
     >
+      <defs>
+        <clipPath id="plot-area">
+          <rect x={X0} y={Y1} width={X1 - X0} height={Y0 - Y1} />
+        </clipPath>
+      </defs>
+
       {/* grid + axes */}
       {plot.yTicks.map((v) => (
         <g key={`y${v}`}>
@@ -129,8 +139,10 @@ export default function HorizonPlot({
       {plot.earth.map((pts, i) => (
         <polyline key={`e${i}`} className="plot-track plot-earth" points={pts} />
       ))}
-      <polygon className="plot-terrain" points={plot.fill} />
-      <polyline className="plot-horizon" points={plot.line} />
+      <g clipPath="url(#plot-area)">
+        <polygon className="plot-terrain" points={plot.fill} />
+        <polyline className="plot-horizon" points={plot.line} />
+      </g>
 
       {/* placeholder watermark: over the terrain (so it's never hidden), under the markers */}
       {placeholder && (

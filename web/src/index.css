@@ -204,6 +204,7 @@ footer { margin-top: calc(2 * var(--space-6)); font-size: var(--text-md); }
 }
 .timeline-event.event-sun { background: var(--color-sun); }
 .timeline-event.event-earth { background: var(--color-earth); }
+.timeline-event.is-selected { box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-text); }
 .timeline-event:focus-visible { outline: 2px solid var(--color-text); outline-offset: 2px; }
 .timeline-ends { display: flex; justify-content: space-between; font-size: var(--text-sm); }
 

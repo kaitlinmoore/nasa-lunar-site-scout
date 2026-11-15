@@ -103,9 +103,12 @@ export function formatSamplePosition(index: number, count: number): string {
   return `sample ${index + 1} of ${count}`
 }
 
-/** Azimuth of the horizon-profile sample a lookup used, e.g. "profile sample at 137° az". */
+/**
+ * Azimuth of the horizon-profile sample a lookup used, e.g. "profile sample at 133.40° az".
+ * Works for any profile spacing (the API's real horizon is 0.1°); degree precision as elsewhere.
+ */
 export function formatProfileSample(az: number): string {
-  return `profile sample at ${az}° az`
+  return `profile sample at ${formatValue(az, 'deg', 'azimuth_deg')} az`
 }
 
 /** Terrain layer line, e.g. "pgda_78_site_dems: near field, 5 m, to 10 km". */

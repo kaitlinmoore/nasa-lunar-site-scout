@@ -29,7 +29,7 @@ The header shows which source is in use. Fixture data goes through the same gene
 The horizon/sky plot and timeline use `fixtures/horizon.json` and `fixtures/series.json`. In live mode the section says it's fixture-only until the live horizon and series endpoints exist.
 
 - **Plot:** terrain horizon profile (elevation vs azimuth, deg clockwise from north) with the Sun and Earth tracks over the window. Markers show the positions at the selected sample: filled when some of the disc is visible (`visible_fraction` > 0), hollow when none is.
-- **Timeline:** the slider steps through the series samples (no interpolation between them). Event marks jump to the nearest sample. The readout shows the Sun/Earth azimuth, elevation, visible disc and clearance at that sample, plus the terrain horizon from the profile sample nearest each body's azimuth (named in the readout).
+- **Timeline:** the slider steps through the series samples (no interpolation between them). Event marks sit at the event's own time; selecting one shows that time as the API sent it (to the second, with a "refined" badge when refined), while the plot and readout move to the nearest sample and say so. Moving the slider clears the selection. The readout shows the Sun/Earth azimuth, elevation, visible disc and clearance at that sample, plus the terrain horizon from the profile sample nearest each body's azimuth (named in the readout). The lookup uses the profile's own azimuths, so any spacing works (the real horizon is 0.1°).
 - **Checks:** the horizon and series must be for the same location and unit height, or nothing is plotted. Placeholder horizon or series data gets a notice in the section and a watermark in the plot.
 
 ## Display rules
