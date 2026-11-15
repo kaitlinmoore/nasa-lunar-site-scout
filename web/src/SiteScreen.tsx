@@ -9,7 +9,16 @@ import type {
   PowerMetrics,
   Stat,
 } from './api/client'
-import { formatDuration, formatLatLon, formatUtc, formatValue, unitOf } from './format'
+import {
+  formatDuration,
+  formatHeight,
+  formatLatLon,
+  formatUtc,
+  formatValue,
+  formatWindowQualifier,
+  midSentence,
+  unitOf,
+} from './format'
 
 const DOCS = __FIELD_DOCS__
 
@@ -47,12 +56,36 @@ function NotComputed() {
   return <span className="not-computed">not computed</span>
 }
 
-function Value({ value, field }: { value: number | null | undefined; field: string }) {
-  if (value === null || value === undefined) return <NotComputed />
+/** Scenario window, for values (counts) that only make sense with the window they cover. */
+type ScenarioWindow = { start: string; end: string }
+
+function WindowQualifier({ start, end }: ScenarioWindow) {
+  const q = formatWindowQualifier(start, end)
   return (
-    <span className="value" title={`API value: ${value}`}>
-      {formatValue(value, unitOf(field))}
-    </span>
+    <div className="definition">
+      {q.lead} <span className="nowrap">{q.start}</span> – <span className="nowrap">{q.end}</span>
+    </div>
+  )
+}
+
+function Value({
+  value,
+  field,
+  scenarioWindow,
+}: {
+  value: number | null | undefined
+  field: string
+  scenarioWindow?: ScenarioWindow
+}) {
+  if (value === null || value === undefined) return <NotComputed />
+  const unit = unitOf(field)
+  return (
+    <>
+      <span className="value" title={`API value: ${value}`}>
+        {formatValue(value, unit, field)}
+      </span>
+      {unit === 'count' && scenarioWindow && <WindowQualifier {...scenarioWindow} />}
+    </>
   )
 }
 
@@ -82,11 +115,13 @@ function MetricTable<T extends object>({
   schema,
   metrics,
   labels,
+  scenarioWindow,
 }: {
   title: string
   schema: string
   metrics: T
   labels: Record<keyof T, string>
+  scenarioWindow: ScenarioWindow
 }) {
   const docs = DOCS[schema] ?? {}
   return (
@@ -114,7 +149,11 @@ function MetricTable<T extends object>({
                   {isStat(v) ? (
                     <StatValue stat={v} field={field} />
                   ) : (
-                    <Value value={v as number | null | undefined} field={field} />
+                    <Value
+                      value={v as number | null | undefined}
+                      field={field}
+                      scenarioWindow={scenarioWindow}
+                    />
                   )}
                 </td>
               </tr>
@@ -160,7 +199,7 @@ function Events({ events, step }: { events: MetricEvent[]; step: string }) {
         </table>
       )}
       <p className="definition">
-        {refinedDoc && <>Refined: {refinedDoc.charAt(0).toLowerCase() + refinedDoc.slice(1)}. </>}
+        {refinedDoc && <>Refined: {midSentence(refinedDoc)}. </>}
         Sampling step: {formatDuration(step)}.
       </p>
     </section>
@@ -195,6 +234,7 @@ export default function SiteScreen({ data }: { data: MetricsResponse }) {
   const { scenario } = data
   const { location } = scenario
   const heightDoc = DOCS.Scenario?.unit_height_m
+  const scenarioWindow: ScenarioWindow = { start: scenario.window_start, end: scenario.window_end }
   return (
     <>
       <section className="card">
@@ -209,7 +249,7 @@ export default function SiteScreen({ data }: { data: MetricsResponse }) {
           </dd>
           <dt>Unit height</dt>
           <dd className="value">
-            {scenario.unit_height_m} m
+            {formatHeight(scenario.unit_height_m)}
             {heightDoc && <div className="definition">{heightDoc}.</div>}
           </dd>
           <dt>Window start</dt>
@@ -223,12 +263,19 @@ export default function SiteScreen({ data }: { data: MetricsResponse }) {
         </dl>
       </section>
       <div className="grid-2">
-        <MetricTable title="Power" schema="PowerMetrics" metrics={data.power} labels={POWER_LABELS} />
+        <MetricTable
+          title="Power"
+          schema="PowerMetrics"
+          metrics={data.power}
+          labels={POWER_LABELS}
+          scenarioWindow={scenarioWindow}
+        />
         <MetricTable
           title="Comms (direct to Earth)"
           schema="CommsMetrics"
           metrics={data.comms}
           labels={COMMS_LABELS}
+          scenarioWindow={scenarioWindow}
         />
       </div>
       <Events events={data.events ?? []} step={scenario.step} />
