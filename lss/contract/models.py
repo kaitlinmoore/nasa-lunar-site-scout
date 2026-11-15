@@ -32,7 +32,7 @@ from pydantic import (
     model_validator,
 )
 
-CONTRACT_VERSION = "0.3.0"
+CONTRACT_VERSION = "0.4.0"
 
 Latitude = Annotated[float, Field(ge=-90.0, le=90.0, description="Planetocentric latitude, deg")]
 Longitude = Annotated[
@@ -398,7 +398,15 @@ class PowerMetrics(Model):
         default=None,
         description=(
             "From window_start to the first sunset (the last part of the solar disc going below the "
-            "terrain horizon), h"
+            "terrain horizon), h. Null if not computed, or if there is no sunset in the window "
+            "(sunset_in_window false)"
+        ),
+    )
+    sunset_in_window: bool | None = Field(
+        default=None,
+        description=(
+            "True if at least one sunset occurs in the window, false if none does (time_to_sunset_h is then "
+            "null). Null only if not computed"
         ),
     )
 
@@ -452,7 +460,15 @@ class CommsMetrics(Model):
         default=None,
         description=(
             "From window_start to the first Earthset (the last part of the Earth disc going below the "
-            "terrain horizon), h"
+            "terrain horizon), h. Null if not computed, or if there is no Earthset in the window "
+            "(earthset_in_window false)"
+        ),
+    )
+    earthset_in_window: bool | None = Field(
+        default=None,
+        description=(
+            "True if at least one Earthset occurs in the window, false if none does (time_to_earthset_h is "
+            "then null). Null only if not computed"
         ),
     )
 

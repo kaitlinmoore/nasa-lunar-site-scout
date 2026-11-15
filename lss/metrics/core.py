@@ -85,6 +85,7 @@ def power_metrics(res: SeriesResult) -> PowerMetrics:
         sun_elevation_deg=stat(g.t_s, g.elevation_deg),
         sun_azimuth_deg=azimuth_arc(g.azimuth_deg),
         time_to_sunset_h=_first(sun.sets),
+        sunset_in_window=bool(sun.sets),
     )
 
 
@@ -101,6 +102,7 @@ def comms_metrics(res: SeriesResult) -> CommsMetrics:
         earth_clearance_deg=stat(g.t_s, g.clearance_deg),
         sun_earth_overlap_fraction=min(1.0, overlap_s(res.sun.visible, earth.visible) / T),
         time_to_earthset_h=_first(earth.sets),
+        earthset_in_window=bool(earth.sets),
     )
 
 

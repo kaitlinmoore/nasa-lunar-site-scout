@@ -3,8 +3,8 @@
   "info": {
     "title": "Lunar Site Scout API",
     "description": "Contract v0. Not affiliated with or endorsed by NASA.",
-    "version": "0.3.0",
-    "x-contract-version": "0.3.0"
+    "version": "0.4.0",
+    "x-contract-version": "0.4.0"
   },
   "paths": {
     "/api/health": {
@@ -222,8 +222,21 @@
               }
             ],
             "default": null,
-            "description": "From window_start to the first Earthset (the last part of the Earth disc going below the terrain horizon), h",
+            "description": "From window_start to the first Earthset (the last part of the Earth disc going below the terrain horizon), h. Null if not computed, or if there is no Earthset in the window (earthset_in_window false)",
             "title": "Time To Earthset H"
+          },
+          "earthset_in_window": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "True if at least one Earthset occurs in the window, false if none does (time_to_earthset_h is then null). Null only if not computed",
+            "title": "Earthset In Window"
           }
         },
         "title": "CommsMetrics",
@@ -251,7 +264,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.3.0",
+            "default": "0.4.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -492,7 +505,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.3.0",
+            "default": "0.4.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -666,7 +679,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.3.0",
+            "default": "0.4.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -772,7 +785,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.3.0"
+            "default": "0.4.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -806,7 +819,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.3.0",
+            "default": "0.4.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -914,7 +927,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.3.0",
+            "default": "0.4.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1060,7 +1073,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.3.0",
+            "default": "0.4.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1188,7 +1201,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.3.0",
+            "default": "0.4.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1255,7 +1268,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.3.0",
+            "default": "0.4.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1357,7 +1370,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.3.0",
+            "default": "0.4.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1546,8 +1559,21 @@
               }
             ],
             "default": null,
-            "description": "From window_start to the first sunset (the last part of the solar disc going below the terrain horizon), h",
+            "description": "From window_start to the first sunset (the last part of the solar disc going below the terrain horizon), h. Null if not computed, or if there is no sunset in the window (sunset_in_window false)",
             "title": "Time To Sunset H"
+          },
+          "sunset_in_window": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "True if at least one sunset occurs in the window, false if none does (time_to_sunset_h is then null). Null only if not computed",
+            "title": "Sunset In Window"
           }
         },
         "title": "PowerMetrics",
@@ -1585,7 +1611,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.3.0",
+            "default": "0.4.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1853,7 +1879,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.3.0",
+            "default": "0.4.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -2001,7 +2027,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.3.0"
+            "default": "0.4.0"
           },
           "_placeholder": {
             "type": "boolean",

@@ -377,7 +377,8 @@ Window W = [`window_start`, `window_end`], duration T.
 | `shadow_count` | Number of shadow periods in W, including clipped ones; no minimum duration. |
 | `sun_elevation_deg` | Apparent elevation of the disc centre above the local horizontal plane (section 2; not the terrain horizon): min, max and time mean over all of W, whether or not the Sun is visible. |
 | `sun_azimuth_deg` | Apparent azimuth of the disc centre, clockwise from north, over all of W, whether or not the Sun is visible. `min` and `max` are the ends of the smallest arc containing the track, read clockwise from `min` to `max`; when the arc crosses north, `min` > `max` (e.g. 300 → 40). A track covering the full circle reports `min` 0, `max` 360. `mean` is always null: a linear mean of azimuths depends on where 0° is put, and a circular mean is undefined for a full circle, which is what the Sun does at Site01. The series carries the full track. |
-| `time_to_sunset_h` | From `window_start` to the first sunset (the last visible part of the solar disc going below the terrain horizon), h. |
+| `time_to_sunset_h` | From `window_start` to the first sunset (the last visible part of the solar disc going below the terrain horizon), h. Null if there is no sunset in the window. |
+| `sunset_in_window` | True if at least one sunset occurs in W, false if none does. Null only if not computed, so a null `time_to_sunset_h` is never ambiguous (Kaitlin, 2026-11-15). |
 
 The azimuth arc is found from the continuous track (unwrapped azimuth). It is a full circle if the
 unwrapped azimuth spans 360° or more; otherwise its ends are the unwrapped minimum and maximum, modulo 360°.
@@ -394,7 +395,8 @@ If other bodies get azimuth statistics, the same rule applies.
 | `earth_elevation_deg` | Apparent elevation of the Earth's disc centre above the local horizontal plane: min, max and time mean over all of W, whether or not the Earth is visible. |
 | `earth_clearance_deg` | Earth disc centre elevation minus the terrain horizon elevation at its azimuth: min, max and time mean over all of W. |
 | `sun_earth_overlap_fraction` | Time in W with any part of both discs visible, divided by T. |
-| `time_to_earthset_h` | From `window_start` to the first Earthset (the last visible part of the Earth disc going below the terrain horizon), h. |
+| `time_to_earthset_h` | From `window_start` to the first Earthset (the last visible part of the Earth disc going below the terrain horizon), h. Null if there is no Earthset in the window. |
+| `earthset_in_window` | True if at least one Earthset occurs in W, false if none does. Null only if not computed. |
 
 ### 5.5 Computation and accuracy (`lss.series`, `lss.metrics`)
 

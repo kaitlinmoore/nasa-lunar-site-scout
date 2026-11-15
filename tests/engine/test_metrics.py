@@ -78,6 +78,7 @@ def test_power_metrics_tile_the_window_and_follow_the_definitions():
     assert pm.longest_shadow_h == pytest.approx(hidden[0].duration_s / 3600)
     assert pm.longest_shadow_clipped is False
     assert pm.time_to_sunset_h == pytest.approx(res.sun.sets[0] / 3600)
+    assert pm.sunset_in_window is True
     # light-weighted mean < illumination fraction (partial discs during rise/set count less than 1)
     assert 0 < pm.mean_visible_disk_fraction < pm.illumination_fraction
     assert pm.sun_elevation_deg.model_dump() == pytest.approx({"min": 0.5, "max": 0.5, "mean": 0.5})
@@ -92,6 +93,8 @@ def test_clipped_flags_when_the_window_starts_in_shadow():
     pm, cm = power_metrics(res), comms_metrics(res)
     assert pm.longest_shadow_clipped is True and cm.longest_earth_gap_clipped is True
     assert pm.time_to_sunset_h is None  # the Sun rises in the window but never sets
+    assert pm.sunset_in_window is False  # so null here means 'no sunset', said by the flag
+    assert cm.time_to_earthset_h is None and cm.earthset_in_window is False
     assert pm.shadow_count == 1
 
 

@@ -215,6 +215,7 @@ def metrics() -> MetricsResponse:
             sun_elevation_deg=Stat(min=-0.8, max=1.6, mean=0.4),
             sun_azimuth_deg=Stat(min=0.0, max=360.0, mean=None),
             time_to_sunset_h=198.0,
+            sunset_in_window=True,
         ),
         comms=CommsMetrics(
             earth_visibility_fraction=0.6,
@@ -225,6 +226,7 @@ def metrics() -> MetricsResponse:
             earth_clearance_deg=Stat(min=-5.8, max=7.2, mean=0.7),
             sun_earth_overlap_fraction=0.3,
             time_to_earthset_h=324.0,
+            earthset_in_window=True,
         ),
         events=_events(),
         fidelity=FIDELITY,
