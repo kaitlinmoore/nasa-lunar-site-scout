@@ -139,5 +139,9 @@ NEARBY_RADIUS_TEXT = "Nearby: within 10 km (default; no distance was given)."
 
 def safe_slope_text(terrain: str) -> str:
     """The D-safe disclosure. `terrain` names the terrain data the slope is measured on (from the
-    engine's result); the project author's rule is that the echo always states it."""
+    engine's result); the project author's rule is that the echo always states it.
+
+    "under 5°" is provisional: when the engine's slope filter is built (contract note C9), word
+    this to match its bound ("under" if strict, "5° or less" if not), as the project author decided.
+    """
     return f"Safe: slope under 5°, measured on {terrain} (default; no slope limit was given)."
