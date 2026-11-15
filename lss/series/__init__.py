@@ -2,3 +2,49 @@
 
 Visibility time series and event finding.
 """
+
+from lss.series.core import (
+    SERIES_VERSION,
+    BodyVisibility,
+    Grid,
+    Period,
+    SeriesParams,
+    SeriesResult,
+    body_visibility,
+    compute_series,
+    compute_visibility,
+    ephemeris_sampler,
+    events,
+    series_response,
+)
+from lss.series.disc import (
+    LIMB_U2,
+    LIMB_V2,
+    LIMB_WAVELENGTH_NM,
+    limb_darkened_disc_mean,
+    limb_darkening,
+    margins,
+    visible_fraction,
+)
+
+__all__ = [
+    "LIMB_U2",
+    "LIMB_V2",
+    "LIMB_WAVELENGTH_NM",
+    "SERIES_VERSION",
+    "BodyVisibility",
+    "Grid",
+    "Period",
+    "SeriesParams",
+    "SeriesResult",
+    "body_visibility",
+    "compute_series",
+    "compute_visibility",
+    "ephemeris_sampler",
+    "events",
+    "limb_darkened_disc_mean",
+    "limb_darkening",
+    "margins",
+    "series_response",
+    "visible_fraction",
+]

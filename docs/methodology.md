@@ -296,9 +296,10 @@ reason, and compare each only with the reference that uses the same terrain reso
 
 These are the definitions behind the `PowerMetrics` and `CommsMetrics` fields; the field descriptions in
 `lss/contract/models.py` say the same in short. The definitions are fixed here first (Kaitlin, 2026-11-15).
-The code that computes them is step 4.6 _(to do)_. The measured numbers below are preliminary: computed with a
-scratch script from the step 4.3 ephemeris and the step 4.5 horizon before the 4.6 code existed, and re-measured
-with it.
+They are computed by `lss.series` (visibility, periods, events) and `lss.metrics` (step 4.6; section 5.5).
+The numbers measured below come from that code, through `scripts/series_checks.py`, which writes them to
+`LSS_DATA_DIR/cache/series_checks.json`. Preliminary numbers quoted while the definitions were being chosen
+(scratch script, 10 min samples) are superseded; where they differed, this says so.
 
 **Served C1 scenario** (`lss.contract.examples.SCENARIO`; the deployed endpoint serves it precomputed and
 matches requests on `Scenario.key()`): the RoI 4 point (section 1.3), 1 m, 2028-05-15T00:00Z to
@@ -319,9 +320,12 @@ disc centre is above the terrain where its elevation exceeds the horizon elevati
 - **Against the real horizon profile.** A point of the disc is visible if it is above the terrain horizon at
   *its own* azimuth (section 3, interpolated linearly between the 0.1° horizon azimuths, so about 5 horizon
   values span the 0.53° solar disc). Barker et al. (2021) instead cut the disc with a flat line at the
-  horizon elevation found at the disc centre's azimuth. Measured at the served point, 1 m, 2024–2025
-  (10 min samples): the time-mean solar fraction is the same to 0.0001 either way, but the flat cut produces
-  3 shadow periods shorter than 1 h where the real profile produces 1.
+  horizon elevation found at the disc centre's azimuth. Measured at the served point, 1 m, 2024–2025: the
+  time-mean solar fraction is the same to 1e-7 either way (0.823396), and both give 50 shadow periods, 2 of
+  them shorter than 1 h. The illumination fraction differs by 0.0002 (0.87194 real profile, 0.87173 flat cut).
+  The preliminary finding that the flat cut adds short shadow periods (3 instead of 1) was an artefact of
+  the 10 min sampling and is withdrawn. At this site the horizon is smooth on the scale of the disc: its
+  largest change between neighbouring 0.1° azimuths is 0.039°.
 - **Sun: a light-weighted fraction.** `f_sun` is the visible share of the solar disc's *light*, not of its
   area. Each point of the disc is weighted by the solar limb-darkening law at 550 nm:
   I(μ)/I(1) = 1 − u₂ − v₂ + u₂ μ + v₂ μ² = 0.30 + 0.93 μ − 0.23 μ², with u₂ = 0.93 and v₂ = −0.23.
@@ -333,9 +337,9 @@ disc centre is above the terrain where its elevation exceeds the horizon elevati
     extended source with limb darkening at 550 nm", with no coefficients or citation. Allen's 550 nm law is
     our choice (Kaitlin, 2026-11-15). The same coefficients are commonly attributed to the 4th edition
     (Cox, 2000); only the 3rd edition was checked.
-  - **Measured effect.** At the served point, 1 m, 2024–2025: time-mean fraction 0.8234 limb-darkened vs
-    0.8232 geometric. The law moves the result by 0.0002, so any gap from Barker in step 4.7 is not
-    explained by the choice of law.
+  - **Measured effect.** At the served point, 1 m, 2024–2025: time-mean fraction 0.82340 limb-darkened vs
+    0.82322 geometric (as in the preliminary estimate). The law moves the result by 0.0002, so any gap from
+    Barker in step 4.7 is not explained by the choice of law.
 - **Earth: a geometric fraction.** `f_earth` is the visible share of the Earth disc's area, unweighted.
   Radius 6371.0 km (section 2).
 
@@ -346,16 +350,17 @@ disc centre is above the terrain where its elevation exceeds the horizon elevati
   tile the window: every instant is in exactly one of them.
 - **Partial loss of the disc is not a shadow.** It shows up only in `mean_visible_disk_fraction`.
 - **No minimum duration.** Every shadow period counts, however short. At the served point over 2024–2025,
-  only 1 of 49 shadow periods is shorter than 1 h (20 min), so horizon flickers do not inflate the count there.
+  2 of 50 shadow periods are shorter than 1 h (the shortest 19.5 min) and none is shorter than 10 min, so
+  horizon flickers do not inflate the count there. (The preliminary 10 min estimate was 1 of 49: it missed
+  one short period.)
 - **Clipped to the window.** A period that starts before `window_start` or runs past `window_end` is cut at
   the window edge and still counted, with its clipped length. `longest_shadow_clipped` says whether the
   longest shadow period was cut, in which case its full length is longer than reported;
   `longest_earth_gap_clipped` says the same for the longest Earth gap.
 - **Earth visible** = any part of the Earth disc visible (`f_earth > 0`). An **Earth gap** = no part
   visible. Same rules: no minimum duration, clipped to the window.
-- **Resolution.** Periods and events are found on a fine internal time grid and refined by root-finding
-  between samples, independent of the scenario's `step`, which sets only the series returned _(grid spacing
-  and refinement tolerance: step 4.6)_.
+- **Resolution.** Periods and events are found on a fine internal time grid (60 s) and refined by
+  bisection to 0.5 s, independent of the scenario's `step`, which sets only the series returned (section 5.5).
 
 ### 5.3 Power (F3): `PowerMetrics`
 
@@ -390,6 +395,40 @@ If other bodies get azimuth statistics, the same rule applies.
 | `earth_clearance_deg` | Earth disc centre elevation minus the terrain horizon elevation at its azimuth: min, max and time mean over all of W. |
 | `sun_earth_overlap_fraction` | Time in W with any part of both discs visible, divided by T. |
 | `time_to_earthset_h` | From `window_start` to the first Earthset (the last visible part of the Earth disc going below the terrain horizon), h. |
+
+### 5.5 Computation and accuracy (`lss.series`, `lss.metrics`)
+
+- **Internal grid.** Each body is sampled every 60 s over the window (`SeriesParams.grid_step_s`). Time axis:
+  seconds since `window_start`, ephemeris time = et(`window_start`) + seconds. This assumes no leap second
+  inside the window (none is scheduled) and ignores the periodic TDB − UTC terms (< 2 ms).
+- **Visibility margins.** Two continuous functions of time decide visibility, evaluated over 101 columns
+  across the disc: *any part* = max over columns of (column top − horizon), positive iff some part is visible;
+  *whole disc* = min over columns of (column bottom − horizon), ≥ 0 iff all of it is. Their sign changes
+  between grid points are refined by bisection to 0.5 s. The refined times split the window into the periods
+  of section 5.2, and rises and sets become the events (`sunrise`, `sunset`, `earthrise`, `earthset`,
+  `refined: true`).
+- **Visible fraction.** 1 for a whole visible disc and 0 for a hidden one, exactly (from the margins, so
+  fractions and periods agree). For a partly hidden disc, integrated column by column: along each column the
+  chord above the horizon is integrated in closed form (uniform, or the limb-darkening law); across columns,
+  the midpoint rule in φ with x = r sin φ over 192 columns, normalised by the same quadrature of the whole disc.
+  A disc point at horizontal offset x is at azimuth az + x / cos(el) (tangent plane on the sky; error below
+  1e-4° for these discs). Accuracy against closed-form circular segments: better than 1e-5 (tested). Against a
+  brute-force 2-D integration: 5e-5 for a horizon rising 4° within one 0.1° azimuth interval, 2e-3 for an
+  extreme 20° rise. The served horizon changes by at most 0.039° between neighbouring azimuths.
+- **Durations and fractions** (illumination, Earth visibility, whole-disc, overlap, sunlit and longest
+  periods) come from the refined periods, so they are not limited by the grid. **Time means** (visible
+  fraction, elevations, clearance) integrate the 60 s grid with the trapezoid rule. **Azimuth arcs** come from
+  the unwrapped 60 s track (section 5.3).
+- **Grid convergence.** The served scenario with a 15 s grid instead of 60 s: every duration and count
+  identical (to 1e-9 h), mean visible fraction changed by 6e-10.
+- **Tests** (`tests/engine/test_series.py`, `test_metrics.py`): the law is 1 at μ = 1 and 0.30 at the limb,
+  and its disc mean is 0.805; fractions against closed-form segments and brute-force integration (flat,
+  sloped and jagged horizons, a disc straddling north); margins against brute force; rise and set times on
+  synthetic tracks known in closed form (within 1 s), periods tiling the window, clipped edges, a 36 s
+  flicker counted; every metric on synthetic series with known answers; on real data, the served scenario's
+  responses, fractions against brute force on the real horizon, and grid-step independence.
+- **Cost.** The served scenario (30 days, both bodies) takes about 2 s with the horizon cached; two years of
+  Sun-only visibility take about 35 s (development PC).
 
 ## 6. Validation results _(to do, step 4.7)_
 
