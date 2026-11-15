@@ -12,6 +12,10 @@ export type CommsMetrics = Schemas['CommsMetrics']
 export type Stat = Schemas['Stat']
 export type MetricEvent = Schemas['Event']
 export type FidelityLabel = Schemas['FidelityLabel']
+export type SeriesResponse = Schemas['SeriesResponse']
+export type BodyTrack = Schemas['BodyTrack']
+export type HorizonProfile = Schemas['HorizonProfile']
+export type TerrainLayer = Schemas['TerrainLayer']
 
 export const API_BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/$/, '')
 

@@ -32,7 +32,16 @@ const contractVersion: string = openapi.info['x-contract-version']
 
 // { SchemaName: { field: description } } for the models the UI explains to the user.
 type JsonSchema = { properties?: Record<string, { description?: string }> }
-const documented = ['Scenario', 'PowerMetrics', 'CommsMetrics', 'Event', 'FidelityLabel']
+const documented = [
+  'Scenario',
+  'PowerMetrics',
+  'CommsMetrics',
+  'Event',
+  'FidelityLabel',
+  'BodyTrack',
+  'HorizonProfile',
+  'SeriesResponse',
+]
 const fieldDocs = Object.fromEntries(
   documented.map((name) => {
     const props = (openapi.components.schemas[name] as JsonSchema).properties ?? {}

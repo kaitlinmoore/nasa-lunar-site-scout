@@ -1,6 +1,7 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 // C1 thin-slice site screen: one scenario's metrics, events and fidelity, exactly as the API
 // (or fixture) sent them. null = "not computed", never 0. Definitions come from the contract.
+import type { ReactNode } from 'react'
 import type {
   CommsMetrics,
   FidelityLabel,
@@ -10,15 +11,16 @@ import type {
   Stat,
 } from './api/client'
 import {
+  EVENT_LABELS,
   formatDuration,
   formatHeight,
   formatLatLon,
   formatUtc,
-  formatValue,
   formatWindowQualifier,
   midSentence,
   unitOf,
 } from './format'
+import { NotComputed, Num } from './Value'
 
 const DOCS = __FIELD_DOCS__
 
@@ -45,17 +47,6 @@ const COMMS_LABELS: Record<keyof CommsMetrics, string> = {
   time_to_earthset_h: 'Time to Earthset',
 }
 
-const EVENT_LABELS: Record<MetricEvent['kind'], string> = {
-  sunrise: 'Sunrise',
-  sunset: 'Sunset',
-  earthrise: 'Earthrise',
-  earthset: 'Earthset',
-}
-
-function NotComputed() {
-  return <span className="not-computed">not computed</span>
-}
-
 /** Scenario window, for values (counts) that only make sense with the window they cover. */
 type ScenarioWindow = { start: string; end: string }
 
@@ -78,13 +69,10 @@ function Value({
   scenarioWindow?: ScenarioWindow
 }) {
   if (value === null || value === undefined) return <NotComputed />
-  const unit = unitOf(field)
   return (
     <>
-      <span className="value" title={`API value: ${value}`}>
-        {formatValue(value, unit, field)}
-      </span>
-      {unit === 'count' && scenarioWindow && <WindowQualifier {...scenarioWindow} />}
+      <Num value={value} field={field} />
+      {unitOf(field) === 'count' && scenarioWindow && <WindowQualifier {...scenarioWindow} />}
     </>
   )
 }
@@ -230,7 +218,8 @@ function Fidelity({ fidelity }: { fidelity: FidelityLabel }) {
   )
 }
 
-export default function SiteScreen({ data }: { data: MetricsResponse }) {
+/** The site screen; `children` (the sky view) renders between the scenario and the metrics. */
+export default function SiteScreen({ data, children }: { data: MetricsResponse; children?: ReactNode }) {
   const { scenario } = data
   const { location } = scenario
   const heightDoc = DOCS.Scenario?.unit_height_m
@@ -262,6 +251,7 @@ export default function SiteScreen({ data }: { data: MetricsResponse }) {
           <dd className="value muted">{data.scenario_key}</dd>
         </dl>
       </section>
+      {children}
       <div className="grid-2">
         <MetricTable
           title="Power"

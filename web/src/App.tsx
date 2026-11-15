@@ -1,21 +1,21 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 import { useEffect, useState } from 'react'
 import { API_BASE, type MetricsResponse, WEB_CONTRACT_VERSION } from './api/client'
-import { dataSource, loadThinSliceMetrics } from './api/source'
+import { type DataSource, dataSource, loadThinSliceMetrics, loadThinSliceSky } from './api/source'
 import SiteScreen from './SiteScreen'
+import SkyView from './sky/SkyView'
 
-type State =
-  | { kind: 'loading' }
-  | { kind: 'ok'; data: MetricsResponse }
-  | { kind: 'error'; message: string }
+type Load<T> = { kind: 'loading' } | { kind: 'ok'; data: T } | { kind: 'error'; message: string }
 
-export default function App() {
-  const source = dataSource()
-  const [state, setState] = useState<State>({ kind: 'loading' })
-
+/**
+ * Load data for `source` with a stable, module-level loader; errors become an error state,
+ * never empty data. The source comes from the URL, so it's fixed for the page's lifetime.
+ */
+function useLoad<T>(load: (source: DataSource) => Promise<T>, source: DataSource): Load<T> {
+  const [state, setState] = useState<Load<T>>({ kind: 'loading' })
   useEffect(() => {
     let cancelled = false
-    loadThinSliceMetrics(source)
+    load(source)
       .then((data) => !cancelled && setState({ kind: 'ok', data }))
       .catch((e: unknown) => {
         if (!cancelled) setState({ kind: 'error', message: e instanceof Error ? e.message : String(e) })
@@ -23,10 +23,53 @@ export default function App() {
     return () => {
       cancelled = true
     }
-  }, [source])
+  }, [load, source])
+  return state
+}
 
-  const data = state.kind === 'ok' ? state.data : null
-  const mismatch = data !== null && data.contract_version !== WEB_CONTRACT_VERSION
+function LoadError({ what, message }: { what: string; message: string }) {
+  return (
+    <div className="banner error" role="alert">
+      <strong>Could not load {what}.</strong> No values are shown.
+      <div className="mono">{message}</div>
+    </div>
+  )
+}
+
+export default function App() {
+  const source = dataSource()
+  const metrics = useLoad<MetricsResponse>(loadThinSliceMetrics, source)
+  const sky = useLoad(loadThinSliceSky, source)
+
+  const data = metrics.kind === 'ok' ? metrics.data : null
+  const skyData = sky.kind === 'ok' ? sky.data : null
+
+  // Contract versions of every response on screen; any that differs from the web's is flagged.
+  const versions = [
+    ...new Set(
+      [data, skyData?.series, skyData?.horizon]
+        .filter((r) => r != null)
+        .map((r) => r.contract_version),
+    ),
+  ]
+  const mismatched = versions.filter((v) => v !== WEB_CONTRACT_VERSION)
+
+  const skySection =
+    source !== 'fixtures' ? (
+      <section className="card">
+        <h2>Horizon and sky</h2>
+        <p className="muted">
+          Fixture mode only for now: the live horizon and series endpoints aren't available yet. Open
+          this page with <span className="mono">?source=fixtures</span> to see it with placeholder data.
+        </p>
+      </section>
+    ) : sky.kind === 'loading' ? (
+      <p className="muted">Loading horizon and series…</p>
+    ) : sky.kind === 'error' ? (
+      <LoadError what="the horizon and series" message={sky.message} />
+    ) : (
+      sky.data && <SkyView horizon={sky.data.horizon} series={sky.data.series} />
+    )
 
   return (
     <main>
@@ -42,14 +85,14 @@ export default function App() {
             </>
           )}
           {' · '}web contract {WEB_CONTRACT_VERSION}
-          {data && <> · data contract {data.contract_version}</>}
+          {versions.length > 0 && <> · data contract {versions.join(', ')}</>}
         </p>
       </header>
 
-      {mismatch && (
+      {mismatched.length > 0 && (
         <p className="banner error" role="alert">
           Contract version mismatch: the web was built for {WEB_CONTRACT_VERSION}, the data is{' '}
-          {data.contract_version}. Values may be misread.
+          {mismatched.join(', ')}. Values may be misread.
         </p>
       )}
       {data?._placeholder && (
@@ -59,14 +102,9 @@ export default function App() {
         </div>
       )}
 
-      {state.kind === 'loading' && <p className="muted">Loading metrics…</p>}
-      {state.kind === 'error' && (
-        <div className="banner error" role="alert">
-          <strong>Could not load metrics.</strong> No values are shown.
-          <div className="mono">{state.message}</div>
-        </div>
-      )}
-      {data && <SiteScreen data={data} />}
+      {metrics.kind === 'loading' && <p className="muted">Loading metrics…</p>}
+      {metrics.kind === 'error' && <LoadError what="metrics" message={metrics.message} />}
+      {data ? <SiteScreen data={data}>{skySection}</SiteScreen> : skySection}
 
       <footer className="muted">Not affiliated with or endorsed by NASA.</footer>
     </main>

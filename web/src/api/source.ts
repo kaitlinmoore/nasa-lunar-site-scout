@@ -1,7 +1,7 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 // Data source switch: live API or the committed fixtures/*.json (see web/README.md).
 // Both paths return the same generated contract types, so the screen can't tell them apart.
-import { type MetricsResponse, postMetrics } from './client'
+import { type HorizonProfile, type MetricsResponse, postMetrics, type SeriesResponse } from './client'
 
 export type DataSource = 'live' | 'fixtures'
 
@@ -29,4 +29,22 @@ async function thinSliceFixture(): Promise<MetricsResponse> {
 export async function loadThinSliceMetrics(source: DataSource): Promise<MetricsResponse> {
   const fixture = await thinSliceFixture()
   return source === 'fixtures' ? fixture : postMetrics(fixture.scenario)
+}
+
+/**
+ * Series and horizon for the sky view (C5). Fixture mode only for now (Kaitlin, 2026-11-15):
+ * the live endpoints aren't merged, so live mode returns null and the screen says so.
+ */
+export async function loadThinSliceSky(
+  source: DataSource,
+): Promise<{ series: SeriesResponse; horizon: HorizonProfile } | null> {
+  if (source !== 'fixtures') return null
+  const [series, horizon] = await Promise.all([
+    import('../../../fixtures/series.json'),
+    import('../../../fixtures/horizon.json'),
+  ])
+  return {
+    series: series.default as SeriesResponse,
+    horizon: horizon.default as HorizonProfile,
+  }
 }

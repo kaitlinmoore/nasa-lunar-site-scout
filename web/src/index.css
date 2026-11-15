@@ -36,6 +36,22 @@
   --color-bad-border: #da3633;
   --color-bad-bg: #2d1214;
 
+  /* colour: sky view (C5) */
+  --color-sun: #f2cc60;
+  --color-earth: #58a6ff;
+  --color-terrain: #6e7681;
+  --color-terrain-line: #c9d1d9;
+  --terrain-fill-opacity: 0.85;
+  --plot-grid: var(--color-border-subtle);
+  --plot-zero: var(--color-text-muted);
+  --plot-font-size: 12px;
+  --plot-track-width: 2;
+  --plot-marker-stroke: 2.5;
+  --plot-watermark-opacity: 0.18;
+  --plot-watermark-size: 44px;
+  --slider-thumb: 16px;
+  --event-mark: 10px;
+
   /* spacing, shape, layout */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -122,3 +138,75 @@ tbody th { font-weight: var(--weight-medium); }
 .nowrap { white-space: nowrap; }
 .error { color: var(--color-bad-strong); }
 footer { margin-top: calc(2 * var(--space-6)); font-size: var(--text-md); }
+
+/* ---- sky view (C5) ---- */
+.sky-plot { display: block; width: 100%; height: auto; font-size: var(--plot-font-size); }
+.plot-grid { stroke: var(--plot-grid); stroke-width: 1; }
+.plot-zero { stroke: var(--plot-zero); stroke-width: 1; stroke-dasharray: 4 4; }
+.plot-tick { fill: var(--color-text-muted); }
+.plot-axis-label { fill: var(--color-text-muted); }
+.plot-track { fill: none; stroke-width: var(--plot-track-width); stroke-linejoin: round; }
+.plot-track.plot-sun { stroke: var(--color-sun); }
+.plot-track.plot-earth { stroke: var(--color-earth); }
+.plot-terrain { fill: var(--color-terrain); fill-opacity: var(--terrain-fill-opacity); }
+.plot-horizon { fill: none; stroke: var(--color-terrain-line); stroke-width: 1.5; }
+.plot-marker { stroke-width: var(--plot-marker-stroke); }
+.plot-marker.plot-sun { stroke: var(--color-sun); }
+.plot-marker.plot-earth { stroke: var(--color-earth); }
+.plot-marker.plot-sun.is-visible { fill: var(--color-sun); }
+.plot-marker.plot-earth.is-visible { fill: var(--color-earth); }
+.plot-marker.is-hidden { fill: var(--color-surface); }
+.plot-watermark {
+  fill: var(--color-warn);
+  fill-opacity: var(--plot-watermark-opacity);
+  font-size: var(--plot-watermark-size);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.1em;
+  pointer-events: none;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-5);
+  list-style: none;
+  padding: 0;
+  margin: var(--space-2) 0 var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+.legend-swatch { display: inline-block; width: 0.9em; height: 0.25em; vertical-align: middle; border-radius: var(--radius-pill); }
+.swatch-sun { background: var(--color-sun); }
+.swatch-earth { background: var(--color-earth); }
+.swatch-terrain { background: var(--color-terrain-line); }
+
+.timeline { margin-bottom: var(--space-4); }
+.timeline-now { margin-bottom: var(--space-2); }
+.timeline-time { font-size: var(--text-h2); font-weight: var(--weight-bold); }
+.timeline-track { position: relative; padding-bottom: calc(var(--event-mark) + var(--space-2)); }
+.timeline-slider { width: 100%; margin: 0; accent-color: var(--color-accent-border); }
+.timeline-events {
+  position: absolute;
+  left: calc(var(--slider-thumb) / 2);
+  right: calc(var(--slider-thumb) / 2);
+  bottom: 0;
+  height: var(--event-mark);
+}
+.timeline-event {
+  position: absolute;
+  width: var(--event-mark);
+  height: var(--event-mark);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  transform: translateX(-50%);
+  cursor: pointer;
+}
+.timeline-event.event-sun { background: var(--color-sun); }
+.timeline-event.event-earth { background: var(--color-earth); }
+.timeline-event:focus-visible { outline: 2px solid var(--color-text); outline-offset: 2px; }
+.timeline-ends { display: flex; justify-content: space-between; font-size: var(--text-sm); }
+
+.readout th, .readout td { white-space: nowrap; }
+.readout-defs { margin-top: var(--space-3); font-size: var(--text-sm); }
+.sky-notes p { margin: var(--space-2) 0 0; }

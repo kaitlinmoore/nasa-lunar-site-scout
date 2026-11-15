@@ -24,6 +24,14 @@ The app can run against the committed example responses in `../fixtures/*.json` 
 
 The header shows which source is in use. Fixture data goes through the same generated contract types as live data, and fixture files load as a separate chunk, only in fixture mode. The fixtures are placeholders (`_placeholder: true`), so the screen shows the "placeholder data, not a computed result" notice.
 
+## Sky view (C5, fixture mode only for now)
+
+The horizon/sky plot and timeline use `fixtures/horizon.json` and `fixtures/series.json`. In live mode the section says it's fixture-only until the live horizon and series endpoints exist.
+
+- **Plot:** terrain horizon profile (elevation vs azimuth, deg clockwise from north) with the Sun and Earth tracks over the window. Markers show the positions at the selected sample: filled when some of the disc is visible (`visible_fraction` > 0), hollow when none is.
+- **Timeline:** the slider steps through the series samples (no interpolation between them). Event marks jump to the nearest sample. The readout shows the Sun/Earth azimuth, elevation, visible disc and clearance at that sample, plus the terrain horizon from the profile sample nearest each body's azimuth (named in the readout).
+- **Checks:** the horizon and series must be for the same location and unit height, or nothing is plotted. Placeholder horizon or series data gets a notice in the section and a watermark in the plot.
+
 ## Display rules
 
 - Values are shown exactly as sent (rounded for display; hover a value to see the API's number). Nothing is derived or defaulted.
@@ -36,6 +44,6 @@ The header shows which source is in use. Fixture data goes through the same gene
 
 The current look is a placeholder; the layout and visual style get decided at C5. To keep that pass cheap:
 
-- **Style:** every colour, size, spacing and radius is a CSS variable (token) at the top of `src/index.css`. Rules below the token block only reference tokens.
+- **Style:** every colour, font, text size, spacing step, radius and plot stroke is a CSS variable (token) at the top of `src/index.css`. Rules below the token block use tokens for all of those; the only literal values are hairline borders (1px) and small fine-tuning offsets.
 - **Formatting:** all value and text formatting (units, precision, dates, durations, counts) is in `src/format.ts`.
-- **Layout:** components (`src/SiteScreen.tsx`, `src/App.tsx`) arrange values. They call `format.ts` and use CSS classes, never inline styles or ad-hoc formatting.
+- **Layout:** components (`src/SiteScreen.tsx`, `src/App.tsx`, `src/sky/`) arrange values. They call `format.ts` and use CSS classes, never ad-hoc formatting. The only inline style is a data-driven position (event marks on the timeline). SVG plot geometry (plot size, margins) is in `src/sky/HorizonPlot.tsx`; its colours and line widths are tokens.

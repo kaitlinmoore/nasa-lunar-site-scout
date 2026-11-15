@@ -86,3 +86,44 @@ export function formatWindowQualifier(start: string, end: string) {
 export function midSentence(description: string): string {
   return description.charAt(0).toLowerCase() + description.slice(1)
 }
+
+/** Compass point for an azimuth tick on the sky plot ("0° N", "90° E"); other ticks as plain degrees. */
+export function formatAzimuthTick(az: number): string {
+  const points: Record<number, string> = { 0: 'N', 90: 'E', 180: 'S', 270: 'W', 360: 'N' }
+  return points[az] ? `${az}° ${points[az]}` : `${az}°`
+}
+
+/** Elevation axis tick, e.g. "-2°". */
+export function formatElevationTick(el: number): string {
+  return `${el}°`
+}
+
+/** Which sample is selected, e.g. "sample 25 of 721". */
+export function formatSamplePosition(index: number, count: number): string {
+  return `sample ${index + 1} of ${count}`
+}
+
+/** Azimuth of the horizon-profile sample a lookup used, e.g. "profile sample at 137° az". */
+export function formatProfileSample(az: number): string {
+  return `profile sample at ${az}° az`
+}
+
+/** Terrain layer line, e.g. "pgda_78_site_dems: near field, 5 m, to 10 km". */
+export function formatTerrainLayer(layer: {
+  dataset_id: string
+  role: string
+  resolution_m: number
+  max_range_km?: number | null
+}): string {
+  const role = layer.role.replace('_', ' ')
+  const range = layer.max_range_km == null ? '' : `, to ${layer.max_range_km} km`
+  return `${layer.dataset_id}: ${role}, ${layer.resolution_m} m${range}`
+}
+
+/** Display names for event kinds (contract `EventKind`). */
+export const EVENT_LABELS: Record<'sunrise' | 'sunset' | 'earthrise' | 'earthset', string> = {
+  sunrise: 'Sunrise',
+  sunset: 'Sunset',
+  earthrise: 'Earthrise',
+  earthset: 'Earthset',
+}
