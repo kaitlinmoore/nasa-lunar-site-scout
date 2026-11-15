@@ -24,6 +24,23 @@ The app can run against the committed example responses in `../fixtures/*.json` 
 
 The header shows which source is in use. Fixture data goes through the same generated contract types as live data, and fixture files load as a separate chunk, only in fixture mode. The fixtures are placeholders (`_placeholder: true`), so the screen shows the "placeholder data, not a computed result" notice.
 
+## Views and URLs
+
+- `/` (plus any `?source=`): the **globe** (C7a), the start page.
+- `?site=<id>`: that curated site's screen. Back/forward work, and other query params (like `?source=fixtures`) are kept when moving between views. No router dependency (`src/route.ts`).
+- A site's screen shows results only when they're for that site's location. So far only the C1 thin-slice scenario (Site01) has results; any other site says "No computed scenario for this site yet".
+
+## Globe (C7a)
+
+Cesium Moon (ion asset 2684829, imagery + LOLA terrain as one 3D tileset), **display only**: no numbers come from Cesium. Its terrain sits about 2.5 km above LOLA heights, so site markers are clamped to the rendered surface, and every value comes from our API.
+
+- **Sites:** from `/api/sites`, or `fixtures/sites.json` in fixture mode. Click a marker (or a name in the list under the globe) to open the site's screen. The list is the accessible equivalent of the canvas markers and keeps working if WebGL or the token fails.
+- **Markers:** drawn without the depth test (a clamped marker is otherwise half-buried in the terrain it sits on) and hidden when they're beyond the Moon's limb from the camera.
+- **Lighting:** a light that follows the camera; Cesium's own Sun and Moon are hidden, so the globe never shows illumination we didn't compute.
+- **Token:** `CESIUM_ION_TOKEN` from the repo's `.env` (or `LSS_ENV_FILE`), injected at build time; the build logs only whether it's set and its length. It ships in the bundle, so it's restricted in Cesium ion (allowed URLs, the Cesium Moon asset, `assets:read`). Local dev needs a token whose allowed URLs include `http://localhost:5173`. Without a token the page says so and the site list still works. Note: changing a token's permissions in ion can generate a new token value; update `.env` when that happens.
+- **Build:** Cesium's runtime files (Workers, ThirdParty, Assets, Widgets) are copied to `/cesium/` (`vite-plugin-static-copy`; `CESIUM_BASE_URL`). Cesium is a separate lazy chunk (~4.2 MB, ~1.1 MB gzipped) loaded only on the globe, so the build prints Vite's "chunks larger than 500 kB" notice for it; that's expected.
+- **Credits:** Cesium's credit bar stays visible (Cesium ion logo, "Upgrade for commercial use.", and "Data attribution" → "NASA and the USGS Astrogeology Science Center", text only).
+
 ## Sky view (C5, fixture mode only for now)
 
 The horizon/sky plot and timeline use `fixtures/horizon.json` and `fixtures/series.json`. In live mode the section says it's fixture-only until the live horizon and series endpoints exist.

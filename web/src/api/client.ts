@@ -5,6 +5,8 @@ import type { components } from './schema'
 export type Schemas = components['schemas']
 export type HealthResponse = Schemas['HealthResponse']
 export type SitesResponse = Schemas['SitesResponse']
+export type Site = Schemas['Site']
+export type SiteLocation = Schemas['Location']
 export type Scenario = Schemas['Scenario']
 export type MetricsResponse = Schemas['MetricsResponse']
 export type PowerMetrics = Schemas['PowerMetrics']

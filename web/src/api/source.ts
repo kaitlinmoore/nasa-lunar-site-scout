@@ -1,7 +1,14 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 // Data source switch: live API or the committed fixtures/*.json (see web/README.md).
 // Both paths return the same generated contract types, so the screen can't tell them apart.
-import { type HorizonProfile, type MetricsResponse, postMetrics, type SeriesResponse } from './client'
+import {
+  getSites,
+  type HorizonProfile,
+  type MetricsResponse,
+  postMetrics,
+  type SeriesResponse,
+  type SitesResponse,
+} from './client'
 
 export type DataSource = 'live' | 'fixtures'
 
@@ -47,4 +54,12 @@ export async function loadThinSliceSky(
     series: series.default as SeriesResponse,
     horizon: horizon.default as HorizonProfile,
   }
+}
+
+/** Curated sites for the globe (C7a): fixtures/sites.json, or GET /api/sites in live mode. */
+export async function loadSites(source: DataSource): Promise<SitesResponse> {
+  if (source === 'fixtures') {
+    return (await import('../../../fixtures/sites.json')).default as SitesResponse
+  }
+  return getSites()
 }

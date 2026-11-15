@@ -9,11 +9,15 @@
 // - Field descriptions from the contract (fixtures/openapi.json) are injected as
 //   __FIELD_DOCS__ so the UI shows the contract's own definitions, not hand-copied ones.
 // - The dev server may read ../fixtures (fixture mode, see web/README.md).
+// - Cesium (C7a globe): its static runtime files (Workers, ThirdParty, Assets, Widgets) are
+//   copied to /cesium/ and CESIUM_BASE_URL points there (Cesium's documented Vite setup).
+//   The token is logged by length only, never printed.
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { parseEnv } from 'node:util'
 import react from '@vitejs/plugin-react'
 import { defineConfig, searchForWorkspaceRoot } from 'vite'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 const repoRoot = resolve(import.meta.dirname, '..')
 const envFile = process.env.LSS_ENV_FILE || resolve(repoRoot, '.env')
@@ -54,9 +58,24 @@ const fieldDocs = Object.fromEntries(
   }),
 )
 
+/** Where Cesium's static runtime files are served from (relative to the site root). */
+const cesiumBaseUrl = 'cesium'
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    viteStaticCopy({
+      targets: [
+        {
+          src: 'node_modules/cesium/Build/Cesium/{Workers,ThirdParty,Assets,Widgets}/**/*',
+          dest: cesiumBaseUrl,
+          rename: { stripBase: 4 }, // drop node_modules/cesium/Build/Cesium
+        },
+      ],
+    }),
+  ],
   define: {
+    CESIUM_BASE_URL: JSON.stringify(`/${cesiumBaseUrl}/`),
     __CONTRACT_VERSION__: JSON.stringify(contractVersion),
     __FIELD_DOCS__: JSON.stringify(fieldDocs),
     'import.meta.env.VITE_CESIUM_ION_TOKEN': JSON.stringify(cesiumToken),
