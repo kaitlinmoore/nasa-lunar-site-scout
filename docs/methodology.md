@@ -114,13 +114,17 @@ Implemented in `lss/ephem/core.py`; tested in `tests/engine/test_ephem.py`.
   (SPICE `LT+S`), computed by `spkcpo` for an observer fixed on the rotating Moon. The aberration therefore
   includes the observer's velocity from lunar rotation. There is no refraction (no atmosphere). Light time
   matters in the rotating frame: in the ~8.3 min the sunlight travels, the Moon turns by about 0.08°.
+- **Libration.** No separate libration model: libration is already in every Earth position, via the DE421
+  ephemeris (the Earth–Moon vector) and the lunar orientation (PA DE421), because the Earth's direction is
+  computed in the Moon's body-fixed frame. At the served site libration is what moves the Earth in its sky:
+  elevation from −7.4° to +6.0° over the served window (section 5.4).
 - **Apparent disc sizes.** Angular radius = asin(R / distance). Sun: R = 696,000 km (`pck00010`), giving about
   0.26–0.27°. Earth: R = 6371.0 km, the volumetric mean radius of `pck00010`'s Earth ellipsoid
   (6378.1366 / 6356.7519 km), giving 0.90–1.02° (a disc of about 1.8–2.05°, the "~2° Earth disc" of the plan).
   Using a sphere for Earth instead of its ellipsoid changes the disc edge by under 0.003°.
 - **Independent check.** For every test site and epoch, azimuth, elevation and range agree with SPICE's own
   constant-position az/el routine (`azlcpo`, same frame and corrections) to better than 10⁻⁶°. The comparison
-  against JPL Horizons, an independent ephemeris service, is in section 6 _(to do, step 4.7)_.
+  against JPL Horizons, an independent ephemeris service, is in section 6.1 (agreement better than 0.05″).
 
 ## 3. Horizon
 
@@ -255,7 +259,7 @@ file also records the DEMs' SHA-256 hashes from `MANIFEST.json`, for provenance.
   - We compute the RoI 4 area average on the nominal DEM: the same quantities, averaged over every 5 m pixel in
     the RoI 4 outline, at 1 m, over Barker's period of 2024-01-01 to 2026-01-01.
   - We require it to be at least Barker's 1st percentile (Table 2, RoI 4, A rows), within a tolerance stated
-    with the result _(to do, step 4.7)_.
+    before the run (section 6.2).
   - For RoI 4 at z = 1 m, those values are: average illumination 69.61%, LCIP 136.49 days, and LCSP 13.27 days,
     where LCSP is a 99th percentile, so the expected direction is reversed (our value at most 13.27 days).
 - **No nominal-DEM values are tabulated.**
@@ -276,7 +280,7 @@ Product 69's average illumination and Earth-visibility maps (2016 release, 60 m/
 | Observer height | **Not stated** anywhere (page, labels, README). Assumed **surface level (0 m)**: Gläser et al. (2018) describe Mazarico's results as "surface level", and Mazarico et al. (2011) treat ~10 m as a sensitivity case | Assumed |
 | Time step | Hourly | Product page: "averaged over hourly timesteps spanning 18.6 years" |
 | Averaging span | 18.6 years (one lunar nodal cycle) | Product page (same sentence) |
-| Averaging dates | **Not stated** anywhere | Assumed; the sensitivity to the start date is measured (two start dates) _(to do, step 4.7)_ |
+| Averaging dates | **Not stated** anywhere | Assumed; the sensitivity to the start date is measured with two start dates, 2000-01-01 and 2024-01-01 (section 6.3) |
 
 Note: Mazarico et al. (2011) themselves ran "several 18.6-years lunar precession cycles" at 6 h resolution on
 240 m maps; the 2016 maps (60 m, hourly) are a later release by the same team.
@@ -432,16 +436,216 @@ If other bodies get azimuth statistics, the same rule applies.
 - **Cost.** The served scenario (30 days, both bodies) takes about 2 s with the horizon cached; two years of
   Sun-only visibility take about 35 s (development PC).
 
-## 6. Validation results _(to do, step 4.7)_
+## 6. Validation results (step 4.7)
+
+All numbers below come from committed scripts. Their outputs are committed too and checked by tests:
+
+- `scripts/horizons_check.py` → `tests/engine/fixtures/horizons_site01_roi4.json`, tested by
+  `tests/engine/test_validation_horizons.py`;
+- `scripts/validation_c1.py` → `tests/engine/fixtures/validation_c1.json`, tested by
+  `tests/engine/test_validation_c1.py`;
+- `scripts/precompute_c1.py` → the served result and the regression fixture
+  `tests/engine/fixtures/site01_roi4_c1.json`, tested by `tests/engine/test_regression_c1.py`.
+
+Every tolerance was fixed before the run it applies to. One comparison misses its tolerance (section 6.3); it
+is reported as a miss, with the diagnosis, and the tolerance was not changed afterwards.
+
+| Check | Tolerance | Result | Verdict |
+|---|---|---|---|
+| Sun and Earth az/el vs JPL Horizons, 25 epochs 2024–2050 | 1″ | ≤ 0.05″ | pass |
+| Barker RoI 4 average illumination (≥ 1st percentile) | −1.0 pp | 77.46% vs 69.61% | pass |
+| Barker RoI 4 LCIP (≥ 1st percentile) | −2 d | 192.2 d vs 136.49 d | pass |
+| Barker RoI 4 LCSP (≤ 99th percentile) | +1 d | 10.05 d vs 13.27 d | pass |
+| Barker Fig. 19 nominal-DEM values (qualitative) | none | read 77.5% / 192 d / 10.1 d; ours 77.46% / 192.2 d / 10.05 d | agrees |
+| Product 69, Earth, 5 × 5 pixels: mean \|difference\| | 5 pp | 3.3 pp | pass |
+| Product 69, Sun, 5 × 5 pixels: mean \|difference\| | 5 pp | 8.7 pp (no bias: mean −1.7 pp) | **miss** (section 6.3) |
+| Ridge-top: the Sun is seen only below the local horizontal | (stated) | confirmed four ways (section 6.4) | confirmed |
+
+### 6.1 Ephemeris vs JPL Horizons
+
+- **Reference.** JPL Horizons (Giorgini et al. 1996), queried through its API for a user-defined site on the
+  Moon: the served point (222.851347° E, 89.452675° S) at 1957.39 m above the 1737.4 km sphere (DEM surface
+  1956.39 m + 1 m). Horizons uses DE441 and its own lunar mean-Earth frame (`MEAN_ME`, "high precision"), so it
+  is independent of our DE421 kernels. Its quantity 4 is the apparent azimuth and elevation: light time,
+  stellar aberration and light bending, no refraction.
+- **Epochs.** 25 epochs: 11 across the served window and 14 spread over 2024–2050 (one every two years, at
+  varied dates and hours). Sun and Earth.
+- **Tolerance:** 1″ (0.00028°) in azimuth, in elevation and in angular separation. That is far below anything
+  the results depend on: the horizon step is 0.1° (360″) and the Sun's radius is about 0.27°.
+- **Result.** The largest separation is 0.044″ for the Sun and 0.050″ for the Earth. The largest azimuth
+  difference is 0.02″ and the largest elevation difference 0.05″. Distances agree to 14 m (Sun) and 4 m (Earth).
+  The DE421 vs DE441 and frame-realisation differences are invisible at this level. Light bending, which
+  Horizons includes and we don't, is far smaller still for these geometries.
+
+### 6.2 Barker et al. (2021): RoI 4 bound
+
+- **Setup** (section 4.1). Every 5 m pixel in Barker's RoI 4 outline (`Site01_ROIs.tgz`, polygon 4). The
+  outline runs through pixel centres, so the RoI is the pixels inside it or on it: **532 pixels = 13,300 m²**,
+  exactly Barker's Table 2 area, with the centroid at Barker's (−11.2875, −12.1675) km. Each pixel gets its own
+  horizon at 1 m (default settings) and two years of Sun visibility, 2024-01-01 to 2026-01-01.
+- **Like with like.** Table 2's A rows are, for each DEM clone, the RoI average of the per-pixel values; the
+  percentiles are then taken over the 100 clones. (The C rows use the most illuminated pixel at each hour; A
+  must be per-pixel averages, because its LCIP differs from C's.) Barker samples hourly, so a shadow shorter
+  than about an hour is invisible to his LCIP and LCSP. We therefore compare values computed from **hourly
+  samples**: the time-mean visible fraction, and the longest runs of hours with any / no part of the Sun
+  visible. Our own definitions (section 5, refined periods) give 77.46%, 191.8 d and 10.04 d, almost the same.
+- **Internal grid.** The area run uses a 600 s internal grid instead of 60 s. On 11 of the pixels both grids were
+  run: average illumination, LCIP, LCSP and illumination fraction agree to better than 10⁻⁵. At 2 of the 11
+  pixels the 60 s grid finds one more short shadow period.
+- **Result** (RoI average over 532 pixels, nominal DEM):
+
+  | RoI 4, z = 1 m, 2024–2025 | Ours | Table 2 A (bound) | Tolerance | Margin |
+  |---|---|---|---|---|
+  | Average illumination | **77.46%** | ≥ 69.61% (1st pct) | −1.0 pp | +7.85 pp |
+  | LCIP | **192.2 d** | ≥ 136.49 d (1st pct) | −2 d | +55.7 d |
+  | LCSP | **10.05 d** | ≤ 13.27 d (99th pct) | +1 d | 3.22 d |
+
+  All three pass. All 532 pixels have average illumination of at least 70.0% (range 70.0–85.1%), as they should,
+  since Barker drew the RoI as the connected region above 70%.
+- **Fig. 19, qualitative.** Barker's nominal-DEM values for RoI 4, read from the figure (open circles), are about
+  77.5%, 192 d and 10.1 d, with the LCIP running from late September 2024 to late March or early April 2025.
+  Ours: 77.46%, 192.2 d and 10.05 d, with the median pixel's LCIP running from 2024-09-07 to 2025-03-27. The
+  values agree to the precision of reading the figure.
+- **C rows, qualitative** (most illuminated pixel at each hourly step): ours 86.86%, 232.54 d and 4.54 d, against
+  Barker's 1st percentiles of 86.81%, 232.50 d and 4.58 d (99th percentile for LCSP).
+- **Cost** (the first area measurement, for C3): 532 points × 2 years of Sun took 4,607 s on the development PC,
+  a median of 8.0 s per point. Uncontended, that is a 3.7 s horizon plus a 3.0 s series.
+
+### 6.3 PGDA product 69: internal pass (never served)
+
+- **Setup** (section 4.2). The observer is at 0 m on the 60 m map (`LDEM_60S_60MPP_ADJ` to 148 km, then 240 m to
+  400 km). The quantity is the share of hourly time steps with any part of the disc visible. Each run covers 18.6
+  years, from two start dates (2000-01-01 and 2024-01-01), and is averaged. It is computed at the 5 × 5 product 69
+  pixels around the RoI 4 centroid; both maps share the same 60 m pixel grid. Tolerance, set before the run: mean
+  |difference| over the 25 pixels ≤ 5 percentage points (pp).
+- **Earth: pass.** Mean |difference| 3.3 pp, mean difference +1.5 pp, correlation 0.80. The RoI 4 pixel reads
+  57.5% (product 69) and 58.3% (ours). The two start dates differ by at most 0.06 pp.
+- **Sun: misses the stated tolerance.** Mean |difference| **8.7 pp** (> 5 pp).
+  - There is no overall bias: the mean difference is −1.7 pp, the correlation 0.72, and the RoI 4 pixel itself
+    agrees within 2.5 pp (68.5% product 69, 71.0% ours).
+  - The two start dates differ by at most 1.0 pp, so the unknown averaging dates do not explain the miss.
+  - The miss is pixel-to-pixel scatter. Neighbouring product 69 pixels on this ridge range from 21% to 86%.
+- **Diagnosis** (added after the miss, not a re-test).
+  - At the 9 central pixels, our value moves by a median of 14 pp (up to 38 pp) when the observer is moved 30 m,
+    half a pixel, in any of the four map directions.
+  - Product 69's value lies within that range of shifted values at 4 of the 9 pixels.
+  - Our 60 m map is a later, orbit-adjusted LOLA product. Product 69 used `LDEM_85S_060M` (2016), so features
+    can sit tens of metres apart between the two maps. On a ridge, a shift that small changes 60 m pixel values by
+    more than the miss.
+  - One product 69 pixel is 0 in both its Sun and Earth maps, where its neighbours are 48–58% for Earth (ours:
+    35% Sun, 36% Earth). This looks like an artefact in the product.
+  - Conclusion: at 60 m on this ridge, a pixel-by-pixel comparison cannot be tighter than about 10 pp without
+    product 69's own terrain. The Earth map, which depends far less on the near horizon, passes.
+- **Terrain resolution** (section 4.3), at the RoI 4 centroid over 18.6 years from 2024. The same quantity on
+  the served 5 m stack is 54.8% at 0 m and **87.0% at 1 m**; on the 60 m map at 0 m it is 71.0%. At 0 m on 5 m
+  terrain, metre-scale relief blocks the Sun, and 1 m clears it. This is why product 69 (0 m, 60 m) and the served
+  result (1 m, 5 m) must not be compared directly.
+
+### 6.4 Ridge-top check: the Sun is seen below the local horizontal
+
+**Finding.** In the served window the Sun's centre is below the local horizontal plane all the time (−1.56° to
+−0.52°), yet some of the Sun is visible 69.8% of the time. Even its upper limb never rises above −0.26°. So all
+of that visibility is the Sun seen *below* the local horizontal. A horizon at the local horizontal would give 0%.
+This is possible only if the terrain horizon lies lower still, which is what a high ridge gives.
+
+**Geometry.** The observer is 1957.4 m above the reference sphere. From that height, a smooth sphere's horizon
+would be at −2.72° (dip = arccos(R / (R + h))). Real terrain only raises the horizon above that line: around
+this point it lies between −2.62° and +0.34°.
+
+**The horizon along the Sun's path while the Sun is visible** (served window, 60 s samples; horizon at the
+disc centre's azimuth; "distance" is how far away the terrain that sets the horizon is):
+
+| Sun azimuth | Visible (h) | Sun centre elevation | Horizon elevation | Horizon distance (km) |
+|---|---|---|---|---|
+| 0–30° | 21.4 | −0.85 to −0.80° | −1.08 to −0.54° | < 0.1 |
+| 30–60° | 59.1 | −1.08 to −0.52° | −2.34 to −1.08° | < 0.1 |
+| 60–90° | 71.6 | −1.14 to −0.52° | −2.43 to −1.22° | 0.0–48 |
+| 90–120° | 59.0 | −1.17 to −0.85° | −2.62 to −0.84° | 37–199 |
+| 120–150° | 41.7 | −1.43 to −1.17° | −2.23 to −1.07° | 102–143 |
+| 150–180° | 30.8 | −1.51 to −1.43° | −2.24 to −1.25° | 0.4–156 |
+| 180–210° | 21.5 | −1.56 to −1.53° | −1.82 to −1.30° | 0.6–9 |
+| 210–240° | 57.3 | −1.53 to −1.39° | −2.02 to −1.13° | 1.2–42 |
+| 240–270° | 58.9 | −1.39 to −1.17° | −2.57 to −1.29° | 37–89 |
+| 270–300° | 58.8 | −1.17 to −0.94° | −2.04 to −0.78° | 0.1–60 |
+| 300–330° | 22.3 | −0.94 to −0.87° | −0.81 to −0.61° | 0.1 |
+| 330–360° | 0 | | | |
+
+- **While the Sun is visible, the horizon at its azimuth ranges from −2.62° to −0.54°.** That is always below
+  the local horizontal, and below the Sun's upper limb, whose clearance over the horizon is −0.01° to +2.14°.
+  The −0.01° comes from partly visible discs whose centre column is just hidden but whose side columns are not:
+  the disc is cut with the real horizon profile (section 5.1).
+- Over 300–330° the horizon (−0.81° to −0.61°) is above the Sun's centre. The 22.3 h there are partial-disc
+  time: only the top of the disc is in view.
+
+**Four independent confirmations.**
+
+1. **Independent ray scan.** At every 5° of azimuth the Sun visits while visible (53 azimuths), the horizon was
+   recomputed by separate code. It reads the DEMs with rasterio, interpolates bilinearly, steps along great
+   circles and takes the elevation angle from 3-D vectors; it shares nothing with `lss.horizon` except the layer
+   split. It agrees with the engine to **0.037°** at worst. Only three azimuths differ by more than 0.01°, all
+   where the horizon is set by terrain within 50 m, where the two codes sample the 5 m map differently. The
+   low horizon is in the terrain data, not an artefact of the horizon code.
+2. **Barker et al. (2021) Fig. 15**, Barker's own horizon at the RoI 4 centroid at 1 m, independent code.
+   - Barker's horizon panels measure azimuth counter-clockwise from the map's +x axis. In our convention that
+     angle a is az = (90° − longitude) − a. We found this mapping by matching the profile's shape, then derived
+     it from the projection.
+   - Under it, our horizon matches values read from the figure at 16 angles with a median difference of 0.06°.
+     Two angles differ by about 0.8°, both where the horizon is set by fine far-field structure 39–136 km away,
+     which is hard to read off the figure.
+   - Like ours, Barker's horizon at RoI 4 is below −1° over most azimuths.
+3. **Barker's Table 2 needs it.** Over Barker's period, a horizon at the local horizontal would allow a
+   time-mean visible fraction of at most **51.4%** at RoI 4 (Sun only, from the ephemeris). Barker's *1st
+   percentile* for RoI 4 is 69.61%, and his nominal-DEM value (Fig. 19) is about 77.5%. Both are impossible
+   unless the Sun is seen below the local horizontal for a large share of the time. Our 77.46% (section 6.2)
+   agrees with his value.
+4. **Product 69 needs it too.** Over 18.6 years from 2024, a horizon at the local horizontal would show some
+   of the Sun 55.6% of the time. Product 69's RoI 4 pixel reads **68.5%**, and five of its neighbours exceed
+   70%. Product 69 was computed by other people, with other code, on an older 60 m map, at surface level. It
+   too sees the Sun below the local horizontal on this ridge. Our reproduction gives 71.0% there, and 87.0% for
+   the served stack at 1 m.
+
+**Verdict: the ridge-top result is confirmed directly.** In the served window the Sun is visible only below the
+local horizontal, because the horizon around the ridge top lies lower still, at −2.6° to −0.5° along the Sun's
+path. Our horizon code, an independent scan of the same DEMs, Barker's horizon, Barker's tabulated
+illumination and product 69 all agree with this.
+
+### 6.5 Served result and regression fixture
+
+- **The served scenario** (key `00010cfa5fef681c`) was computed with the validated code and stored in two places:
+  - the served result: `LSS_DATA_DIR/cache/served/c1_00010cfa5fef681c.json`, the metrics and series responses
+    with their provenance, written by `scripts/precompute_c1.py`;
+  - the regression fixture: `tests/engine/fixtures/site01_roi4_c1.json`, the same metrics and every 6th hourly
+    sample.
+- `tests/engine/test_regression_c1.py` recomputes the scenario and requires fractions to agree to 10⁻⁶, durations
+  to 10⁻³ h, angles to 10⁻⁶° and event times to 1 s.
+- **Final served values** at the 1 h step, alongside the 10-minute previews quoted when window B was chosen:
+
+  | Metric | Served (1 h step; metrics from the 60 s grid, refined) | Preview (10 min) |
+  |---|---|---|
+  | Sun illumination fraction | 69.77% | 69.7% |
+  | Mean visible disc fraction | 60.17% | n/a |
+  | Shadow periods | 4 | 4 |
+  | Longest shadow | 132.88 h (not clipped) | 132.8 h |
+  | Earth visibility fraction | 63.56% | 63.5% |
+  | Longest Earth gap | 262.40 h (not clipped) | 262.7 h |
+  | Sun and Earth both visible | 45.10% | 45.1% |
+
 
 ## References
 
 - Allen, C. W. (1973). *Astrophysical Quantities*, 3rd edition. Athlone Press, London. §81, p. 171.
 - Barker, M. K., et al. (2021). Improved LOLA elevation maps for south pole landing sites: Error estimates and
   their impact on illumination conditions. *Planetary and Space Science* 203, 105119. doi:10.1016/j.pss.2020.105119
-- Barker, M. K., et al. (2023). *Planetary Science Journal* 4, 183. doi:10.3847/PSJ/acf3e1
+- Barker, M. K., et al. (2023). A New View of the Lunar South Pole from the Lunar Orbiter Laser Altimeter (LOLA).
+  *Planetary Science Journal* 4(9), 183. doi:10.3847/PSJ/acf3e1
 - Gläser, P., et al. (2018). Illumination conditions at the lunar poles: Implications for future exploration.
-  *Planetary and Space Science* 162. doi:10.1016/j.pss.2017.07.006
+  *Planetary and Space Science* 162, 170–178. doi:10.1016/j.pss.2017.07.006
 - Mazarico, E., et al. (2011). Illumination conditions of the lunar polar regions using LOLA topography.
   *Icarus* 211, 1066–1081. doi:10.1016/j.icarus.2010.10.030
-- Folkner, W. M., et al. (2008). The Planetary and Lunar Ephemeris DE 421. JPL IOM 343R-08-003.
+- Mazarico, E., Barker, M. K., & Nicholas, J. B. (2018). Advanced illumination modeling for data analysis and
+  calibration. Application to the Moon. *Advances in Space Research* 62(11), 3214–3228.
+  doi:10.1016/j.asr.2018.08.022
+- Giorgini, J. D., et al. (1996). JPL's On-Line Solar System Data Service. *Bulletin of the American
+  Astronomical Society* 28(3), 1158. (JPL Horizons, https://ssd.jpl.nasa.gov/horizons/)
+- Folkner, W. M., Williams, J. G., & Boggs, D. H. (2008). The Planetary and Lunar Ephemeris DE 421. JPL IOM
+  343R-08-003.
