@@ -21,9 +21,9 @@ from typing import Any
 from pydantic import Field, model_validator
 
 from lss.contract import Model, Operation
-from lss.nl.vocabulary import OPERATION_PARAMS, HeightSource, WindowSource
+from lss.nl.vocabulary import OPERATION_PARAMS, HeightSource, RadiusSource, SlopeSource, WindowSource
 
-SCHEMA_VERSION = "nl-output-3"
+SCHEMA_VERSION = "nl-output-4"
 
 
 class Outcome(StrEnum):
@@ -59,6 +59,8 @@ class NLOutput(Model):
     query: NLQuery | None = None
     height_source: HeightSource = HeightSource.not_applicable
     window_source: WindowSource = WindowSource.not_applicable
+    slope_source: SlopeSource = SlopeSource.not_applicable
+    radius_source: RadiusSource = RadiusSource.not_applicable
     assumptions: list[str] = Field(
         default_factory=list, description="Defaults or readings the user didn't state, e.g. an assumed date"
     )
@@ -138,8 +140,9 @@ def llm_json_schema() -> dict[str, Any]:
 # compile ("compiled grammar is too large", measured 2026-11-15), and strict tools hit the
 # optional/union parameter limits. So the model answers in two calls, each with a small schema:
 #   1. route: outcome, operation (or none), and any registry-cited limitations;
-#   2. fill (only when there is an operation): that operation's params, the height/window
-#      sources, and the interpretation, so the echo comes from the call that wrote the params.
+#   2. fill (only when there is an operation): that operation's params, the
+#      height/window/slope/radius sources, and the interpretation, so the echo comes from the
+#      call that wrote the params.
 # `lss.nl.interpret` combines them into an `NLOutput`, which `lss.nl.validate` checks as before.
 
 
@@ -155,6 +158,8 @@ class NLFill(Model):
     params: dict[str, Any]
     height_source: HeightSource = HeightSource.not_applicable
     window_source: WindowSource = WindowSource.not_applicable
+    slope_source: SlopeSource = SlopeSource.not_applicable
+    radius_source: RadiusSource = RadiusSource.not_applicable
     assumptions: list[str] = Field(default_factory=list)
 
 

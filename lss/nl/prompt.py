@@ -18,9 +18,16 @@ from lss.contract import Operation
 from lss.nl.provider import NLPrompt
 from lss.nl.schema import fill_json_schema, route_json_schema
 from lss.nl.validate import NLContext
-from lss.nl.vocabulary import ALLOWED_OPERATIONS, DEFAULT_WINDOW, UNIT_HEIGHT_PROXIES_M, HeightSource
+from lss.nl.vocabulary import (
+    ALLOWED_OPERATIONS,
+    DEFAULT_WINDOW,
+    NEARBY_RADIUS_M,
+    SAFE_MAX_SLOPE_DEG,
+    UNIT_HEIGHT_PROXIES_M,
+    HeightSource,
+)
 
-PROMPT_VERSION = "p3-draft"
+PROMPT_VERSION = "p4-draft"
 
 ROUTE_SYSTEM = """\
 You are the first step of a natural-language interface to a terrain-aware lunar landing-site \
@@ -80,9 +87,20 @@ only when the user gives them.
 <month>" is the whole month (00:00 UTC on the 1st to 00:00 UTC on the 1st of the next month).
    Times are UTC, ISO 8601 with "Z". "Today" is given in the context. Leave "step" out unless \
 the user asks for a sampling step.
-5. Put any other reading you chose (e.g. how you interpreted a vague term) in "assumptions". \
-Proxy heights and default windows are disclosed automatically; don't repeat them.
-6. "interpretation" restates the query exactly as you filled it (site, height, dates, \
+5. Slope limits (max_slope_deg) and slope_source:
+   - the user gave a slope limit -> that value, "user";
+   - the user asked for "safe" terrain and gave no slope limit -> {safe_slope} degrees, \
+"safe_default";
+   - the query has no slope limit -> "not_applicable".
+6. Search distances (radius_m, max_feature_distance_m) and radius_source:
+   - the user gave a distance -> that value in meters, "user";
+   - the user said "nearby", "near" or "around" and gave no distance -> {nearby_m} m, \
+"nearby_default";
+   - the query has no search distance -> "not_applicable".
+7. Put any other reading you chose (e.g. how you interpreted a vague term) in "assumptions". \
+Proxy heights, default windows, the "safe" slope limit and the "nearby" distance are disclosed \
+automatically; don't repeat them.
+8. "interpretation" restates the query exactly as you filled it (site, height, dates, \
 thresholds), in one or two plain sentences.
 
 Return only JSON matching the schema."""
@@ -102,6 +120,8 @@ def fill_system_prompt() -> str:
         lander=UNIT_HEIGHT_PROXIES_M[HeightSource.lander_proxy],
         default_height=UNIT_HEIGHT_PROXIES_M[HeightSource.default],
         default_days=DEFAULT_WINDOW.days,
+        safe_slope=f"{SAFE_MAX_SLOPE_DEG:g}",
+        nearby_m=f"{NEARBY_RADIUS_M:g}",
     )
 
 

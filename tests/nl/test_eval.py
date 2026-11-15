@@ -121,6 +121,7 @@ PROXIMITY_OK = {
         "operation": "proximity",
         "params": {"location": {"site_id": "pgda-site01"}, "types": ["crater"], "radius_m": 10000},
     },
+    "radius_source": "user",
 }
 
 
@@ -309,3 +310,11 @@ def test_rescore_applies_current_labels_without_calls(tmp_path):
     assert re["rescored_from"] == path.name and re["usage"] == report["usage"]
     out = nl_eval.write_results(re, tmp_path)
     assert "_rescored-" in out.name and out != path
+
+
+def test_rescore_refuses_runs_from_another_schema(tmp_path):
+    responses = {LANDER: answer(), BOULDERS: refusal(CITE_81, CITE_AUSSEL)}
+    report = nl_eval.run_eval(FakeProvider(responses), eval_set())
+    path = nl_eval.write_results({**report, "schema_version": "nl-output-3"}, tmp_path)
+    with pytest.raises(ValueError, match="nl-output-3"):
+        nl_eval.rescore(path, eval_set())

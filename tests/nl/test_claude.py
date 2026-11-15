@@ -183,3 +183,23 @@ def test_auth_failure_is_fatal_and_stops_the_eval():
     with pytest.raises(ProviderFatalError, match="ANTHROPIC_API_KEY"):
         nl_eval.run_eval(ClaudeProvider("claude-opus-5-5", client=client), load_eval_set())
     assert client.n == 1  # stopped after the first call
+
+
+def test_eval_cli_turns_the_refusal_fallback_off(monkeypatch):
+    """Project author, 2026-11-15: no fallback for eval runs (scores are the chosen model's own);
+    the deployed demo keeps it on (the provider's default)."""
+    from lss.nl import claude as nl_claude
+    from lss.nl import eval as nl_eval
+
+    made = []
+
+    class Recording(ClaudeProvider):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, client=StandInClient(response()), **kwargs)
+            made.append(self)
+
+    monkeypatch.setattr(nl_claude, "ClaudeProvider", Recording)
+    monkeypatch.setattr(nl_eval, "run_eval", lambda provider, include_blocked=False: {"fallbacks": None})
+    nl_eval.main(["--provider", "claude", "--live", "--model", "claude-opus-5-5", "--no-write"])
+    assert made and made[0].fallbacks is False
+    assert ClaudeProvider("claude-opus-5-5", client=StandInClient(response())).fallbacks is True

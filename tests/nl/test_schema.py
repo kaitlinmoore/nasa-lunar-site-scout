@@ -13,7 +13,13 @@ from lss.config import FIXTURES_DIR
 from lss.contract import NLAnswer, NLUnsupported, Operation
 from lss.nl.schema import llm_json_schema
 from lss.nl.validate import NLValidationError, default_context, to_response, validate_output
-from lss.nl.vocabulary import ALLOWED_OPERATIONS, PROXY_ASSUMPTION_TEXT, HeightSource
+from lss.nl.vocabulary import (
+    ALLOWED_OPERATIONS,
+    NEARBY_RADIUS_TEXT,
+    PROXY_ASSUMPTION_TEXT,
+    HeightSource,
+    safe_slope_text,
+)
 
 
 def fixture(name: str) -> dict[str, Any]:
@@ -274,3 +280,69 @@ def test_window_source_needed_when_params_have_a_window(ctx):
     del out["window_source"]
     with pytest.raises(NLValidationError, match="window_source is 'not_applicable'"):
         validate_output(out, ctx)
+
+
+# ------------------------------------------------- defaults (D-safe, D-radius)
+
+
+def proximity_output(radius=10_000.0, radius_source="nearby_default") -> dict[str, Any]:
+    return {
+        "outcome": "answer",
+        "interpretation": "Craters near Connecting ridge.",
+        "query": {
+            "operation": "proximity",
+            "params": {"location": {"site_id": "pgda-site01"}, "types": ["crater"], "radius_m": radius},
+        },
+        "radius_source": radius_source,
+    }
+
+
+def search_output(slope=5.0, slope_source="safe_default") -> dict[str, Any]:
+    return {
+        "outcome": "answer",
+        "interpretation": "Safe terrain at 85 S, 30 E.",
+        "query": {
+            "operation": "search",
+            "params": {
+                "area": {"kind": "points", "points": [{"lat": -85.0, "lon": 30.0}]},
+                "criteria": {"max_slope_deg": slope},
+            },
+        },
+        "slope_source": slope_source,
+    }
+
+
+def test_nearby_default_is_checked_and_disclosed(ctx):
+    resp = to_response(validate_output(proximity_output(), ctx), ctx)
+    assert NEARBY_RADIUS_TEXT in resp.interpretation
+
+
+def test_safe_default_echo_names_the_terrain_data(ctx):
+    validated = validate_output(search_output(), ctx)
+    with pytest.raises(NLValidationError, match="slope_terrain"):
+        to_response(validated, ctx)  # no terrain named: the echo can't be built
+    resp = to_response(validated, ctx, slope_terrain="the PGDA 5 m south pole mosaic")
+    assert safe_slope_text("the PGDA 5 m south pole mosaic") in resp.interpretation
+    assert "under 5°" in resp.interpretation
+
+
+def test_user_values_are_not_disclosed_as_defaults(ctx):
+    resp = to_response(validate_output(search_output(slope=10.0, slope_source="user"), ctx), ctx)
+    assert "Safe:" not in resp.interpretation
+    resp = to_response(validate_output(proximity_output(2_000.0, "user"), ctx), ctx)
+    assert NEARBY_RADIUS_TEXT not in resp.interpretation
+
+
+@pytest.mark.parametrize(
+    ("raw", "problem"),
+    [
+        (search_output(slope=10.0), "requires slope = 5"),
+        (search_output(slope_source="not_applicable"), "slope_source is 'not_applicable'"),
+        (proximity_output(radius=5_000.0), "requires radius = 10000"),
+        (proximity_output(radius_source="not_applicable"), "radius_source is 'not_applicable'"),
+        ({**BOULDERS, "slope_source": "safe_default"}, "slope_source is set but there is no query"),
+    ],
+)
+def test_slope_and_radius_sources_must_match_params(ctx, raw, problem):
+    with pytest.raises(NLValidationError, match=problem):
+        validate_output(raw, ctx)

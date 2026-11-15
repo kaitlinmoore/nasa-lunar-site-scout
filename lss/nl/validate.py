@@ -10,6 +10,8 @@ Validation of the LLM's output (step 4.3), and conversion to the contract's NL r
 - unit heights that don't match the declared `height_source` (proxy and default heights
   must be exactly that value), and windows that don't match `window_source` (the default
   window must be exactly 30 days from the request's date);
+- slope limits and search distances that don't match `slope_source` / `radius_source` (the
+  "safe" and "nearby" defaults must be exactly 5 degrees and 10 km);
 - limitations whose citations aren't in the dataset capability registry.
 """
 
@@ -38,12 +40,20 @@ from lss.nl.schema import NLOutput, NLQuery, Outcome, SiteRef
 from lss.nl.vocabulary import (
     ALLOWED_OPERATIONS,
     DEFAULT_WINDOW,
+    NEARBY_RADIUS_M,
+    NEARBY_RADIUS_TEXT,
     OPERATION_PARAMS,
     PROXY_ASSUMPTION_TEXT,
+    RADIUS_KEYS,
+    SAFE_MAX_SLOPE_DEG,
+    SLOPE_KEYS,
     UNIT_HEIGHT_PROXIES_M,
     HeightSource,
+    RadiusSource,
+    SlopeSource,
     WindowSource,
     default_window_text,
+    safe_slope_text,
 )
 from lss.registry.loader import load_datasets
 
@@ -195,6 +205,45 @@ def _check_windows(output: NLOutput, params: dict[str, Any], ctx: NLContext, pro
             problems.append("window differs from the selected scenario's window")
 
 
+def _values(value: Any, keys: frozenset[str]) -> list[float]:
+    """Every non-null number under one of `keys`, at any depth."""
+    found: list[float] = []
+    if isinstance(value, dict):
+        for k, v in value.items():
+            if k in keys and isinstance(v, int | float):
+                found.append(float(v))
+            else:
+                found.extend(_values(v, keys))
+    elif isinstance(value, list):
+        for v in value:
+            found.extend(_values(v, keys))
+    return found
+
+
+def _check_default_value(
+    name: str, src: Any, defaulted: Any, want: float, values: list[float], problems: list[str]
+) -> None:
+    """Shared check for `slope_source` / `radius_source` (`defaulted` is the default member)."""
+    if src.value == "not_applicable":
+        if values:
+            problems.append(f"params set a {name} but {name}_source is 'not_applicable'")
+        return
+    if not values:
+        problems.append(f"{name}_source is {src.value!r} but params have no {name}")
+    elif src == defaulted and any(v != want for v in values):
+        problems.append(f"{name}_source {src.value!r} requires {name} = {want:g}, got {values}")
+
+
+def _check_slope_radius(output: NLOutput, params: dict[str, Any], problems: list[str]) -> None:
+    slopes, radii = _values(params, SLOPE_KEYS), _values(params, RADIUS_KEYS)
+    _check_default_value(
+        "slope", output.slope_source, SlopeSource.safe_default, SAFE_MAX_SLOPE_DEG, slopes, problems
+    )
+    _check_default_value(
+        "radius", output.radius_source, RadiusSource.nearby_default, NEARBY_RADIUS_M, radii, problems
+    )
+
+
 def _check_citations(output: NLOutput, ctx: NLContext, problems: list[str]) -> None:
     registry = {d.id: d for d in ctx.datasets}
     for lim in output.limitations:
@@ -247,18 +296,22 @@ def validate_output(raw: str | Mapping[str, Any] | NLOutput, ctx: NLContext) -> 
         else:
             _check_heights(output, structured.params, ctx, problems)
             _check_windows(output, structured.params, ctx, problems)
+            _check_slope_radius(output, structured.params, problems)
     else:
-        if output.height_source != HeightSource.not_applicable:
-            problems.append("height_source is set but there is no query")
-        if output.window_source != WindowSource.not_applicable:
-            problems.append("window_source is set but there is no query")
+        for name in ("height_source", "window_source", "slope_source", "radius_source"):
+            if getattr(output, name).value != "not_applicable":
+                problems.append(f"{name} is set but there is no query")
 
     _check_citations(output, ctx, problems)
     if problems:
         raise NLValidationError(problems)
 
-    # Disclosures built here, not by the model: the default window, then proxy/default heights.
+    # Disclosures built here, not by the model: the default window, then proxy/default heights,
+    # then the "nearby" radius. The "safe" slope disclosure needs the terrain data the slope is
+    # measured on, which comes with the engine's result: `to_response` adds it.
     assumptions = list(output.assumptions)
+    if output.radius_source == RadiusSource.nearby_default:
+        assumptions.insert(0, NEARBY_RADIUS_TEXT)
     if output.height_source in PROXY_ASSUMPTION_TEXT:
         assumptions.insert(0, PROXY_ASSUMPTION_TEXT[output.height_source])
     if output.window_source == WindowSource.default and structured is not None:
@@ -286,19 +339,41 @@ def to_limitations(output: NLOutput, ctx: NLContext) -> list[Limitation]:
     return result
 
 
-def interpretation_text(validated: ValidatedOutput) -> str:
-    """The echo shown to the user.
+def _all_assumptions(validated: ValidatedOutput, slope_terrain: str | None) -> list[str]:
+    assumptions = list(validated.assumptions)
+    if validated.output.slope_source == SlopeSource.safe_default:
+        if not slope_terrain:
+            raise NLValidationError(
+                [
+                    "'safe' was read as the default slope limit: name the terrain data the slope is "
+                    "measured on (slope_terrain), so the echo states it"
+                ]
+            )
+        assumptions.insert(0, safe_slope_text(slope_terrain))
+    return assumptions
+
+
+def interpretation_text(validated: ValidatedOutput, slope_terrain: str | None = None) -> str:
+    """The echo shown to the user. `slope_terrain` names the terrain data the slope was measured
+    on; required when "safe" was read as the default slope limit (D-safe).
 
     Assumptions are appended here until the contract has a field for them (contract gap C8, Phase 2).
     """
     text = validated.output.interpretation.strip()
-    if validated.assumptions:
-        text += " Assumed: " + " ".join(a.strip() for a in validated.assumptions)
+    assumptions = _all_assumptions(validated, slope_terrain)
+    if assumptions:
+        text += " Assumed: " + " ".join(a.strip() for a in assumptions)
     return text
 
 
-def to_response(validated: ValidatedOutput, ctx: NLContext) -> NLAnswer | NLUnsupported:
-    """Build the contract response. `result` stays None: the engine fills it, never the LLM."""
+def to_response(
+    validated: ValidatedOutput, ctx: NLContext, slope_terrain: str | None = None
+) -> NLAnswer | NLUnsupported:
+    """Build the contract response. `result` stays None: the engine fills it, never the LLM.
+
+    `slope_terrain`: see `interpretation_text`. It comes from the engine's result (the terrain
+    layer the slope was computed on), so a "safe" query is only answered once that result exists.
+    """
     limitations = to_limitations(validated.output, ctx)
     if validated.output.outcome == Outcome.unsupported:
         ids = list(dict.fromkeys(i for lim in limitations for i in lim.datasets_considered))
@@ -306,7 +381,7 @@ def to_response(validated: ValidatedOutput, ctx: NLContext) -> NLAnswer | NLUnsu
         return NLUnsupported(unsupported=merged)
     assert validated.structured_query is not None
     return NLAnswer(
-        interpretation=interpretation_text(validated),
+        interpretation=interpretation_text(validated, slope_terrain),
         structured_query=validated.structured_query,
         result=None,
         limitations=limitations,

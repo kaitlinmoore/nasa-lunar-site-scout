@@ -19,13 +19,16 @@
 #   blocked_on     request ids from reference/logs/nl-progress.md:
 #                    C*    blocked on contract (gaps held until Phase 2, when this stream owns the contract)
 #                    G-R*  blocked on registry (batch request to stream A, sent after A's C1 merges)
-#                    D-*   blocked on a default the project author hasn't decided yet
+#                    D-*   blocked on a default the project author hasn't decided yet (none open:
+#                          D-height, D-window, D-safe and D-radius were all decided 2026-11-15)
 #   expected       what a correct NL output is under the current contract + vocabulary:
 #     outcome      answer | partial | unsupported
 #     query        {operation, params}; locations may be {site_id: ...}
 #     params_match exact (default) | subset (only the keys given are checked)
 #     height_source  see lss.nl.vocabulary.HeightSource
 #     window_source  see lss.nl.vocabulary.WindowSource
+#     slope_source   see lss.nl.vocabulary.SlopeSource ("safe" with no limit -> 5 degrees, D-safe)
+#     radius_source  see lss.nl.vocabulary.RadiusSource ("nearby" with no distance -> 10 km, D-radius)
 #     citations    registry citations that must be present
 #     citations_optional  registry citations that may also be present without penalty
 
@@ -70,14 +73,19 @@ items:
       Partial: slopes, PGDA polar roughness maps, craters >=1-2 km. States that boulder data doesn't
       cover the pole.
     status: blocked
-    blocked_on: [C2, D-radius]
+    blocked_on: [C2]
+    notes: >-
+      D-radius resolved 2026-11-15: "nearby" with no distance is 10 km, disclosed by code; results
+      closest first, capped (an engine/contract behavior, not an NL one). Still needs slope numbers (C2).
     expected:
       outcome: partial
+      radius_source: nearby_default
       query:
         operation: proximity
         params:
           location: {site_id: pgda-site01}
           types: [crater, hazard]
+          radius_m: 10000.0
       params_match: subset
       citations:
         - {dataset_id: aussel_2025_boulders, cannot_answer: Any boulder information at the poles}
@@ -131,9 +139,13 @@ items:
       Before time-dependent area search exists: answer for curated sites in the region and say area
       search isn't available yet. Echo how "safe" was interpreted (slope limit).
     status: blocked
-    blocked_on: [C3, C2, G-R4, D-safe]
+    blocked_on: [C3, C2, G-R4]
+    notes: >-
+      D-safe resolved 2026-11-15: "safe" with no slope limit is slope under 5 degrees, and the echo names
+      the terrain data the slope is measured on (from the engine's result).
     expected:
       outcome: partial
+      slope_source: safe_default
 
   - id: k7
     source: kaitlin
@@ -183,13 +195,21 @@ items:
       Partial: PSR distance (straight-line, not a drive route). State that hydrogen data is too coarse
       for 1 km, and offer M3 surface-ice detections (~280 m) as a clearly labeled stand-in.
     status: blocked
-    blocked_on: [C5, G-R3, G-R4, D-safe]
+    blocked_on: [C5, G-R3, G-R4]
+    notes: >-
+      D-safe resolved 2026-11-15 (slope under 5 degrees; the echo names the terrain data). The 1 km is
+      the user's own distance, so radius_source is user, not the "nearby" default.
     expected:
       outcome: partial
+      slope_source: safe_default
+      radius_source: user
       query:
         operation: search
         params:
-          criteria: {near_feature_types: [psr, ice_detection], max_feature_distance_m: 1000}
+          criteria:
+            max_slope_deg: 5.0
+            near_feature_types: [psr, ice_detection]
+            max_feature_distance_m: 1000
       params_match: subset
 
   # ---- SI-supplied items: drafted by Claude, approved by the project author 2026-11-15
@@ -342,6 +362,7 @@ items:
     status: ready
     expected:
       outcome: partial
+      radius_source: user  # 10 km is the user's own distance (it happens to equal the "nearby" default)
       query:
         operation: proximity
         params:
@@ -360,6 +381,7 @@ items:
     notes: A polygon around a site would make the LLM compute coordinates; needs a circle area (C5).
     expected:
       outcome: partial
+      slope_source: user
       query:
         operation: search
         params:

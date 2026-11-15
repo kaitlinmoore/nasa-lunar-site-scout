@@ -66,6 +66,8 @@ def interpret(
         "query": {"operation": route.operation.value, "params": fill.params},
         "height_source": fill.height_source.value,
         "window_source": fill.window_source.value,
+        "slope_source": fill.slope_source.value,
+        "radius_source": fill.radius_source.value,
         "assumptions": fill.assumptions,
         "limitations": limitations,
     }

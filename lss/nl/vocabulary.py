@@ -12,6 +12,11 @@ Unit-height proxies (project author's decision, 2026-11-15): "rover" -> 1 m and
 Defaults (project author's decisions, 2026-11-15): with no height, no role and no selected
 scenario, the lander proxy (5 m); with no dates and no selected scenario, a 30-day window
 starting at the request's date (00:00 UTC). Both are disclosed in the answer.
+
+Defaults for vague terms (project author's decisions, 2026-11-15): "safe" with no slope limit
+means slope under 5 degrees (D-safe), and the echo names the terrain data the slope is measured
+on; "nearby" with no distance means within 10 km (D-radius), stated in the echo. Both are
+disclosed by code, not by the model.
 """
 
 from __future__ import annotations
@@ -104,3 +109,35 @@ DEFAULT_WINDOW = timedelta(days=30)
 
 def default_window_text(start_iso_date: str) -> str:
     return f"Window: 30 days from {start_iso_date} 00:00 UTC (default; no dates were given)."
+
+
+class SlopeSource(StrEnum):
+    """Where a structured query's slope limit (`max_slope_deg`) came from."""
+
+    user = "user"  # the user gave a slope limit in degrees
+    safe_default = "safe_default"  # the user said "safe" and gave no limit: SAFE_MAX_SLOPE_DEG (D-safe)
+    not_applicable = "not_applicable"  # the query has no slope limit
+
+
+class RadiusSource(StrEnum):
+    """Where a structured query's search distance (`radius_m`, `max_feature_distance_m`) came from."""
+
+    user = "user"  # the user gave a distance
+    nearby_default = "nearby_default"  # the user said "nearby" (or similar) and gave none (D-radius)
+    not_applicable = "not_applicable"  # the query has no search distance
+
+
+SAFE_MAX_SLOPE_DEG = 5.0
+NEARBY_RADIUS_M = 10_000.0
+
+# Params that carry the slope limit / search distance, at any depth of `StructuredQuery.params`.
+SLOPE_KEYS: frozenset[str] = frozenset({"max_slope_deg"})
+RADIUS_KEYS: frozenset[str] = frozenset({"radius_m", "max_feature_distance_m"})
+
+NEARBY_RADIUS_TEXT = "Nearby: within 10 km (default; no distance was given)."
+
+
+def safe_slope_text(terrain: str) -> str:
+    """The D-safe disclosure. `terrain` names the terrain data the slope is measured on (from the
+    engine's result); the project author's rule is that the echo always states it."""
+    return f"Safe: slope under 5°, measured on {terrain} (default; no slope limit was given)."

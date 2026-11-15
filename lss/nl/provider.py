@@ -90,5 +90,7 @@ def project_stage(out: Any, stage: str | None) -> Any:
         "params": query.get("params", {}),
         "height_source": out.get("height_source", "not_applicable"),
         "window_source": out.get("window_source", "not_applicable"),
+        "slope_source": out.get("slope_source", "not_applicable"),
+        "radius_source": out.get("radius_source", "not_applicable"),
         "assumptions": out.get("assumptions", []),
     }

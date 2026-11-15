@@ -16,7 +16,7 @@ from pydantic import Field, model_validator
 from lss.config import REPO_ROOT
 from lss.contract import Model
 from lss.nl.schema import NLQuery, Outcome, RegistryCitation
-from lss.nl.vocabulary import HeightSource, WindowSource
+from lss.nl.vocabulary import HeightSource, RadiusSource, SlopeSource, WindowSource
 
 EVAL_SET_PATH = REPO_ROOT / "tests" / "nl" / "eval_set.yaml"
 
@@ -54,6 +54,8 @@ class Expected(Model):
     params_match: Literal["exact", "subset"] = "exact"
     height_source: HeightSource | None = None
     window_source: WindowSource | None = None
+    slope_source: SlopeSource | None = None
+    radius_source: RadiusSource | None = None
     citations: list[RegistryCitation] = Field(default_factory=list)
     citations_optional: list[RegistryCitation] = Field(default_factory=list)
 
@@ -124,6 +126,8 @@ def label_output(item: EvalItem) -> dict | None:
         "interpretation": item.text,
         "height_source": (exp.height_source or HeightSource.not_applicable).value,
         "window_source": (exp.window_source or WindowSource.not_applicable).value,
+        "slope_source": (exp.slope_source or SlopeSource.not_applicable).value,
+        "radius_source": (exp.radius_source or RadiusSource.not_applicable).value,
     }
     if exp.query is not None:
         out["query"] = exp.query.model_dump(mode="json")

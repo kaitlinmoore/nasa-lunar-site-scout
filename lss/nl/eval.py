@@ -9,8 +9,8 @@ NL eval harness (step 4.5; plan section 4.5).
 Scores (plan section 4.5, the project author's two measures), over `ready` items only:
   (a) structured-query correctness, for items expecting a query (answer / partial):
       output is valid, outcome matches, operation matches, params match (exact, or the
-      label's keys for `subset`), and height_source / window_source match when the label
-      gives them.
+      label's keys for `subset`), and the height / window / slope / radius sources match when
+      the label gives them.
   (b) refusal/partial-reason correctness, for items expecting limitations (partial / unsupported):
       output is valid, outcome matches, and the cited registry entries include every required
       citation and nothing outside required + optional.
@@ -125,10 +125,10 @@ def _score_query(item: EvalItem, v: ValidatedOutput, ctx) -> tuple[bool, list[st
             notes.append("params differ from the label")
     elif not _is_subset(resolve_site_refs(exp.query.params, ctx), sq.params):
         notes.append("params don't contain the label's values")
-    if exp.window_source is not None and v.output.window_source != exp.window_source:
-        notes.append(f"window_source {v.output.window_source.value} != expected {exp.window_source.value}")
-    if exp.height_source is not None and v.output.height_source != exp.height_source:
-        notes.append(f"height_source {v.output.height_source.value} != expected {exp.height_source.value}")
+    for name in ("window_source", "height_source", "slope_source", "radius_source"):
+        want, got = getattr(exp, name), getattr(v.output, name)
+        if want is not None and got != want:
+            notes.append(f"{name} {got.value} != expected {want.value}")
     return not notes, notes
 
 
@@ -226,6 +226,7 @@ def run_eval(
         "provider": provider.name,
         "model": provider.model,
         "effort": getattr(provider, "effort", None),
+        "fallbacks": getattr(provider, "fallbacks", None),
         "prompt_version": PROMPT_VERSION,
         "schema_version": SCHEMA_VERSION,
         **_summary(results, eval_set),
@@ -266,9 +267,19 @@ def _summary(results: list[ItemResult], eval_set: EvalSet) -> dict[str, Any]:
 
 def rescore(path: Path, eval_set: EvalSet | None = None) -> dict[str, Any]:
     """Score a saved run's outputs against the current labels and splits. No API calls; the
-    usage (spend) is the original run's."""
+    usage (spend) is the original run's.
+
+    Only for runs saved under the current output schema: an older run's outputs lack fields the
+    current validation requires (e.g. `radius_source`, added in nl-output-4), so its rescore would
+    count misses the model was never asked to avoid.
+    """
     eval_set = eval_set or load_eval_set()
     saved = json.loads(path.read_text(encoding="utf-8"))
+    if saved.get("schema_version") != SCHEMA_VERSION:
+        raise ValueError(
+            f"{path.name} was saved under schema {saved.get('schema_version')!r}, not {SCHEMA_VERSION!r}: "
+            "rescoring it would count fields the model was never asked for. Its own scores stand."
+        )
     by_id = {i.id: i for i in eval_set.items}
     results = []
     for old in saved["items"]:
@@ -283,7 +294,7 @@ def rescore(path: Path, eval_set: EvalSet | None = None) -> dict[str, Any]:
             res.problems = list(old.get("problems", []))
         _finalize(res, item)
         results.append(res)
-    keep = ("run_at", "provider", "model", "effort", "prompt_version", "schema_version")
+    keep = ("run_at", "provider", "model", "effort", "fallbacks", "prompt_version", "schema_version")
     return {
         **{k: saved.get(k) for k in keep},
         "rescored_at": datetime.now(UTC).isoformat(timespec="seconds"),
@@ -338,7 +349,10 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     if args.rescore is not None:
-        report = rescore(args.rescore)
+        try:
+            report = rescore(args.rescore)
+        except ValueError as e:
+            p.error(str(e))
     elif args.provider == "oracle":
         provider: Provider = oracle_provider()
     else:
@@ -348,7 +362,9 @@ def main(argv: list[str] | None = None) -> int:
             p.error("--provider claude needs --model (the project author chooses the model)")
         from lss.nl.claude import ClaudeProvider
 
-        provider = ClaudeProvider(model=args.model, effort=args.effort)
+        # Refusal fallback off for eval runs, so every score is the chosen model's own answer
+        # (project author, 2026-11-15); the deployed demo keeps it on (ClaudeProvider's default).
+        provider = ClaudeProvider(model=args.model, effort=args.effort, fallbacks=False)
     if args.rescore is None:
         report = run_eval(provider, include_blocked=args.include_blocked)
     print(
