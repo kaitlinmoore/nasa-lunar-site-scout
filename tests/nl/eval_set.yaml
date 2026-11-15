@@ -12,8 +12,10 @@
 #   status         ready: scored now. blocked: listed with what it waits for; run but not scored.
 #   split          dev (default): used for prompt tuning. holdout: never used for tuning; scored
 #                  separately (project author, 2026-11-15). Prompt changes must be general rules,
-#                  never written around a specific item. The holdout items were chosen after live
-#                  run 2, whose outputs had been seen; they are clean from run 3 on.
+#                  never written around a specific item. Holdout: s3, s5, s8, s16 (chosen after live
+#                  run 2, whose outputs had been seen; clean from run 3 on) and s11 (never run;
+#                  replaced s13 on 2026-11-15 because s13's label changed after its output was seen).
+#                  s11 is blocked (G-R4), so the holdout has no scorable refusal until it unblocks.
 #   blocked_on     request ids from reference/logs/nl-progress.md:
 #                    C*    blocked on contract (gaps held until Phase 2, when this stream owns the contract)
 #                    G-R*  blocked on registry (batch request to stream A, sent after A's C1 merges)
@@ -366,6 +368,7 @@ items:
 
   - id: s11
     source: si_supplied
+    split: holdout
     text: What will the temperature be at Connecting ridge on January 1, 2029 at noon?
     target: "Unsupported: temperature queries are not supported yet (tool limit)."
     status: blocked
@@ -388,7 +391,6 @@ items:
 
   - id: s13
     source: si_supplied
-    split: holdout
     text: How much water ice is in Shackleton crater?
     target: "Unsupported: no dataset gives ice abundance or depth."
     status: ready

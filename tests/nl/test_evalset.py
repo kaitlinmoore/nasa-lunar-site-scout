@@ -50,7 +50,8 @@ def test_si_supplied_items_are_marked():
 
 def test_holdout_set_covers_answers_and_refusals():
     holdout = [i for i in EVAL.items if i.split.value == "holdout"]
-    assert {i.id for i in holdout} == {"s3", "s5", "s8", "s13", "s16"}
-    assert all(i.status == ItemStatus.ready and i.source == Source.si_supplied for i in holdout)
+    assert {i.id for i in holdout} == {"s3", "s5", "s8", "s11", "s16"}
+    assert all(i.source == Source.si_supplied for i in holdout)
     outcomes = {i.expected.outcome.value for i in holdout}
     assert {"answer", "unsupported"} <= outcomes
+    assert "s13" not in {i.id for i in holdout}  # label changed after its output was seen
