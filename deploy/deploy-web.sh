@@ -13,9 +13,9 @@ echo "Building web against API: $API_URL"
 
 (cd web && npm ci && VITE_API_BASE="$API_URL" npm run build)
 
-# Firebase config is generated from deploy/firebase.json with the site ID from config.sh,
+# Firebase config is generated (gitignored) from deploy/firebase.json with the site ID from config.sh,
 # so the site ID lives in one place.
-GEN=deploy/firebase.generated.json
+GEN=firebase.generated.json  # at repo root: Firebase requires "public" inside the config's directory
 node -e '
 const fs = require("fs");
 const cfg = JSON.parse(fs.readFileSync("deploy/firebase.json", "utf-8"));

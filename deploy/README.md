@@ -13,6 +13,13 @@ bash deploy/deploy-web.sh   # build web/ against the deployed API URL, deploy to
 
 Deploy the API first: the web build reads the API URL from Cloud Run.
 
+## Current deployment
+
+| What | URL |
+|---|---|
+| Web (Firebase Hosting, site `penumbra-luna`) | https://penumbra-luna.web.app |
+| API (Cloud Run `lss-api`, us-east1, project `lunar-site-scout`) | https://lss-api-vdrbt264rq-ue.a.run.app |
+
 ## How the scripts stay off other accounts
 
 Every gcloud call runs with `CLOUDSDK_ACTIVE_CONFIG_NAME=lss`. That is a dedicated gcloud
@@ -25,12 +32,21 @@ configuration is never used or changed. Override with `LSS_GCLOUD_CONFIG`,
 ```bash
 gcloud config configurations create lss --no-activate
 gcloud auth login --configuration=lss          # project owner's Google account
-gcloud config set project <project-id> --configuration=lss
+gcloud config set project lunar-site-scout --configuration=lss
 npx --yes firebase-tools@15 login               # same Google account
 ```
 
 The project needs billing linked and these APIs enabled: Cloud Run, Cloud Build,
-Artifact Registry. Firebase must be added to the project (`firebase projects:addfirebase`).
+Artifact Registry. Firebase must be added to the project (in C0 this needed the Firebase
+console, because the CLI returned 403 until the account accepted the Firebase terms).
+
+Firebase no longer auto-creates a default Hosting site (since 2026-10-15), so create it
+explicitly. Its ID is `WEB_SITE` in `deploy/config.sh`; the web URL and the API CORS
+origins derive from it:
+
+```bash
+npx --yes firebase-tools@15 hosting:sites:create penumbra-luna --project lunar-site-scout
+```
 
 ## Secrets and the Cesium token
 
