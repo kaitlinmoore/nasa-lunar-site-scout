@@ -8,5 +8,9 @@ export CLOUDSDK_ACTIVE_CONFIG_NAME="${LSS_GCLOUD_CONFIG:-lss}"
 GCP_PROJECT="${LSS_GCP_PROJECT:-lunar-site-scout}"
 GCP_REGION="${LSS_GCP_REGION:-us-east1}"
 API_SERVICE="lss-api"
-# Firebase Hosting default site = project id -> https://<project>.web.app
-WEB_ORIGINS="https://${GCP_PROJECT}.web.app,https://${GCP_PROJECT}.firebaseapp.com"
+# Firebase Hosting site ID (created explicitly with `firebase hosting:sites:create`;
+# Firebase stopped auto-creating a default site on 2026-10-15). The web URL and the
+# API's CORS origins derive from this, not from the project ID.
+WEB_SITE="${LSS_WEB_SITE:-penumbra-luna}"
+WEB_URL="https://${WEB_SITE}.web.app"
+WEB_ORIGINS="${WEB_URL},https://${WEB_SITE}.firebaseapp.com"

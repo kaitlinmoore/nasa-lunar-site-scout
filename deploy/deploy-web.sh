@@ -7,11 +7,23 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 source deploy/config.sh
 
-API_URL=$(gcloud run services describe "$API_SERVICE" --project "$GCP_PROJECT"   --region "$GCP_REGION" --format 'value(status.url)')
+API_URL=$(gcloud run services describe "$API_SERVICE" --project "$GCP_PROJECT" \
+  --region "$GCP_REGION" --format 'value(status.url)')
 echo "Building web against API: $API_URL"
 
 (cd web && npm ci && VITE_API_BASE="$API_URL" npm run build)
 
-npx --yes firebase-tools@15 deploy --only hosting --project "$GCP_PROJECT"   --config deploy/firebase.json --non-interactive
+# Firebase config is generated from deploy/firebase.json with the site ID from config.sh,
+# so the site ID lives in one place.
+GEN=deploy/firebase.generated.json
+node -e '
+const fs = require("fs");
+const cfg = JSON.parse(fs.readFileSync("deploy/firebase.json", "utf-8"));
+cfg.hosting.site = process.argv[1];
+fs.writeFileSync(process.argv[2], JSON.stringify(cfg, null, 2) + "\n");
+' "$WEB_SITE" "$GEN"
 
-echo "Web URL: https://${GCP_PROJECT}.web.app"
+npx --yes firebase-tools@15 deploy --only hosting --project "$GCP_PROJECT" \
+  --config "$GEN" --non-interactive
+
+echo "Web URL: $WEB_URL"
