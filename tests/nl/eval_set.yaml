@@ -1,0 +1,186 @@
+# SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
+#
+# NL eval set (plan section 4.5; step 4.4). Loaded and validated by lss.nl.evalset.
+#
+# Provenance (SI rule):
+#   source: kaitlin      -> the project author's example queries (scoping notes, Round 2 #14), verbatim,
+#                           with her expected outcomes (plan section 4.5, labels she edited).
+#   source: si_supplied  -> Claude-drafted queries the project author approved (none yet).
+#
+# Fields:
+#   target         the plan section 4.5 label (the outcome once every needed feature exists)
+#   status         ready: scored now. blocked: listed with what it waits for; run but not scored.
+#   blocked_on     request ids from reference/logs/nl-progress.md:
+#                    C*    blocked on contract (gaps held until Phase 2, when this stream owns the contract)
+#                    G-R*  blocked on registry (batch request to stream A, sent after A's C1 merges)
+#                    D-*   blocked on a default the project author hasn't decided yet
+#   expected       what a correct NL output is under the current contract + vocabulary:
+#     outcome      answer | partial | unsupported
+#     query        {operation, params}; locations may be {site_id: ...}
+#     params_match exact (default) | subset (only the keys given are checked)
+#     height_source  see lss.nl.vocabulary.HeightSource
+#     citations    registry citations that must be present
+#     citations_optional  registry citations that may also be present without penalty
+
+version: 1
+reference_date: "2026-11-15"  # "today" for relative dates, so runs are reproducible
+
+items:
+  - id: k1
+    source: kaitlin
+    text: What can we learn from this site and the surrounding location?
+    context: {selected_site_id: pgda-site01}
+    target: "Answer: site summary (metrics + nearby features)."
+    status: blocked
+    blocked_on: [C1]
+    expected:
+      outcome: answer
+
+  - id: k1-no-site
+    source: kaitlin
+    text: What can we learn from this site and the surrounding location?
+    context: {}
+    target: "Asks for a site, since none is selected (the second half of label #1)."
+    status: blocked
+    blocked_on: [C6]
+    notes: Same query as k1 with no site selected; the label covers both cases.
+
+  - id: k2
+    source: kaitlin
+    text: How steep is the terrain?
+    context: {selected_site_id: pgda-site01}
+    target: "Answer: slope at and around the site."
+    status: blocked
+    blocked_on: [C2]
+    expected:
+      outcome: answer
+
+  - id: k3
+    source: kaitlin
+    text: Where are the nearby hazards?
+    context: {selected_site_id: pgda-site01}
+    target: >-
+      Partial: slopes, PGDA polar roughness maps, craters >=1-2 km. States that boulder data doesn't
+      cover the pole.
+    status: blocked
+    blocked_on: [C2, D-radius]
+    expected:
+      outcome: partial
+      query:
+        operation: proximity
+        params:
+          location: {site_id: pgda-site01}
+          types: [crater, hazard]
+      params_match: subset
+      citations:
+        - {dataset_id: aussel_2025_boulders, cannot_answer: Any boulder information at the poles}
+      citations_optional:
+        - {dataset_id: robbins_craters, cannot_answer: Craters smaller than ~1 km}
+        - {dataset_id: pgda_98_polar_roughness, cannot_answer: Individual boulders or meter-scale hazards}
+
+  - id: k4
+    source: kaitlin
+    text: >-
+      Show me all regions within 6 degrees of the lunar south pole that have at least 100 square meters
+      of flat terrain with a slope under 5 degrees.
+    context: {}
+    target: >-
+      Partial: answerable only within the 5 m mosaic (87-90 S), and low-confidence even there because
+      ~90% of 5 m pixels are interpolated (Barker). Elsewhere, 100 m2 is smaller than one pixel and the
+      tool says so.
+    status: blocked
+    blocked_on: [C5, G-R2]
+    expected:
+      outcome: partial
+      query:
+        operation: search
+        params:
+          criteria: {max_slope_deg: 5, min_flat_area_m2: 100}
+      params_match: subset
+
+  - id: k5
+    source: kaitlin
+    text: Which candidate sites have zero boulders larger than 0.5 meters within a 50-meter landing ellipse?
+    context: {}
+    target: "Refusal: below any dataset's resolution; no boulder map covers the pole."
+    status: ready
+    expected:
+      outcome: unsupported
+      citations:
+        - dataset_id: pgda_81_mosaic_5m
+          cannot_answer: Hazards smaller than a few pixels (e.g. sub-meter boulders)
+        - {dataset_id: aussel_2025_boulders, cannot_answer: Any boulder information at the poles}
+      citations_optional:
+        - {dataset_id: aussel_2025_boulders, cannot_answer: Individual sub-meter boulders in a landing ellipse}
+        - {dataset_id: pgda_98_polar_roughness, cannot_answer: Individual boulders or meter-scale hazards}
+
+  - id: k6
+    source: kaitlin
+    text: >-
+      Find all safe landing zones in the Shackleton crater region that will experience continuous sunlight
+      for at least 10 Earth days starting on November 15, 2028.
+    context: {}
+    target: >-
+      Before time-dependent area search exists: answer for curated sites in the region and say area
+      search isn't available yet. Echo how "safe" was interpreted (slope limit).
+    status: blocked
+    blocked_on: [C3, C2, G-R4, D-safe]
+    expected:
+      outcome: partial
+
+  - id: k7
+    source: kaitlin
+    text: >-
+      Rank the top five sites where the Sun angle during descent is between 10 and 25 degrees so our
+      optical hazard-detection cameras have optimal contrast.
+    context: {}
+    target: >-
+      Answer for curated/saved sites; echo the assumed date; note it is Sun elevation at the site, not
+      along the approach trajectory.
+    status: blocked
+    blocked_on: [C3, G-R4, D-window]
+    expected:
+      outcome: partial
+
+  - id: k8
+    source: kaitlin
+    text: >-
+      Which high-latitude sites stay warm enough during the lunar night to reduce our battery heating
+      requirements by 20 percent?
+    context: {}
+    target: >-
+      Partial: night temperatures where polar Diviner products apply (poleward of 80). For 60-80, state
+      that the tool has no temperature product for that range. Refuse the 20% part (needs a spacecraft
+      thermal model).
+    status: blocked
+    blocked_on: [G-R1]
+    notes: >-
+      Unsupported (not partial) until a thermal operation exists (C7, with S5): the Core vocabulary has no
+      temperature query. The first citation uses the registry wording Kaitlin approved (G-R1).
+    expected:
+      outcome: unsupported
+      citations:
+        - dataset_id: diviner_polar_temperature
+          cannot_answer: >-
+            Temperatures equatorward of 80° (the tool has not integrated a Diviner product for that range)
+        - dataset_id: diviner_polar_temperature
+          cannot_answer: Spacecraft thermal or battery-heating requirements (needs a spacecraft thermal model)
+
+  - id: k9
+    source: kaitlin
+    text: >-
+      Recommend a safe landing zone within a 1-kilometer drive of a permanently shadowed region that shows
+      high hydrogen signatures.
+    context: {}
+    target: >-
+      Partial: PSR distance (straight-line, not a drive route). State that hydrogen data is too coarse
+      for 1 km, and offer M3 surface-ice detections (~280 m) as a clearly labeled stand-in.
+    status: blocked
+    blocked_on: [C5, G-R3, G-R4, D-safe]
+    expected:
+      outcome: partial
+      query:
+        operation: search
+        params:
+          criteria: {near_feature_types: [psr, ice_detection], max_feature_distance_m: 1000}
+      params_match: subset
