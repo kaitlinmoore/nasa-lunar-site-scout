@@ -75,9 +75,12 @@ SITE01_SOURCE = (
 
 # Barker et al. (2021) Table 2, RoI 4 centroid (PS -11287.5, -12167.5 m), converted on the 1737.4 km sphere.
 SITE01 = Location(lat=-89.452675, lon=-137.148653, name=SITE01_NAME)
+# The C1 thin-slice scenario. Exactly this scenario is precomputed and served by the deployed endpoint, which
+# matches requests on SCENARIO.key() (location without name, height, window and step). Window: Kaitlin,
+# 2026-11-14. Step: 1 h, the plan's default sampling (plan section 4.2; events are refined between samples).
 WINDOW_START = datetime(2028, 11, 15, tzinfo=UTC)
 WINDOW_END = WINDOW_START + timedelta(days=30)
-STEP = timedelta(hours=6)
+STEP = timedelta(hours=1)
 SCENARIO = Scenario(
     location=SITE01,
     unit_height_m=1.0,

@@ -15,7 +15,7 @@
         "unit_height_m": 1.0,
         "window_start": "2028-11-15T00:00:00Z",
         "window_end": "2028-12-15T00:00:00Z",
-        "step": "PT6H"
+        "step": "PT1H"
       }
     }
   },
@@ -32,9 +32,9 @@
       "unit_height_m": 1.0,
       "window_start": "2028-11-15T00:00:00Z",
       "window_end": "2028-12-15T00:00:00Z",
-      "step": "PT6H"
+      "step": "PT1H"
     },
-    "scenario_key": "0eb3e0a396d33622",
+    "scenario_key": "947681b3639b1307",
     "power": {
       "illumination_fraction": 0.5,
       "mean_visible_disk_fraction": 0.4,

@@ -68,3 +68,41 @@ def test_scenario_rejects_bad_window():
             window_start="2028-11-15T00:00:00Z",
             window_end="2028-11-14T00:00:00Z",
         )
+
+
+# The C1 served scenario (precomputed; the endpoint matches requests on its key). Stream B sends exactly
+# this scenario, so changing it is a cross-stream change: update the precomputed result and tell B.
+C1_SCENARIO_KEY = "947681b3639b1307"
+
+
+def test_c1_example_scenario_is_the_served_one():
+    from lss.contract.examples import SCENARIO
+
+    assert SCENARIO.key() == C1_SCENARIO_KEY
+    for name in ("series.json", "metrics.json"):
+        data = json.loads((FIXTURES_DIR / name).read_text(encoding="utf-8"))
+        assert Scenario.model_validate(data["scenario"]).key() == C1_SCENARIO_KEY
+        assert data["scenario_key"] == C1_SCENARIO_KEY
+
+
+def test_c1_key_matches_a_browser_request_and_depends_on_every_field():
+    from lss.contract.examples import SCENARIO
+
+    # As JSON.stringify writes it: 1.0 becomes 1; the site name may differ (it is not part of the key).
+    sent = {
+        "location": {"lat": -89.452675, "lon": -137.148653, "name": "anything"},
+        "unit_height_m": 1,
+        "window_start": "2028-11-15T00:00:00Z",
+        "window_end": "2028-12-15T00:00:00Z",
+        "step": "PT1H",
+    }
+    assert Scenario.model_validate(sent).key() == C1_SCENARIO_KEY
+    changes = [
+        {"location": {"lat": -89.45, "lon": -137.148653}},
+        {"unit_height_m": 2},
+        {"window_start": "2028-11-16T00:00:00Z"},
+        {"window_end": "2028-12-14T00:00:00Z"},
+        {"step": "PT6H"},
+    ]
+    for change in changes:
+        assert Scenario.model_validate({**sent, **change}).key() != SCENARIO.key()
