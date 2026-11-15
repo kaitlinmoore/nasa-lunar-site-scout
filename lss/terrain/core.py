@@ -19,6 +19,7 @@ import threading
 from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
+from typing import NamedTuple
 
 import numpy as np
 
@@ -51,6 +52,25 @@ def latlon_from_ps(x_m, y_m, pole: str = "south"):
     else:
         raise ValueError("pole must be 'south' or 'north'")
     return lat, lon
+
+
+class Grid(NamedTuple):
+    """An elevation raster in memory: heights (float32, NaN = no data) and its pixel-registered geometry.
+
+    `x0`, `y0` are the outer top-left corner (PS metres), `res` the square pixel size. Used by the horizon
+    ray caster; synthetic DEMs in tests are built directly as Grids.
+    """
+
+    array: np.ndarray
+    x0: float
+    y0: float
+    res: float
+    pole: str = "south"
+
+    def height_at_ps(self, x_m, y_m) -> np.ndarray:
+        col = (np.asarray(x_m) - self.x0) / self.res - 0.5
+        row = (self.y0 - np.asarray(y_m)) / self.res - 0.5
+        return bilinear(self.array, col, row)
 
 
 @dataclass
@@ -103,6 +123,11 @@ class DemLayer:
         if m["scale"] != 1.0 or m["offset"] != 0.0:
             a = a * np.float32(m["scale"]) + np.float32(m["offset"])
         return a
+
+    @cached_property
+    def grid(self) -> Grid:
+        m = self.meta
+        return Grid(self.array, m["x0"], m["y0"], m["res"], self.pole)
 
     def to_pixel(self, x_m, y_m):
         """PS metres -> fractional (col, row) of pixel centres (centre of pixel (0, 0) is (0, 0))."""

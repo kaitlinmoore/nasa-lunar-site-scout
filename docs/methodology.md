@@ -48,8 +48,8 @@ in MOON_ME / DE421, float32 heights in metres above the sphere, NaN = no data (c
 **Why this stack:** it mirrors the nested-grid approach used for the PGDA site illumination results (Barker et
 al. 2021: 5 m within 5 km, 80 m for 5–100 km, 240 m beyond; following Mazarico et al. 2018). Barker's far-field
 grids were the original LOLA polar maps; ours are the newer, orbit-adjusted product 90 maps (Barker et al. 2023)
-on the same frame. The near/far transition distances and the maximum ray range are set in section 3 by a
-convergence test, not assumed _(to do, step 4.5)_.
+on the same frame. The near/far transition distances and the maximum ray range were checked by a convergence
+test (section 3.2), not assumed.
 
 The served Site01 point (section 1.3) lies at PS (−11.2875, −12.1675) km, at least 7.7 km from every edge of its
 5 m tile.
@@ -122,7 +122,115 @@ Implemented in `lss/ephem/core.py`; tested in `tests/engine/test_ephem.py`.
   constant-position az/el routine (`azlcpo`, same frame and corrections) to better than 10⁻⁶°. The comparison
   against JPL Horizons, an independent ephemeris service, is in section 6 _(to do, step 4.7)_.
 
-## 3. Horizon _(to do, step 4.5)_
+## 3. Horizon
+
+Implemented in `lss/horizon/core.py` (numba ray caster) and `lss/horizon/cache.py`; tested in
+`tests/engine/test_horizon.py`; settings chosen by `scripts/horizon_convergence.py`.
+
+### 3.1 Geometry
+
+- **Observer.** On the sphere normal at the site, at radius r_o = 1737.4 km + surface height + unit height.
+  The surface height is taken from the finest terrain layer (the near field).
+- **Rays.** The ray at azimuth A is the great circle that leaves the site in direction A. At angular distance θ
+  its direction is p = cos θ · up + sin θ · (cos A · north + sin A · east), in the site's ENU frame (section 2).
+  The ray distance is the arc length d = R θ on the reference sphere. Rays are not traced as straight lines
+  on the polar stereographic map, because that map is not true to scale away from the pole. 400 km from
+  Site01 its local scale is 1.4% too large, and map distances out to there are about 0.5% too long. That
+  would shift the curvature term by about 0.07°.
+- **Elevation of a terrain point.** A point at height h (radius r = R + h) and angular distance θ is seen at
+  tan(el) = (r cos θ − r_o) / (r sin θ), measured from the observer's local horizontal plane. This is exact on the sphere. The
+  plan's form, atan((Δh − d²/2R)/d), is its small-angle limit. The two differ by about 0.005° at short range
+  (the approximation uses R where the geometry has R + h) and about 0.03° for terrain 400 km away (tested).
+  The exact form costs nothing extra.
+- **Horizon.** For each azimuth, the horizon is the largest elevation over the ray samples. Between computed
+  azimuths it is interpolated linearly.
+- **Heights along a ray.** Bilinear between pixel centres (section 1.2). Each ray distance has a designated
+  layer (5 m site map, then the 80 m map, then the 240 m map; section 1.2). If that layer has no data at a
+  sample, the next coarser layer is used. Samples that no layer covers are counted and reported, never
+  silently dropped. At Site01 there are none.
+
+### 3.2 Numerical settings and convergence
+
+| Setting | Default (`HorizonParams`, `lss/registry/terrain.py`) | Reference used to judge it |
+|---|---|---|
+| Azimuth step | 0.1° | 0.05° |
+| Ray sample spacing at distance d | min(0.5 × pixel size, 0.002 × d) | min(0.25 × pixel size, 0.0005 × d) |
+| First sample | 1 m | 0.5 m |
+| 5 m site map used to | 5 km | 7.5 km (the most the tile allows at Site01) |
+| 80 m map used to | 100 km | 290 km (the most the map allows) |
+| Maximum ray range (240 m map beyond) | 400 km | 800 km |
+
+**Sample spacing near the observer.** The spacing is min(fraction × pixel size, fraction × distance), so it is
+geometric close in and uniform further out. Close to the observer, elevation changes with distance like 1/d,
+so a spacing tied only to the pixel size misses near-field peaks. The first version of the study found this:
+with 2.5 m spacing, peaks about 18 m from the Site01 point were missed by up to **0.19°**, at most azimuths,
+because terrain within 15–40 m sets the 1 m horizon there. A synthetic test now pins this down: a single
+raised 5 m pixel 18.3 m away must be found within the analytic bound, and pixel-only spacing must visibly fail it.
+
+**Results** (`scripts/horizon_convergence.py`; each variant compared with the reference at every reference
+azimuth):
+
+| Case | Default vs reference: max | 99th percentile | RMS | Time per horizon (two runs) |
+|---|---|---|---|---|
+| Mazarico Site01 point, 1 m (horizon from terrain 15–40 m away) | 0.0088° | 0.0020° | 0.0006° | 4.2–4.5 s |
+| Served point (RoI 4 centroid), 1 m | 0.0066° | 0.0035° | 0.0010° | 3.6–4.1 s |
+| Mazarico Site01 point, 10 m | 0.0091° | 0.0038° | 0.0011° | 3.6–3.9 s |
+
+Which setting causes how much (max over the three cases, one setting at its default, all others at the
+reference):
+
+| Setting at its default | Max change |
+|---|---|
+| Azimuth step 0.1° | 0.0083° |
+| Spacing 0.002 × d | 0.0064° |
+| 80 m map handing over to 240 m at 100 km | 0.0056° |
+| Spacing 0.5 × pixel | 0.0012° |
+| First sample at 1 m | 0.0011° |
+| 5 m map handing over at 5 km | 0.0007° |
+| Maximum range 400 km (vs 800 km) | 0.0000° |
+
+Coarser settings cost accuracy. A 0.25° azimuth step gives up to 0.025°, and spacing at 0.01 × d gives up
+to 0.034°. Barker et al. (2021) used 0.5°.
+
+**Accepted:** horizon errors of at most about 0.01°, about 2% of the Sun's apparent diameter (0.53°). How such an
+error carries into illumination metrics is measured with the series in step 4.7.
+
+**Limits of this study:**
+- It covers Site01 only (two points, two heights).
+- Distant terrain does not set the horizon here (400 km and 800 km agree exactly; 200 km also did at these
+  points). 400 km is kept because other sites can see farther terrain, and the extra range is cheap.
+- C3 repeats the study for other site types.
+
+**Timing:** wall-clock, measured on the development PC (24 logical CPUs, numba parallel over azimuths), with the DEMs
+already in memory; reference settings take 34–38 s. The first call in a process also reads the DEMs, about 0.5 GB for the three layers.
+
+### 3.3 Cache
+
+Horizons depend only on location and unit height, not on dates (plan section 4.6), so each is computed once
+and stored in `LSS_DATA_DIR/cache/horizon/`. The cache key is a SHA-256 hash of everything that changes the
+result:
+
+- the algorithm version;
+- latitude, longitude and unit height;
+- the numerical settings;
+- the terrain stack: file ids, source URLs and ray-distance ranges.
+
+The key does not need the DEM files, so a deployment can serve cached horizons without the DEMs. Each cache
+file also records the DEMs' SHA-256 hashes from `MANIFEST.json`, for provenance.
+
+### 3.4 Tests
+
+- **Flat sphere:** the horizon equals the pure curvature dip, −acos(R / r_o), within 10⁻⁵° at every azimuth.
+  This is checked for a 1 m and a 1000 m observer, and also with the range cut short of the tangent point.
+- **Ring-shaped ridge** (Gaussian profile, at both poles): within 0.001° of the analytic maximum, which is
+  computed independently on a 0.5 m grid of distances.
+- **Azimuth convention:** separate ridges placed to the north and to the east show up at 0° and 90°, with
+  sharp sector edges. The synthetic terrain is built from the standard spherical distance and bearing formulas,
+  not from the ray caster's vector maths.
+- **Layer fallback:** a hole in the fine layer is filled from the coarse one; samples beyond every layer are counted.
+- **Site01, real data:** the numba kernel matches a separate NumPy calculation to 10⁻⁶° on five azimuths. That
+  calculation uses the great-circle destination formula and the terrain module's height lookup.
+- **Cache:** a second request is read from the file (verified), and a different unit height is a different key.
 
 ## 4. Validation references
 

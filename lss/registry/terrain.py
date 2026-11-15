@@ -18,6 +18,7 @@ last one always continues to the maximum ray range. The first layer is the near 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import cache
 
 from lss.contract import FidelityLabel, FidelityTier, Location, TerrainLayer
 from lss.datafiles import get as datafile
@@ -40,7 +41,13 @@ class LayerSpec:
         return left + margin_m <= x_m <= right - margin_m and bottom + margin_m <= y_m <= top - margin_m
 
     def dem(self) -> DemLayer:
-        return DemLayer(self.dataset_id, datafile(self.file_id).path, self.pole)
+        """The layer's DEM (one shared instance per file, so its array is loaded once per process)."""
+        return _dem(self.file_id, self.dataset_id, self.pole)
+
+
+@cache
+def _dem(file_id: str, dataset_id: str, pole: str) -> DemLayer:
+    return DemLayer(dataset_id, datafile(file_id).path, pole)
 
 
 # Finest first. Only layers the C1 slice has downloaded are listed.
@@ -76,7 +83,7 @@ LAYERS: tuple[LayerSpec, ...] = (
 )
 
 # The `use_to_m` defaults follow Barker et al. (2021): 5 m within 5 km, 80 m to 100 km, 240 m beyond.
-# Confirmed or changed by the horizon convergence test (step 4.5), as is the maximum ray range.
+# Checked, with the maximum ray range, by scripts/horizon_convergence.py (docs/methodology.md section 3.2).
 MAX_RANGE_M = 400_000.0
 
 
