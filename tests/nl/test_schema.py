@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 from typing import Any
 
 import pytest
@@ -35,6 +36,7 @@ def metrics_output(**overrides: Any) -> dict[str, Any]:
             "params": {"scenario": {**scenario, "location": {"site_id": "pgda-site01"}}},
         },
         "height_source": "user",
+        "window_source": "user",
     }
     out.update(overrides)
     return out
@@ -222,3 +224,53 @@ def test_sites_query_validates_category(ctx):
     ok["query"]["params"]["category"] = "mars"
     with pytest.raises(NLValidationError, match="params"):
         validate_output(ok, ctx)
+
+
+# ------------------------------------------------- defaults (D-height, D-window)
+
+
+def default_output(start="2026-11-15T00:00:00Z", end="2026-12-15T00:00:00Z", height=5.0):
+    return {
+        "outcome": "answer",
+        "interpretation": "Power and Earth-visibility metrics for Connecting ridge.",
+        "query": {
+            "operation": "metrics",
+            "params": {
+                "scenario": {
+                    "location": {"site_id": "pgda-site01"},
+                    "unit_height_m": height,
+                    "window_start": start,
+                    "window_end": end,
+                }
+            },
+        },
+        "height_source": "default",
+        "window_source": "default",
+    }
+
+
+def test_defaults_are_checked_and_disclosed():
+    ctx = default_context(today=date(2026, 11, 15))
+    resp = to_response(validate_output(default_output(), ctx), ctx)
+    assert "Window: 30 days from 2026-11-15 00:00 UTC (default; no dates were given)." in resp.interpretation
+    assert PROXY_ASSUMPTION_TEXT[HeightSource.default] in resp.interpretation
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "problem"),
+    [
+        ({"end": "2026-11-29T00:00:00Z"}, "30-day window"),
+        ({"start": "2026-11-16T00:00:00Z", "end": "2026-12-16T00:00:00Z"}, "request's date"),
+        ({"height": 2.0}, "requires unit_height_m = 5.0"),
+    ],
+)
+def test_defaults_must_be_exact(kwargs, problem):
+    with pytest.raises(NLValidationError, match=problem):
+        validate_output(default_output(**kwargs), default_context(today=date(2026, 11, 15)))
+
+
+def test_window_source_needed_when_params_have_a_window(ctx):
+    out = metrics_output()
+    del out["window_source"]
+    with pytest.raises(NLValidationError, match="window_source is 'not_applicable'"):
+        validate_output(out, ctx)

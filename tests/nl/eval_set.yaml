@@ -19,6 +19,7 @@
 #     query        {operation, params}; locations may be {site_id: ...}
 #     params_match exact (default) | subset (only the keys given are checked)
 #     height_source  see lss.nl.vocabulary.HeightSource
+#     window_source  see lss.nl.vocabulary.WindowSource
 #     citations    registry citations that must be present
 #     citations_optional  registry citations that may also be present without penalty
 
@@ -138,7 +139,7 @@ items:
       Answer for curated/saved sites; echo the assumed date; note it is Sun elevation at the site, not
       along the approach trajectory.
     status: blocked
-    blocked_on: [C3, G-R4, D-window]
+    blocked_on: [C3, G-R4]
     expected:
       outcome: partial
 

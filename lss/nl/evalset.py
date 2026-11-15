@@ -16,7 +16,7 @@ from pydantic import Field, model_validator
 from lss.config import REPO_ROOT
 from lss.contract import Model
 from lss.nl.schema import NLQuery, Outcome, RegistryCitation
-from lss.nl.vocabulary import HeightSource
+from lss.nl.vocabulary import HeightSource, WindowSource
 
 EVAL_SET_PATH = REPO_ROOT / "tests" / "nl" / "eval_set.yaml"
 
@@ -48,6 +48,7 @@ class Expected(Model):
     query: NLQuery | None = None
     params_match: Literal["exact", "subset"] = "exact"
     height_source: HeightSource | None = None
+    window_source: WindowSource | None = None
     citations: list[RegistryCitation] = Field(default_factory=list)
     citations_optional: list[RegistryCitation] = Field(default_factory=list)
 
@@ -104,3 +105,23 @@ class EvalSet(Model):
 
 def load_eval_set(path: Path = EVAL_SET_PATH) -> EvalSet:
     return EvalSet.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))
+
+
+def label_output(item: EvalItem) -> dict | None:
+    """The NL output a perfect model would return for this label, or None if the label is incomplete
+    (no `expected`, or `params_match: subset`). Used by the oracle provider and label self-checks."""
+    exp = item.expected
+    if exp is None or exp.params_match == "subset":
+        return None
+    out: dict = {
+        "outcome": exp.outcome.value,
+        "interpretation": item.text,
+        "height_source": (exp.height_source or HeightSource.not_applicable).value,
+        "window_source": (exp.window_source or WindowSource.not_applicable).value,
+    }
+    if exp.query is not None:
+        out["query"] = exp.query.model_dump(mode="json")
+    if exp.outcome != Outcome.answer:
+        cites = [c.model_dump() for c in exp.citations]
+        out["limitations"] = [{"topic": item.text, "citations": cites}]
+    return out

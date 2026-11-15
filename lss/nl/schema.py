@@ -21,9 +21,9 @@ from typing import Any
 from pydantic import Field, model_validator
 
 from lss.contract import Model, Operation
-from lss.nl.vocabulary import OPERATION_PARAMS, HeightSource
+from lss.nl.vocabulary import OPERATION_PARAMS, HeightSource, WindowSource
 
-SCHEMA_VERSION = "nl-output-1"
+SCHEMA_VERSION = "nl-output-2"
 
 
 class Outcome(StrEnum):
@@ -58,6 +58,7 @@ class NLOutput(Model):
     interpretation: str = Field(min_length=1, description="Plain-language echo of the request")
     query: NLQuery | None = None
     height_source: HeightSource = HeightSource.not_applicable
+    window_source: WindowSource = WindowSource.not_applicable
     assumptions: list[str] = Field(
         default_factory=list, description="Defaults or readings the user didn't state, e.g. an assumed date"
     )

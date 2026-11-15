@@ -7,8 +7,9 @@ Validation of the LLM's output (step 4.3), and conversion to the contract's NL r
 - operations outside the Core NL vocabulary;
 - `params` that the operation's contract request model rejects (after site ids are
   replaced by catalog locations);
-- unit heights that don't match the declared `height_source` (proxy heights must be
-  exactly the proxy value);
+- unit heights that don't match the declared `height_source` (proxy and default heights
+  must be exactly that value), and windows that don't match `window_source` (the default
+  window must be exactly 30 days from the request's date);
 - limitations whose citations aren't in the dataset capability registry.
 """
 
@@ -17,6 +18,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from datetime import UTC, date, datetime
 from typing import Any
 
 from pydantic import ValidationError
@@ -32,13 +34,16 @@ from lss.contract import (
     SitesResponse,
     StructuredQuery,
 )
-from lss.nl.schema import NLOutput, Outcome, SiteRef
+from lss.nl.schema import NLOutput, NLQuery, Outcome, SiteRef
 from lss.nl.vocabulary import (
     ALLOWED_OPERATIONS,
+    DEFAULT_WINDOW,
     OPERATION_PARAMS,
     PROXY_ASSUMPTION_TEXT,
     UNIT_HEIGHT_PROXIES_M,
     HeightSource,
+    WindowSource,
+    default_window_text,
 )
 from lss.registry.loader import load_datasets
 
@@ -57,10 +62,13 @@ class NLContext:
     datasets: Sequence[DatasetCapability]
     selected_site_id: str | None = None
     selected_scenario: Scenario | None = None
+    today: date | None = None  # the request's date: start of the default window
 
 
 def default_context(
-    selected_site_id: str | None = None, selected_scenario: Scenario | None = None
+    selected_site_id: str | None = None,
+    selected_scenario: Scenario | None = None,
+    today: date | None = None,
 ) -> NLContext:
     """Context from the committed site list (`fixtures/sites.json`) and the registry.
 
@@ -72,6 +80,7 @@ def default_context(
         datasets=load_datasets(),
         selected_site_id=selected_site_id,
         selected_scenario=selected_scenario,
+        today=today,
     )
 
 
@@ -141,6 +150,49 @@ def _check_heights(output: NLOutput, params: dict[str, Any], ctx: NLContext, pro
             problems.append("height_source is 'selected_scenario' but no scenario is selected")
         elif any(h != ctx.selected_scenario.unit_height_m for h in heights):
             problems.append("unit_height_m differs from the selected scenario's height")
+    if src == HeightSource.default and ctx.selected_scenario is not None:
+        problems.append("height_source is 'default' but a scenario is selected (use its height)")
+
+
+def _windows(value: Any) -> list[tuple[datetime, datetime]]:
+    found: list[tuple[datetime, datetime]] = []
+    if isinstance(value, dict):
+        if "window_start" in value and "window_end" in value:
+            start, end = value["window_start"], value["window_end"]
+            found.append((datetime.fromisoformat(start), datetime.fromisoformat(end)))
+        for v in value.values():
+            found.extend(_windows(v))
+    elif isinstance(value, list):
+        for v in value:
+            found.extend(_windows(v))
+    return found
+
+
+def _check_windows(output: NLOutput, params: dict[str, Any], ctx: NLContext, problems: list[str]) -> None:
+    windows = _windows(params)
+    src = output.window_source
+    if src == WindowSource.not_applicable:
+        if windows:
+            problems.append("params set a window but window_source is 'not_applicable'")
+        return
+    if not windows:
+        problems.append(f"window_source is {src.value!r} but params have no window")
+        return
+    if src == WindowSource.default:
+        if ctx.selected_scenario is not None:
+            problems.append("window_source is 'default' but a scenario is selected (use its window)")
+        if any(end - start != DEFAULT_WINDOW for start, end in windows):
+            problems.append("window_source 'default' requires a 30-day window")
+        if ctx.today is not None:
+            start = datetime(ctx.today.year, ctx.today.month, ctx.today.day, tzinfo=UTC)
+            if any(s != start for s, _ in windows):
+                problems.append(f"the default window starts at {start.isoformat()} (the request's date)")
+    elif src == WindowSource.selected_scenario:
+        sc = ctx.selected_scenario
+        if sc is None:
+            problems.append("window_source is 'selected_scenario' but no scenario is selected")
+        elif any((s, e) != (sc.window_start, sc.window_end) for s, e in windows):
+            problems.append("window differs from the selected scenario's window")
 
 
 def _check_citations(output: NLOutput, ctx: NLContext, problems: list[str]) -> None:
@@ -156,6 +208,31 @@ def _check_citations(output: NLOutput, ctx: NLContext, problems: list[str]) -> N
                 )
 
 
+def resolve_site_refs(params: dict[str, Any], ctx: NLContext) -> dict[str, Any]:
+    """Replace every `{"site_id": ...}` with the site's catalog location; raise on unknown ids."""
+    problems: list[str] = []
+    resolved = _resolve_site_refs(params, {s.id: s for s in ctx.sites}, problems)
+    if problems:
+        raise NLValidationError(problems)
+    return resolved
+
+
+def normalize_query(query: NLQuery, ctx: NLContext) -> StructuredQuery:
+    """Check the operation is in the vocabulary, resolve site ids, and validate `params`
+    against the operation's contract request model. Returns the query as the API receives it."""
+    op = query.operation
+    if op not in ALLOWED_OPERATIONS:
+        raise NLValidationError([f"operation {op.value!r} is not in the Core NL vocabulary"])
+    params = resolve_site_refs(query.params, ctx)
+    try:
+        model = OPERATION_PARAMS[op].model_validate(params)
+    except ValidationError as e:
+        raise NLValidationError(
+            [f"params ({op.value}): {err['loc']}: {err['msg']}" for err in e.errors()]
+        ) from e
+    return StructuredQuery(operation=op, params=model.model_dump(mode="json"))
+
+
 def validate_output(raw: str | Mapping[str, Any] | NLOutput, ctx: NLContext) -> ValidatedOutput:
     """Validate the LLM's output against the vocabulary, contract and registry; raise on any problem."""
     output = raw if isinstance(raw, NLOutput) else parse_output(raw)
@@ -163,31 +240,30 @@ def validate_output(raw: str | Mapping[str, Any] | NLOutput, ctx: NLContext) -> 
     structured: StructuredQuery | None = None
 
     if output.query is not None:
-        op = output.query.operation
-        if op not in ALLOWED_OPERATIONS:
-            problems.append(f"operation {op.value!r} is not in the Core NL vocabulary")
+        try:
+            structured = normalize_query(output.query, ctx)
+        except NLValidationError as e:
+            problems.extend(e.problems)
         else:
-            sites = {s.id: s for s in ctx.sites}
-            params = _resolve_site_refs(output.query.params, sites, problems)
-            _check_heights(output, params, ctx, problems)
-            try:
-                model = OPERATION_PARAMS[op].model_validate(params)
-            except ValidationError as e:
-                problems.extend(f"params ({op.value}): {err['loc']}: {err['msg']}" for err in e.errors())
-            else:
-                structured = StructuredQuery(
-                    operation=op, params=model.model_dump(mode="json", exclude_none=False)
-                )
-    elif output.height_source != HeightSource.not_applicable:
-        problems.append("height_source is set but there is no query")
+            _check_heights(output, structured.params, ctx, problems)
+            _check_windows(output, structured.params, ctx, problems)
+    else:
+        if output.height_source != HeightSource.not_applicable:
+            problems.append("height_source is set but there is no query")
+        if output.window_source != WindowSource.not_applicable:
+            problems.append("window_source is set but there is no query")
 
     _check_citations(output, ctx, problems)
     if problems:
         raise NLValidationError(problems)
 
+    # Disclosures built here, not by the model: the default window, then proxy/default heights.
     assumptions = list(output.assumptions)
     if output.height_source in PROXY_ASSUMPTION_TEXT:
         assumptions.insert(0, PROXY_ASSUMPTION_TEXT[output.height_source])
+    if output.window_source == WindowSource.default and structured is not None:
+        start = _windows(structured.params)[0][0]
+        assumptions.insert(0, default_window_text(start.date().isoformat()))
     return ValidatedOutput(output=output, structured_query=structured, assumptions=assumptions)
 
 
