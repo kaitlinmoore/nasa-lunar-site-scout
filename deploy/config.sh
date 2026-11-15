@@ -14,3 +14,9 @@ API_SERVICE="lss-api"
 WEB_SITE="${LSS_WEB_SITE:-penumbra-luna}"
 WEB_URL="https://${WEB_SITE}.web.app"
 WEB_ORIGINS="${WEB_URL},https://${WEB_SITE}.firebaseapp.com"
+
+# Precomputed served results (plan 4.6) live in the shared data folder, outside the repo.
+# deploy-api.sh stages them into bundle/served/ (gitignored) so Cloud Build can copy them
+# into the image at /data/cache/served (LSS_DATA_DIR=/data in the container).
+LSS_DATA_DIR_POSIX="$(cygpath -u "${LSS_DATA_DIR:-C:\\dev\\GitHub\\lss-data}" 2>/dev/null || echo "${LSS_DATA_DIR:-/c/dev/GitHub/lss-data}")"
+SERVED_SRC="${LSS_DATA_DIR_POSIX}/cache/served"

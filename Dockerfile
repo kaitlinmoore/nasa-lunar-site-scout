@@ -13,6 +13,8 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 COPY lss ./lss
 COPY fixtures ./fixtures
+# Precomputed served results, staged by deploy/deploy-api.sh (LSS_DATA_DIR=/data).
+COPY bundle/served /data/cache/served
 RUN uv sync --frozen --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH"

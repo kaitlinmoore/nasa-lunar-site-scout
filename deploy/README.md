@@ -20,6 +20,14 @@ Deploy the API first: the web build reads the API URL from Cloud Run.
 | Web (Firebase Hosting, site `penumbra-luna`) | https://penumbra-luna.web.app |
 | API (Cloud Run `lss-api`, us-east1, project `lunar-site-scout`) | https://lss-api-vdrbt264rq-ue.a.run.app |
 
+## Precomputed results in the API image
+
+The API serves precomputed results only (plan 4.6; C1 serves one scenario). They live in the shared
+data folder (`LSS_DATA_DIR/cache/served/*.json`, written by `scripts/precompute_c1.py`), outside the
+repo. `deploy-api.sh` copies them into `bundle/served/` (gitignored), checks them with the same loader
+the API uses (contract version, scenario keys, not placeholder), and the `Dockerfile` copies them to
+`/data/cache/served`. Rerun the precompute after any contract version bump, then redeploy.
+
 ## How the scripts stay off other accounts
 
 Every gcloud call runs with `CLOUDSDK_ACTIVE_CONFIG_NAME=lss`. That is a dedicated gcloud

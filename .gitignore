@@ -53,3 +53,6 @@ desktop.ini
 firebase.generated.json
 firebase-debug.log
 .firebase/
+
+# Staged by deploy/deploy-api.sh (precomputed results copied into the API image)
+bundle/
