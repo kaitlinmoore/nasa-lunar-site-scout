@@ -106,3 +106,12 @@ def test_c1_key_matches_a_browser_request_and_depends_on_every_field():
     ]
     for change in changes:
         assert Scenario.model_validate({**sent, **change}).key() != SCENARIO.key()
+
+
+def test_every_metric_field_has_a_description():
+    # Stream B shows these as on-screen definitions (read at build time from fixtures/openapi.json).
+    from lss.contract import CommsMetrics, PowerMetrics
+
+    for model in (PowerMetrics, CommsMetrics):
+        for name, field in model.model_fields.items():
+            assert field.description, f"{model.__name__}.{name} has no description"

@@ -208,9 +208,10 @@ def metrics() -> MetricsResponse:
             sunlit_duration_h=168.0,
             longest_sunlit_period_h=150.0,
             longest_shadow_h=100.0,
+            longest_shadow_clipped=False,
             shadow_count=2,
             sun_elevation_deg=Stat(min=-0.8, max=1.6, mean=0.4),
-            sun_azimuth_deg=Stat(min=0.0, max=170.0, mean=85.0),
+            sun_azimuth_deg=Stat(min=0.0, max=360.0, mean=None),
             time_to_sunset_h=198.0,
         ),
         comms=CommsMetrics(

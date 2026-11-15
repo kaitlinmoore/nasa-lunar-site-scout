@@ -1,10 +1,10 @@
 {
-  "contract_version": "0.1.0",
+  "contract_version": "0.2.0",
   "_placeholder": true,
   "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
   "items": [
     {
-      "contract_version": "0.1.0",
+      "contract_version": "0.2.0",
       "_placeholder": true,
       "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
       "scenario": {
@@ -25,6 +25,7 @@
         "sunlit_duration_h": 168.0,
         "longest_sunlit_period_h": 150.0,
         "longest_shadow_h": 100.0,
+        "longest_shadow_clipped": false,
         "shadow_count": 2,
         "sun_elevation_deg": {
           "min": -0.8,
@@ -33,8 +34,8 @@
         },
         "sun_azimuth_deg": {
           "min": 0.0,
-          "max": 170.0,
-          "mean": 85.0
+          "max": 360.0,
+          "mean": null
         },
         "time_to_sunset_h": 198.0
       },

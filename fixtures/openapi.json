@@ -3,8 +3,8 @@
   "info": {
     "title": "Lunar Site Scout API",
     "description": "Contract v0. Not affiliated with or endorsed by NASA.",
-    "version": "0.1.0",
-    "x-contract-version": "0.1.0"
+    "version": "0.2.0",
+    "x-contract-version": "0.2.0"
   },
   "paths": {
     "/api/health": {
@@ -129,7 +129,7 @@
       },
       "CommsMetrics": {
         "additionalProperties": false,
-        "description": "F4 (direct-to-Earth at the unit height). Nullable: null = not computed.",
+        "description": "F4 (direct-to-Earth at the unit height). Nullable: null = not computed. See methodology section 5.\n\nEarth visible = any part of the Earth disc above the terrain horizon; a gap = no part of it above.",
         "properties": {
           "earth_visibility_fraction": {
             "anyOf": [
@@ -143,7 +143,7 @@
               }
             ],
             "default": null,
-            "description": "Time fraction with any part of the Earth disc visible",
+            "description": "Fraction of the window with any part of the Earth disc visible",
             "title": "Earth Visibility Fraction"
           },
           "earth_full_disc_fraction": {
@@ -158,6 +158,7 @@
               }
             ],
             "default": null,
+            "description": "Fraction of the window with the whole Earth disc above the terrain horizon",
             "title": "Earth Full Disc Fraction"
           },
           "longest_earth_gap_h": {
@@ -170,14 +171,16 @@
               }
             ],
             "default": null,
+            "description": "Longest continuous period with no part of the Earth disc visible, clipped to the window, h",
             "title": "Longest Earth Gap H"
           },
           "earth_elevation_deg": {
-            "$ref": "#/components/schemas/Stat"
+            "$ref": "#/components/schemas/Stat",
+            "description": "Apparent elevation of the Earth's disc centre above the local horizontal plane (not the terrain horizon): min, max and time mean over the whole window, whether or not the Earth is visible, deg"
           },
           "earth_clearance_deg": {
             "$ref": "#/components/schemas/Stat",
-            "description": "Earth centre above the terrain horizon, deg"
+            "description": "Earth disc centre elevation minus the terrain horizon elevation at its azimuth: min, max and time mean over the whole window, deg"
           },
           "sun_earth_overlap_fraction": {
             "anyOf": [
@@ -191,7 +194,7 @@
               }
             ],
             "default": null,
-            "description": "Time fraction with Sun and Earth both visible",
+            "description": "Fraction of the window with any part of both the solar and the Earth disc visible",
             "title": "Sun Earth Overlap Fraction"
           },
           "time_to_earthset_h": {
@@ -204,7 +207,7 @@
               }
             ],
             "default": null,
-            "description": "From window_start to the first Earthset, h",
+            "description": "From window_start to the first Earthset (the last part of the Earth disc going below the terrain horizon), h",
             "title": "Time To Earthset H"
           }
         },
@@ -233,7 +236,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.1.0",
+            "default": "0.2.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -474,7 +477,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.1.0",
+            "default": "0.2.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -648,7 +651,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.1.0",
+            "default": "0.2.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -754,7 +757,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.1.0"
+            "default": "0.2.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -788,7 +791,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.1.0",
+            "default": "0.2.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -896,7 +899,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.1.0",
+            "default": "0.2.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1042,7 +1045,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.1.0",
+            "default": "0.2.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1170,7 +1173,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.1.0",
+            "default": "0.2.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1237,7 +1240,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.1.0",
+            "default": "0.2.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1339,7 +1342,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.1.0",
+            "default": "0.2.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1413,7 +1416,7 @@
       },
       "PowerMetrics": {
         "additionalProperties": false,
-        "description": "F3. Nullable: null = not computed.",
+        "description": "F3. Nullable: null = not computed. Exact definitions: docs/methodology.md section 5.\n\nSunlit = any part of the solar disc above the terrain horizon; shadow = no part of it above. Sunlit and\nshadow periods tile the window. Periods that start before window_start or run past window_end are\nclipped to the window and still counted.",
         "properties": {
           "illumination_fraction": {
             "anyOf": [
@@ -1427,7 +1430,7 @@
               }
             ],
             "default": null,
-            "description": "Time fraction with any part of the solar disc visible",
+            "description": "Fraction of the window that is sunlit (any part of the solar disc visible)",
             "title": "Illumination Fraction"
           },
           "mean_visible_disk_fraction": {
@@ -1442,7 +1445,7 @@
               }
             ],
             "default": null,
-            "description": "Time-averaged visible fraction of the solar disc",
+            "description": "Time average over the window of the visible share of the solar disc's light, weighted by limb darkening at 550 nm (a light-weighted fraction, not a geometric area fraction)",
             "title": "Mean Visible Disk Fraction"
           },
           "sunlit_duration_h": {
@@ -1455,7 +1458,7 @@
               }
             ],
             "default": null,
-            "description": "Total sunlit time, h",
+            "description": "Total sunlit time in the window (any part of the solar disc visible), h",
             "title": "Sunlit Duration H"
           },
           "longest_sunlit_period_h": {
@@ -1468,6 +1471,7 @@
               }
             ],
             "default": null,
+            "description": "Longest continuous sunlit period (any part of the solar disc visible), clipped to the window, h",
             "title": "Longest Sunlit Period H"
           },
           "longest_shadow_h": {
@@ -1480,8 +1484,21 @@
               }
             ],
             "default": null,
-            "description": "Longest shadow period, h",
+            "description": "Longest continuous shadow period (no part of the solar disc visible), clipped to the window, h",
             "title": "Longest Shadow H"
+          },
+          "longest_shadow_clipped": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "True if the longest shadow period starts before window_start or runs past window_end, so its full length is longer than longest_shadow_h; false if it lies inside the window or there is none",
+            "title": "Longest Shadow Clipped"
           },
           "shadow_count": {
             "anyOf": [
@@ -1493,13 +1510,16 @@
               }
             ],
             "default": null,
+            "description": "Number of shadow periods (no part of the solar disc visible) in the window, with no minimum duration; periods clipped to the window count. Partial loss of the disc is not a shadow",
             "title": "Shadow Count"
           },
           "sun_elevation_deg": {
-            "$ref": "#/components/schemas/Stat"
+            "$ref": "#/components/schemas/Stat",
+            "description": "Apparent elevation of the Sun's disc centre above the local horizontal plane (not the terrain horizon): min, max and time mean over the whole window, whether or not the Sun is visible, deg"
           },
           "sun_azimuth_deg": {
-            "$ref": "#/components/schemas/Stat"
+            "$ref": "#/components/schemas/Stat",
+            "description": "Apparent azimuth of the Sun's disc centre, deg clockwise from north, over the whole window, whether or not the Sun is visible. min and max are the ends of the smallest arc containing the track, read clockwise from min to max (min > max when the arc crosses north). A full circle is reported as min 0, max 360. mean is always null: an average azimuth has no meaning here"
           },
           "time_to_sunset_h": {
             "anyOf": [
@@ -1511,7 +1531,7 @@
               }
             ],
             "default": null,
-            "description": "From window_start to the first sunset, h",
+            "description": "From window_start to the first sunset (the last part of the solar disc going below the terrain horizon), h",
             "title": "Time To Sunset H"
           }
         },
@@ -1550,7 +1570,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.1.0",
+            "default": "0.2.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1818,7 +1838,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.1.0",
+            "default": "0.2.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1966,7 +1986,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.1.0"
+            "default": "0.2.0"
           },
           "_placeholder": {
             "type": "boolean",

@@ -243,6 +243,10 @@ file also records the DEMs' SHA-256 hashes from `MANIFEST.json`, for provenance.
   fraction is computed by cutting the disc horizontally at the horizon elevation found at the disc centre's azimuth.
 - Barker's definitions: "average illumination" = the time-averaged visible fraction of the solar disc;
   LCIP/LCSP = longest continuous period with any / no part of the Sun visible.
+- Our definitions match these (section 5). Two method differences remain, both measured (section 5.1):
+  we cut the disc with the real horizon profile instead of a flat line, and the limb-darkening law
+  (Barker names none) is Allen's 550 nm law. Each moves the time-mean fraction by 0.0002 or less at the
+  served point.
 - Published numbers usable for comparison: Table 2 gives, for seven regions of interest (RoIs) at Site01, the
   centroids (PS km) and the **1st/99th percentiles over 100 DEM clones**, not the nominal-DEM values. Barker
   notes that the nominal DEM tends to give *better* illumination than the clone median, so the 1st percentile
@@ -288,12 +292,95 @@ level, Gläser et al. (2018, Table 1) report a maximum average illumination of *
 raises illumination. Expect the 5 m served result and the 60 m product 69 reproduction to differ for this
 reason, and compare each only with the reference that uses the same terrain resolution.
 
-## 5. Metric definitions _(to do, step 4.6 / C2)_
+## 5. Metric definitions
+
+These are the definitions behind the `PowerMetrics` and `CommsMetrics` fields; the field descriptions in
+`lss/contract/models.py` say the same in short. The definitions are fixed here first (Kaitlin, 2026-11-15).
+The code that computes them is step 4.6 _(to do)_. The measured numbers below are preliminary: computed with a
+scratch script from the step 4.3 ephemeris and the step 4.5 horizon before the 4.6 code existed, and re-measured
+with it.
+
+### 5.1 Visible fraction of a disc at one instant
+
+- **Disc.** Centre at the apparent azimuth and elevation, angular radius asin(R / distance) (section 2).
+- **Against the real horizon profile.** A point of the disc is visible if it is above the terrain horizon at
+  *its own* azimuth (section 3, interpolated linearly between the 0.1° horizon azimuths, so about 5 horizon
+  values span the 0.53° solar disc). Barker et al. (2021) instead cut the disc with a flat line at the
+  horizon elevation found at the disc centre's azimuth. Measured at the served point, 1 m, 2024–2025
+  (10 min samples): the time-mean solar fraction is the same to 0.0001 either way, but the flat cut produces
+  3 shadow periods shorter than 1 h where the real profile produces 1.
+- **Sun: a light-weighted fraction.** `f_sun` is the visible share of the solar disc's *light*, not of its
+  area. Each point of the disc is weighted by the solar limb-darkening law at 550 nm:
+  I(μ)/I(1) = 1 − u₂ − v₂ + u₂ μ + v₂ μ² = 0.30 + 0.93 μ − 0.23 μ², with u₂ = 0.93 and v₂ = −0.23.
+  Here μ = √(1 − (ρ/r)²) for a point at angular distance ρ from the disc centre, r being the disc's angular
+  radius. Source: Allen (1973), *Astrophysical Quantities*, 3rd edition, §81 "Solar limb darkening", p. 171,
+  table of limb-darkening constants, row λ = 0.55 µm. The limb is 30% as bright as the centre, and the disc
+  as a whole 80.5% (1 − u₂/3 − v₂/2; Allen's table gives 0.803).
+  - **Barker et al. (2021) name no law.** They state only that the Sun is "treated as a 2-dimensional
+    extended source with limb darkening at 550 nm", with no coefficients or citation. Allen's 550 nm law is
+    our choice (Kaitlin, 2026-11-15). The same coefficients are commonly attributed to the 4th edition
+    (Cox, 2000); only the 3rd edition was checked.
+  - **Measured effect.** At the served point, 1 m, 2024–2025: time-mean fraction 0.8234 limb-darkened vs
+    0.8232 geometric. The law moves the result by 0.0002, so any gap from Barker in step 4.7 is not
+    explained by the choice of law.
+- **Earth: a geometric fraction.** `f_earth` is the visible share of the Earth disc's area, unweighted.
+  Radius 6371.0 km (section 2).
+
+### 5.2 Visibility, periods and clipping
+
+- **Sunlit** = any part of the solar disc visible (`f_sun > 0`). **Shadow** = no part visible (`f_sun = 0`).
+  This is product 69's convention for illumination and Barker's for LCIP/LCSP. Sunlit and shadow periods
+  tile the window: every instant is in exactly one of them.
+- **Partial loss of the disc is not a shadow.** It shows up only in `mean_visible_disk_fraction`.
+- **No minimum duration.** Every shadow period counts, however short. At the served point over 2024–2025,
+  only 1 of 49 shadow periods is shorter than 1 h (20 min), so horizon flickers do not inflate the count there.
+- **Clipped to the window.** A period that starts before `window_start` or runs past `window_end` is cut at
+  the window edge and still counted, with its clipped length. `longest_shadow_clipped` says whether the
+  longest shadow period was cut, in which case its full length is longer than reported.
+- **Earth visible** = any part of the Earth disc visible (`f_earth > 0`). An **Earth gap** = no part
+  visible. Same rules: no minimum duration, clipped to the window.
+- **Resolution.** Periods and events are found on a fine internal time grid and refined by root-finding
+  between samples, independent of the scenario's `step`, which sets only the series returned _(grid spacing
+  and refinement tolerance: step 4.6)_.
+
+### 5.3 Power (F3): `PowerMetrics`
+
+Window W = [`window_start`, `window_end`], duration T.
+
+| Field | Definition |
+|---|---|
+| `illumination_fraction` | Sunlit time in W divided by T. |
+| `mean_visible_disk_fraction` | Time average of `f_sun` over W (limb-darkened, section 5.1). A light-weighted fraction, not a geometric area fraction. |
+| `sunlit_duration_h` | Total sunlit time in W, h (= `illumination_fraction` × T). |
+| `longest_sunlit_period_h` | Longest continuous sunlit period, clipped to W, h. |
+| `longest_shadow_h` | Longest continuous shadow period, clipped to W, h. 0 if there is none. |
+| `longest_shadow_clipped` | True if that period starts before W or runs past it; false if it lies inside W or there is none. |
+| `shadow_count` | Number of shadow periods in W, including clipped ones; no minimum duration. |
+| `sun_elevation_deg` | Apparent elevation of the disc centre above the local horizontal plane (section 2; not the terrain horizon): min, max and time mean over all of W, whether or not the Sun is visible. |
+| `sun_azimuth_deg` | Apparent azimuth of the disc centre, clockwise from north, over all of W, whether or not the Sun is visible. `min` and `max` are the ends of the smallest arc containing the track, read clockwise from `min` to `max`; when the arc crosses north, `min` > `max` (e.g. 300 → 40). A track covering the full circle reports `min` 0, `max` 360. `mean` is always null: a linear mean of azimuths depends on where 0° is put, and a circular mean is undefined for a full circle, which is what the Sun does at Site01. The series carries the full track. |
+| `time_to_sunset_h` | From `window_start` to the first sunset (the last visible part of the solar disc going below the terrain horizon), h. |
+
+The azimuth arc is found from the continuous track (unwrapped azimuth). It is a full circle if the
+unwrapped azimuth spans 360° or more; otherwise its ends are the unwrapped minimum and maximum, modulo 360°.
+If other bodies get azimuth statistics, the same rule applies.
+
+### 5.4 Communications (F4): `CommsMetrics`
+
+| Field | Definition |
+|---|---|
+| `earth_visibility_fraction` | Time in W with any part of the Earth disc visible, divided by T. |
+| `earth_full_disc_fraction` | Time in W with the whole Earth disc above the terrain horizon (`f_earth = 1`), divided by T. |
+| `longest_earth_gap_h` | Longest continuous period with no part of the Earth disc visible, clipped to W, h. |
+| `earth_elevation_deg` | Apparent elevation of the Earth's disc centre above the local horizontal plane: min, max and time mean over all of W, whether or not the Earth is visible. |
+| `earth_clearance_deg` | Earth disc centre elevation minus the terrain horizon elevation at its azimuth: min, max and time mean over all of W. |
+| `sun_earth_overlap_fraction` | Time in W with any part of both discs visible, divided by T. |
+| `time_to_earthset_h` | From `window_start` to the first Earthset (the last visible part of the Earth disc going below the terrain horizon), h. |
 
 ## 6. Validation results _(to do, step 4.7)_
 
 ## References
 
+- Allen, C. W. (1973). *Astrophysical Quantities*, 3rd edition. Athlone Press, London. §81, p. 171.
 - Barker, M. K., et al. (2021). Improved LOLA elevation maps for south pole landing sites: Error estimates and
   their impact on illumination conditions. *Planetary and Space Science* 203, 105119. doi:10.1016/j.pss.2020.105119
 - Barker, M. K., et al. (2023). *Planetary Science Journal* 4, 183. doi:10.3847/PSJ/acf3e1

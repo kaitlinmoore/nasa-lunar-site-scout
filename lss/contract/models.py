@@ -32,7 +32,7 @@ from pydantic import (
     model_validator,
 )
 
-CONTRACT_VERSION = "0.1.0"
+CONTRACT_VERSION = "0.2.0"
 
 Latitude = Annotated[float, Field(ge=-90.0, le=90.0, description="Planetocentric latitude, deg")]
 Longitude = Annotated[
@@ -297,42 +297,120 @@ class Stat(Model):
 
 
 class PowerMetrics(Model):
-    """F3. Nullable: null = not computed."""
+    """F3. Nullable: null = not computed. Exact definitions: docs/methodology.md section 5.
+
+    Sunlit = any part of the solar disc above the terrain horizon; shadow = no part of it above. Sunlit and
+    shadow periods tile the window. Periods that start before window_start or run past window_end are
+    clipped to the window and still counted.
+    """
 
     illumination_fraction: Fraction | None = Field(
-        default=None, description="Time fraction with any part of the solar disc visible"
+        default=None,
+        description="Fraction of the window that is sunlit (any part of the solar disc visible)",
     )
     mean_visible_disk_fraction: Fraction | None = Field(
-        default=None, description="Time-averaged visible fraction of the solar disc"
+        default=None,
+        description=(
+            "Time average over the window of the visible share of the solar disc's light, weighted by limb "
+            "darkening at 550 nm (a light-weighted fraction, not a geometric area fraction)"
+        ),
     )
-    sunlit_duration_h: float | None = Field(default=None, description="Total sunlit time, h")
-    longest_sunlit_period_h: float | None = None
-    longest_shadow_h: float | None = Field(default=None, description="Longest shadow period, h")
-    shadow_count: int | None = None
-    sun_elevation_deg: Stat = Field(default_factory=Stat)
-    sun_azimuth_deg: Stat = Field(default_factory=Stat)
+    sunlit_duration_h: float | None = Field(
+        default=None, description="Total sunlit time in the window (any part of the solar disc visible), h"
+    )
+    longest_sunlit_period_h: float | None = Field(
+        default=None,
+        description=(
+            "Longest continuous sunlit period (any part of the solar disc visible), clipped to the window, h"
+        ),
+    )
+    longest_shadow_h: float | None = Field(
+        default=None,
+        description=(
+            "Longest continuous shadow period (no part of the solar disc visible), clipped to the window, h"
+        ),
+    )
+    longest_shadow_clipped: bool | None = Field(
+        default=None,
+        description=(
+            "True if the longest shadow period starts before window_start or runs past window_end, so its "
+            "full length is longer than longest_shadow_h; false if it lies inside the window or there is none"
+        ),
+    )
+    shadow_count: int | None = Field(
+        default=None,
+        description=(
+            "Number of shadow periods (no part of the solar disc visible) in the window, with no minimum "
+            "duration; periods clipped to the window count. Partial loss of the disc is not a shadow"
+        ),
+    )
+    sun_elevation_deg: Stat = Field(
+        default_factory=Stat,
+        description=(
+            "Apparent elevation of the Sun's disc centre above the local horizontal plane (not the terrain "
+            "horizon): min, max and time mean over the whole window, whether or not the Sun is visible, deg"
+        ),
+    )
+    sun_azimuth_deg: Stat = Field(
+        default_factory=Stat,
+        description=(
+            "Apparent azimuth of the Sun's disc centre, deg clockwise from north, over the whole window, "
+            "whether or not the Sun is visible. min and max are the ends of the smallest arc containing the "
+            "track, read clockwise from min to max (min > max when the arc crosses north). A full circle is "
+            "reported as min 0, max 360. mean is always null: an average azimuth has no meaning here"
+        ),
+    )
     time_to_sunset_h: float | None = Field(
-        default=None, description="From window_start to the first sunset, h"
+        default=None,
+        description=(
+            "From window_start to the first sunset (the last part of the solar disc going below the "
+            "terrain horizon), h"
+        ),
     )
 
 
 class CommsMetrics(Model):
-    """F4 (direct-to-Earth at the unit height). Nullable: null = not computed."""
+    """F4 (direct-to-Earth at the unit height). Nullable: null = not computed. See methodology section 5.
+
+    Earth visible = any part of the Earth disc above the terrain horizon; a gap = no part of it above.
+    """
 
     earth_visibility_fraction: Fraction | None = Field(
-        default=None, description="Time fraction with any part of the Earth disc visible"
+        default=None, description="Fraction of the window with any part of the Earth disc visible"
     )
-    earth_full_disc_fraction: Fraction | None = None
-    longest_earth_gap_h: float | None = None
-    earth_elevation_deg: Stat = Field(default_factory=Stat)
+    earth_full_disc_fraction: Fraction | None = Field(
+        default=None, description="Fraction of the window with the whole Earth disc above the terrain horizon"
+    )
+    longest_earth_gap_h: float | None = Field(
+        default=None,
+        description=(
+            "Longest continuous period with no part of the Earth disc visible, clipped to the window, h"
+        ),
+    )
+    earth_elevation_deg: Stat = Field(
+        default_factory=Stat,
+        description=(
+            "Apparent elevation of the Earth's disc centre above the local horizontal plane (not the terrain "
+            "horizon): min, max and time mean over the whole window, whether or not the Earth is visible, deg"
+        ),
+    )
     earth_clearance_deg: Stat = Field(
-        default_factory=Stat, description="Earth centre above the terrain horizon, deg"
+        default_factory=Stat,
+        description=(
+            "Earth disc centre elevation minus the terrain horizon elevation at its azimuth: min, max and "
+            "time mean over the whole window, deg"
+        ),
     )
     sun_earth_overlap_fraction: Fraction | None = Field(
-        default=None, description="Time fraction with Sun and Earth both visible"
+        default=None,
+        description="Fraction of the window with any part of both the solar and the Earth disc visible",
     )
     time_to_earthset_h: float | None = Field(
-        default=None, description="From window_start to the first Earthset, h"
+        default=None,
+        description=(
+            "From window_start to the first Earthset (the last part of the Earth disc going below the "
+            "terrain horizon), h"
+        ),
     )
 
 
