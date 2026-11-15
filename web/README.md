@@ -1,5 +1,5 @@
 <!-- SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage". -->
-# Lunar Site Scout: web
+# Penumbra Luna (Lunar Landing Site Navigator): web
 
 Vite + React + TypeScript. Owner: stream B (web). See the repo README for the project.
 
@@ -45,6 +45,9 @@ The header shows which source is in use. Fixture data goes through the same gene
 Cesium Moon (ion asset 2684829, imagery + LOLA terrain as one 3D tileset), **display only**: no numbers come from Cesium. Its terrain sits about 2.5 km above LOLA heights, so site markers are clamped to the rendered surface, and every value comes from our API.
 
 - **Sites:** from `/api/sites`, or `fixtures/sites.json` in fixture mode. Click a marker (or a name in the list under the globe) to open the site's screen. The list is the accessible equivalent of the canvas markers and keeps working if WebGL or the token fails.
+- **Start view:** the whole Moon fitted to the canvas (narrower field of view, 12 % margin), seen from above 60° S on the first curated site's meridian, north up, so the south pole and Site01 sit in the lower part of the disc. A "South pole" label marks 90° S (it moves with the Moon and can't be selected), and a note "You're looking at the Moon's south pole (north is up)" shows until the first drag, wheel, pinch or zoom button, and again after Reset.
+- **Zoom:** wheel ≈ 13 % per notch (`zoomFactor` 2; Cesium's default 5 was far too fast); limits 20 km to 12,000 km above the Moon ellipsoid. On-screen + / − / reset buttons (bottom right): ± move a fraction of the current height within the same limits; reset flies back to the start view.
+- **Caption:** a plain sentence for visitors, with the expert detail (Cesium's terrain ~2.5 km above LOLA, markers on the rendered surface, no values from Cesium) behind a "Details" toggle.
 - **Markers:** drawn without the depth test (a clamped marker is otherwise half-buried in the terrain it sits on) and hidden when they're beyond the Moon's limb from the camera.
 - **Lighting:** a light that follows the camera; Cesium's own Sun and Moon are hidden, so the globe never shows illumination we didn't compute.
 - **Token:** `CESIUM_ION_TOKEN` from the repo's `.env` (or `LSS_ENV_FILE`), injected at build time; the build logs only whether it's set and its length. It ships in the bundle, so it's restricted in Cesium ion (allowed URLs, the Cesium Moon asset, `assets:read`). Local dev needs a token whose allowed URLs include `http://localhost:5173`. Without a token the page says so and the site list still works. Note: changing a token's permissions in ion can generate a new token value; update `.env` when that happens.
@@ -73,7 +76,10 @@ The horizon/sky plot and timeline use `fixtures/horizon.json` and `fixtures/seri
 - Metric definitions are the contract's own field descriptions, read from `fixtures/openapi.json` at build time.
 - `_clipped` flags (contract 0.3.0) aren't rows of their own: each is a note under the longest-period duration it qualifies. `true` → "clipped to the window; the full period is longer"; `null` → "not computed"; `false` → no note.
 - `sunset_in_window` / `earthset_in_window` (contract 0.4.0): when the flag is `false`, `time_to_sunset_h` / `time_to_earthset_h` is null because the event doesn't happen in the window, and the value shows "no sunset in this window" / "no Earthset in this window". A null time with the flag `null` (or `true`) still shows "not computed".
-- A contract version mismatch between the web build and the data shows a warning.
+- A contract version mismatch between the web build and the data shows a warning, in every build.
+- **Developer info** (data source, web/data contract versions) shows only in dev builds (`npm run dev`); production builds hide it. Placeholder notices and the mismatch warning always show.
+- **Times** are UTC and written explicitly ("2028-05-15 00:00 UTC"). The scenario form takes "YYYY-MM-DD HH:MM" in UTC (text fields with a visible "UTC"; the browser's date pickers would show local formats like "12:00 AM").
+- **Site description:** a site's screen opens with its name and its `description` from /api/sites; an empty description is left out.
 
 ## Code layout: style, formatting, layout
 

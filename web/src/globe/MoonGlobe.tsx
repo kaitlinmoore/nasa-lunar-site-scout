@@ -10,7 +10,7 @@
 //   exactly what this tool computes.
 // Loaded lazily (a separate chunk) so the site screen never pays for Cesium.
 import {
-  BoundingSphere,
+  type Camera,
   Cartesian2,
   Cartesian3,
   Cesium3DTileset,
@@ -20,10 +20,10 @@ import {
   Ellipsoid,
   EllipsoidalOccluder,
   Entity,
-  HeadingPitchRange,
   HeightReference,
   Ion,
   LabelStyle,
+  type PerspectiveFrustum,
   Math as CesiumMath,
   ScreenSpaceEventType,
   VerticalOrigin,
@@ -36,8 +36,36 @@ import type { Site } from '../api/client'
 /** Cesium ion asset: "Cesium Moon" (imagery + LOLA terrain in one 3D tileset). */
 const CESIUM_MOON_ASSET_ID = 2684829
 
-/** Initial view: looking at the south pole from 45° above the horizontal, 3000 km away. */
-const INITIAL_VIEW = { lat: -90, lon: 0, pitchDeg: -45, rangeM: 3_000_000 }
+/**
+ * Start view: the whole Moon in frame, seen from above 60° S on the first curated site's
+ * meridian, north up, so the south pole (and Site01) sit clearly in the lower part of the disc.
+ */
+const START_VIEW = { lat: -60, margin: 1.12 }
+
+/** Zoom: wheel speed (Cesium's default is 5) and limits, as heights above the Moon ellipsoid. */
+const ZOOM = { factor: 2, minHeightM: 20_000, maxHeightM: 12_000_000 }
+
+/**
+ * Camera position and orientation that fit the whole Moon in the canvas: look at the Moon's
+ * centre from above (lat, lon), north up, at the distance where the limb fits the narrower
+ * field of view with `margin`.
+ */
+function startView(camera: Camera, canvas: HTMLCanvasElement, lon: number) {
+  const radius = Ellipsoid.MOON.maximumRadius
+  const frustum = camera.frustum as PerspectiveFrustum
+  const aspect = canvas.clientWidth / Math.max(1, canvas.clientHeight)
+  const fovy = frustum.fovy ?? CesiumMath.toRadians(60)
+  const fovx = 2 * Math.atan(Math.tan(fovy / 2) * aspect)
+  const distance = (radius * START_VIEW.margin) / Math.sin(Math.min(fovx, fovy) / 2)
+  const out = Cartesian3.normalize(Cartesian3.fromDegrees(lon, START_VIEW.lat), new Cartesian3())
+  const destination = Cartesian3.multiplyByScalar(out, distance, new Cartesian3())
+  const direction = Cartesian3.negate(out, new Cartesian3())
+  // "Up" on screen = the Moon's north axis, made perpendicular to the view direction.
+  const north = Cartesian3.UNIT_Z
+  const along = Cartesian3.multiplyByScalar(direction, Cartesian3.dot(north, direction), new Cartesian3())
+  const up = Cartesian3.normalize(Cartesian3.subtract(north, along, new Cartesian3()), new Cartesian3())
+  return { destination, orientation: { direction, up } }
+}
 
 /** A CSS token's value from :root, so marker colours, sizes and fonts live in index.css too. */
 function token(name: string): string {
@@ -52,6 +80,14 @@ function tokenNumber(name: string, fallback: number): number {
 
 type Status = { kind: 'loading' } | { kind: 'ready' } | { kind: 'error'; message: string }
 
+/** On-screen zoom buttons: each press moves this fraction of the current height (within limits). */
+const BUTTON_ZOOM = { inFraction: 0.35, outFraction: 0.6 }
+
+/** Entity id of the "South pole" label; it isn't a site and can't be selected. */
+const SOUTH_POLE_ID = 'south-pole-label'
+
+type Controls = { zoomIn: () => void; zoomOut: () => void; reset: () => void }
+
 export default function MoonGlobe({
   sites,
   token: ionToken,
@@ -63,7 +99,11 @@ export default function MoonGlobe({
 }) {
   const container = useRef<HTMLDivElement>(null)
   const onSelectRef = useRef(onSelect)
+  const controls = useRef<Controls | null>(null)
   const [status, setStatus] = useState<Status>({ kind: 'loading' })
+  // "You're looking at the Moon's south pole" note: shown at the start view, hidden once the
+  // view moves, shown again after Reset (Kaitlin, 2026-11-15: both the pole label and this note).
+  const [poleNote, setPoleNote] = useState(true)
 
   useEffect(() => {
     onSelectRef.current = onSelect
@@ -114,11 +154,50 @@ export default function MoonGlobe({
       light.direction = Cartesian3.clone(scene.camera.directionWC, light.direction)
     })
 
-    const pole = Cartesian3.fromDegrees(INITIAL_VIEW.lon, INITIAL_VIEW.lat)
-    scene.camera.flyToBoundingSphere(new BoundingSphere(pole, 0), {
-      offset: new HeadingPitchRange(0, CesiumMath.toRadians(INITIAL_VIEW.pitchDeg), INITIAL_VIEW.rangeM),
-      duration: 0,
-    })
+    // Zoom: gentler wheel, and limits so the Moon never vanishes or the camera dives into it.
+    const controller = scene.screenSpaceCameraController
+    controller.zoomFactor = ZOOM.factor
+    controller.minimumZoomDistance = ZOOM.minHeightM
+    controller.maximumZoomDistance = ZOOM.maxHeightM
+
+    const startLon = sites[0]?.location.lon ?? 0
+    scene.camera.setView(startView(scene.camera, v.canvas, startLon))
+    // Hide the south-pole note on the user's first move (drag, wheel, pinch or a zoom button).
+    // Not on camera.moveStart: Cesium fires that on the first frame after setView, too.
+    const hideNote = () => setPoleNote(false)
+    for (const type of [
+      ScreenSpaceEventType.LEFT_DOWN,
+      ScreenSpaceEventType.RIGHT_DOWN,
+      ScreenSpaceEventType.MIDDLE_DOWN,
+      ScreenSpaceEventType.WHEEL,
+      ScreenSpaceEventType.PINCH_START,
+    ]) {
+      v.screenSpaceEventHandler.setInputAction(hideNote, type)
+    }
+
+    // On-screen controls: zoom by a fraction of the current height, clamped to the same limits
+    // as the wheel; reset flies back to the start view.
+    const height = () => scene.camera.positionCartographic.height
+    controls.current = {
+      zoomIn: () => {
+        hideNote()
+        const h = height()
+        scene.camera.zoomIn(Math.max(0, Math.min(h * BUTTON_ZOOM.inFraction, h - ZOOM.minHeightM)))
+        scene.requestRender()
+      },
+      zoomOut: () => {
+        hideNote()
+        const h = height()
+        scene.camera.zoomOut(Math.max(0, Math.min(h * BUTTON_ZOOM.outFraction, ZOOM.maxHeightM - h)))
+        scene.requestRender()
+      },
+      reset: () =>
+        scene.camera.flyTo({
+          ...startView(scene.camera, v.canvas, startLon),
+          duration: 1,
+          complete: () => setPoleNote(true),
+        }),
+    }
 
     // Site markers: clamped to the rendered tileset surface; no height is read back.
     const markers: { entity: Entity; position: Cartesian3 }[] = []
@@ -160,6 +239,38 @@ export default function MoonGlobe({
       markers.push({ entity, position })
     }
 
+    // "South pole" label at 90° S: below its small point (site labels sit above theirs, so
+    // Site01's label, ~60 km away, doesn't collide). Not a site: it can't be selected.
+    const polePosition = Cartesian3.fromDegrees(0, -90)
+    const poleColor = Color.fromCssColorString(token('--globe-pole') || 'white')
+    const poleEntity = v.entities.add(
+      new Entity({
+        id: SOUTH_POLE_ID,
+        position: polePosition,
+        point: {
+          pixelSize: tokenNumber('--globe-pole-size', 6),
+          color: poleColor,
+          outlineColor,
+          outlineWidth,
+          heightReference: HeightReference.CLAMP_TO_3D_TILE,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        },
+        label: {
+          text: 'South pole',
+          font: token('--globe-pole-font') || '12px sans-serif',
+          fillColor: poleColor,
+          outlineColor,
+          outlineWidth: outlineWidth + 1,
+          style: LabelStyle.FILL_AND_OUTLINE,
+          verticalOrigin: VerticalOrigin.TOP,
+          pixelOffset: new Cartesian2(0, labelOffset - 4),
+          heightReference: HeightReference.CLAMP_TO_3D_TILE,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        },
+      }),
+    )
+    markers.push({ entity: poleEntity, position: polePosition })
+
     // With the depth test off, hide markers on the far side of the Moon (beyond the limb).
     const occluder = new EllipsoidalOccluder(Ellipsoid.MOON, scene.camera.positionWC)
     scene.preRender.addEventListener(() => {
@@ -175,10 +286,12 @@ export default function MoonGlobe({
       if (changed) scene.requestRender()
     })
 
-    // Click a marker -> open its site screen. Pointer cursor over markers.
+    // Click a site marker -> open its site screen. Pointer cursor over site markers only.
+    const siteIds = new Set(sites.map((s) => s.id))
     const pickedSiteId = (pos: Cartesian2): string | undefined => {
       const picked = scene.pick(pos)
-      return defined(picked) && picked.id instanceof Entity ? picked.id.id : undefined
+      const id = defined(picked) && picked.id instanceof Entity ? picked.id.id : undefined
+      return id !== undefined && siteIds.has(id) ? id : undefined
     }
     const handler = v.screenSpaceEventHandler
     handler.removeInputAction(ScreenSpaceEventType.LEFT_DOUBLE_CLICK) // no entity tracking
@@ -205,6 +318,7 @@ export default function MoonGlobe({
 
     return () => {
       cancelled = true
+      controls.current = null
       if (!v.isDestroyed()) v.destroy()
     }
   }, [sites, ionToken])
@@ -212,6 +326,39 @@ export default function MoonGlobe({
   return (
     <div className="globe">
       <div ref={container} className="globe-canvas" />
+      {status.kind === 'ready' && poleNote && (
+        <p className="globe-note" role="note">
+          You're looking at the Moon's south pole (north is up).
+        </p>
+      )}
+      {status.kind !== 'error' && (
+        <div className="globe-zoom" role="group" aria-label="Globe view">
+          <button
+            type="button"
+            aria-label="Zoom in"
+            title="Zoom in"
+            onClick={() => controls.current?.zoomIn()}
+          >
+            +
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom out"
+            title="Zoom out"
+            onClick={() => controls.current?.zoomOut()}
+          >
+            −
+          </button>
+          <button
+            type="button"
+            aria-label="Reset view"
+            title="Reset view (whole Moon, south pole)"
+            onClick={() => controls.current?.reset()}
+          >
+            ⟲
+          </button>
+        </div>
+      )}
       {status.kind === 'loading' && <p className="globe-status muted">Loading the Cesium Moon…</p>}
       {status.kind === 'error' && (
         <div className="banner error globe-status" role="alert">

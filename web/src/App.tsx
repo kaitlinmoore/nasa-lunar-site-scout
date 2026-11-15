@@ -56,13 +56,21 @@ function useLoad<T>(load: (source: DataSource) => Promise<T>, source: DataSource
   return state
 }
 
+/**
+ * Developer info (data source, contract versions): shown in dev builds only. It means nothing to
+ * public visitors (Kaitlin, 2026-11-15). The contract-mismatch warning is shown in every build.
+ */
+const SHOW_DEV_INFO = import.meta.env.DEV
+
 /** Contract versions of the responses on screen; flags any that differ from the web build's. */
 function ContractCheck({ responses }: { responses: ({ contract_version: string } | null | undefined)[] }) {
   const versions = [...new Set(responses.filter((r) => r != null).map((r) => r.contract_version))]
   const mismatched = versions.filter((v) => v !== WEB_CONTRACT_VERSION)
   return (
     <>
-      {versions.length > 0 && <p className="muted source">Data contract {versions.join(', ')}</p>}
+      {SHOW_DEV_INFO && versions.length > 0 && (
+        <p className="muted source">Data contract {versions.join(', ')}</p>
+      )}
       {mismatched.length > 0 && (
         <p className="banner error" role="alert">
           Contract version mismatch: the web was built for {WEB_CONTRACT_VERSION}, the data is{' '}
@@ -262,18 +270,21 @@ export default function App() {
   return (
     <main>
       <header>
-        <h1>Lunar Site Scout</h1>
-        <p className="muted source">
-          Data source:{' '}
-          {source === 'fixtures' ? (
-            <strong>fixtures</strong>
-          ) : (
-            <>
-              <strong>live API</strong> {API_BASE || '(same origin)'}
-            </>
-          )}
-          {' · '}web contract {WEB_CONTRACT_VERSION}
-        </p>
+        <h1>Penumbra Luna</h1>
+        <p className="subtitle">Lunar Landing Site Navigator</p>
+        {SHOW_DEV_INFO && (
+          <p className="muted source">
+            Data source:{' '}
+            {source === 'fixtures' ? (
+              <strong>fixtures</strong>
+            ) : (
+              <>
+                <strong>live API</strong> {API_BASE || '(same origin)'}
+              </>
+            )}
+            {' · '}web contract {WEB_CONTRACT_VERSION}
+          </p>
+        )}
         {route.view === 'globe' && <ContractCheck responses={[siteList]} />}
         <Nav route={route} />
       </header>

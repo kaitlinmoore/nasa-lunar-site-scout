@@ -57,10 +57,21 @@ export default function GlobeView({ data }: { data: SitesResponse }) {
           works.
         </p>
       )}
-      <p className="definition">
-        Display only: the 3D Moon is Cesium's (terrain about 2.5 km above LOLA heights), so markers
-        sit on its rendered surface and no numbers come from it. Every value comes from our API.
+      {/* Caption wording chosen by Kaitlin (2026-11-15); expert detail behind "Details". */}
+      <p className="globe-caption">
+        Near the Moon's south pole the Sun skims the horizon, so a few metres of height or a nearby
+        hill decide between light and shadow. Choose a site to see it worked out from our own terrain
+        calculations; the globe itself is just for finding your way.
       </p>
+      <details className="globe-details">
+        <summary>Details</summary>
+        <p>
+          The 3D Moon is Cesium's model (imagery and LOLA terrain), used for display only. Its terrain
+          sits about 2.5 km above the LOLA heights our calculations use, so site markers are placed on
+          its rendered surface and no values are taken from it. Every number in this tool comes from our
+          own API.
+        </p>
+      </details>
       <h3 className="list-heading">Curated sites</h3>
       {data.sites.length === 0 ? <p className="muted">No curated sites.</p> : <SiteList sites={data.sites} />}
     </section>

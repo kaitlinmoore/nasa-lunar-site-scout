@@ -166,3 +166,19 @@ export const SCENARIO_FIELD_LABELS: Record<string, string> = {
   window_end: 'window end',
   step: 'step',
 }
+
+/** A UTC time for a text field, written explicitly: "2028-05-15 00:00" (shown next to "UTC"). */
+export function formatUtcInput(iso: string): string {
+  const s = new Date(iso).toISOString()
+  return `${s.slice(0, 10)} ${s.slice(11, 16)}`
+}
+
+/** "2028-05-15 00:00" (or "2028-05-15T00:00"), read as UTC -> "2028-05-15T00:00:00Z"; null if malformed. */
+export function parseUtcInput(text: string): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})$/.exec(text.trim())
+  if (!m) return null
+  const iso = `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00Z`
+  const d = new Date(iso)
+  // Reject impossible dates like 2028-02-30 (Date would roll them over).
+  return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 16) !== iso.slice(0, 16) ? null : iso
+}

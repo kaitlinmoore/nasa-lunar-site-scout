@@ -63,6 +63,10 @@
   --globe-marker-outline-width: 2px;
   --globe-label-font: 600 14px system-ui, sans-serif;
   --globe-label-offset: 14px;
+  --globe-pole: #c9d1d9;
+  --globe-pole-size: 6px;
+  --globe-pole-font: 500 12px system-ui, sans-serif;
+  --globe-overlay-bg: rgba(13, 17, 23, 0.78);
 
   /* controls (C6) */
   --control-bg: #21262d;
@@ -90,7 +94,8 @@
 
 body { margin: 0; }
 main { max-width: var(--page-width); margin: calc(2 * var(--space-5)) auto; padding: 0 var(--space-6); }
-h1 { font-weight: var(--weight-bold); letter-spacing: 0.01em; margin: 0 0 var(--space-1); }
+h1 { font-weight: var(--weight-bold); letter-spacing: 0.01em; margin: 0; }
+.subtitle { margin: 0 0 var(--space-2); color: var(--color-text-muted); font-size: var(--text-h2); }
 h2 { font-size: var(--text-h2); font-weight: var(--weight-bold); margin: 0 0 var(--space-3); }
 header { margin-bottom: var(--space-5); }
 .source { margin: 0; font-size: var(--text-md); }
@@ -291,3 +296,29 @@ input[type='checkbox'] { padding: 0; }
 .site-intro { margin-bottom: var(--space-3); }
 .site-intro h2 { font-size: var(--text-site-title); margin: 0 0 var(--space-2); }
 .site-intro p { margin: 0 0 var(--space-1); max-width: 48rem; }
+.utc-field { color: var(--color-text); font-size: var(--text-md); white-space: nowrap; }
+.globe-note {
+  position: absolute;
+  left: var(--space-3);
+  top: var(--space-3);
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius);
+  background: var(--globe-overlay-bg);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  pointer-events: none;
+}
+.globe-zoom {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.globe-zoom button { width: 2.2rem; height: 2.2rem; padding: 0; font-size: var(--text-h2); background: var(--globe-overlay-bg); }
+.globe-caption { margin: 0 0 var(--space-2); max-width: 48rem; }
+.globe-details { font-size: var(--text-sm); color: var(--color-text-muted); }
+.globe-details summary { cursor: pointer; width: fit-content; }
+.globe-details p { margin: var(--space-1) 0 0; max-width: 48rem; }

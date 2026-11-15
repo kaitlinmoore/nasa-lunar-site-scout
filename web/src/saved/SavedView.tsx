@@ -12,16 +12,11 @@ import {
   WEB_CONTRACT_VERSION,
 } from '../api/client'
 import { type DataSource, loadCompare } from '../api/source'
-import { formatLatLon, formatScenarioSummary } from '../format'
+import { formatLatLon, formatScenarioSummary, formatUtcInput, parseUtcInput } from '../format'
 import { navigate, routeHref } from '../route'
 import { validateScenario } from '../scenario'
 import CompareTable from './CompareTable'
 import { exportJson, type ImportReport, useSaved } from './store'
-
-/** "2028-05-15T00:00:00Z" -> "2028-05-15T00:00" for a datetime-local input read as UTC. */
-function toInputUtc(iso: string): string {
-  return new Date(iso).toISOString().slice(0, 16)
-}
 
 function SiteLink({ siteId, children }: { siteId: string; children: ReactNode }) {
   const route = { view: 'site', siteId } as const
@@ -42,8 +37,10 @@ function ScenarioForm({ sites, defaults }: { sites: Site[]; defaults: Scenario |
   const saved = useSaved()
   const [siteId, setSiteId] = useState(sites[0]?.id ?? '')
   const [height, setHeight] = useState(defaults ? String(defaults.unit_height_m) : '')
-  const [start, setStart] = useState(defaults ? toInputUtc(defaults.window_start) : '')
-  const [end, setEnd] = useState(defaults ? toInputUtc(defaults.window_end) : '')
+  // Times are typed and shown explicitly in UTC ("YYYY-MM-DD HH:MM"), never in the browser's
+  // local format (Kaitlin, 2026-11-15).
+  const [start, setStart] = useState(defaults ? formatUtcInput(defaults.window_start) : '')
+  const [end, setEnd] = useState(defaults ? formatUtcInput(defaults.window_end) : '')
   const [step, setStep] = useState(defaults?.step ?? 'PT1H')
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
 
@@ -54,11 +51,20 @@ function ScenarioForm({ sites, defaults }: { sites: Site[]; defaults: Scenario |
       setMessage({ kind: 'error', text: 'Pick a site.' })
       return
     }
+    const startIso = parseUtcInput(start)
+    const endIso = parseUtcInput(end)
+    if (!startIso || !endIso) {
+      setMessage({
+        kind: 'error',
+        text: 'Write window times as YYYY-MM-DD HH:MM in UTC, e.g. 2028-05-15 00:00.',
+      })
+      return
+    }
     const v = validateScenario({
       location: site.location,
       unit_height_m: height.trim() === '' ? NaN : Number(height),
-      window_start: start ? `${start}:00Z` : '',
-      window_end: end ? `${end}:00Z` : '',
+      window_start: startIso,
+      window_end: endIso,
       step: step.trim(),
     })
     if ('error' in v) {
@@ -93,12 +99,34 @@ function ScenarioForm({ sites, defaults }: { sites: Site[]; defaults: Scenario |
         />
       </label>
       <label>
-        Window start (UTC)
-        <input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} required />
+        Window start
+        <span className="utc-field">
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="YYYY-MM-DD HH:MM"
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+            size={16}
+            required
+          />{' '}
+          UTC
+        </span>
       </label>
       <label>
-        Window end (UTC)
-        <input type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} required />
+        Window end
+        <span className="utc-field">
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="YYYY-MM-DD HH:MM"
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
+            size={16}
+            required
+          />{' '}
+          UTC
+        </span>
       </label>
       <label>
         Step (ISO 8601)
