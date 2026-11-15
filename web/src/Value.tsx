@@ -6,10 +6,19 @@ export function NotComputed() {
   return <span className="not-computed">not computed</span>
 }
 
-export function Num({ value, field }: { value: number | null | undefined; field: string }) {
+export function Num({
+  value,
+  field,
+  origin = 'API value',
+}: {
+  value: number | null | undefined
+  field: string
+  /** What the hover text calls the raw number, e.g. "Interpolated from the API profile". */
+  origin?: string
+}) {
   if (value === null || value === undefined) return <NotComputed />
   return (
-    <span className="value" title={`API value: ${value}`}>
+    <span className="value" title={`${origin}: ${value}`}>
       {formatValue(value, unitOf(field), field)}
     </span>
   )

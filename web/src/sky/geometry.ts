@@ -1,6 +1,7 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Pure helpers for the sky view: plot scales, azimuth wrap-around, and nearest-sample lookups.
-// Nothing here interpolates: lookups return an index into the arrays the API sent.
+// Pure helpers for the sky view: plot scales, azimuth wrap-around, sample lookups.
+// Time lookups return the nearest sample (no interpolation in time). The terrain horizon is
+// interpolated linearly in azimuth, because the contract defines the profile that way.
 
 /** Linear map from [d0, d1] to [r0, r1]. */
 export function linear(d0: number, d1: number, r0: number, r1: number) {
@@ -69,17 +70,48 @@ export function nearestTimeIndex(times: number[], t: number): number {
   return Math.abs(times[hi] - t) < Math.abs(times[lo] - t) ? hi : lo
 }
 
-/** Smallest angle between two azimuths, deg. */
-function azimuthGap(a: number, b: number): number {
-  const d = Math.abs(a - b) % 360
-  return d > 180 ? 360 - d : d
+/** Azimuth folded into [0, 360). */
+function mod360(a: number): number {
+  return ((a % 360) + 360) % 360
 }
 
-/** Index of the horizon sample whose azimuth is nearest to `az` (circular). */
-export function nearestAzimuthIndex(azimuths: number[], az: number): number {
-  let best = 0
-  for (let i = 1; i < azimuths.length; i++) {
-    if (azimuthGap(azimuths[i], az) < azimuthGap(azimuths[best], az)) best = i
+/** Terrain horizon at an azimuth, and the profile samples it came from. */
+export type HorizonValue = {
+  elevation: number
+  /** index of the sample at or just before the azimuth (clockwise) */
+  lo: number
+  /** index of the sample just after it; equal to `lo` when the azimuth is on a sample */
+  hi: number
+}
+
+/**
+ * Terrain horizon elevation at `az`, read the way the contract specifies
+ * (HorizonProfile.azimuth_deg: "Interpolate linearly between samples, periodic over 360"):
+ * linear interpolation between the two neighbouring samples, across the 0/360° seam too.
+ * Works for any spacing and doesn't assume the samples are sorted. On a sample, returns it as sent.
+ */
+export function horizonAt(azimuths: number[], elevations: number[], az: number): HorizonValue | null {
+  const n = Math.min(azimuths.length, elevations.length)
+  if (n === 0) return null
+  const a = mod360(az)
+  let lo = 0
+  let hi = 0
+  let back = Infinity // clockwise gap from the sample before `a` to `a`
+  let fwd = Infinity // clockwise gap from `a` to the sample after it
+  for (let i = 0; i < n; i++) {
+    const x = mod360(azimuths[i])
+    const b = mod360(a - x)
+    const f = mod360(x - a)
+    if (b < back) {
+      back = b
+      lo = i
+    }
+    if (f < fwd) {
+      fwd = f
+      hi = i
+    }
   }
-  return best
+  if (back === 0) return { elevation: elevations[lo], lo, hi: lo }
+  const t = back / (back + fwd)
+  return { elevation: elevations[lo] + t * (elevations[hi] - elevations[lo]), lo, hi }
 }

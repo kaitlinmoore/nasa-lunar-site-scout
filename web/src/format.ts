@@ -111,6 +111,12 @@ export function formatProfileSample(az: number): string {
   return `profile sample at ${formatValue(az, 'deg', 'azimuth_deg')} az`
 }
 
+/** Where an interpolated horizon value came from, e.g. "linear between samples at 133.40° and 133.50° az". */
+export function formatInterpolatedBetween(azLo: number, azHi: number): string {
+  const f = (a: number) => formatValue(a, 'deg', 'azimuth_deg')
+  return `linear between samples at ${f(azLo)} and ${f(azHi)} az`
+}
+
 /** Terrain layer line, e.g. "pgda_78_site_dems: near field, 5 m, to 10 km". */
 export function formatTerrainLayer(layer: {
   dataset_id: string

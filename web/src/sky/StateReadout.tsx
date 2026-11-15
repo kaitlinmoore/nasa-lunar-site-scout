@@ -1,11 +1,12 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Sun / Earth / horizon state at the selected sample (C5). Every number is a value the API sent
-// at that sample; the terrain horizon is the profile sample nearest the body's azimuth, and the
-// readout names which profile sample it used.
+// Sun / Earth / horizon state at the selected sample (C5). Sun/Earth numbers are the values the
+// API sent at that sample. The terrain horizon at each body's azimuth is interpolated linearly
+// between the neighbouring profile samples, as the contract specifies (Kaitlin, 2026-11-15), so
+// it's the same value the engine uses; the readout names the samples it came from.
 import type { BodyTrack, HorizonProfile } from '../api/client'
-import { formatProfileSample } from '../format'
+import { formatInterpolatedBetween, formatProfileSample } from '../format'
 import { Num } from '../Value'
-import { nearestAzimuthIndex } from './geometry'
+import { horizonAt } from './geometry'
 
 const DOCS = __FIELD_DOCS__
 
@@ -23,7 +24,7 @@ function Row({
   horizon: HorizonProfile
 }) {
   const az = track.azimuth_deg[index]
-  const k = nearestAzimuthIndex(horizon.azimuth_deg, az)
+  const h = horizonAt(horizon.azimuth_deg, horizon.elevation_deg, az)
   return (
     <tr>
       <th scope="row">
@@ -42,8 +43,21 @@ function Row({
         <Num value={track.clearance_deg?.[index]} field="clearance_deg" />
       </td>
       <td>
-        <Num value={horizon.elevation_deg[k]} field="elevation_deg" />
-        <div className="definition">{formatProfileSample(horizon.azimuth_deg[k])}</div>
+        {h === null ? (
+          <Num value={null} field="elevation_deg" />
+        ) : h.lo === h.hi ? (
+          <>
+            <Num value={h.elevation} field="elevation_deg" />
+            <div className="definition">{formatProfileSample(horizon.azimuth_deg[h.lo])}</div>
+          </>
+        ) : (
+          <>
+            <Num value={h.elevation} field="elevation_deg" origin="Interpolated from the API profile" />
+            <div className="definition">
+              {formatInterpolatedBetween(horizon.azimuth_deg[h.lo], horizon.azimuth_deg[h.hi])}
+            </div>
+          </>
+        )}
       </td>
     </tr>
   )
@@ -72,7 +86,7 @@ export default function StateReadout({
             <th scope="col">Elevation</th>
             <th scope="col">Visible disc</th>
             <th scope="col">Clearance</th>
-            <th scope="col">Terrain horizon at its azimuth</th>
+            <th scope="col">Terrain horizon at its azimuth (interpolated)</th>
           </tr>
         </thead>
         <tbody>
@@ -86,7 +100,13 @@ export default function StateReadout({
         <dt>Clearance</dt>
         <dd>{docs.clearance_deg ?? <span className="no-def">No definition in the contract yet.</span>}</dd>
         <dt>Terrain horizon</dt>
-        <dd>{horizonDoc ?? <span className="no-def">No definition in the contract yet.</span>}</dd>
+        <dd>
+          {horizonDoc ?? <span className="no-def">No definition in the contract yet.</span>}
+          <div>
+            Read at each body's azimuth by linear interpolation between the neighbouring profile
+            samples, as the contract specifies, so it's the same value the engine uses.
+          </div>
+        </dd>
       </dl>
     </>
   )
