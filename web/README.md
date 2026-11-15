@@ -38,6 +38,7 @@ The horizon/sky plot and timeline use `fixtures/horizon.json` and `fixtures/seri
 - `null` metrics show as "not computed", never as 0.
 - Units come from the contract's field-name convention (`_h` hours, `_deg` degrees, `_fraction` shown as %, `_m` meters). Counts (`_count`) name what they count and the scenario window they cover ("2 shadow periods, in the window …").
 - Metric definitions are the contract's own field descriptions, read from `fixtures/openapi.json` at build time.
+- `_clipped` flags (contract 0.3.0) aren't rows of their own: each is a note under the longest-period duration it qualifies. `true` → "clipped to the window; the full period is longer"; `null` → "not computed"; `false` → no note.
 - A contract version mismatch between the web build and the data shows a warning.
 
 ## Code layout: style, formatting, layout

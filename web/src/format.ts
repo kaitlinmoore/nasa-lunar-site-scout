@@ -130,3 +130,8 @@ export const EVENT_LABELS: Record<'sunrise' | 'sunset' | 'earthrise' | 'earthset
   earthrise: 'Earthrise',
   earthset: 'Earthset',
 }
+
+/** Under a longest-period duration whose `_clipped` flag is true (contract 0.3.0). */
+export const CLIPPED_NOTE = 'clipped to the window; the full period is longer'
+/** Under a longest-period duration whose `_clipped` flag is null. */
+export const CLIPPED_UNKNOWN_NOTE = 'whether it runs past the window: not computed'

@@ -47,55 +47,73 @@ export interface components {
          * @description Per-sample values for one body; every list has the length of `SeriesResponse.time`.
          */
         BodyTrack: {
-            /** Azimuth Deg */
+            /**
+             * Azimuth Deg
+             * @description Apparent azimuth of the disc centre (light time + stellar aberration), deg, 0-360, clockwise from north, in the site's topocentric frame (east-north-up at the site, from the normal to the 1737.4 km reference sphere, MOON_ME_DE421); the same frame as the horizon profile (HorizonProfile.azimuth_deg)
+             */
             azimuth_deg: number[];
-            /** Elevation Deg */
+            /**
+             * Elevation Deg
+             * @description Apparent elevation of the disc centre (light time + stellar aberration), deg, measured from the local horizontal plane: the plane through the observer (DEM surface + unit height) normal to the reference sphere's radius at the site; the same plane as the horizon profile (HorizonProfile.elevation_deg). Not the elevation above the terrain: see clearance_deg
+             */
             elevation_deg: number[];
             /**
              * Visible Fraction
-             * @description Visible fraction of the disc, 0..1
+             * @description Visible fraction of the disc, 0..1, against the terrain horizon: Sun = share of the disc's light (limb-darkened, 550 nm), Earth = share of its area (methodology section 5.1)
              */
             visible_fraction: number[];
             /**
              * Clearance Deg
-             * @description Disc centre elevation above the terrain horizon, deg
+             * @description Disc centre elevation minus the terrain horizon elevation at its azimuth, deg
              * @default null
              */
             clearance_deg: number[] | null;
         };
         /**
          * CommsMetrics
-         * @description F4 (direct-to-Earth at the unit height). Nullable: null = not computed.
+         * @description F4 (direct-to-Earth at the unit height). Nullable: null = not computed. See methodology section 5.
+         *
+         *     Earth visible = any part of the Earth disc above the terrain horizon; a gap = no part of it above.
+         *     Gaps that start before window_start or run past window_end are clipped to the window.
          */
         CommsMetrics: {
             /**
              * Earth Visibility Fraction
-             * @description Time fraction with any part of the Earth disc visible
+             * @description Fraction of the window with any part of the Earth disc visible
              * @default null
              */
             earth_visibility_fraction: number | null;
             /**
              * Earth Full Disc Fraction
+             * @description Fraction of the window with the whole Earth disc above the terrain horizon
              * @default null
              */
             earth_full_disc_fraction: number | null;
             /**
              * Longest Earth Gap H
+             * @description Longest continuous period with no part of the Earth disc visible, clipped to the window, h
              * @default null
              */
             longest_earth_gap_h: number | null;
+            /**
+             * Longest Earth Gap Clipped
+             * @description True if the longest Earth gap starts before window_start or runs past window_end, so its full length is longer than longest_earth_gap_h; false if it lies inside the window or there is none
+             * @default null
+             */
+            longest_earth_gap_clipped: boolean | null;
+            /** @description Apparent elevation of the Earth's disc centre above the local horizontal plane (not the terrain horizon): min, max and time mean over the whole window, whether or not the Earth is visible, deg */
             earth_elevation_deg?: components["schemas"]["Stat"];
-            /** @description Earth centre above the terrain horizon, deg */
+            /** @description Earth disc centre elevation minus the terrain horizon elevation at its azimuth: min, max and time mean over the whole window, deg */
             earth_clearance_deg?: components["schemas"]["Stat"];
             /**
              * Sun Earth Overlap Fraction
-             * @description Time fraction with Sun and Earth both visible
+             * @description Fraction of the window with any part of both the solar and the Earth disc visible
              * @default null
              */
             sun_earth_overlap_fraction: number | null;
             /**
              * Time To Earthset H
-             * @description From window_start to the first Earthset, h
+             * @description From window_start to the first Earthset (the last part of the Earth disc going below the terrain horizon), h
              * @default null
              */
             time_to_earthset_h: number | null;
@@ -109,7 +127,7 @@ export interface components {
         CompareResponse: {
             /**
              * Contract Version
-             * @default 0.1.0
+             * @default 0.3.0
              */
             contract_version: string;
             /**
@@ -212,7 +230,7 @@ export interface components {
         DatasetsResponse: {
             /**
              * Contract Version
-             * @default 0.1.0
+             * @default 0.3.0
              */
             contract_version: string;
             /**
@@ -295,7 +313,7 @@ export interface components {
         FeaturesResponse: {
             /**
              * Contract Version
-             * @default 0.1.0
+             * @default 0.3.0
              */
             contract_version: string;
             /**
@@ -345,7 +363,7 @@ export interface components {
         HealthResponse: {
             /**
              * Contract Version
-             * @default 0.1.0
+             * @default 0.3.0
              */
             contract_version: string;
             /**
@@ -367,7 +385,7 @@ export interface components {
         HorizonProfile: {
             /**
              * Contract Version
-             * @default 0.1.0
+             * @default 0.3.0
              */
             contract_version: string;
             /**
@@ -386,12 +404,12 @@ export interface components {
             unit_height_m: number;
             /**
              * Azimuth Deg
-             * @description Azimuths, deg clockwise from north
+             * @description Azimuth of each horizon sample, deg, 0-360, clockwise from north, in the site's topocentric frame (east-north-up at the site, from the normal to the 1737.4 km reference sphere, MOON_ME_DE421); the same frame as the Sun/Earth tracks (BodyTrack.azimuth_deg). Interpolate linearly between samples, periodic over 360
              */
             azimuth_deg: number[];
             /**
              * Elevation Deg
-             * @description Terrain horizon elevation per azimuth, deg
+             * @description Terrain horizon elevation at each azimuth, deg, measured from the local horizontal plane: the plane through the observer (DEM surface + unit height) normal to the reference sphere's radius at the site; the same plane as the Sun/Earth tracks (BodyTrack.elevation_deg)
              */
             elevation_deg: number[];
             /**
@@ -414,7 +432,7 @@ export interface components {
         Job: {
             /**
              * Contract Version
-             * @default 0.1.0
+             * @default 0.3.0
              */
             contract_version: string;
             /**
@@ -483,7 +501,7 @@ export interface components {
         LocateResponse: {
             /**
              * Contract Version
-             * @default 0.1.0
+             * @default 0.3.0
              */
             contract_version: string;
             /**
@@ -542,7 +560,7 @@ export interface components {
         MetricsResponse: {
             /**
              * Contract Version
-             * @default 0.1.0
+             * @default 0.3.0
              */
             contract_version: string;
             /**
@@ -570,7 +588,7 @@ export interface components {
         NLAnswer: {
             /**
              * Contract Version
-             * @default 0.1.0
+             * @default 0.3.0
              */
             contract_version: string;
             /**
@@ -620,7 +638,7 @@ export interface components {
         NLUnsupported: {
             /**
              * Contract Version
-             * @default 0.1.0
+             * @default 0.3.0
              */
             contract_version: string;
             /**
@@ -654,48 +672,62 @@ export interface components {
         };
         /**
          * PowerMetrics
-         * @description F3. Nullable: null = not computed.
+         * @description F3. Nullable: null = not computed. Exact definitions: docs/methodology.md section 5.
+         *
+         *     Sunlit = any part of the solar disc above the terrain horizon; shadow = no part of it above. Sunlit and
+         *     shadow periods tile the window. Periods that start before window_start or run past window_end are
+         *     clipped to the window and still counted.
          */
         PowerMetrics: {
             /**
              * Illumination Fraction
-             * @description Time fraction with any part of the solar disc visible
+             * @description Fraction of the window that is sunlit (any part of the solar disc visible)
              * @default null
              */
             illumination_fraction: number | null;
             /**
              * Mean Visible Disk Fraction
-             * @description Time-averaged visible fraction of the solar disc
+             * @description Time average over the window of the visible share of the solar disc's light, weighted by limb darkening at 550 nm (a light-weighted fraction, not a geometric area fraction)
              * @default null
              */
             mean_visible_disk_fraction: number | null;
             /**
              * Sunlit Duration H
-             * @description Total sunlit time, h
+             * @description Total sunlit time in the window (any part of the solar disc visible), h
              * @default null
              */
             sunlit_duration_h: number | null;
             /**
              * Longest Sunlit Period H
+             * @description Longest continuous sunlit period (any part of the solar disc visible), clipped to the window, h
              * @default null
              */
             longest_sunlit_period_h: number | null;
             /**
              * Longest Shadow H
-             * @description Longest shadow period, h
+             * @description Longest continuous shadow period (no part of the solar disc visible), clipped to the window, h
              * @default null
              */
             longest_shadow_h: number | null;
             /**
+             * Longest Shadow Clipped
+             * @description True if the longest shadow period starts before window_start or runs past window_end, so its full length is longer than longest_shadow_h; false if it lies inside the window or there is none
+             * @default null
+             */
+            longest_shadow_clipped: boolean | null;
+            /**
              * Shadow Count
+             * @description Number of shadow periods (no part of the solar disc visible) in the window, with no minimum duration; periods clipped to the window count. Partial loss of the disc is not a shadow
              * @default null
              */
             shadow_count: number | null;
+            /** @description Apparent elevation of the Sun's disc centre above the local horizontal plane (not the terrain horizon): min, max and time mean over the whole window, whether or not the Sun is visible, deg */
             sun_elevation_deg?: components["schemas"]["Stat"];
+            /** @description Apparent azimuth of the Sun's disc centre, deg clockwise from north, over the whole window, whether or not the Sun is visible. min and max are the ends of the smallest arc containing the track, read clockwise from min to max (min > max when the arc crosses north). A full circle is reported as min 0, max 360. mean is always null: an average azimuth has no meaning here */
             sun_azimuth_deg?: components["schemas"]["Stat"];
             /**
              * Time To Sunset H
-             * @description From window_start to the first sunset, h
+             * @description From window_start to the first sunset (the last part of the solar disc going below the terrain horizon), h
              * @default null
              */
             time_to_sunset_h: number | null;
@@ -712,7 +744,7 @@ export interface components {
         ProximityResponse: {
             /**
              * Contract Version
-             * @default 0.1.0
+             * @default 0.3.0
              */
             contract_version: string;
             /**
@@ -827,7 +859,7 @@ export interface components {
         SeriesResponse: {
             /**
              * Contract Version
-             * @default 0.1.0
+             * @default 0.3.0
              */
             contract_version: string;
             /**
@@ -892,7 +924,7 @@ export interface components {
         SitesResponse: {
             /**
              * Contract Version
-             * @default 0.1.0
+             * @default 0.3.0
              */
             contract_version: string;
             /**

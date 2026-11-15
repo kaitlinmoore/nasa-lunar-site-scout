@@ -12,6 +12,8 @@ import type {
 } from './api/client'
 import {
   EVENT_LABELS,
+  CLIPPED_NOTE,
+  CLIPPED_UNKNOWN_NOTE,
   formatDuration,
   formatHeight,
   formatLatLon,
@@ -24,8 +26,13 @@ import { NotComputed, Num } from './Value'
 
 const DOCS = __FIELD_DOCS__
 
-// Labels are keyed by the contract types: a renamed or added field is a type error here.
-const POWER_LABELS: Record<keyof PowerMetrics, string> = {
+// Boolean flags that qualify another metric rather than being shown as their own row.
+type PowerFlag = 'longest_shadow_clipped'
+type CommsFlag = 'longest_earth_gap_clipped'
+
+// Labels are keyed by the contract types (minus the flags): a renamed or added field is a
+// type error here.
+const POWER_LABELS: Record<Exclude<keyof PowerMetrics, PowerFlag>, string> = {
   illumination_fraction: 'Illumination',
   mean_visible_disk_fraction: 'Mean visible solar disc',
   sunlit_duration_h: 'Sunlit duration',
@@ -37,7 +44,7 @@ const POWER_LABELS: Record<keyof PowerMetrics, string> = {
   time_to_sunset_h: 'Time to sunset',
 }
 
-const COMMS_LABELS: Record<keyof CommsMetrics, string> = {
+const COMMS_LABELS: Record<Exclude<keyof CommsMetrics, CommsFlag>, string> = {
   earth_visibility_fraction: 'Earth visibility',
   earth_full_disc_fraction: 'Earth full disc',
   longest_earth_gap_h: 'Longest Earth gap',
@@ -45,6 +52,27 @@ const COMMS_LABELS: Record<keyof CommsMetrics, string> = {
   earth_clearance_deg: 'Earth clearance',
   sun_earth_overlap_fraction: 'Sun + Earth overlap',
   time_to_earthset_h: 'Time to Earthset',
+}
+
+// Which "clipped to the window" flag qualifies which duration (every flag must be placed).
+const POWER_CLIPPED: Record<PowerFlag, keyof PowerMetrics> = {
+  longest_shadow_clipped: 'longest_shadow_h',
+}
+const COMMS_CLIPPED: Record<CommsFlag, keyof CommsMetrics> = {
+  longest_earth_gap_clipped: 'longest_earth_gap_h',
+}
+
+/**
+ * Note under a duration whose period may run past the window edges. Shown only when the
+ * duration has a value: true -> "clipped …"; null -> "not computed"; false -> nothing.
+ */
+function ClippedNote({ flag, doc }: { flag: boolean | null | undefined; doc?: string }) {
+  if (flag === false) return null
+  return (
+    <div className="definition" title={doc}>
+      {flag === true ? CLIPPED_NOTE : CLIPPED_UNKNOWN_NOTE}
+    </div>
+  )
 }
 
 /** Scenario window, for values (counts) that only make sense with the window they cover. */
@@ -103,15 +131,22 @@ function MetricTable<T extends object>({
   schema,
   metrics,
   labels,
+  clipped,
   scenarioWindow,
 }: {
   title: string
   schema: string
   metrics: T
-  labels: Record<keyof T, string>
+  labels: Partial<Record<keyof T, string>>
+  /** flag field -> the duration field it qualifies */
+  clipped: Partial<Record<keyof T, keyof T>>
   scenarioWindow: ScenarioWindow
 }) {
   const docs = DOCS[schema] ?? {}
+  // duration field -> its flag field
+  const flagFor = new Map(
+    (Object.entries(clipped) as [keyof T & string, keyof T & string][]).map(([flag, field]) => [field, flag]),
+  )
   return (
     <section className="card">
       <h2>{title}</h2>
@@ -125,6 +160,7 @@ function MetricTable<T extends object>({
         <tbody>
           {(Object.keys(labels) as (keyof T & string)[]).map((field) => {
             const v = metrics[field] as unknown
+            const flag = flagFor.get(field)
             return (
               <tr key={field}>
                 <th scope="row">
@@ -137,11 +173,16 @@ function MetricTable<T extends object>({
                   {isStat(v) ? (
                     <StatValue stat={v} field={field} />
                   ) : (
-                    <Value
-                      value={v as number | null | undefined}
-                      field={field}
-                      scenarioWindow={scenarioWindow}
-                    />
+                    <>
+                      <Value
+                        value={v as number | null | undefined}
+                        field={field}
+                        scenarioWindow={scenarioWindow}
+                      />
+                      {flag && v != null && (
+                        <ClippedNote flag={metrics[flag] as boolean | null | undefined} doc={docs[flag]} />
+                      )}
+                    </>
                   )}
                 </td>
               </tr>
@@ -258,6 +299,7 @@ export default function SiteScreen({ data, children }: { data: MetricsResponse; 
           schema="PowerMetrics"
           metrics={data.power}
           labels={POWER_LABELS}
+          clipped={POWER_CLIPPED}
           scenarioWindow={scenarioWindow}
         />
         <MetricTable
@@ -265,6 +307,7 @@ export default function SiteScreen({ data, children }: { data: MetricsResponse; 
           schema="CommsMetrics"
           metrics={data.comms}
           labels={COMMS_LABELS}
+          clipped={COMMS_CLIPPED}
           scenarioWindow={scenarioWindow}
         />
       </div>
