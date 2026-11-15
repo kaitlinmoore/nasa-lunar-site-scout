@@ -72,7 +72,7 @@ def test_scenario_rejects_bad_window():
 
 # The C1 served scenario (precomputed; the endpoint matches requests on its key). Stream B sends exactly
 # this scenario, so changing it is a cross-stream change: update the precomputed result and tell B.
-C1_SCENARIO_KEY = "947681b3639b1307"
+C1_SCENARIO_KEY = "00010cfa5fef681c"
 
 
 def test_c1_example_scenario_is_the_served_one():
@@ -92,16 +92,16 @@ def test_c1_key_matches_a_browser_request_and_depends_on_every_field():
     sent = {
         "location": {"lat": -89.452675, "lon": -137.148653, "name": "anything"},
         "unit_height_m": 1,
-        "window_start": "2028-11-15T00:00:00Z",
-        "window_end": "2028-12-15T00:00:00Z",
+        "window_start": "2028-05-15T00:00:00Z",
+        "window_end": "2028-06-14T00:00:00Z",
         "step": "PT1H",
     }
     assert Scenario.model_validate(sent).key() == C1_SCENARIO_KEY
     changes = [
         {"location": {"lat": -89.45, "lon": -137.148653}},
         {"unit_height_m": 2},
-        {"window_start": "2028-11-16T00:00:00Z"},
-        {"window_end": "2028-12-14T00:00:00Z"},
+        {"window_start": "2028-05-16T00:00:00Z"},
+        {"window_end": "2028-06-13T00:00:00Z"},
         {"step": "PT6H"},
     ]
     for change in changes:
@@ -111,7 +111,17 @@ def test_c1_key_matches_a_browser_request_and_depends_on_every_field():
 def test_every_metric_field_has_a_description():
     # Stream B shows these as on-screen definitions (read at build time from fixtures/openapi.json).
     from lss.contract import CommsMetrics, PowerMetrics
+    from lss.contract.models import BodyTrack
 
-    for model in (PowerMetrics, CommsMetrics):
+    for model in (PowerMetrics, CommsMetrics, BodyTrack):
         for name, field in model.model_fields.items():
             assert field.description, f"{model.__name__}.{name} has no description"
+
+
+def test_horizon_and_tracks_state_the_same_frame():
+    # Stream B overlays the Sun/Earth tracks on the horizon profile: the alignment is stated, not assumed.
+    from lss.contract.models import AZIMUTH_CONVENTION, ELEVATION_CONVENTION, BodyTrack, HorizonProfile
+
+    for model in (BodyTrack, HorizonProfile):
+        assert AZIMUTH_CONVENTION in model.model_fields["azimuth_deg"].description
+        assert ELEVATION_CONVENTION in model.model_fields["elevation_deg"].description

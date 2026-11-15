@@ -182,7 +182,7 @@ def _mutate(path: list[Any], value: Any) -> dict[str, Any]:
         ({**BOULDERS, "outcome": "answer"}, "schema"),
         (_mutate(["query", "operation"], "features"), "not in the Core NL vocabulary"),
         (_mutate(["query", "operation"], "thermal"), "schema"),
-        (_mutate(["query", "params", "scenario", "window_end"], "2028-11-01T00:00:00Z"), "window_end"),
+        (_mutate(["query", "params", "scenario", "window_end"], "2020-01-01T00:00:00Z"), "window_end"),
         (_mutate(["query", "params", "scenario", "window_start"], "2028-11-15T00:00:00"), "params"),
         (_mutate(["query", "params", "scenario", "colour"], "red"), "params"),
         (_mutate(["query", "params", "scenario", "location"], {"site_id": "nope"}), "unknown site_id"),

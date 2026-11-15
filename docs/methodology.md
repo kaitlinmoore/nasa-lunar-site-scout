@@ -300,6 +300,19 @@ The code that computes them is step 4.6 _(to do)_. The measured numbers below ar
 scratch script from the step 4.3 ephemeris and the step 4.5 horizon before the 4.6 code existed, and re-measured
 with it.
 
+**Served C1 scenario** (`lss.contract.examples.SCENARIO`; the deployed endpoint serves it precomputed and
+matches requests on `Scenario.key()`): the RoI 4 point (section 1.3), 1 m, 2028-05-15T00:00Z to
+2028-06-14T00:00Z, step 1 h (the plan's hourly default). Kaitlin chose this window (2026-11-15) so it
+contains shadow periods: at RoI 4 every 30-day window from mid-July to mid-January 2028 is fully sunlit,
+including the first choice, 2028-11-15 to 12-15.
+
+**One frame for horizon and tracks.** The horizon profile (`HorizonProfile`) and the Sun/Earth tracks
+(`BodyTrack`) use the same topocentric frame and the same observer (section 2): azimuth 0–360°
+clockwise from north, elevation measured from the plane through the observer normal to the 1737.4 km
+reference sphere's radius at the site. A track can therefore be overlaid on the horizon directly: the
+disc centre is above the terrain where its elevation exceeds the horizon elevation at the same azimuth
+(`clearance_deg` is that difference).
+
 ### 5.1 Visible fraction of a disc at one instant
 
 - **Disc.** Centre at the apparent azimuth and elevation, angular radius asin(R / distance) (section 2).
@@ -336,7 +349,8 @@ with it.
   only 1 of 49 shadow periods is shorter than 1 h (20 min), so horizon flickers do not inflate the count there.
 - **Clipped to the window.** A period that starts before `window_start` or runs past `window_end` is cut at
   the window edge and still counted, with its clipped length. `longest_shadow_clipped` says whether the
-  longest shadow period was cut, in which case its full length is longer than reported.
+  longest shadow period was cut, in which case its full length is longer than reported;
+  `longest_earth_gap_clipped` says the same for the longest Earth gap.
 - **Earth visible** = any part of the Earth disc visible (`f_earth > 0`). An **Earth gap** = no part
   visible. Same rules: no minimum duration, clipped to the window.
 - **Resolution.** Periods and events are found on a fine internal time grid and refined by root-finding
@@ -370,7 +384,8 @@ If other bodies get azimuth statistics, the same rule applies.
 |---|---|
 | `earth_visibility_fraction` | Time in W with any part of the Earth disc visible, divided by T. |
 | `earth_full_disc_fraction` | Time in W with the whole Earth disc above the terrain horizon (`f_earth = 1`), divided by T. |
-| `longest_earth_gap_h` | Longest continuous period with no part of the Earth disc visible, clipped to W, h. |
+| `longest_earth_gap_h` | Longest continuous period with no part of the Earth disc visible, clipped to W, h. 0 if there is none. |
+| `longest_earth_gap_clipped` | True if that gap starts before W or runs past it; false if it lies inside W or there is none. |
 | `earth_elevation_deg` | Apparent elevation of the Earth's disc centre above the local horizontal plane: min, max and time mean over all of W, whether or not the Earth is visible. |
 | `earth_clearance_deg` | Earth disc centre elevation minus the terrain horizon elevation at its azimuth: min, max and time mean over all of W. |
 | `sun_earth_overlap_fraction` | Time in W with any part of both discs visible, divided by T. |

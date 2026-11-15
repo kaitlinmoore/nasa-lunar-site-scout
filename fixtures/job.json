@@ -1,12 +1,12 @@
 {
-  "contract_version": "0.2.0",
+  "contract_version": "0.3.0",
   "_placeholder": true,
   "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
   "id": "placeholder-job-1",
   "status": "succeeded",
   "progress": 1.0,
-  "created_at": "2028-11-15T00:00:00Z",
-  "updated_at": "2028-11-15T00:00:30Z",
+  "created_at": "2028-05-15T00:00:00Z",
+  "updated_at": "2028-05-15T00:00:30Z",
   "result": {
     "candidates": [
       {

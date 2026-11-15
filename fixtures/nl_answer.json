@@ -1,8 +1,8 @@
 {
-  "contract_version": "0.2.0",
+  "contract_version": "0.3.0",
   "_placeholder": true,
   "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
-  "interpretation": "Power and Earth-visibility metrics for Site01 Connecting ridge (Barker 2021 RoI 4) at 1 m height, 2028-11-15 to 2028-12-15 UTC.",
+  "interpretation": "Power and Earth-visibility metrics for Site01 Connecting ridge (Barker 2021 RoI 4) at 1 m height, 2028-05-15 to 2028-06-14 UTC.",
   "structured_query": {
     "operation": "metrics",
     "params": {
@@ -13,14 +13,14 @@
           "name": "Site01 Connecting ridge (Barker 2021 RoI 4)"
         },
         "unit_height_m": 1.0,
-        "window_start": "2028-11-15T00:00:00Z",
-        "window_end": "2028-12-15T00:00:00Z",
+        "window_start": "2028-05-15T00:00:00Z",
+        "window_end": "2028-06-14T00:00:00Z",
         "step": "PT1H"
       }
     }
   },
   "result": {
-    "contract_version": "0.2.0",
+    "contract_version": "0.3.0",
     "_placeholder": true,
     "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
     "scenario": {
@@ -30,11 +30,11 @@
         "name": "Site01 Connecting ridge (Barker 2021 RoI 4)"
       },
       "unit_height_m": 1.0,
-      "window_start": "2028-11-15T00:00:00Z",
-      "window_end": "2028-12-15T00:00:00Z",
+      "window_start": "2028-05-15T00:00:00Z",
+      "window_end": "2028-06-14T00:00:00Z",
       "step": "PT1H"
     },
-    "scenario_key": "947681b3639b1307",
+    "scenario_key": "00010cfa5fef681c",
     "power": {
       "illumination_fraction": 0.5,
       "mean_visible_disk_fraction": 0.4,
@@ -59,6 +59,7 @@
       "earth_visibility_fraction": 0.6,
       "earth_full_disc_fraction": 0.5,
       "longest_earth_gap_h": 120.0,
+      "longest_earth_gap_clipped": false,
       "earth_elevation_deg": {
         "min": -5.0,
         "max": 8.0,
@@ -75,19 +76,19 @@
     "events": [
       {
         "kind": "sunset",
-        "time": "2028-11-23T06:00:00Z",
+        "time": "2028-05-23T06:00:00Z",
         "refined": false,
         "note": null
       },
       {
         "kind": "sunrise",
-        "time": "2028-11-28T18:00:00Z",
+        "time": "2028-05-28T18:00:00Z",
         "refined": false,
         "note": null
       },
       {
         "kind": "earthset",
-        "time": "2028-11-28T12:00:00Z",
+        "time": "2028-05-28T12:00:00Z",
         "refined": false,
         "note": null
       }

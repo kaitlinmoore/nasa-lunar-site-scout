@@ -32,7 +32,7 @@ from pydantic import (
     model_validator,
 )
 
-CONTRACT_VERSION = "0.2.0"
+CONTRACT_VERSION = "0.3.0"
 
 Latitude = Annotated[float, Field(ge=-90.0, le=90.0, description="Planetocentric latitude, deg")]
 Longitude = Annotated[
@@ -210,6 +210,18 @@ class TerrainViewLayer(StrEnum):
 
 # ------------------------------------------------------------------------ horizon
 
+# One topocentric frame for the horizon profile and the Sun/Earth tracks (docs/methodology.md sections 2-3),
+# so a client can overlay them directly: a disc centre is above the terrain where its elevation exceeds the
+# horizon elevation at the same azimuth. Both are built from lss.ephem.enu_basis.
+AZIMUTH_CONVENTION = (
+    "deg, 0-360, clockwise from north, in the site's topocentric frame (east-north-up at the site, from the "
+    "normal to the 1737.4 km reference sphere, MOON_ME_DE421); the same frame as "
+)
+ELEVATION_CONVENTION = (
+    "deg, measured from the local horizontal plane: the plane through the observer (DEM surface + unit "
+    "height) normal to the reference sphere's radius at the site; the same plane as "
+)
+
 
 class HorizonRequest(Model):
     location: Location
@@ -219,8 +231,17 @@ class HorizonRequest(Model):
 class HorizonProfile(Response):
     location: Location
     unit_height_m: float
-    azimuth_deg: list[float] = Field(description="Azimuths, deg clockwise from north")
-    elevation_deg: list[float] = Field(description="Terrain horizon elevation per azimuth, deg")
+    azimuth_deg: list[float] = Field(
+        description="Azimuth of each horizon sample, "
+        + AZIMUTH_CONVENTION
+        + "the Sun/Earth tracks (BodyTrack.azimuth_deg). Interpolate linearly between samples, "
+        "periodic over 360"
+    )
+    elevation_deg: list[float] = Field(
+        description="Terrain horizon elevation at each azimuth, "
+        + ELEVATION_CONVENTION
+        + "the Sun/Earth tracks (BodyTrack.elevation_deg)"
+    )
     max_range_km: float | None = None
     terrain_stack: list[TerrainLayer] = Field(default_factory=list)
     fidelity: FidelityLabel | None = None
@@ -258,11 +279,24 @@ class Event(Model):
 class BodyTrack(Model):
     """Per-sample values for one body; every list has the length of `SeriesResponse.time`."""
 
-    azimuth_deg: list[float]
-    elevation_deg: list[float]
-    visible_fraction: list[Fraction] = Field(description="Visible fraction of the disc, 0..1")
+    azimuth_deg: list[float] = Field(
+        description="Apparent azimuth of the disc centre (light time + stellar aberration), "
+        + AZIMUTH_CONVENTION
+        + "the horizon profile (HorizonProfile.azimuth_deg)"
+    )
+    elevation_deg: list[float] = Field(
+        description="Apparent elevation of the disc centre (light time + stellar aberration), "
+        + ELEVATION_CONVENTION
+        + "the horizon profile (HorizonProfile.elevation_deg). Not the elevation above the terrain: "
+        "see clearance_deg"
+    )
+    visible_fraction: list[Fraction] = Field(
+        description="Visible fraction of the disc, 0..1, against the terrain horizon: Sun = share of "
+        "the disc's light (limb-darkened, 550 nm), Earth = share of its area (methodology section 5.1)"
+    )
     clearance_deg: list[float] | None = Field(
-        default=None, description="Disc centre elevation above the terrain horizon, deg"
+        default=None,
+        description="Disc centre elevation minus the terrain horizon elevation at its azimuth, deg",
     )
 
 
@@ -373,6 +407,7 @@ class CommsMetrics(Model):
     """F4 (direct-to-Earth at the unit height). Nullable: null = not computed. See methodology section 5.
 
     Earth visible = any part of the Earth disc above the terrain horizon; a gap = no part of it above.
+    Gaps that start before window_start or run past window_end are clipped to the window.
     """
 
     earth_visibility_fraction: Fraction | None = Field(
@@ -385,6 +420,14 @@ class CommsMetrics(Model):
         default=None,
         description=(
             "Longest continuous period with no part of the Earth disc visible, clipped to the window, h"
+        ),
+    )
+    longest_earth_gap_clipped: bool | None = Field(
+        default=None,
+        description=(
+            "True if the longest Earth gap starts before window_start or runs past window_end, so its "
+            "full length is longer than longest_earth_gap_h; false if it lies inside the window or there "
+            "is none"
         ),
     )
     earth_elevation_deg: Stat = Field(

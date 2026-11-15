@@ -9,7 +9,8 @@ They are NOT computed results and must never be presented as such.
 
 Scope (C1 thin slice, handoff 03): one PGDA site (Site01, Connecting ridge), one unit
 height (1 m, chosen by Kaitlin to match Barker et al. 2021), one window (30 days from
-2028-11-15 UTC, covering one full 29.53-day synodic month).
+2028-05-15 UTC, covering one full 29.53-day synodic month; chosen by Kaitlin so the window has
+shadow periods: from mid-July to mid-January every 30-day window is fully sunlit at RoI 4).
 
 The served Site01 point is the centroid of region of interest (RoI) 4 of Barker et al. (2021, Table 2),
 a real published location, so `sites.json` is not a placeholder. It replaces the Mazarico et al. (2011)
@@ -77,8 +78,9 @@ SITE01_SOURCE = (
 SITE01 = Location(lat=-89.452675, lon=-137.148653, name=SITE01_NAME)
 # The C1 thin-slice scenario. Exactly this scenario is precomputed and served by the deployed endpoint, which
 # matches requests on SCENARIO.key() (location without name, height, window and step). Window: Kaitlin,
-# 2026-11-14. Step: 1 h, the plan's default sampling (plan section 4.2; events are refined between samples).
-WINDOW_START = datetime(2028, 11, 15, tzinfo=UTC)
+# 2026-11-15 (was 2028-11-15, which is fully sunlit at RoI 4). Step: 1 h, the plan's default sampling
+# (plan section 4.2; events are refined between samples).
+WINDOW_START = datetime(2028, 5, 15, tzinfo=UTC)
 WINDOW_END = WINDOW_START + timedelta(days=30)
 STEP = timedelta(hours=1)
 SCENARIO = Scenario(
@@ -218,6 +220,7 @@ def metrics() -> MetricsResponse:
             earth_visibility_fraction=0.6,
             earth_full_disc_fraction=0.5,
             longest_earth_gap_h=120.0,
+            longest_earth_gap_clipped=False,
             earth_elevation_deg=Stat(min=-5.0, max=8.0, mean=1.5),
             earth_clearance_deg=Stat(min=-5.8, max=7.2, mean=0.7),
             sun_earth_overlap_fraction=0.3,
@@ -281,7 +284,7 @@ def nl_answer() -> NLAnswer:
     return NLAnswer(
         interpretation=(
             f"Power and Earth-visibility metrics for {SITE01_NAME} at 1 m height, "
-            "2028-11-15 to 2028-12-15 UTC."
+            f"{WINDOW_START:%Y-%m-%d} to {WINDOW_END:%Y-%m-%d} UTC."
         ),
         structured_query=StructuredQuery(
             operation=Operation.metrics,
