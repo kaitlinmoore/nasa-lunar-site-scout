@@ -15,6 +15,11 @@ from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 
+class ProviderFatalError(RuntimeError):
+    """A failure that would repeat on every request (bad credentials, no permission):
+    the eval harness stops instead of recording it once per item."""
+
+
 @dataclass(frozen=True)
 class NLPrompt:
     system: str
@@ -37,7 +42,8 @@ class FakeProvider:
     """Returns canned outputs keyed by the request text; no network calls.
 
     `responses` maps request text -> output (dict, serialized to JSON, or a raw string).
-    Alternatively pass `respond`, a function of the prompt.
+    Alternatively pass `respond`, a function of the prompt. Full NL outputs are projected onto
+    the stage being asked for (route or fill), so one canned output serves both calls.
     """
 
     name = "fake"
@@ -62,4 +68,27 @@ class FakeProvider:
             if text not in self.responses:
                 raise KeyError(f"FakeProvider has no response for {text!r}")
             out = self.responses[text]
+        out = project_stage(out, prompt.meta.get("stage"))
         return out if isinstance(out, str) else json.dumps(out)
+
+
+def project_stage(out: Any, stage: str | None) -> Any:
+    """Turn a full NL output (as written in tests and eval labels) into what one stage of the
+    two-step call returns. Anything else (strings, stage-shaped dicts) passes through."""
+    if not isinstance(out, dict) or stage not in ("route", "fill") or "outcome" not in out:
+        return out
+    query = out.get("query") or {}
+    if stage == "route":
+        return {
+            "outcome": out["outcome"],
+            "operation": query.get("operation"),
+            "interpretation": out.get("interpretation", ""),
+            "limitations": out.get("limitations", []),
+        }
+    return {
+        "interpretation": out.get("interpretation", ""),
+        "params": query.get("params", {}),
+        "height_source": out.get("height_source", "not_applicable"),
+        "window_source": out.get("window_source", "not_applicable"),
+        "assumptions": out.get("assumptions", []),
+    }

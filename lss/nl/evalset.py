@@ -34,6 +34,11 @@ class Source(StrEnum):
     si_supplied = "si_supplied"  # Claude-drafted, approved by the project author
 
 
+class Split(StrEnum):
+    dev = "dev"  # used for prompt tuning
+    holdout = "holdout"  # never used for tuning; scored separately
+
+
 class ItemStatus(StrEnum):
     ready = "ready"
     blocked = "blocked"
@@ -56,6 +61,7 @@ class Expected(Model):
 class EvalItem(Model):
     id: str
     source: Source
+    split: Split = Split.dev
     text: str = Field(min_length=1)
     context: EvalContext = Field(default_factory=EvalContext)
     target: str

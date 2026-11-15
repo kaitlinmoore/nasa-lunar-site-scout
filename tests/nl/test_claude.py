@@ -9,8 +9,9 @@ from types import SimpleNamespace
 
 import pytest
 
+from lss.contract import Operation
 from lss.nl.claude import FALLBACK_BETA, ClaudeProvider, ProviderError, api_schema
-from lss.nl.prompt import build_prompt
+from lss.nl.prompt import build_fill_prompt
 from lss.nl.validate import default_context, validate_output
 
 OUTPUT = {
@@ -55,7 +56,9 @@ class StandInClient:
 
 
 def prompt():
-    return build_prompt("What terrain data covers 85 S, 30 E?", default_context(), date(2026, 11, 15))
+    return build_fill_prompt(
+        "What terrain data covers 85 S, 30 E?", default_context(), date(2026, 11, 15), Operation.locate
+    )
 
 
 def test_request_shape_with_fallbacks():
@@ -112,3 +115,71 @@ def test_missing_key_fails_before_any_call(monkeypatch):
     monkeypatch.setattr("lss.nl.claude.get_settings", config.get_settings)
     with pytest.raises(ProviderError, match="ANTHROPIC_API_KEY"):
         ClaudeProvider("claude-opus-5-5")
+
+
+def test_eval_report_prices_tokens_by_serving_model():
+    from lss.nl import eval as nl_eval
+
+    results = [
+        nl_eval.ItemResult(
+            id="x",
+            source="si_supplied",
+            status="ready",
+            blocked_reasons=[],
+            scored=True,
+            expected_outcome="answer",
+            calls=[  # route + fill; the fill was served by a fallback model
+                {
+                    "stage": "route",
+                    "raw": "",
+                    "meta": {
+                        "served_by": "claude-opus-5-5",
+                        "input_tokens": 1_000_000,
+                        "output_tokens": 100_000,
+                    },
+                },
+                {
+                    "stage": "fill",
+                    "raw": "",
+                    "meta": {"served_by": "claude-haiku-5-5", "input_tokens": 1_000_000, "output_tokens": 0},
+                },
+            ],
+        )
+    ]
+    assert nl_eval._usage(results) == {
+        "input_tokens": 2_000_000,
+        "output_tokens": 100_000,
+        "est_cost_usd": 6.1,  # 4 + 2 (Opus) + 0.10 (Haiku)
+        "unpriced_models": [],
+    }
+
+
+def test_auth_failure_is_fatal_and_stops_the_eval():
+    import anthropic
+    import httpx2
+
+    from lss.nl import eval as nl_eval
+    from lss.nl.evalset import load_eval_set
+    from lss.nl.provider import ProviderFatalError
+
+    req = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
+    err = anthropic.AuthenticationError(
+        "invalid x-api-key", response=httpx2.Response(401, request=req), body=None
+    )
+
+    class Failing(StandInClient):
+        def __init__(self):
+            super().__init__(None)
+            self.n = 0
+
+            def create(**kwargs):
+                self.n += 1
+                raise err
+
+            self.messages = SimpleNamespace(create=create)
+            self.beta = SimpleNamespace(messages=SimpleNamespace(create=create))
+
+    client = Failing()
+    with pytest.raises(ProviderFatalError, match="ANTHROPIC_API_KEY"):
+        nl_eval.run_eval(ClaudeProvider("claude-opus-5-5", client=client), load_eval_set())
+    assert client.n == 1  # stopped after the first call

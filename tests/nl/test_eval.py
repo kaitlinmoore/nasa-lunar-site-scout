@@ -8,9 +8,10 @@ from datetime import date
 
 import pytest
 
+from lss.contract import Operation
 from lss.nl import eval as nl_eval
 from lss.nl.evalset import EvalSet, load_eval_set
-from lss.nl.prompt import PROMPT_VERSION, build_prompt
+from lss.nl.prompt import PROMPT_VERSION, build_fill_prompt, build_route_prompt
 from lss.nl.provider import FakeProvider
 from lss.nl.validate import default_context
 
@@ -232,10 +233,79 @@ def test_cli_oracle_and_live_guard(capsys):
     assert "--live" in capsys.readouterr().err
 
 
-def test_prompt_carries_schema_registry_and_no_api_key():
-    prompt = build_prompt(BOULDERS, default_context(), date(2026, 11, 15))
-    assert "aussel_2025_boulders" in prompt.user and "2026-11-15" in prompt.user
-    other = build_prompt("How steep is the terrain?", default_context("pgda-site01"), date(2027, 1, 1))
-    assert other.system == prompt.system  # stable system text: cacheable across requests and days
-    assert prompt.json_schema["x-schema-version"]
-    assert "sk-ant" not in prompt.system + prompt.user
+def test_stage_prompts():
+    route = build_route_prompt(BOULDERS, default_context(), date(2026, 11, 15))
+    fill = build_fill_prompt(LANDER, default_context(), date(2026, 11, 15), Operation.metrics)
+    assert "aussel_2025_boulders" in route.user and "registry" not in fill.user  # fill needs no registry
+    assert "2026-11-15" in route.user and "2026-11-15" in fill.user
+    assert route.meta["stage"] == "route" and fill.meta["operation"] == "metrics"
+    assert fill.json_schema["$defs"]["ScenarioRequest"]  # typed params for the chosen operation only
+    assert "SearchRequest" not in fill.json_schema["$defs"]
+    other = build_route_prompt("How steep is the terrain?", default_context("pgda-site01"), date(2027, 1, 1))
+    assert other.system == route.system  # stable system text: cacheable across requests and days
+    assert "sk-ant" not in route.system + route.user + fill.system + fill.user
+
+
+def test_unsupported_route_makes_one_call_and_answers_make_two():
+    provider = FakeProvider({LANDER: answer(), BOULDERS: refusal(CITE_81, CITE_AUSSEL)})
+    nl_eval.run_eval(provider, eval_set())
+    stages = [(c.meta["text"], c.meta["stage"]) for c in provider.calls]
+    assert stages.count((BOULDERS, "route")) == 1 and (BOULDERS, "fill") not in stages
+    assert (LANDER, "route") in stages and (LANDER, "fill") in stages
+
+
+def test_inconsistent_route_is_a_problem_not_a_crash():
+    bad = {"outcome": "answer", "operation": None, "interpretation": "i", "limitations": []}
+    _, items = run(
+        {
+            LANDER: bad,
+            "Craters within 10 km of Connecting ridge?": PROXIMITY_OK,
+            BOULDERS: refusal(CITE_81, CITE_AUSSEL),
+        }
+    )
+    assert any("needs an operation" in p for p in items["q"]["problems"])
+
+
+def _with_split(es: EvalSet, item_id: str, split: str) -> EvalSet:
+    data = es.model_dump(mode="json")
+    for item in data["items"]:
+        if item["id"] == item_id:
+            item["split"] = split
+    return EvalSet.model_validate(data)
+
+
+def test_scores_are_reported_per_split():
+    es = _with_split(eval_set(), "r", "holdout")
+    responses = {
+        LANDER: answer(),
+        "Craters within 10 km of Connecting ridge?": PROXIMITY_OK,
+        BOULDERS: refusal(CITE_81, CITE_AUSSEL),
+    }
+    report = nl_eval.run_eval(FakeProvider(responses), es)
+    by = report["scores_by_split"]
+    assert by["holdout"]["b_refusal_reason"] == {"correct": 1, "total": 1, "score": 1.0}
+    assert by["holdout"]["a_structured_query"]["total"] == 0
+    assert by["dev"]["a_structured_query"] == {"correct": 2, "total": 2, "score": 1.0}
+    assert by["dev"]["b_refusal_reason"]["total"] == 0
+
+
+def test_rescore_applies_current_labels_without_calls(tmp_path):
+    responses = {
+        LANDER: answer(),
+        "Craters within 10 km of Connecting ridge?": PROXIMITY_OK,
+        BOULDERS: refusal(CITE_81, CITE_AUSSEL, CITE_CRATERS),  # extra citation: wrong under the label
+    }
+    es = eval_set()
+    report = nl_eval.run_eval(FakeProvider(responses), es)
+    path = nl_eval.write_results(report, tmp_path)
+    assert {r["id"]: r for r in report["items"]}["r"]["reason_correct"] is False
+
+    data = es.model_dump(mode="json")
+    next(i for i in data["items"] if i["id"] == "r")["expected"]["citations_optional"].append(CITE_CRATERS)
+    relabeled = _with_split(EvalSet.model_validate(data), "r", "holdout")
+    re = nl_eval.rescore(path, relabeled)
+    items = {r["id"]: r for r in re["items"]}
+    assert items["r"]["reason_correct"] is True and items["r"]["split"] == "holdout"
+    assert re["rescored_from"] == path.name and re["usage"] == report["usage"]
+    out = nl_eval.write_results(re, tmp_path)
+    assert "_rescored-" in out.name and out != path

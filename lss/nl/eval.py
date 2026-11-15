@@ -4,6 +4,7 @@ NL eval harness (step 4.5; plan section 4.5).
 
     uv run python -m lss.nl.eval                   # oracle provider: label self-check, no network
     uv run python -m lss.nl.eval --provider claude --live --model <id>   # needs the author's okay
+    uv run python -m lss.nl.eval --rescore tests/nl/results/<file>.json   # current labels, no API
 
 Scores (plan section 4.5, the project author's two measures), over `ready` items only:
   (a) structured-query correctness, for items expecting a query (answer / partial):
@@ -14,6 +15,8 @@ Scores (plan section 4.5, the project author's two measures), over `ready` items
       output is valid, outcome matches, and the cited registry entries include every required
       citation and nothing outside required + optional.
 Blocked items are skipped unless `--include-blocked` (then run and recorded, never scored).
+Scores are reported for all scored items and per split: dev (tuning) and holdout (never used
+for tuning; project author's rule, 2026-11-15).
 Writes a dated JSON results file to tests/nl/results/.
 """
 
@@ -28,9 +31,10 @@ from pathlib import Path
 from typing import Any
 
 from lss.config import REPO_ROOT
-from lss.nl.evalset import EvalItem, EvalSet, ItemStatus, label_output, load_eval_set
-from lss.nl.prompt import PROMPT_VERSION, build_prompt
-from lss.nl.provider import FakeProvider, NLPrompt, Provider
+from lss.nl.evalset import EvalItem, EvalSet, ItemStatus, Split, label_output, load_eval_set
+from lss.nl.interpret import interpret
+from lss.nl.prompt import PROMPT_VERSION
+from lss.nl.provider import FakeProvider, NLPrompt, Provider, ProviderFatalError
 from lss.nl.schema import SCHEMA_VERSION, Outcome
 from lss.nl.validate import (
     NLValidationError,
@@ -43,6 +47,37 @@ from lss.nl.validate import (
 
 RESULTS_DIR = REPO_ROOT / "tests" / "nl" / "results"
 
+# USD per million tokens (input, output), standard rates. Source: Anthropic pricing as cached in
+# the claude-api skill, 2026-11-03. Used only to estimate a run's spend; check the Console for the bill.
+PRICES_PER_MTOK: dict[str, tuple[float, float]] = {
+    "claude-opus-5-5": (4.00, 20.00),
+    "claude-sonnet-5-5": (2.00, 10.00),
+    "claude-haiku-5-5": (0.10, 0.50),
+}
+
+
+def _usage(results: list[ItemResult]) -> dict[str, Any]:
+    """Token totals and estimated cost, priced by the model that actually served each item."""
+    tin = tout = 0
+    cost = 0.0
+    unpriced: set[str] = set()
+    metas = [c["meta"] or {} for r in results for c in r.calls]
+    for meta in metas:
+        i, o = meta.get("input_tokens") or 0, meta.get("output_tokens") or 0
+        tin, tout = tin + i, tout + o
+        model = meta.get("served_by")
+        if model in PRICES_PER_MTOK:
+            pin, pout = PRICES_PER_MTOK[model]
+            cost += (i * pin + o * pout) / 1e6
+        elif i or o:
+            unpriced.add(str(model))
+    return {
+        "input_tokens": tin,
+        "output_tokens": tout,
+        "est_cost_usd": round(cost, 4),
+        "unpriced_models": sorted(unpriced),
+    }
+
 
 @dataclass
 class ItemResult:
@@ -52,14 +87,15 @@ class ItemResult:
     blocked_reasons: list[str]
     scored: bool
     expected_outcome: str | None
+    split: str = "dev"
     outcome: str | None = None
     valid: bool = False
     problems: list[str] = field(default_factory=list)
     query_correct: bool | None = None  # (a); None = not applicable
     reason_correct: bool | None = None  # (b); None = not applicable
     error: str | None = None
-    raw_output: str | None = None
-    provider_meta: dict[str, Any] | None = None  # e.g. served_by, token counts, request id
+    output: dict[str, Any] | None = None  # combined route + fill output, before validation
+    calls: list[dict[str, Any]] = field(default_factory=list)  # per provider call: stage, raw, meta
 
 
 def _is_subset(expected: Any, actual: Any) -> bool:
@@ -106,47 +142,71 @@ def _score_reason(item: EvalItem, v: ValidatedOutput) -> tuple[bool, list[str]]:
     return not notes, notes
 
 
-def run_item(item: EvalItem, provider: Provider, eval_set: EvalSet) -> ItemResult:
+def _new_result(item: EvalItem) -> ItemResult:
     exp = item.expected
-    res = ItemResult(
+    return ItemResult(
         id=item.id,
         source=item.source.value,
         status=item.status.value,
         blocked_reasons=item.blocked_reasons,
         scored=item.status == ItemStatus.ready,
         expected_outcome=exp.outcome.value if exp else None,
+        split=item.split.value,
     )
-    ctx = default_context(selected_site_id=item.context.selected_site_id, today=eval_set.reference_date)
-    prompt = build_prompt(item.text, ctx, eval_set.reference_date)
+
+
+def _context(item: EvalItem, eval_set: EvalSet):
+    return default_context(selected_site_id=item.context.selected_site_id, today=eval_set.reference_date)
+
+
+def run_item(item: EvalItem, provider: Provider, eval_set: EvalSet) -> ItemResult:
+    res = _new_result(item)
     try:
-        res.raw_output = provider.complete(prompt)
-        meta = getattr(provider, "last_meta", None)
-        res.provider_meta = dict(meta) if meta else None
-    except Exception as e:  # provider failures are recorded, not fatal
+        res.output = interpret(
+            item.text, _context(item, eval_set), provider, eval_set.reference_date, trace=res.calls
+        )
+    except ProviderFatalError:
+        raise  # would fail the same way on every item: stop the run
+    except NLValidationError as e:  # a stage's output didn't parse
+        res.problems = e.problems
+    except Exception as e:  # other provider failures are recorded, not fatal
         res.error = f"{type(e).__name__}: {e}"
     else:
-        try:
-            v = validate_output(res.raw_output, ctx)
-        except NLValidationError as e:
-            res.problems = e.problems
-        else:
-            res.valid = True
-            res.outcome = v.output.outcome.value
-            if exp is not None:
-                if v.output.outcome != exp.outcome:
-                    res.problems.append(f"outcome {res.outcome} != expected {exp.outcome.value}")
-                if exp.outcome != Outcome.unsupported:
-                    ok, notes = _score_query(item, v, ctx)
-                    res.query_correct = ok and v.output.outcome == exp.outcome
-                    res.problems += notes
-                if exp.outcome != Outcome.answer:
-                    ok, notes = _score_reason(item, v)
-                    res.reason_correct = ok and v.output.outcome == exp.outcome
-                    res.problems += notes
+        score_output(res, item, eval_set)
+    _finalize(res, item)
+    return res
+
+
+def score_output(res: ItemResult, item: EvalItem, eval_set: EvalSet) -> None:
+    """Validate `res.output` and score it against the item's label (current labels)."""
+    exp = item.expected
+    ctx = _context(item, eval_set)
+    try:
+        v = validate_output(res.output, ctx)
+    except NLValidationError as e:
+        res.problems = e.problems
+        return
+    res.valid = True
+    res.outcome = v.output.outcome.value
+    if exp is None:
+        return
+    if v.output.outcome != exp.outcome:
+        res.problems.append(f"outcome {res.outcome} != expected {exp.outcome.value}")
+    if exp.outcome != Outcome.unsupported:
+        ok, notes = _score_query(item, v, ctx)
+        res.query_correct = ok and v.output.outcome == exp.outcome
+        res.problems += notes
+    if exp.outcome != Outcome.answer:
+        ok, notes = _score_reason(item, v)
+        res.reason_correct = ok and v.output.outcome == exp.outcome
+        res.problems += notes
+
+
+def _finalize(res: ItemResult, item: EvalItem) -> None:
+    exp = item.expected
     if res.valid is False and exp is not None:
         res.query_correct = False if exp.outcome != Outcome.unsupported else None
         res.reason_correct = False if exp.outcome != Outcome.answer else None
-    return res
 
 
 def _score(results: list[ItemResult], attr: str) -> dict[str, Any]:
@@ -161,7 +221,6 @@ def run_eval(
     eval_set = eval_set or load_eval_set()
     items = [i for i in eval_set.items if include_blocked or i.status == ItemStatus.ready]
     results = [run_item(i, provider, eval_set) for i in items]
-    scored = [r for r in results if r.scored]
     return {
         "run_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "provider": provider.name,
@@ -169,24 +228,67 @@ def run_eval(
         "effort": getattr(provider, "effort", None),
         "prompt_version": PROMPT_VERSION,
         "schema_version": SCHEMA_VERSION,
+        **_summary(results, eval_set),
+    }
+
+
+def _scores(results: list[ItemResult]) -> dict[str, Any]:
+    scored = [r for r in results if r.scored]
+    return {
+        "a_structured_query": _score(results, "query_correct"),
+        "b_refusal_reason": _score(results, "reason_correct"),
+        "valid_output": {
+            "correct": sum(r.valid for r in scored),
+            "total": len(scored),
+            "score": sum(r.valid for r in scored) / len(scored) if scored else None,
+        },
+    }
+
+
+def _summary(results: list[ItemResult], eval_set: EvalSet) -> dict[str, Any]:
+    """Counts and scores. `scores` covers every scored item; `scores_by_split` reports the tuning
+    (dev) and held-out items separately. Holdout items are never used for tuning."""
+    return {
         "eval_set_version": eval_set.version,
         "reference_date": eval_set.reference_date.isoformat(),
         "counts": {
             "items_in_set": len(eval_set.items),
             "run": len(results),
-            "scored": len(scored),
+            "scored": sum(r.scored for r in results),
             "blocked": sum(i.status == ItemStatus.blocked for i in eval_set.items),
         },
-        "scores": {
-            "a_structured_query": _score(results, "query_correct"),
-            "b_refusal_reason": _score(results, "reason_correct"),
-            "valid_output": {
-                "correct": sum(r.valid for r in scored),
-                "total": len(scored),
-                "score": sum(r.valid for r in scored) / len(scored) if scored else None,
-            },
-        },
+        "scores": _scores(results),
+        "scores_by_split": {s.value: _scores([r for r in results if r.split == s.value]) for s in Split},
+        "usage": _usage(results),
         "items": [asdict(r) for r in results],
+    }
+
+
+def rescore(path: Path, eval_set: EvalSet | None = None) -> dict[str, Any]:
+    """Score a saved run's outputs against the current labels and splits. No API calls; the
+    usage (spend) is the original run's."""
+    eval_set = eval_set or load_eval_set()
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    by_id = {i.id: i for i in eval_set.items}
+    results = []
+    for old in saved["items"]:
+        item = by_id.get(old["id"])
+        if item is None:
+            continue  # no longer in the set
+        res = _new_result(item)
+        res.calls, res.output, res.error = old.get("calls", []), old.get("output"), old.get("error")
+        if res.output is not None:
+            score_output(res, item, eval_set)
+        elif res.error is None:
+            res.problems = list(old.get("problems", []))
+        _finalize(res, item)
+        results.append(res)
+    keep = ("run_at", "provider", "model", "effort", "prompt_version", "schema_version")
+    return {
+        **{k: saved.get(k) for k in keep},
+        "rescored_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "rescored_from": path.name,
+        **_summary(results, eval_set),
     }
 
 
@@ -194,8 +296,10 @@ def write_results(report: dict[str, Any], out_dir: Path = RESULTS_DIR) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = report["run_at"].replace(":", "").replace("+0000", "Z")
     safe = lambda s: "".join(ch if ch.isalnum() or ch in "-." else "-" for ch in s)  # noqa: E731
-    name = f"{stamp}_{safe(report['provider'])}_{safe(report['model'])}_{safe(report['prompt_version'])}.json"
-    path = out_dir / name
+    name = f"{stamp}_{safe(report['provider'])}_{safe(report['model'])}_{safe(report['prompt_version'])}"
+    if report.get("rescored_at"):
+        name += "_rescored-" + report["rescored_at"].replace(":", "").replace("+0000", "Z")
+    path = out_dir / f"{name}.json"
     path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return path
 
@@ -228,9 +332,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     p.add_argument("--include-blocked", action="store_true", help="also run blocked items (not scored)")
     p.add_argument("--no-write", action="store_true", help="print scores only; don't write a results file")
+    p.add_argument(
+        "--rescore", type=Path, help="score a saved results file against the current labels (no API)"
+    )
     args = p.parse_args(argv)
 
-    if args.provider == "oracle":
+    if args.rescore is not None:
+        report = rescore(args.rescore)
+    elif args.provider == "oracle":
         provider: Provider = oracle_provider()
     else:
         if not args.live:
@@ -240,11 +349,24 @@ def main(argv: list[str] | None = None) -> int:
         from lss.nl.claude import ClaudeProvider
 
         provider = ClaudeProvider(model=args.model, effort=args.effort)
-
-    report = run_eval(provider, include_blocked=args.include_blocked)
+    if args.rescore is None:
+        report = run_eval(provider, include_blocked=args.include_blocked)
     print(
         json.dumps(
-            {k: report[k] for k in ("provider", "model", "prompt_version", "counts", "scores")}, indent=2
+            {
+                k: report.get(k)
+                for k in (
+                    "provider",
+                    "model",
+                    "prompt_version",
+                    "rescored_from",
+                    "counts",
+                    "scores",
+                    "scores_by_split",
+                    "usage",
+                )
+            },
+            indent=2,
         )
     )
     if not args.no_write:

@@ -23,7 +23,7 @@ from pydantic import Field, model_validator
 from lss.contract import Model, Operation
 from lss.nl.vocabulary import OPERATION_PARAMS, HeightSource, WindowSource
 
-SCHEMA_VERSION = "nl-output-2"
+SCHEMA_VERSION = "nl-output-3"
 
 
 class Outcome(StrEnum):
@@ -130,3 +130,105 @@ def llm_json_schema() -> dict[str, Any]:
     schema["title"] = "NLOutput"
     schema["x-schema-version"] = SCHEMA_VERSION
     return schema
+
+
+# ------------------------------------------------------- two-step call (route, fill)
+#
+# One structured-output schema covering all eight operations is too large for the API to
+# compile ("compiled grammar is too large", measured 2026-11-15), and strict tools hit the
+# optional/union parameter limits. So the model answers in two calls, each with a small schema:
+#   1. route: outcome, operation (or none), and any registry-cited limitations;
+#   2. fill (only when there is an operation): that operation's params, the height/window
+#      sources, and the interpretation, so the echo comes from the call that wrote the params.
+# `lss.nl.interpret` combines them into an `NLOutput`, which `lss.nl.validate` checks as before.
+
+
+class NLRoute(Model):
+    outcome: Outcome
+    operation: Operation | None = None
+    interpretation: str = Field(min_length=1)
+    limitations: list[NLLimitation] = Field(default_factory=list)
+
+
+class NLFill(Model):
+    interpretation: str = Field(min_length=1, description="Plain-language echo of the query as filled")
+    params: dict[str, Any]
+    height_source: HeightSource = HeightSource.not_applicable
+    window_source: WindowSource = WindowSource.not_applicable
+    assumptions: list[str] = Field(default_factory=list)
+
+
+def _refs(node: Any) -> set[str]:
+    if isinstance(node, dict):
+        found = {node["$ref"].rsplit("/", 1)[-1]} if "$ref" in node else set()
+        return found.union(*(_refs(v) for v in node.values()))
+    if isinstance(node, list):
+        return set().union(*(_refs(v) for v in node))
+    return set()
+
+
+def _prune_defs(schema: dict[str, Any]) -> dict[str, Any]:
+    """Drop `$defs` the schema doesn't reach: the API compiles every definition."""
+    defs = schema.get("$defs", {})
+    keep: set[str] = set()
+    todo = list(_refs({k: v for k, v in schema.items() if k != "$defs"}))
+    while todo:
+        name = todo.pop()
+        if name not in keep:
+            keep.add(name)
+            todo.extend(_refs(defs[name]))
+    schema["$defs"] = {k: v for k, v in defs.items() if k in keep}
+    return schema
+
+
+def _formats_to_descriptions(node: Any) -> Any:
+    """String formats enlarge the compiled grammar; state them in the description instead
+    (`lss.nl.validate` enforces them through the contract models)."""
+    if isinstance(node, dict):
+        node = {k: _formats_to_descriptions(v) for k, v in node.items()}
+        fmt = node.pop("format", None)
+        if fmt is not None:
+            hint = {
+                "date-time": "ISO 8601 date-time in UTC, e.g. 2028-11-15T00:00:00Z",
+                "duration": "ISO 8601 duration, e.g. PT1H",
+            }.get(fmt, f"format {fmt}")
+            node["description"] = f"{node['description']} ({hint})" if node.get("description") else hint
+        return node
+    if isinstance(node, list):
+        return [_formats_to_descriptions(v) for v in node]
+    return node
+
+
+def _site_ref_locations(defs: dict[str, Any]) -> None:
+    if "Location" in defs:
+        defs["LocationCoords"] = defs.pop("Location")
+        _merge_defs(defs, {"SiteRef": SiteRef.model_json_schema()})
+        defs["Location"] = {
+            "anyOf": [{"$ref": "#/$defs/LocationCoords"}, {"$ref": "#/$defs/SiteRef"}],
+            "description": "Coordinates for a custom point, or a curated site by id",
+        }
+
+
+def route_json_schema() -> dict[str, Any]:
+    schema = copy.deepcopy(NLRoute.model_json_schema())
+    allowed = sorted(op.value for op in OPERATION_PARAMS)
+    schema["properties"]["operation"] = {
+        "anyOf": [{"type": "string", "enum": allowed}, {"type": "null"}],
+        "default": None,
+        "description": "The one operation that answers the request (or its answerable part); null if none",
+    }
+    schema["x-schema-version"] = SCHEMA_VERSION
+    return _prune_defs(schema)
+
+
+def fill_json_schema(op: Operation) -> dict[str, Any]:
+    schema = copy.deepcopy(NLFill.model_json_schema())
+    defs: dict[str, Any] = schema.setdefault("$defs", {})
+    model = OPERATION_PARAMS[op]
+    params = copy.deepcopy(model.model_json_schema())
+    _merge_defs(defs, params.pop("$defs", {}))
+    _merge_defs(defs, {model.__name__: params})
+    schema["properties"]["params"] = {"$ref": f"#/$defs/{model.__name__}"}
+    _site_ref_locations(defs)
+    schema["x-schema-version"] = SCHEMA_VERSION
+    return _prune_defs(_formats_to_descriptions(schema))

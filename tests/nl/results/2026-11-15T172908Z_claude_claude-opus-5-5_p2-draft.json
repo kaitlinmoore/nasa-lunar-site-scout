@@ -1,0 +1,800 @@
+{
+  "run_at": "2026-11-15T17:29:08+00:00",
+  "provider": "claude",
+  "model": "claude-opus-5-5",
+  "effort": "low",
+  "prompt_version": "p2-draft",
+  "schema_version": "nl-output-3",
+  "eval_set_version": 1,
+  "reference_date": "2026-11-15",
+  "counts": {
+    "items_in_set": 26,
+    "run": 13,
+    "scored": 13,
+    "blocked": 13
+  },
+  "scores": {
+    "a_structured_query": {
+      "correct": 9,
+      "total": 10,
+      "score": 0.9
+    },
+    "b_refusal_reason": {
+      "correct": 1,
+      "total": 4,
+      "score": 0.25
+    },
+    "valid_output": {
+      "correct": 13,
+      "total": 13,
+      "score": 1.0
+    }
+  },
+  "usage": {
+    "input_tokens": 62096,
+    "output_tokens": 3489,
+    "est_cost_usd": 0.3182,
+    "unpriced_models": []
+  },
+  "items": [
+    {
+      "id": "k5",
+      "source": "kaitlin",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "unsupported",
+      "outcome": "unsupported",
+      "valid": true,
+      "problems": [],
+      "query_correct": null,
+      "reason_correct": true,
+      "error": null,
+      "output": {
+        "outcome": "unsupported",
+        "interpretation": "The planner wants to know which candidate landing sites have no boulders larger than 0.5 m within a 50 m landing ellipse.",
+        "limitations": [
+          {
+            "topic": "Boulder counts (>0.5 m) within a landing ellipse at polar candidate sites",
+            "citations": [
+              {
+                "dataset_id": "aussel_2025_boulders",
+                "cannot_answer": "Any boulder information at the poles"
+              },
+              {
+                "dataset_id": "aussel_2025_boulders",
+                "cannot_answer": "Individual sub-meter boulders in a landing ellipse"
+              },
+              {
+                "dataset_id": "pgda_81_mosaic_5m",
+                "cannot_answer": "Hazards smaller than a few pixels (e.g. sub-meter boulders)"
+              },
+              {
+                "dataset_id": "pgda_98_polar_roughness",
+                "cannot_answer": "Individual boulders or meter-scale hazards"
+              }
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"unsupported\",\"operation\":null,\"interpretation\":\"The planner wants to know which candidate landing sites have no boulders larger than 0.5 m within a 50 m landing ellipse.\",\"limitations\":[{\"topic\":\"Boulder counts (>0.5 m) within a landing ellipse at polar candidate sites\",\"citations\":[{\"dataset_id\":\"aussel_2025_boulders\",\"cannot_answer\":\"Any boulder information at the poles\"},{\"dataset_id\":\"aussel_2025_boulders\",\"cannot_answer\":\"Individual sub-meter boulders in a landing ellipse\"},{\"dataset_id\":\"pgda_81_mosaic_5m\",\"cannot_answer\":\"Hazards smaller than a few pixels (e.g. sub-meter boulders)\"},{\"dataset_id\":\"pgda_98_polar_roughness\",\"cannot_answer\":\"Individual boulders or meter-scale hazards\"}]}]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57DCkoJHXqYqVbxpERh",
+            "input_tokens": 3018,
+            "output_tokens": 315
+          }
+        }
+      ]
+    },
+    {
+      "id": "s1",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Illumination metrics for Site01 Connecting ridge (pgda-site01) at 2 m above the surface, from 2028-12-01 00:00 UTC to 2029-01-01 00:00 UTC (through December 31 inclusive).",
+        "query": {
+          "operation": "metrics",
+          "params": {
+            "scenario": {
+              "location": {
+                "site_id": "pgda-site01"
+              },
+              "unit_height_m": 2.0,
+              "window_start": "2028-12-01T00:00:00Z",
+              "window_end": "2029-01-01T00:00:00Z"
+            }
+          }
+        },
+        "height_source": "user",
+        "window_source": "user",
+        "assumptions": [
+          "\"How much sunlight\" is read as the site's illumination metrics."
+        ],
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"metrics\",\"interpretation\":\"Compute the solar illumination (power metrics) at the Connecting ridge site (pgda-site01) for an observer 2 m above the surface over December 1\u201331, 2028.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57DVjWFvnfLQRPon3H1",
+            "input_tokens": 3016,
+            "output_tokens": 90
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Illumination metrics for Site01 Connecting ridge (pgda-site01) at 2 m above the surface, from 2028-12-01 00:00 UTC to 2029-01-01 00:00 UTC (through December 31 inclusive).\",\"params\":{\"scenario\":{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":2.0,\"window_start\":\"2028-12-01T00:00:00Z\",\"window_end\":\"2029-01-01T00:00:00Z\"}},\"height_source\":\"user\",\"window_source\":\"user\",\"assumptions\":[\"\\\"How much sunlight\\\" is read as the site's illumination metrics.\"]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57Dfj1vnnrhAutCia7W",
+            "input_tokens": 2553,
+            "output_tokens": 219
+          }
+        }
+      ]
+    },
+    {
+      "id": "s2",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Earth-visibility metrics for a lander (5.0 m) at Connecting ridge (pgda-site01) from 2029-01-01T00:00:00Z to 2029-02-01T00:00:00Z.",
+        "query": {
+          "operation": "metrics",
+          "params": {
+            "scenario": {
+              "location": {
+                "site_id": "pgda-site01"
+              },
+              "unit_height_m": 5.0,
+              "window_start": "2029-01-01T00:00:00Z",
+              "window_end": "2029-02-01T00:00:00Z"
+            }
+          }
+        },
+        "height_source": "lander_proxy",
+        "window_source": "user",
+        "assumptions": [],
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"metrics\",\"interpretation\":\"Compute the Earth-visibility fraction for a lander at Site01 Connecting ridge (pgda-site01) over the window of January 2029.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57DynDS59kKtaV7Uw5S",
+            "input_tokens": 3010,
+            "output_tokens": 81
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Earth-visibility metrics for a lander (5.0 m) at Connecting ridge (pgda-site01) from 2029-01-01T00:00:00Z to 2029-02-01T00:00:00Z.\",\"params\":{\"scenario\":{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":5.0,\"window_start\":\"2029-01-01T00:00:00Z\",\"window_end\":\"2029-02-01T00:00:00Z\"}},\"height_source\":\"lander_proxy\",\"window_source\":\"user\",\"assumptions\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57E7PN7xh4FaM7yYJFq",
+            "input_tokens": 2547,
+            "output_tokens": 191
+          }
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Illumination time series at Connecting ridge (pgda-site01) for a rover-height observer (1.0 m), from 2028-11-15 00:00 UTC to 2028-12-16 00:00 UTC, to find when the Sun sets.",
+        "query": {
+          "operation": "series",
+          "params": {
+            "scenario": {
+              "location": {
+                "site_id": "pgda-site01"
+              },
+              "unit_height_m": 1.0,
+              "window_start": "2028-11-15T00:00:00Z",
+              "window_end": "2028-12-16T00:00:00Z"
+            }
+          }
+        },
+        "height_source": "rover_proxy",
+        "window_source": "user",
+        "assumptions": [
+          "Sunset times are read from the illumination series as transitions from lit to shadowed."
+        ],
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"series\",\"interpretation\":\"Find the sunset times at the Connecting ridge site (pgda-site01) between 2028-11-15 and 2028-12-15, as seen by a rover on the surface.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57EJgGvjuAsvNBp8btH",
+            "input_tokens": 3015,
+            "output_tokens": 87
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Illumination time series at Connecting ridge (pgda-site01) for a rover-height observer (1.0 m), from 2028-11-15 00:00 UTC to 2028-12-16 00:00 UTC, to find when the Sun sets.\",\"params\":{\"scenario\":{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":1.0,\"window_start\":\"2028-11-15T00:00:00Z\",\"window_end\":\"2028-12-16T00:00:00Z\"}},\"height_source\":\"rover_proxy\",\"window_source\":\"user\",\"assumptions\":[\"Sunset times are read from the illumination series as transitions from lit to shadowed.\"]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57ETQ959mAjK9YKPjsS",
+            "input_tokens": 2550,
+            "output_tokens": 227
+          }
+        }
+      ]
+    },
+    {
+      "id": "s4",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Compare two scenarios at Connecting ridge (pgda-site01): one at 1 m and one at 10 m observer height, both from 2028-11-01T00:00:00Z to 2028-12-01T00:00:00Z.",
+        "query": {
+          "operation": "compare",
+          "params": {
+            "scenarios": [
+              {
+                "location": {
+                  "site_id": "pgda-site01"
+                },
+                "unit_height_m": 1.0,
+                "window_start": "2028-11-01T00:00:00Z",
+                "window_end": "2028-12-01T00:00:00Z"
+              },
+              {
+                "location": {
+                  "site_id": "pgda-site01"
+                },
+                "unit_height_m": 10.0,
+                "window_start": "2028-11-01T00:00:00Z",
+                "window_end": "2028-12-01T00:00:00Z"
+              }
+            ]
+          }
+        },
+        "height_source": "user",
+        "window_source": "user",
+        "assumptions": [
+          "The comparison covers each scenario's full results; the focus on Earth visibility is a reading of the user's interest rather than a separate parameter."
+        ],
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"compare\",\"interpretation\":\"Compare Earth-visibility metrics at the Connecting ridge site (pgda-site01) for observer heights of 1 m and 10 m above the surface over November 2028, side by side.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57EgFZ94WTFfXVqUixZ",
+            "input_tokens": 3016,
+            "output_tokens": 93
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Compare two scenarios at Connecting ridge (pgda-site01): one at 1 m and one at 10 m observer height, both from 2028-11-01T00:00:00Z to 2028-12-01T00:00:00Z.\",\"params\":{\"scenarios\":[{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":1.0,\"window_start\":\"2028-11-01T00:00:00Z\",\"window_end\":\"2028-12-01T00:00:00Z\"},{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":10.0,\"window_start\":\"2028-11-01T00:00:00Z\",\"window_end\":\"2028-12-01T00:00:00Z\"}]},\"height_source\":\"user\",\"window_source\":\"user\",\"assumptions\":[\"The comparison covers each scenario's full results; the focus on Earth visibility is a reading of the user's interest rather than a separate parameter.\"]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57EqwDDkjsqz3iMSpTN",
+            "input_tokens": 2560,
+            "output_tokens": 311
+          }
+        }
+      ]
+    },
+    {
+      "id": "s5",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Compare Connecting ridge (pgda-site01) at 2 m height for November 2028 (2028-11-01 to 2028-12-01 UTC) versus May 2029 (2029-05-01 to 2029-06-01 UTC).",
+        "query": {
+          "operation": "compare",
+          "params": {
+            "scenarios": [
+              {
+                "location": {
+                  "site_id": "pgda-site01"
+                },
+                "unit_height_m": 2.0,
+                "window_start": "2028-11-01T00:00:00Z",
+                "window_end": "2028-12-01T00:00:00Z"
+              },
+              {
+                "location": {
+                  "site_id": "pgda-site01"
+                },
+                "unit_height_m": 2.0,
+                "window_start": "2029-05-01T00:00:00Z",
+                "window_end": "2029-06-01T00:00:00Z"
+              }
+            ]
+          }
+        },
+        "height_source": "user",
+        "window_source": "user",
+        "assumptions": [
+          "Each month is read as the whole calendar month."
+        ],
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"compare\",\"interpretation\":\"Compare power and Earth-visibility metrics at Site01 Connecting ridge (pgda-site01) for a November 2028 window versus a May 2029 window, evaluated at an observer height of 2 m above the surface.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57FAqzyfVeRPLdELaBJ",
+            "input_tokens": 3010,
+            "output_tokens": 105
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Compare Connecting ridge (pgda-site01) at 2 m height for November 2028 (2028-11-01 to 2028-12-01 UTC) versus May 2029 (2029-05-01 to 2029-06-01 UTC).\",\"params\":{\"scenarios\":[{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":2.0,\"window_start\":\"2028-11-01T00:00:00Z\",\"window_end\":\"2028-12-01T00:00:00Z\"},{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":2.0,\"window_start\":\"2029-05-01T00:00:00Z\",\"window_end\":\"2029-06-01T00:00:00Z\"}]},\"height_source\":\"user\",\"window_source\":\"user\",\"assumptions\":[\"Each month is read as the whole calendar month.\"]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57FLPVALJk8owGjr1nC",
+            "input_tokens": 2554,
+            "output_tokens": 285
+          }
+        }
+      ]
+    },
+    {
+      "id": "s6",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Compute the terrain horizon profile at curated site Site01 Connecting ridge (pgda-site01) for an observer height of 2 m above the surface.",
+        "query": {
+          "operation": "horizon",
+          "params": {
+            "location": {
+              "site_id": "pgda-site01"
+            },
+            "unit_height_m": 2.0
+          }
+        },
+        "height_source": "user",
+        "window_source": "not_applicable",
+        "assumptions": [
+          "Interpreted '2 m' as the observer/unit height above local terrain."
+        ],
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"horizon\",\"interpretation\":\"Show the terrain horizon profile at the Connecting ridge site (pgda-site01), as seen from an observer height of 2 m above the surface.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57FcphnRW9phrwN1JFF",
+            "input_tokens": 3002,
+            "output_tokens": 81
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Compute the terrain horizon profile at curated site Site01 Connecting ridge (pgda-site01) for an observer height of 2 m above the surface.\",\"params\":{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":2.0},\"height_source\":\"user\",\"window_source\":\"not_applicable\",\"assumptions\":[\"Interpreted '2 m' as the observer/unit height above local terrain.\"]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57FkxrL12XUosGTGj6v",
+            "input_tokens": 2122,
+            "output_tokens": 145
+          }
+        }
+      ]
+    },
+    {
+      "id": "s7",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "List the curated landing sites in the Apollo category.",
+        "query": {
+          "operation": "sites",
+          "params": {
+            "category": "apollo"
+          }
+        },
+        "height_source": "not_applicable",
+        "window_source": "not_applicable",
+        "assumptions": [],
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"sites\",\"interpretation\":\"The user wants a list of curated sites in the Apollo landing sites category. The sites operation lists curated sites filtered by category, though the current catalog may contain no Apollo entries.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57FzLkZobp38zDrmjy2",
+            "input_tokens": 2992,
+            "output_tokens": 90
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"List the curated landing sites in the Apollo category.\",\"params\":{\"category\":\"apollo\"},\"height_source\":\"not_applicable\",\"window_source\":\"not_applicable\",\"assumptions\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57G8SgJNAUgjm8wHW9D",
+            "input_tokens": 1701,
+            "output_tokens": 70
+          }
+        }
+      ]
+    },
+    {
+      "id": "s8",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Find which terrain data products cover the point at latitude 85\u00b0S, longitude 30\u00b0E, and report their resolution.",
+        "query": {
+          "operation": "locate",
+          "params": {
+            "lat": -85.0,
+            "lon": 30.0
+          }
+        },
+        "height_source": "not_applicable",
+        "window_source": "not_applicable",
+        "assumptions": [
+          "85\u00b0S interpreted as latitude -85; 30\u00b0E as east-positive longitude 30."
+        ],
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"locate\",\"interpretation\":\"The user wants to know which terrain datasets cover the point at 85\u00b0S, 30\u00b0E and what resolution or level of detail each offers there.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57GJ1eU38AWZM8DT15q",
+            "input_tokens": 3006,
+            "output_tokens": 75
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Find which terrain data products cover the point at latitude 85\u00b0S, longitude 30\u00b0E, and report their resolution.\",\"params\":{\"lat\":-85.0,\"lon\":30.0},\"height_source\":\"not_applicable\",\"window_source\":\"not_applicable\",\"assumptions\":[\"85\u00b0S interpreted as latitude -85; 30\u00b0E as east-positive longitude 30.\"]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57GPx5PzisN2fzrQKXd",
+            "input_tokens": 1637,
+            "output_tokens": 127
+          }
+        }
+      ]
+    },
+    {
+      "id": "s9",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "partial",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [
+        "outcome answer != expected partial",
+        "missing citation ('robbins_craters', 'Craters smaller than ~1 km')"
+      ],
+      "query_correct": false,
+      "reason_correct": false,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Find craters within 10 km (10000 m) of curated site pgda-site01 (Connecting ridge).",
+        "query": {
+          "operation": "proximity",
+          "params": {
+            "location": {
+              "site_id": "pgda-site01"
+            },
+            "types": [
+              "crater"
+            ],
+            "radius_m": 10000
+          }
+        },
+        "height_source": "not_applicable",
+        "window_source": "not_applicable",
+        "assumptions": [],
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"proximity\",\"interpretation\":\"List the craters whose straight-line distance from the Connecting ridge site (pgda-site01) is within 10 km.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57GcxQgpsSw4eAEzKNs",
+            "input_tokens": 3000,
+            "output_tokens": 71
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Find craters within 10 km (10000 m) of curated site pgda-site01 (Connecting ridge).\",\"params\":{\"location\":{\"site_id\":\"pgda-site01\"},\"types\":[\"crater\"],\"radius_m\":10000},\"height_source\":\"not_applicable\",\"window_source\":\"not_applicable\",\"assumptions\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57GifiYJbfynLeMEoM9",
+            "input_tokens": 2263,
+            "output_tokens": 115
+          }
+        }
+      ]
+    },
+    {
+      "id": "s12",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "unsupported",
+      "outcome": "unsupported",
+      "valid": true,
+      "problems": [
+        "unexpected citation ('pgda_69_polar_illumination', 'Conditions for a specific date window (long-term averages)')"
+      ],
+      "query_correct": null,
+      "reason_correct": false,
+      "error": null,
+      "output": {
+        "outcome": "unsupported",
+        "interpretation": "The planner wants the solar illumination (power) metrics for the Connecting ridge site (pgda-site01) over the year 2055.",
+        "limitations": [
+          {
+            "topic": "Sun position and illumination for dates in 2055",
+            "citations": [
+              {
+                "dataset_id": "spice_de421",
+                "cannot_answer": "Dates after 2050-12-31 23:58:50 UTC (orientation kernel end); needs newer kernels + frame alignment (X5)"
+              },
+              {
+                "dataset_id": "pgda_69_polar_illumination",
+                "cannot_answer": "Conditions for a specific date window (long-term averages)"
+              }
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"unsupported\",\"operation\":null,\"interpretation\":\"The planner wants the solar illumination (power) metrics for the Connecting ridge site (pgda-site01) over the year 2055.\",\"limitations\":[{\"topic\":\"Sun position and illumination for dates in 2055\",\"citations\":[{\"dataset_id\":\"spice_de421\",\"cannot_answer\":\"Dates after 2050-12-31 23:58:50 UTC (orientation kernel end); needs newer kernels + frame alignment (X5)\"},{\"dataset_id\":\"pgda_69_polar_illumination\",\"cannot_answer\":\"Conditions for a specific date window (long-term averages)\"}]}]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57GwLxBUPgRnjBtVCCK",
+            "input_tokens": 3001,
+            "output_tokens": 225
+          }
+        }
+      ]
+    },
+    {
+      "id": "s13",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "unsupported",
+      "outcome": "unsupported",
+      "valid": true,
+      "problems": [
+        "unexpected citation ('m3_surface_ice', 'Subsurface hydrogen at km scale (neutron data are far coarser)')"
+      ],
+      "query_correct": null,
+      "reason_correct": false,
+      "error": null,
+      "output": {
+        "outcome": "unsupported",
+        "interpretation": "The planner wants to know the quantity (abundance) of water ice inside Shackleton crater.",
+        "limitations": [
+          {
+            "topic": "Amount of water ice in Shackleton crater",
+            "citations": [
+              {
+                "dataset_id": "m3_surface_ice",
+                "cannot_answer": "Ice abundance or depth"
+              },
+              {
+                "dataset_id": "m3_surface_ice",
+                "cannot_answer": "Subsurface hydrogen at km scale (neutron data are far coarser)"
+              }
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"unsupported\",\"operation\":null,\"interpretation\":\"The planner wants to know the quantity (abundance) of water ice inside Shackleton crater.\",\"limitations\":[{\"topic\":\"Amount of water ice in Shackleton crater\",\"citations\":[{\"dataset_id\":\"m3_surface_ice\",\"cannot_answer\":\"Ice abundance or depth\"},{\"dataset_id\":\"m3_surface_ice\",\"cannot_answer\":\"Subsurface hydrogen at km scale (neutron data are far coarser)\"}]}]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57H6nz9UM3T9DjeniWN",
+            "input_tokens": 2996,
+            "output_tokens": 182
+          }
+        }
+      ]
+    },
+    {
+      "id": "s16",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Sunlight metrics for Connecting ridge (pgda-site01) at 5.0 m height above the surface, from 2026-11-15T00:00:00Z to 2026-12-15T00:00:00Z.",
+        "query": {
+          "operation": "metrics",
+          "params": {
+            "scenario": {
+              "location": {
+                "site_id": "pgda-site01"
+              },
+              "unit_height_m": 5.0,
+              "window_start": "2026-11-15T00:00:00Z",
+              "window_end": "2026-12-15T00:00:00Z"
+            }
+          }
+        },
+        "height_source": "default",
+        "window_source": "default",
+        "assumptions": [
+          "\"How much sun\" read as the illumination/sunlight metrics for the site."
+        ],
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"metrics\",\"interpretation\":\"The planner wants the solar illumination (power-relevant sunlight fraction) at site pgda-site01, Connecting ridge, over a time window (window to be chosen in the next step).\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57HF35fjE47ph1PRybQ",
+            "input_tokens": 2995,
+            "output_tokens": 92
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Sunlight metrics for Connecting ridge (pgda-site01) at 5.0 m height above the surface, from 2026-11-15T00:00:00Z to 2026-12-15T00:00:00Z.\",\"params\":{\"scenario\":{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":5.0,\"window_start\":\"2026-11-15T00:00:00Z\",\"window_end\":\"2026-12-15T00:00:00Z\"}},\"height_source\":\"default\",\"window_source\":\"default\",\"assumptions\":[\"\\\"How much sun\\\" read as the illumination/sunlight metrics for the site.\"]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch57HMw4R1JPEqj9pbzut",
+            "input_tokens": 2532,
+            "output_tokens": 212
+          }
+        }
+      ]
+    }
+  ]
+}

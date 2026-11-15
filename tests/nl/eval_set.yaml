@@ -5,11 +5,15 @@
 # Provenance (SI rule):
 #   source: kaitlin      -> the project author's example queries (scoping notes, Round 2 #14), verbatim,
 #                           with her expected outcomes (plan section 4.5, labels she edited).
-#   source: si_supplied  -> Claude-drafted queries the project author approved (none yet).
+#   source: si_supplied  -> Claude-drafted queries the project author approved (s1-s16, 2026-11-15).
 #
 # Fields:
 #   target         the plan section 4.5 label (the outcome once every needed feature exists)
 #   status         ready: scored now. blocked: listed with what it waits for; run but not scored.
+#   split          dev (default): used for prompt tuning. holdout: never used for tuning; scored
+#                  separately (project author, 2026-11-15). Prompt changes must be general rules,
+#                  never written around a specific item. The holdout items were chosen after live
+#                  run 2, whose outputs had been seen; they are clean from run 3 on.
 #   blocked_on     request ids from reference/logs/nl-progress.md:
 #                    C*    blocked on contract (gaps held until Phase 2, when this stream owns the contract)
 #                    G-R*  blocked on registry (batch request to stream A, sent after A's C1 merges)
@@ -185,3 +189,251 @@ items:
         params:
           criteria: {near_feature_types: [psr, ice_detection], max_feature_distance_m: 1000}
       params_match: subset
+
+  # ---- SI-supplied items: drafted by Claude, approved by the project author 2026-11-15
+  #      (reference/logs/nl-eval-candidates.md, s1-s15, plus s16 for the defaults).
+  #      Date convention (project author, 2026-11-15): a named end date includes that day,
+  #      so the window ends at 00:00 UTC the next day; "during <month>" is the whole month.
+
+  - id: s1
+    source: si_supplied
+    text: How much sunlight will Connecting ridge get at 2 m height from December 1 to December 31, 2028?
+    target: "Answer: power metrics at Site01, 2 m, all of December 2028."
+    status: ready
+    expected:
+      outcome: answer
+      height_source: user
+      window_source: user
+      query:
+        operation: metrics
+        params:
+          scenario:
+            location: {site_id: pgda-site01}
+            unit_height_m: 2.0
+            window_start: "2028-12-01T00:00:00Z"
+            window_end: "2029-01-01T00:00:00Z"
+
+  - id: s2
+    source: si_supplied
+    text: What fraction of the time can a lander at Connecting ridge see Earth during January 2029?
+    target: "Answer: comms metrics at Site01 at the lander proxy height (disclosed), January 2029."
+    status: ready
+    expected:
+      outcome: answer
+      height_source: lander_proxy
+      window_source: user
+      query:
+        operation: metrics
+        params:
+          scenario:
+            location: {site_id: pgda-site01}
+            unit_height_m: 5.0
+            window_start: "2029-01-01T00:00:00Z"
+            window_end: "2029-02-01T00:00:00Z"
+
+  - id: s3
+    source: si_supplied
+    split: holdout
+    text: When does the Sun set at Connecting ridge between November 15 and December 15, 2028, for a rover?
+    target: "Answer: sunset events at Site01 at the rover proxy height (disclosed)."
+    status: ready
+    expected:
+      outcome: answer
+      height_source: rover_proxy
+      window_source: user
+      query:
+        operation: series
+        params:
+          scenario:
+            location: {site_id: pgda-site01}
+            unit_height_m: 1.0
+            window_start: "2028-11-15T00:00:00Z"
+            window_end: "2028-12-16T00:00:00Z"
+
+  - id: s4
+    source: si_supplied
+    text: Compare Earth visibility at Connecting ridge for 1 m and 10 m heights during November 2028.
+    target: "Answer: compare two heights at Site01, November 2028."
+    status: ready
+    expected:
+      outcome: answer
+      height_source: user
+      window_source: user
+      query:
+        operation: compare
+        params:
+          scenarios:
+            - location: {site_id: pgda-site01}
+              unit_height_m: 1.0
+              window_start: "2028-11-01T00:00:00Z"
+              window_end: "2028-12-01T00:00:00Z"
+            - location: {site_id: pgda-site01}
+              unit_height_m: 10.0
+              window_start: "2028-11-01T00:00:00Z"
+              window_end: "2028-12-01T00:00:00Z"
+
+  - id: s5
+    source: si_supplied
+    split: holdout
+    text: Compare Connecting ridge in November 2028 versus May 2029 at 2 m.
+    target: "Answer: compare two windows at Site01, 2 m."
+    status: ready
+    expected:
+      outcome: answer
+      height_source: user
+      window_source: user
+      query:
+        operation: compare
+        params:
+          scenarios:
+            - location: {site_id: pgda-site01}
+              unit_height_m: 2.0
+              window_start: "2028-11-01T00:00:00Z"
+              window_end: "2028-12-01T00:00:00Z"
+            - location: {site_id: pgda-site01}
+              unit_height_m: 2.0
+              window_start: "2029-05-01T00:00:00Z"
+              window_end: "2029-06-01T00:00:00Z"
+
+  - id: s6
+    source: si_supplied
+    text: Show me the horizon from Connecting ridge at 2 m.
+    target: "Answer: horizon profile at Site01, 2 m."
+    status: ready
+    expected:
+      outcome: answer
+      height_source: user
+      window_source: not_applicable
+      query:
+        operation: horizon
+        params:
+          location: {site_id: pgda-site01}
+          unit_height_m: 2.0
+
+  - id: s7
+    source: si_supplied
+    text: List the Apollo landing sites.
+    target: "Answer: curated sites, category apollo."
+    status: ready
+    expected:
+      outcome: answer
+      query:
+        operation: sites
+        params: {category: apollo}
+
+  - id: s8
+    source: si_supplied
+    split: holdout
+    text: What terrain data covers 85°S, 30°E, and how detailed is it?
+    target: "Answer: terrain stack and fidelity at a custom point."
+    status: ready
+    expected:
+      outcome: answer
+      query:
+        operation: locate
+        params: {lat: -85.0, lon: 30.0}
+
+  - id: s9
+    source: si_supplied
+    text: Which craters are within 10 km of Connecting ridge?
+    target: "Partial: craters within 10 km; the crater catalog is complete only above ~1-2 km."
+    status: ready
+    expected:
+      outcome: partial
+      query:
+        operation: proximity
+        params:
+          location: {site_id: pgda-site01}
+          types: [crater]
+          radius_m: 10000.0
+      citations:
+        - {dataset_id: robbins_craters, cannot_answer: Craters smaller than ~1 km}
+
+  - id: s10
+    source: si_supplied
+    text: Find flat spots with slope under 10° within 2 km of Connecting ridge.
+    target: "Partial: terrain-only search around a site."
+    status: blocked
+    blocked_on: [C5]
+    notes: A polygon around a site would make the LLM compute coordinates; needs a circle area (C5).
+    expected:
+      outcome: partial
+      query:
+        operation: search
+        params:
+          criteria: {max_slope_deg: 10.0}
+      params_match: subset
+
+  - id: s11
+    source: si_supplied
+    text: What will the temperature be at Connecting ridge on January 1, 2029 at noon?
+    target: "Unsupported: temperature queries are not supported yet (tool limit)."
+    status: blocked
+    blocked_on: [G-R4]
+    expected:
+      outcome: unsupported
+
+  - id: s12
+    source: si_supplied
+    text: How much sunlight will Connecting ridge get in 2055?
+    target: "Unsupported: after the ephemeris kernels' end (2050)."
+    status: ready
+    expected:
+      outcome: unsupported
+      citations:
+        - dataset_id: spice_de421
+          cannot_answer: >-
+            Dates after 2050-12-31 23:58:50 UTC (orientation kernel end); needs newer kernels + frame
+            alignment (X5)
+
+  - id: s13
+    source: si_supplied
+    split: holdout
+    text: How much water ice is in Shackleton crater?
+    target: "Unsupported: no dataset gives ice abundance or depth."
+    status: ready
+    expected:
+      outcome: unsupported
+      citations:
+        - {dataset_id: m3_surface_ice, cannot_answer: Ice abundance or depth}
+      citations_optional:  # project author, 2026-11-15: this extra citation is acceptable
+        - dataset_id: m3_surface_ice
+          cannot_answer: Subsurface hydrogen at km scale (neutron data are far coarser)
+
+  - id: s14
+    source: si_supplied
+    text: Plan a drive route for a rover from Connecting ridge to the nearest permanently shadowed region.
+    target: "Unsupported: drive routes are a tool limit (distances are straight-line)."
+    status: blocked
+    blocked_on: [G-R4]
+    notes: Approved as unsupported; a partial (straight-line PSR distance) is the alternative.
+    expected:
+      outcome: unsupported
+
+  - id: s15
+    source: si_supplied
+    text: What's the weather like on Mars?
+    target: "Unsupported: outside lunar landing-site planning (tool limit)."
+    status: blocked
+    blocked_on: [G-R4]
+    expected:
+      outcome: unsupported
+
+  - id: s16
+    source: si_supplied
+    split: holdout
+    text: How much sun does Connecting ridge get?
+    target: "Answer: power metrics at Site01 with the default height and window, both disclosed."
+    status: ready
+    expected:
+      outcome: answer
+      height_source: default
+      window_source: default
+      query:
+        operation: metrics
+        params:
+          scenario:
+            location: {site_id: pgda-site01}
+            unit_height_m: 5.0
+            window_start: "2026-11-15T00:00:00Z"
+            window_end: "2026-12-15T00:00:00Z"

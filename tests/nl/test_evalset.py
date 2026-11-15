@@ -7,10 +7,8 @@ import re
 
 import pytest
 
-from lss.nl.evalset import ItemStatus, Source, load_eval_set
-from lss.nl.schema import NLLimitation, NLOutput, Outcome
+from lss.nl.evalset import ItemStatus, Source, label_output, load_eval_set
 from lss.nl.validate import default_context, validate_output
-from lss.nl.vocabulary import HeightSource
 
 EVAL = load_eval_set()
 READY = [i for i in EVAL.items if i.status == ItemStatus.ready]
@@ -37,18 +35,22 @@ def test_contract_blocked_items_are_labeled():
 
 @pytest.mark.parametrize("item", READY, ids=lambda i: i.id)
 def test_ready_label_passes_validation(item):
-    """Assemble the label into an NL output and run it through the same validator the LLM faces."""
-    exp = item.expected
-    limitations = []
-    if exp.outcome != Outcome.answer:
-        limitations = [NLLimitation(topic="label", citations=exp.citations + exp.citations_optional)]
-    output = NLOutput(
-        outcome=exp.outcome,
-        interpretation=item.text,
-        query=exp.query,
-        height_source=exp.height_source or HeightSource.not_applicable,
-        limitations=limitations,
-    )
-    if exp.params_match == "subset":
+    """Every ready label, as an NL output, passes the same validator the LLM faces."""
+    output = label_output(item)
+    if output is None:
         pytest.skip("subset labels are not complete queries")
-    validate_output(output, default_context(selected_site_id=item.context.selected_site_id))
+    ctx = default_context(selected_site_id=item.context.selected_site_id, today=EVAL.reference_date)
+    validate_output(output, ctx)
+
+
+def test_si_supplied_items_are_marked():
+    si = [i.id for i in EVAL.items if i.source == Source.si_supplied]
+    assert si == [f"s{n}" for n in range(1, 17)]
+
+
+def test_holdout_set_covers_answers_and_refusals():
+    holdout = [i for i in EVAL.items if i.split.value == "holdout"]
+    assert {i.id for i in holdout} == {"s3", "s5", "s8", "s13", "s16"}
+    assert all(i.status == ItemStatus.ready and i.source == Source.si_supplied for i in holdout)
+    outcomes = {i.expected.outcome.value for i in holdout}
+    assert {"answer", "unsupported"} <= outcomes

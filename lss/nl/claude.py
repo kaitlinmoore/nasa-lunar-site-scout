@@ -19,7 +19,7 @@ from typing import Any
 import anthropic
 
 from lss.config import get_settings
-from lss.nl.provider import NLPrompt
+from lss.nl.provider import NLPrompt, ProviderFatalError
 
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
 # Models that accept server-side `fallbacks` (Haiku 5.5 doesn't).
@@ -70,10 +70,18 @@ class ClaudeProvider:
                 "format": {"type": "json_schema", "schema": api_schema(prompt.json_schema)},
             },
         }
-        if self.fallbacks:
-            response = self.client.beta.messages.create(betas=[FALLBACK_BETA], fallbacks="default", **kwargs)
-        else:
-            response = self.client.messages.create(**kwargs)
+        try:
+            if self.fallbacks:
+                response = self.client.beta.messages.create(
+                    betas=[FALLBACK_BETA], fallbacks="default", **kwargs
+                )
+            else:
+                response = self.client.messages.create(**kwargs)
+        except (anthropic.AuthenticationError, anthropic.PermissionDeniedError) as e:
+            raise ProviderFatalError(
+                f"{type(e).__name__} (HTTP {e.status_code}): check ANTHROPIC_API_KEY "
+                "(lss.config explains which .env is read)."
+            ) from e
 
         usage = getattr(response, "usage", None)
         self.last_meta = {
