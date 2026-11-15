@@ -458,7 +458,7 @@ is reported as a miss, with the diagnosis, and the tolerance was not changed aft
 | Barker RoI 4 LCSP (≤ 99th percentile) | +1 d | 10.05 d vs 13.27 d | pass |
 | Barker Fig. 19 nominal-DEM values (qualitative) | none | read 77.5% / 192 d / 10.1 d; ours 77.46% / 192.2 d / 10.05 d | agrees |
 | Product 69, Earth, 5 × 5 pixels: mean \|difference\| | 5 pp | 3.3 pp | pass |
-| Product 69, Sun, 5 × 5 pixels: mean \|difference\| | 5 pp | 8.7 pp (no bias: mean −1.7 pp) | **miss** (section 6.3) |
+| Product 69, Sun, 5 × 5 pixels: mean \|difference\| | 5 pp | 8.7 pp (no bias: mean −1.7 pp); 7.56 pp without the zero pixel (diagnostic) | **miss**, accepted for G1 as a stated difference (section 6.3) |
 | Ridge-top: the Sun is seen only below the local horizontal | (stated) | confirmed four ways (section 6.4) | confirmed |
 
 ### 6.1 Ephemeris vs JPL Horizons
@@ -534,8 +534,13 @@ is reported as a miss, with the diagnosis, and the tolerance was not changed aft
     more than the miss.
   - One product 69 pixel is 0 in both its Sun and Earth maps, where its neighbours are 48–58% for Earth (ours:
     35% Sun, 36% Earth). This looks like an artefact in the product.
+  - **Diagnostic: that pixel excluded** (requested after the miss; not a re-test, the tolerance applies to all
+    25 pixels). Sun: mean |difference| **7.56 pp** over 24 pixels (still above 5 pp), mean difference −3.25 pp,
+    correlation 0.72. Earth: 1.95 pp, mean difference +0.06 pp. So the miss is not caused by that pixel.
   - Conclusion: at 60 m on this ridge, a pixel-by-pixel comparison cannot be tighter than about 10 pp without
     product 69's own terrain. The Earth map, which depends far less on the near horizon, passes.
+  - **Status:** accepted for G1 as a stated remaining difference (Kaitlin, 2026-11-15). Queued for C3: a
+    like-for-like rerun on product 69's own terrain, `LDEM_85S_060M`.
 - **Terrain resolution** (section 4.3), at the RoI 4 centroid over 18.6 years from 2024. The same quantity on
   the served 5 m stack is 54.8% at 0 m and **87.0% at 1 m**; on the 60 m map at 0 m it is 71.0%. At 0 m on 5 m
   terrain, metre-scale relief blocks the Sun, and 1 m clears it. This is why product 69 (0 m, 60 m) and the served

@@ -135,6 +135,9 @@ def test_product69_sun_result_is_recorded_as_a_miss():
     assert s["start_date_spread_pp_max"] < 1.5
     d = p["diagnostic_half_pixel_shift"]
     assert d["median_max_change_pp"] > s["mean_abs_diff_pp"]  # a half-pixel move changes more than the miss
+    z = s["diagnostic_zero_pixel_excluded"]  # product 69's zero-valued pixel left out: still a miss
+    assert z["pixels_excluded"] == 1
+    assert p["tolerance_mean_abs_pp"] < z["mean_abs_diff_pp"] < s["mean_abs_diff_pp"]
 
 
 def test_product69_supports_the_ridge_top_result():
