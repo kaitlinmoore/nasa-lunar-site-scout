@@ -21,7 +21,7 @@ The decision it supports: **where to land and when.** It is built for mission pl
 
 - **Globe:** a 3D Moon (Cesium Moon, display only) with the curated sites as markers. Click one for its card, then open its site screen.
 - **Site screen:** pick a time window and unit height (the picker offers only that site's precomputed scenarios), then see:
-  - **power:** illumination, mean visible solar disc, sunlit duration, shadow periods, longest shadow, Sun elevation and azimuth, time to sunset;
+  - **power:** illumination, mean visible solar disc, sunlit duration, longest sunlit period, longest shadow, shadow periods, Sun elevation and azimuth, time to sunset;
   - **communications (direct to Earth):** Earth visibility, Earth full disc, longest Earth gap, Earth elevation, Earth clearance, Sun + Earth overlap, time to Earthset;
   - **sky view:** the terrain horizon with the Sun and Earth tracks over the window, and a timeline of sunrises, sunsets, Earthrises and Earthsets.
 - **Save and compare:** save scenarios and compare them side by side, several sites and several dates. Saved items stay in your browser, with export and import.
@@ -72,22 +72,26 @@ From [methodology §6](docs/methodology.md#6-validation-results-step-47). Every 
 
 The question box is scored on a labelled eval set (`tests/nl/eval_set.yaml`, 26 items, with a dev and a holdout split) for (a) the structured query and (b) the reason given when it refuses or answers in part.
 
-Latest run, **run 5** (2026-11-16, `claude-opus-5-5`, effort low, prompt `p6-draft`), copied from the harness output [`tests/nl/results/2026-11-16T042950Z_claude_claude-opus-5-5_p6-draft.json`](tests/nl/results/2026-11-16T042950Z_claude_claude-opus-5-5_p6-draft.json):
+**Latest scored run: run 6** (2026-11-16): prompt **`p8-draft`**, schema `nl-output-6`, `claude-opus-5-5` at effort low, refusal fallback off, dev split only. Scores are copied from the harness output, [run 6](tests/nl/results/2026-11-16T072624Z_claude_claude-opus-5-5_p8-draft.json); run 5 ([harness output](tests/nl/results/2026-11-16T042950Z_claude_claude-opus-5-5_p6-draft.json)) is the previous result.
 
-| Score (dev split) | Correct | Total |
+| Score (dev split) | Run 6, `p8-draft` (latest) | Run 5, `p6-draft` (previous) |
 |---|---|---|
-| (a) structured query | 11 | 13 |
-| (b) refusal / partial reason | 6 | 11 |
-| valid output | 19 | 19 |
+| (a) structured query | 13 / 15 (of which clarification 1 / 1) | 11 / 13 (of which clarification 1 / 1) |
+| (b) refusal / partial reason | 7 / 13 | 6 / 11 |
+| valid output | 21 / 21 | 19 / 19 |
 
-Run 5 covered 19 of the 26 items, all from the dev split. **The holdout split was not run.** Items k6 and k7 have been labelled since run 5 and have not been run live yet.
+- Run 6 covered 21 of the 26 items and run 5 covered 19, all from the dev split. **The holdout split has not been run.**
+- k6 and k7, labelled after run 5, are both correct in run 6.
+- One regression: s13 is answered in part instead of refused (it was correct in run 5).
+- **The live site runs `p8-draft`** ([`lss/nl/prompt.py`](lss/nl/prompt.py)), the prompt scored in run 6. Eval runs turn the refusal fallback off, so every score is the chosen model's own answer; the live question box has it on (a request the model declines on safety grounds is re-run on another model).
 
 ## Data, references and glossary
 
 - **Data used:** all NASA, listed with every planned dataset in the dataset registry [`lss/registry/datasets.yaml`](lss/registry/datasets.yaml) (served at `/api/datasets`):
   - Terrain: NASA GSFC PGDA LOLA elevation maps. The 5 m site maps (product 78; Barker et al. 2021) give the near field; the large-area south-pole maps (product 90; Barker et al. 2023) give the far field. Slope statistics use the 5 m site maps within 1 km and product 90's 10 m map within 10 km.
   - Sun and Earth geometry: JPL's DE421 ephemeris and lunar orientation, through NAIF SPICE.
-  - Validation: Barker et al. (2021), PGDA product 69 (Mazarico et al. 2011), JPL Horizons and the PDS LOLA 60 m polar map. The limb-darkening law is from Allen's *Astrophysical Quantities* (3rd ed., 1973, §81).
+  - Validation: Barker et al. (2021) and its supplementary figures, PGDA product 69, Mazarico et al. (2011) Table 3, JPL Horizons and the PDS LOLA 60 m polar map. The limb-darkening law is from Allen's *Astrophysical Quantities* (3rd ed., 1973, §81).
+  - Apollo site positions: the Lunar Module descent stages located in LRO camera images (Wagner et al. 2017), as listed by NASA's NSSDCA.
 - **Globe:** Cesium Moon, display only (no number comes from it). Data provided by: NASA and the USGS Astrogeology Science Center.
 - **Software:** open source, listed with licenses: Python (FastAPI, NumPy, Numba, rasterio, SpiceyPy, Pydantic, …) and web (React, CesiumJS, Vite, TypeScript).
 - **[References](docs/references.md):** every dataset, paper, book, service and package, with citations, links and terms.
@@ -103,7 +107,7 @@ This project was built with SI (AI) assistance from Claude (Anthropic). **The co
 
 **Models and what each was used for:**
 - **Claude Opus 5.5:** all development sessions (Claude Code: engine, API and natural-language layer, web, docs) and the research, planning and orchestration chats. It is also the model the live question box calls (`claude-opus-5-5`) and the model scored in the eval above.
-- **Claude Fable 5.2:** an independent correctness review of the horizon, frames and metric definitions at the G1 checkpoint. Its findings were applied by the engine stream. A second review is planned at G2.
+- **Claude Fable 5.2:** an independent correctness review of the horizon, frames and metric definitions at the G1 checkpoint. Its findings were applied by the engine stream. A second Fable 5.2 review (G2) is in progress.
 
 **What Claude generated:** the code and tests; drafts of the methodology, references, glossary and this README; data research (finding and checking datasets and papers); the architecture and build-plan recommendations; drafts of the visitor-facing texts. The list of candidate metrics was supplied by Claude at the author's request, and she chose the metrics from it.
 
