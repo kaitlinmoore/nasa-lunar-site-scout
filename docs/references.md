@@ -66,20 +66,19 @@ Every external dataset, paper, book, software package and service this project u
 - **Terms:** NASA-produced data. The product page asks users to cite Mazarico et al. (2011) when using the
   LOLA illumination maps. No license is stated on the page.
 
-#### PDS LOLA gridded polar map `LDEM_75S_60M` (no registry entry of its own) — NASA
+#### LOLA gridded polar DEMs (PDS LRO-L-LOLA-4-GDR-V1.0), e.g. `LDEM_75S_60M` (`pds_lola_gdr`) — NASA
 
-- **Provider:** NASA LRO LOLA team (producer D. E. Smith, NASA GSFC), PDS Geosciences Node.
+- **Provider:** NASA PDS Geosciences Node (LRO LOLA). Producer per the file's label: the LRO LOLA team (D. E.
+  Smith, NASA GSFC).
 - **URL:** https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/
   (`ldem_75s_60m.img` and `.lbl`; product version V2.0, created 2017-06-15, per the label).
 - **Used for:** validation only: the terrain of the internal product 69 rerun, standing in for product 69's own
   terrain map, which is not public (methodology section 6.3). A ±150 km window around Site01.
-- **Cite:** the data set's PDS catalog citation, as written there: Neumann, G.A., 2009 Lunar Orbiter Laser
-  Altimeter Raw Data Set, LRO-L-LOLA-4-GDR-V1.0, NASA Planetary Data System, 2010. The bundle that now holds it
-  has a DOI: Smith, D. E., & Neumann, G. A. (2023). Lunar Reconnaissance Orbiter LOLA Processed (RDR) Data
-  Products. NASA Planetary Data System. https://doi.org/10.17189/tnyt-7007
+- **Cite:** Neumann, G. A. (2010). Lunar Orbiter Laser Altimeter Raw Data Set, LRO-L-LOLA-4-GDR-V1.0. NASA
+  Planetary Data System. PDS4 bundle the file comes from: Smith, D. E., & Neumann, G. A. (2023). Lunar
+  Reconnaissance Orbiter LOLA Processed Data (RDR) Bundle. NASA Planetary Data System.
+  https://doi.org/10.17189/tnyt-7007
 - **Terms:** NASA PDS data (U.S. Government work).
-- **Registry:** the data file catalog (`lss/datafiles.py`) files it under `pgda_69_polar_illumination`;
-  the registry has no entry for it yet (requested from stream A).
 
 #### NAIF SPICE generic kernels, DE421 era (`spice_de421`) — NASA
 
@@ -192,20 +191,21 @@ not repeated.
   law (sections 4.1, 5.1).
 - Barker, M. K., et al. (2021): see section 1.1. Terrain, method, published results (Table 2), the region of
   interest definition and outlines, the slope definition and slope error (sections 1.2–1.4, 3.2, 4.1, 5.1,
-  5.2, 5.6, 6.2–6.4, 6.6).
+  5.2, 5.6, 6.2–6.4, 6.6, 6.7).
 - Barker, M. K., et al. (2021), Appendix A. Supplementary data: "Supplementary Online Material", figures S1–S19
   for Sites 4, 7 and 11 (LDEM close-ups, clone errors, illumination, LCIP and LCSP maps with region-of-interest
   boundaries and centroids, per-RoI box plots). Figures only, no numeric tables. Available with the article,
-  https://doi.org/10.1016/j.pss.2020.105119 (the paper's Appendix A gives that link). Consulted for the
-  region-of-interest checks at Site04, 07 and 11 (curated sites, methodology section 1.4); the methodology does
-  not cite it yet.
+  https://doi.org/10.1016/j.pss.2020.105119 (the paper's Appendix A gives that link). Used for the
+  region-of-interest checks at Site04, 07 and 11: the nominal-DEM RoI averages read from Figs. S9, S14 and S19
+  (sections 1.4, 6.7).
 - Barker, M. K., et al. (2023): see section 1.1 (section 1.2).
 - Gläser, P., Oberst, J., Neumann, G. A., Mazarico, E., Speyerer, E. J., & Robinson, M. S. (2018). Illumination
   conditions at the lunar poles: Implications for future exploration. *Planetary and Space Science* 162,
   170–178. https://doi.org/10.1016/j.pss.2017.07.006 (sections 4.2, 4.3).
 - Mazarico, E., et al. (2011): see section 1.1. Site numbering, the Site01 coordinate, and the Table 3
   coordinates and ranks of Site06, 20, 23 and 42 (sections 1.3, 1.4); product 69 setup and terrain-resolution
-  effect (sections 4.2, 4.3).
+  effect (sections 4.2, 4.3); Table 3 average illumination and visibility at all eight sites, as a validation
+  reference (section 6.7).
 - Mazarico, E., Barker, M. K., & Nicholas, J. B. (2018). Advanced illumination modeling for data analysis and
   calibration. Application to the Moon. *Advances in Space Research* 62(11), 3214–3228.
   https://doi.org/10.1016/j.asr.2018.08.022 (section 1.2, nested terrain grids; the methodology cites it as

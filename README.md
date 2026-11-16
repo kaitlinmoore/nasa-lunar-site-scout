@@ -56,9 +56,14 @@ From [methodology §6](docs/methodology.md#6-validation-results-step-47). Every 
 | PGDA product 69, Earth, 5 × 5 pixels: mean \|difference\| | 5 pp | 3.3 pp | pass |
 | PGDA product 69, Sun, 5 × 5 pixels: mean \|difference\| | 5 pp | 8.7 pp (no bias: mean −1.7 pp) | **miss**; inconclusive at this resolution (§6.3) |
 | Product 69 rerun, stand-in terrain `LDEM_75S_60M`: Sun at 0 m / 2 m; Earth | Sun 9.6 pp; Earth 5 pp | Sun 7.28 / 17.74 pp; Earth 2.80 / 4.30 pp | Sun pass at 0 m (miss at 2 m); Earth pass |
+| Barker RoI definition at Site04, 07, 11 (sampled pixels > 70%) | 0.5 pp | Site04 70.02%, Site11 70.01%; Site07 one pixel at 69.03% | pass, pass, **miss** (§6.7) |
+| Mazarico et al. (2011) Table 3, 8 sites, matched method | from 120 m shifts | all four comparisons above tolerance; at 10 m the 7 points other than rank 20 agree within 1.4 pp | **miss** (§6.7) |
 
 - **What limits the numbers is the terrain map, not the numerics** ([§6.6](docs/methodology.md#66-accuracy-of-the-served-numbers)). At Connecting Ridge, a ±0.2° near-field horizon error (about Barker's median height error at 100 m) gives an illumination fraction of 64.8–74.1% (served 69.8%). The Earth metrics are far less affected.
-- **Other sites:** `VERIFY:` methodology §6.7 (validation at the other curated sites) is still being written; its headline numbers go here.
+- **The other curated sites** ([§6.7](docs/methodology.md#67-the-other-curated-sites-against-published-numbers)):
+  - Against the RoI averages read from Barker et al. (2021)'s supplementary figures (an approximate check, with no tolerance): "Average illumination agrees to within 0.6 pp at 9 of the 10 RoIs (Site04 RoI 3: +1.2 pp). LCSP agrees to within 0.5 d at all 10, and LCIP to within 3.5 d at 9 (Site04 RoI 3: +15.5 d)."
+  - Against Mazarico et al. (2011) Table 3: "At 10 m the other seven points agree closely: average illumination within 1.4 pp and visibility within 0.4 pp with the matched setting." "At the surface the differences remain (ours lower by 6–8 pp on average, up to 17 pp, with the matched setting)."
+  - Site20 (Leibnitz Beta Plateau): "Consequence for the served Site20 point, which is the same published coordinate (section 1.4): it is lit 17% of 2028 at 1 m and 36% at 10 m on the 5 m map. It does not represent the well-lit part of the plateau that Table 3 describes."
 
 ## Natural-language questions: evaluation
 
