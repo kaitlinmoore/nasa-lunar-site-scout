@@ -425,7 +425,7 @@ items:
     status: ready
     notes: >-
       A circle area around the site (C5). The partial's citation (the 5 m interpolation limit, as in k4)
-      is Claude-drafted, pending the project author's review.
+      is Claude-drafted, approved by the project author (2026-11-16).
     expected:
       outcome: partial
       slope_source: user

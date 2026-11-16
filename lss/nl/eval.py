@@ -16,8 +16,8 @@ Scores (plan section 4.5, the project author's two measures), over `ready` items
       citation, at least one of each `citations_one_of` group, and nothing outside required + optional
       + those groups.
   Items expecting a clarification (outcome "clarify": the question names no site and none is
-  selected) count in (a): correct when the output is valid and asks instead of answering. (Claude's
-  placement, pending the project author's okay; the clarification is a query-routing decision.)
+  selected) count in (a): correct when the output is valid and asks instead of answering (project
+  author, 2026-11-16). Their count is reported inside (a) as `of_which_clarify`.
 Blocked items are skipped unless `--include-blocked` (then run and recorded, never scored).
 Scores are reported for all scored items and per split: dev (tuning) and holdout (never used
 for tuning; project author's rule, 2026-11-15).

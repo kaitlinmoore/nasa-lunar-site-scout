@@ -73,8 +73,8 @@ from lss.contract import (
 
 # Visitor-facing wording. NOT_SERVED_REASON and UNAVAILABLE_REASON: Kaitlin, 2026-11-15.
 # HORIZON_NOT_SERVED_REASON and NO_TERRAIN_REASON: Claude-drafted, approved by her 2026-11-15.
-# COMPARE_NOT_SERVED_REASON: Claude-drafted, pending her review. A compare answer lists no served scenarios
-# (stream B, 2026-11-16), so its reason must not refer to a list.
+# COMPARE_NOT_SERVED_REASON: Claude-drafted, approved by her 2026-11-16. A compare answer lists no served
+# scenarios (stream B, 2026-11-16), so its reason must not refer to a list.
 # A 503's technical cause goes in `detail.technical`, never in the reason.
 NOT_SERVED_REASON = (
     "This version has precomputed results only for the scenarios listed with this message. A request must "

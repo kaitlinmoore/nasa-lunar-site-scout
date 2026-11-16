@@ -65,7 +65,7 @@ DAILY_SPEND_USD = float(os.environ.get("LSS_NL_DAILY_SPEND_USD", "2.0"))
 MODEL = os.environ.get("LSS_NL_MODEL", "claude-opus-5-5")
 EFFORT = os.environ.get("LSS_NL_EFFORT", "low")
 
-# Visitor-facing texts: Claude-drafted (2026-11-16), pending the project author's review.
+# Visitor-facing texts: Claude-drafted (2026-11-16), approved by the project author 2026-11-16.
 RATE_LIMITED_REASON = "Too many questions from this connection. Please wait a little and try again."
 PAUSED_REASON = (
     "Live questions are paused until tomorrow (UTC): the demo's daily limit has been reached. The example "

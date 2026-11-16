@@ -133,7 +133,7 @@ SLOPE_KEYS: frozenset[str] = frozenset({"max_slope_deg"})
 RADIUS_KEYS: frozenset[str] = frozenset({"radius_m", "max_feature_distance_m"})
 
 NEARBY_RADIUS_TEXT = "Nearby: within 10 km (default; no distance was given)."
-# Claude-drafted on the same pattern as the approved "nearby" text; pending the project author's review.
+# Claude-drafted on the same pattern as the "nearby" text; approved by the project author 2026-11-16.
 AROUND_RADIUS_TEXT = "Around: within 1 km (default; no distance was given)."
 
 # Default distances: the value each default source requires, and its disclosure.
@@ -153,7 +153,7 @@ def safe_slope_text(terrain: str) -> str:
     return f"Safe: slope under 5°, measured on {terrain} (default; no slope limit was given)."
 
 
-# Claude-drafted (2026-11-16), pending the project author's review: the "safe" disclosure when the
+# Claude-drafted, approved by the project author (2026-11-16): the "safe" disclosure when the
 # operation that would measure the slope is not available yet, so no terrain data can be named.
 SAFE_NOT_MEASURED_TEXT = (
     "Safe: slope under 5° (default; no slope limit was given). Not measured: this version can't run "

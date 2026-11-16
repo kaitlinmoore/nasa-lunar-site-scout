@@ -55,3 +55,25 @@ def test_sites_are_the_curated_registry():
     assert site01.location == SCENARIO.location  # the served C1 scenario's key depends on it
     pgda = client.get("/api/sites", params={"category": "pgda"}).json()["sites"]
     assert [s["id"] for s in pgda] == [s.id for s in registry if s.category == "pgda"]
+
+
+def test_installed_results_match_stream_a_index():
+    """A's served-scenario index (cache/served_c3_index.json) lists exactly what the API loads, plus C1."""
+    import json
+    from pathlib import Path
+
+    import pytest
+
+    from lss.api.served import load_all
+    from lss.config import get_settings
+
+    index_path = Path(get_settings().cache_dir) / "served_c3_index.json"
+    if not index_path.is_file():
+        pytest.skip("stream A's served index not on this machine")
+    index = {
+        e["scenario_key"]: e["file"] for e in json.loads(index_path.read_text(encoding="utf-8"))["served"]
+    }
+    served = load_all()
+    assert {k: served[k].path.name for k in index} == index
+    assert {served[k].path.name for k in set(served) - set(index)} <= {"c1_00010cfa5fef681c.json"}
+    assert all(sv.horizon is not None for sv in served.values())
