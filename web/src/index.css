@@ -63,6 +63,12 @@
   --globe-marker-outline-width: 2px;
   --globe-label-font: 600 14px system-ui, sans-serif;
   --globe-label-offset: 14px;
+  /* every globe label (sites, South Pole, landmarks): dark outline + subtle dark backing (labelStyle.ts) */
+  --globe-label-outline: #0d1117;
+  --globe-label-outline-width: 3px;
+  --globe-label-bg: rgba(13, 17, 23, 0.72);
+  --globe-label-bg-padding-x: 6px;
+  --globe-label-bg-padding-y: 3px;
   --globe-pin: #58a6ff;
   --globe-pin-size: 15px;
   --globe-pin-outline-width: 3px;

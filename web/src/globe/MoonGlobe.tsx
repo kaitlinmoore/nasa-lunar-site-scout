@@ -29,7 +29,6 @@ import {
   HeadingPitchRange,
   HeightReference,
   Ion,
-  LabelStyle,
   type PerspectiveFrustum,
   Math as CesiumMath,
   SceneTransforms,
@@ -41,6 +40,7 @@ import {
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { displayName } from '../siteNames'
+import { globeLabelStyle, labelPadding } from './labelStyle'
 import { type MarkerCircle, poleLabelRightEdge } from './poleLabel'
 import type { Site } from '../api/client'
 
@@ -97,10 +97,12 @@ type Status = { kind: 'loading' } | { kind: 'ready' } | { kind: 'error'; message
 /** On-screen zoom buttons: each press moves this fraction of the current height (within limits). */
 const BUTTON_ZOOM = { inFraction: 0.35, outFraction: 0.6 }
 
-/** Entity id of the "South pole" label; it isn't a site and can't be selected. */
+/** Place labels are in title case (Kaitlin, 2026-11-16), like the sites' short names. */
+const POLE_LABEL_TEXT = 'South Pole'
+/** Entity id of the "South Pole" label; it isn't a site and can't be selected. */
 const SOUTH_POLE_ID = 'south-pole-label'
 
-/** Space between the "South pole" label and the pole point or a site marker, CSS px (poleLabel.ts). */
+/** Space between the "South Pole" label and the pole point or a site marker, CSS px (poleLabel.ts). */
 const POLE_LABEL_GAP_PX = 4
 
 /** "See details" view: the site from 55° above its horizon, 900 km away, so the region around it stays in view. */
@@ -108,14 +110,14 @@ const FOCUS_VIEW = { pitchDeg: -55, rangeM: 900_000, durationS: 1.2 }
 
 /**
  * Card placement next to its marker, in CSS pixels: gap from the marker (wide enough to clear the
- * "South pole" label beside Site01), margin from the canvas edge.
+ * "South Pole" label beside Site01), margin from the canvas edge.
  */
 const CARD = { gap: 36, margin: 8, raise: 24 }
 
 /**
  * Site labels show only when the camera is this close to the site (Kaitlin, 2026-11-15, readiness
  * fix P2): further out, the polar sites' labels pile into an unreadable stack. The crowded-site test
- * separated the markers at about 180 km. The "South pole" cue label isn't affected.
+ * separated the markers at about 180 km. The "South Pole" cue label isn't affected.
  */
 const SITE_LABEL_MAX_DISTANCE_M = 300_000
 
@@ -340,11 +342,7 @@ export default function MoonGlobe({
           },
           label: {
             text: displayName(site),
-            font: labelFont,
-            fillColor: markerColor,
-            outlineColor,
-            outlineWidth: outlineWidth + 1,
-            style: LabelStyle.FILL_AND_OUTLINE,
+            ...globeLabelStyle(labelFont, markerColor),
             verticalOrigin: VerticalOrigin.BOTTOM,
             pixelOffset: new Cartesian2(0, -labelOffset),
             heightReference: HeightReference.CLAMP_TO_3D_TILE,
@@ -356,7 +354,7 @@ export default function MoonGlobe({
       markers.push({ entity, position })
     }
 
-    // "South pole" label at 90° S, left of its small point and kept clear of the site markers
+    // "South Pole" label at 90° S, left of its small point and kept clear of the site markers
     // (placed every frame below; Kaitlin, 2026-11-16). Not a site: it can't be selected.
     const polePosition = Cartesian3.fromDegrees(0, -90)
     const poleColor = Color.fromCssColorString(token('--globe-pole') || 'white')
@@ -365,10 +363,11 @@ export default function MoonGlobe({
     const poleLabelBox = (() => {
       const ctx = document.createElement('canvas').getContext('2d')
       if (ctx) ctx.font = poleFont
-      const m = ctx?.measureText('South pole')
+      const m = ctx?.measureText(POLE_LABEL_TEXT)
       const height = m ? m.actualBoundingBoxAscent + m.actualBoundingBoxDescent : 12
-      // + the outline drawn around the text on both sides
-      return { width: (m?.width ?? 70) + 2 * (outlineWidth + 1), height: height + 2 * (outlineWidth + 1) }
+      // + the dark backing around the text on both sides (labelStyle.ts)
+      const pad = labelPadding()
+      return { width: (m?.width ?? 70) + 2 * pad.x, height: height + 2 * pad.y }
     })()
     const poleEntity = v.entities.add(
       new Entity({
@@ -383,12 +382,8 @@ export default function MoonGlobe({
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
         },
         label: {
-          text: 'South pole',
-          font: poleFont,
-          fillColor: poleColor,
-          outlineColor,
-          outlineWidth: outlineWidth + 1,
-          style: LabelStyle.FILL_AND_OUTLINE,
+          text: POLE_LABEL_TEXT,
+          ...globeLabelStyle(poleFont, poleColor),
           verticalOrigin: VerticalOrigin.CENTER,
           horizontalOrigin: HorizontalOrigin.RIGHT,
           pixelOffset: new Cartesian2(-(poleRadius + POLE_LABEL_GAP_PX), 0),
@@ -414,7 +409,7 @@ export default function MoonGlobe({
       if (changed) scene.requestRender()
     })
 
-    // Keep the "South pole" label clear of the visible site markers (poleLabel.ts).
+    // Keep the "South Pole" label clear of the visible site markers (poleLabel.ts).
     let poleLabelRight = Number.NaN
     scene.preRender.addEventListener(() => {
       const pole = SceneTransforms.worldToWindowCoordinates(scene, polePosition)

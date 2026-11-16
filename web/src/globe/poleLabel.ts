@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Where the "South pole" cue label goes (Kaitlin, 2026-11-16): to the left of the pole point, moved
+// Where the "South Pole" cue label goes (Kaitlin, 2026-11-16): to the left of the pole point, moved
 // further left until no visible site marker overlaps it, so the polar markers never cover it at the
 // start view. Pure (screen pixels only), so it can be unit-tested in Node.
 
