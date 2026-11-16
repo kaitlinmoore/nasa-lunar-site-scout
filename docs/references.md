@@ -269,7 +269,7 @@ Libraries bundled inside those packages that do the core work:
 
 ## 6. SI (AI) tools
 
-This project was built with SI assistance from Claude models (Anthropic), and its natural-language feature
-calls Claude through the `anthropic` package. Which models were used, for what, and what the author changed
-are in the README's [AI usage](../README.md#ai-usage) section. `VERIFY:` that section lists the models (it is
-a stub as of 2026-11-15).
+This project was built with SI assistance from Claude models (Anthropic): Claude Opus 5.5 and Claude Fable
+5.2. Its natural-language feature calls Claude Opus 5.5 through the `anthropic` package. What each model was
+used for, and what the author decided and changed, are in the README's [AI usage](../README.md#ai-usage)
+section.
