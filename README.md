@@ -5,7 +5,13 @@
 
 **Live app: https://penumbra-luna.web.app** (no login).
 
-Terrain-aware lunar south pole landing site planner. Compare sites and dates for sunlight and direct-to-Earth communications using LOLA topography and JPL ephemerides.
+- **Results are precomputed**, for the scenarios listed under [Sites](#sites); the app offers only those.
+- **Questions** typed into the question box are sent to Claude live, with a rate limit per connection and a daily
+  limit for the whole demo. When the daily limit is reached, live questions pause until the next day (UTC).
+- **Example questions** have saved answers: they return at once, without a model call, and keep working when live
+  questions are paused or the model can't be reached.
+
+Terrain-aware lunar landing site planner. Compare sites and dates for sunlight and direct-to-Earth communications using LOLA topography and JPL ephemerides.
 
 > Built for the 2026 NASA Space Apps Challenge (Lunar Landing Site Navigator). Not affiliated with or endorsed by NASA.
 
