@@ -13,6 +13,7 @@ import {
   type HorizonProfile,
   type MetricsResponse,
   type Scenario,
+  type ScenariosResponse,
   type SeriesResponse,
   type Schemas,
   type SitesResponse,
@@ -58,10 +59,39 @@ export async function staticSites(): Promise<SitesResponse> {
   return getStaticJson<SitesResponse>((await staticIndex()).sites)
 }
 
+/**
+ * The scenario list, as GET /api/scenarios returns it: the copy's own file (0.11.0), or, in an
+ * older copy, built from its entries that name their curated site.
+ */
+export async function staticScenarios(): Promise<ScenariosResponse> {
+  const idx = await staticIndex()
+  if (idx.scenario_list) return getStaticJson<ScenariosResponse>(idx.scenario_list)
+  return {
+    contract_version: idx.contract_version,
+    _placeholder: idx._placeholder,
+    _note: idx._note,
+    scenarios: idx.scenarios
+      .filter((e) => e.site_id)
+      .map((e) => ({
+        site_id: e.site_id ?? null,
+        scenario_key: e.scenario_key,
+        scenario: e.scenario,
+        has_horizon: !!e.horizon,
+      })),
+  }
+}
+
 export async function staticMetrics(scenario: Scenario): Promise<MetricsResponse> {
   const entry = entryFor(await staticIndex(), scenario)
   if (!entry) throw new Error(NOT_IN_COPY)
   return getStaticJson<MetricsResponse>(entry.metrics)
+}
+
+/** One scenario's series alone (for a location and height without a horizon profile). */
+export async function staticSeries(scenario: Scenario): Promise<SeriesResponse> {
+  const entry = entryFor(await staticIndex(), scenario)
+  if (!entry) throw new Error(NOT_IN_COPY)
+  return getStaticJson<SeriesResponse>(entry.series)
 }
 
 export async function staticSky(

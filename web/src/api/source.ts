@@ -3,10 +3,19 @@
 // Both paths return the same generated contract types, so the screen can't tell them apart.
 import { scenarioId } from '../scenario'
 import { type ComparisonResult, mapCompareResponse } from './compare'
-import { staticCompare, staticMetrics, staticSites, staticSky, withStaticFallback } from './staticFallback'
+import {
+  staticCompare,
+  staticMetrics,
+  staticScenarios,
+  staticSeries,
+  staticSites,
+  staticSky,
+  withStaticFallback,
+} from './staticFallback'
 import {
   ApiError,
   type CompareResponse,
+  getScenarios,
   getSites,
   type HorizonProfile,
   type MetricsResponse,
@@ -17,6 +26,8 @@ import {
   postNl,
   postSeries,
   type Scenario,
+  type ScenarioEntry,
+  type ScenariosResponse,
   type SeriesResponse,
   type SitesResponse,
 } from './client'
@@ -31,62 +42,104 @@ export function dataSource(): DataSource {
 }
 
 /**
- * The C1 thin-slice response from fixtures/metrics.json. Its `scenario` is exactly the one
- * stream A serves, so live mode sends that scenario rather than a copy of its values: one
- * source, no drift. Loaded on demand (a separate build chunk).
+ * The example response in fixtures/metrics.json (C api's fixture). Fixture mode's only scenario;
+ * its scenario is also the saved-scenario form's default. Loaded on demand (a separate chunk).
  */
-async function thinSliceFixture(): Promise<MetricsResponse> {
+async function exampleFixture(): Promise<MetricsResponse> {
   return (await import('../../../fixtures/metrics.json')).default as MetricsResponse
 }
 
-/** The thin-slice scenario itself (from the fixture), e.g. as form defaults. Never calls the API. */
+/** The example scenario itself (from the fixture), e.g. as form defaults. Never calls the API. */
 export async function thinSliceScenario(): Promise<Scenario> {
-  return (await thinSliceFixture()).scenario
+  return (await exampleFixture()).scenario
 }
 
+const FIXTURE_ONLY_EXAMPLE = 'Fixture mode has only the example scenario in fixtures/metrics.json.'
+
 /**
- * Metrics for the thin-slice scenario.
- * Fixture mode: the fixture response itself.
- * Live mode: POST /api/metrics with the fixture's scenario.
+ * Every precomputed scenario with its curated site (G2; GET /api/scenarios, contract 0.11.0), with
+ * the static copy as fallback. Fixture mode: the example scenario, under the curated site at its
+ * location. Fetched once per page load and shared by every site page.
  */
-export async function loadThinSliceMetrics(source: DataSource): Promise<MetricsResponse> {
-  const fixture = await thinSliceFixture()
-  if (source === 'fixtures') return fixture
+const scenarioLists = new Map<DataSource, Promise<ScenariosResponse>>()
+export function loadScenarios(source: DataSource): Promise<ScenariosResponse> {
+  let list = scenarioLists.get(source)
+  if (!list) {
+    list = source === 'fixtures' ? fixtureScenarios() : withStaticFallback(getScenarios, staticScenarios)
+    // A failed load isn't cached, so the next site page tries again.
+    list.catch(() => scenarioLists.delete(source))
+    scenarioLists.set(source, list)
+  }
+  return list
+}
+
+async function fixtureScenarios(): Promise<ScenariosResponse> {
+  const [example, sites] = await Promise.all([exampleFixture(), loadSites('fixtures')])
+  const { location } = example.scenario
+  const site = sites.sites.find((s) => s.location.lat === location.lat && s.location.lon === location.lon)
+  return {
+    contract_version: example.contract_version,
+    _placeholder: true,
+    _note: example._note,
+    scenarios: [
+      {
+        site_id: site?.id ?? null,
+        scenario_key: example.scenario_key,
+        scenario: example.scenario,
+        has_horizon: true,
+      },
+    ],
+  }
+}
+
+/** Metrics for one precomputed scenario: POST /api/metrics (static copy as fallback), or the fixture. */
+export async function loadMetrics(source: DataSource, entry: ScenarioEntry): Promise<MetricsResponse> {
+  if (source === 'fixtures') {
+    const example = await exampleFixture()
+    if (scenarioId(example.scenario) !== scenarioId(entry.scenario)) throw new Error(FIXTURE_ONLY_EXAMPLE)
+    return example
+  }
   return withStaticFallback(
-    () => postMetrics(fixture.scenario),
-    () => staticMetrics(fixture.scenario),
+    () => postMetrics(entry.scenario),
+    () => staticMetrics(entry.scenario),
   )
 }
 
 /**
- * Series and horizon for the sky view (C5). Fixture mode only for now (Kaitlin, 2026-11-15):
- * the live endpoints aren't merged, so live mode returns null and the screen says so.
+ * Series and horizon for the sky view (C5; live in Phase 2 step 3.2) of one precomputed scenario.
+ * `horizon` is null when the scenario's location and height have no horizon profile.
  */
-export async function loadThinSliceSky(
+export async function loadSky(
   source: DataSource,
-): Promise<{ series: SeriesResponse; horizon: HorizonProfile }> {
-  if (source !== 'fixtures') {
-    // Live (Phase 2 step 3.2): the thin-slice series and the horizon for its location + height.
-    const { scenario } = await thinSliceFixture()
-    return withStaticFallback(
-      async () => {
-        const [series, horizon] = await Promise.all([
-          postSeries(scenario),
-          postHorizon(scenario.location, scenario.unit_height_m),
-        ])
-        return { series, horizon }
-      },
-      () => staticSky(scenario),
+  entry: ScenarioEntry,
+): Promise<{ series: SeriesResponse; horizon: HorizonProfile | null }> {
+  if (source === 'fixtures') {
+    const example = await exampleFixture()
+    if (scenarioId(example.scenario) !== scenarioId(entry.scenario)) throw new Error(FIXTURE_ONLY_EXAMPLE)
+    const [series, horizon] = await Promise.all([
+      import('../../../fixtures/series.json'),
+      import('../../../fixtures/horizon.json'),
+    ])
+    return { series: series.default as SeriesResponse, horizon: horizon.default as HorizonProfile }
+  }
+  const { scenario } = entry
+  if (!entry.has_horizon) {
+    const series = await withStaticFallback(
+      () => postSeries(scenario),
+      () => staticSeries(scenario),
     )
+    return { series, horizon: null }
   }
-  const [series, horizon] = await Promise.all([
-    import('../../../fixtures/series.json'),
-    import('../../../fixtures/horizon.json'),
-  ])
-  return {
-    series: series.default as SeriesResponse,
-    horizon: horizon.default as HorizonProfile,
-  }
+  return withStaticFallback(
+    async () => {
+      const [series, horizon] = await Promise.all([
+        postSeries(scenario),
+        postHorizon(scenario.location, scenario.unit_height_m),
+      ])
+      return { series, horizon }
+    },
+    () => staticSky(scenario),
+  )
 }
 
 /** Curated sites for the globe (C7a): fixtures/sites.json, or GET /api/sites in live mode. */

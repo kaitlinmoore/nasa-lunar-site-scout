@@ -5,8 +5,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   API_BASE,
-  type MetricsResponse,
   type Scenario,
+  type ScenarioEntry,
   type Site,
   type SiteLocation,
   type SitesResponse,
@@ -16,8 +16,9 @@ import {
   type DataSource,
   dataSource,
   loadSites,
-  loadThinSliceMetrics,
-  loadThinSliceSky,
+  loadMetrics,
+  loadScenarios,
+  loadSky,
   thinSliceScenario,
 } from './api/source'
 import ApiProblemView from './ApiProblemView'
@@ -31,6 +32,8 @@ import { displayName, SiteNamesContext, siteNames, subtitleOf } from './siteName
 import { useSaved } from './saved/store'
 import SiteScreen from './SiteScreen'
 import SkyView from './sky/SkyView'
+import ScenarioPicker from './ScenarioPicker'
+import { type Choice, resolveChoice, siteWindows } from './scenarioChoice'
 
 /** An error's message, for short inline text. */
 function errorText(e: unknown): string {
@@ -204,25 +207,69 @@ function SiteActions({ site, scenario }: { site: Site; scenario: Scenario | null
 const loadDefaults = () => thinSliceScenario()
 
 /** The site screen for one curated site. Shows results only if they are for this site's location. */
+/**
+ * Load `load(source, entry)` for the chosen scenario. After a change of scenario it reports
+ * "loading" until that scenario's answer arrives; an answer for an earlier choice is dropped.
+ */
+function useScenarioLoad<T>(
+  load: (source: DataSource, entry: ScenarioEntry) => Promise<T>,
+  source: DataSource,
+  entry: ScenarioEntry | null,
+): Load<T> | null {
+  const [state, setState] = useState<{ entry: ScenarioEntry; load: Load<T> } | null>(null)
+  useEffect(() => {
+    if (!entry) return
+    let cancelled = false
+    load(source, entry)
+      .then((data) => !cancelled && setState({ entry, load: { kind: 'ok', data } }))
+      .catch((error: unknown) => {
+        if (!cancelled) setState({ entry, load: { kind: 'error', error } })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [load, source, entry])
+  if (!entry) return null
+  return state && state.entry === entry ? state.load : { kind: 'loading' }
+}
+
+/**
+ * A site's page (G2): its precomputed scenarios from GET /api/scenarios, a plain window / height
+ * picker, and the chosen scenario's dashboard. Only this site's scenarios are loaded.
+ */
 function SitePage({ site, source }: { site: Site; source: DataSource }) {
-  const metrics = useLoad<MetricsResponse>(loadThinSliceMetrics, source)
-  const sky = useLoad(loadThinSliceSky, source)
-  const data = metrics.kind === 'ok' ? metrics.data : null
-  const skyData = sky.kind === 'ok' ? sky.data : null
+  const list = useLoad(loadScenarios, source)
+  const windows = useMemo(
+    () => (list.kind === 'ok' ? siteWindows(list.data.scenarios, site.id) : []),
+    [list, site.id],
+  )
+  const [choice, setChoice] = useState<Choice | null>(null)
+  const chosen = resolveChoice(windows, choice)
+  const entry = chosen?.entry ?? null
+  const metrics = useScenarioLoad(loadMetrics, source, entry)
+  const sky = useScenarioLoad(loadSky, source, entry)
+  const data = metrics?.kind === 'ok' ? metrics.data : null
+  const skyData = sky?.kind === 'ok' ? sky.data : null
 
-  // The only computed scenario so far is the C1 thin slice. Never show it under another site.
+  // Never show a result under a site other than the one at its location.
   const metricsForSite = data !== null && sameLocation(data.scenario.location, site.location)
-  const skyForSite = skyData != null && sameLocation(skyData.series.scenario.location, site.location)
+  const skyForSite = skyData !== null && sameLocation(skyData.series.scenario.location, site.location)
 
-  // Horizon and sky: fixtures, or live /api/series + /api/horizon (Phase 2 step 3.2).
-  const skySection =
-    sky.kind === 'loading' ? (
-      <p className="muted">Loading horizon and series…</p>
-    ) : sky.kind === 'error' ? (
-      <ApiProblemView what="the horizon and series" error={sky.error} />
-    ) : skyForSite && skyData ? (
-      <SkyView horizon={skyData.horizon} series={skyData.series} />
-    ) : null
+  // Horizon and sky for the chosen scenario: /api/series + /api/horizon (Phase 2 step 3.2).
+  const skySection = !sky ? null : sky.kind === 'loading' ? (
+    <p className="muted">Loading horizon and series…</p>
+  ) : sky.kind === 'error' ? (
+    <ApiProblemView what="the horizon and series" error={sky.error} />
+  ) : !skyForSite || !skyData ? null : skyData.horizon ? (
+    <SkyView horizon={skyData.horizon} series={skyData.series} />
+  ) : (
+    <section className="card">
+      <h2>Horizon and sky</h2>
+      <p className="muted">
+        This version has no terrain horizon for this location and unit height, so the sky view can't be drawn.
+      </p>
+    </section>
+  )
 
   return (
     <>
@@ -230,20 +277,32 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
       <SiteActions site={site} scenario={metricsForSite && data ? data.scenario : null} />
       <ContractCheck
         responses={[
+          list.kind === 'ok' ? list.data : null,
           metricsForSite ? data : null,
           skyForSite ? skyData?.series : null,
           skyForSite ? skyData?.horizon : null,
         ]}
       />
-      {metrics.kind === 'loading' && <p className="muted">Loading metrics…</p>}
-      {metrics.kind === 'error' && <ApiProblemView what="metrics" error={metrics.error} />}
-      {data && !metricsForSite && (
+      {list.kind === 'loading' && <p className="muted">Loading this site's scenarios…</p>}
+      {list.kind === 'error' && (
+        <ApiProblemView what="the list of precomputed scenarios" error={list.error} />
+      )}
+      {list.kind === 'ok' && windows.length === 0 && (
         <section className="card">
           <p className="muted">
-            No computed scenario for this site yet. So far only the C1 thin-slice scenario has results.
+            This version has no precomputed results for this site
+            {source === 'fixtures' ? ' (fixture mode has only the example scenario)' : ''}.
           </p>
           <p className="muted value">{formatLatLon(site.location.lat, site.location.lon)}</p>
         </section>
+      )}
+      {chosen && <ScenarioPicker windows={windows} chosen={chosen} onChange={setChoice} />}
+      {metrics?.kind === 'loading' && <p className="muted">Loading metrics…</p>}
+      {metrics?.kind === 'error' && <ApiProblemView what="metrics" error={metrics.error} />}
+      {data && !metricsForSite && (
+        <div className="banner error" role="alert">
+          The result returned is for a different location than this site, so it isn't shown.
+        </div>
       )}
       {data && metricsForSite && (
         <>
@@ -256,13 +315,8 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
           <SiteScreen data={data}>{skySection}</SiteScreen>
         </>
       )}
-      {/* Questions (C7b), below the dashboard; a fresh box per site. */}
-      <NlBox
-        key={site.id}
-        site={site}
-        scenario={metricsForSite && data ? data.scenario : null}
-        source={source}
-      />
+      {/* Questions (C7b), below the dashboard; a fresh box per site. It sends the chosen scenario. */}
+      <NlBox key={site.id} site={site} scenario={entry ? entry.scenario : null} source={source} />
     </>
   )
 }

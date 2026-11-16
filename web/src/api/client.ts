@@ -24,6 +24,8 @@ export type HorizonProfile = Schemas['HorizonProfile']
 export type TerrainLayer = Schemas['TerrainLayer']
 export type LocateResponse = Schemas['LocateResponse']
 export type NLRequest = Schemas['NLRequest']
+export type ScenariosResponse = Schemas['ScenariosResponse']
+export type ScenarioEntry = Schemas['ScenarioEntry']
 
 export const API_BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/$/, '')
 
@@ -63,6 +65,8 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
 
 export const getHealth = () => getJson<HealthResponse>('/api/health')
 export const getSites = () => getJson<SitesResponse>('/api/sites')
+/** Every precomputed scenario, each with its curated site (contract 0.11.0). */
+export const getScenarios = () => getJson<ScenariosResponse>('/api/scenarios')
 export const postMetrics = (scenario: Scenario) => postJson<MetricsResponse>('/api/metrics', { scenario })
 export const postSeries = (scenario: Scenario) => postJson<SeriesResponse>('/api/series', { scenario })
 export const postHorizon = (location: SiteLocation, unit_height_m: number) =>
