@@ -408,7 +408,9 @@
       },
       "resolution_m": null,
       "resolution_note": null,
-      "can_answer": [],
+      "can_answer": [
+        "Share of a precomputed time window with the Sun's elevation in a band, at the site, measured from the local horizontal whether or not terrain hides the Sun"
+      ],
       "cannot_answer": [
         "Time-dependent area search (not available yet)",
         "Temperature queries (not available yet)",

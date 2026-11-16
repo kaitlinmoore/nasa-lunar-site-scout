@@ -103,3 +103,41 @@ def test_mazarico_table3_recorded_as_misses_with_the_rank_20_point_off_the_plate
 
 def x_off(row):
     return row["mazarico"] - row["ours"]
+
+
+# ------------------------------------------------------- G2 review follow-ups (methodology 6.6.1, 6.7)
+
+
+def test_accuracy_at_every_pgda_site():
+    a = V["accuracy_sites"]
+    assert len([k for k in a if k.startswith("pgda-")]) == 8
+    for sid in (
+        "pgda-site01",
+        "pgda-site11",
+    ):  # the Earth's horizon is set far away: a near-field shift does nothing
+        r = a[sid]
+        assert r["near_minus_0.2"]["earth_visibility_fraction"] == r["base"]["earth_visibility_fraction"]
+        assert r["earth_partly_hidden"]["lt_1km"] == 0.0
+    for sid in ("pgda-site04", "pgda-site06", "pgda-site07", "pgda-site20", "pgda-site23", "pgda-site42"):
+        r = a[sid]
+        assert r["earth_partly_hidden"]["lt_1km"] == 1.0  # here near terrain sets the Earth's horizon
+        assert r["near_minus_0.2"]["earth_visibility_fraction"] > r["base"]["earth_visibility_fraction"]
+    for sid, r in a.items():
+        if sid.startswith("pgda-"):  # the 600 s baseline is the served value to 0.1 pp
+            served = a["served_heights"][sid]["1m"]["illumination_fraction"]
+            assert abs(r["base"]["illumination_fraction"] - served) < 1e-3
+
+
+def test_site20_cluster_disagrees_between_the_maps():
+    m = V["maz20"]
+    assert m["grid_points"] == 49 and m["grid_above_table3"] == 0
+    assert m["grid_nearest_above_65pct_m"] > m["rounding_halfwidth_m"]["latitude"]  # outside the rounding
+    r38, t38 = m["rank38_matched"], m["rank38_table3"]
+    assert r38["0m"]["avg_ill_pct"] < t38["0m"][0] - 15 and r38["10m"]["avg_ill_pct"] < t38["10m"][0]
+
+
+def test_site04_roi3_full_run_matches_the_figure():
+    f = V["roifull"]
+    assert (f["site"], f["roi"], f["pixels"]) == ("pgda-site04", 3, 126)
+    d = f["full_minus_figure"]
+    assert abs(d["avg_ill_pct"]) < 0.5 and abs(d["lcip_d"]) < 1.0 and abs(d["lcsp_d"]) < 0.2

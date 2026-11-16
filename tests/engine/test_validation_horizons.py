@@ -18,6 +18,8 @@ from lss.datafiles import get as datafile
 from lss.ephem import core as ephem
 
 FIXTURE = Path(__file__).parent / "fixtures" / "horizons_site01_roi4.json"
+# A second site far from the pole at an eastern longitude (methodology 6.1, G2 review m3): Site06, 85.3S 37E.
+FIXTURE_SITE06 = Path(__file__).parent / "fixtures" / "horizons_pgda-site06.json"
 TOL_ARCSEC = 1.0  # on the angular separation; measured agreement is ~0.05 arcsec
 
 needs_kernels = pytest.mark.skipif(
@@ -25,6 +27,7 @@ needs_kernels = pytest.mark.skipif(
     reason="SPICE kernels missing: uv run python scripts/fetch_data.py kernels",
 )
 REF = json.loads(FIXTURE.read_text(encoding="utf-8"))
+REF06 = json.loads(FIXTURE_SITE06.read_text(encoding="utf-8"))
 
 
 def test_fixture_is_the_served_site():
@@ -44,10 +47,24 @@ def separation_deg(az1, el1, az2, el2):
     return np.degrees(np.arccos(np.clip(c, -1.0, 1.0)))
 
 
+def test_site06_fixture_is_the_served_point():
+    from lss.registry.sites import get_site
+
+    loc, s = get_site("pgda-site06").location, REF06["site"]
+    assert REF06["site_id"] == "pgda-site06"
+    assert s["lat_deg"] == pytest.approx(loc.lat, abs=1e-9) and s["east_lon_deg"] == pytest.approx(
+        loc.lon % 360.0
+    )
+    for body in ("SUN", "EARTH"):
+        assert "MEAN_ME" in REF06["bodies"][body]["header"]["Center pole/equ"]
+        assert len(REF06["bodies"][body]["rows"]) == 25
+
+
 @needs_kernels
+@pytest.mark.parametrize("ref", [REF, REF06], ids=["site01", "site06"])
 @pytest.mark.parametrize("body", ["SUN", "EARTH"])
-def test_topocentric_az_el_matches_horizons(body):
-    s, rows = REF["site"], REF["bodies"][body]["rows"]
+def test_topocentric_az_el_matches_horizons(body, ref):
+    s, rows = ref["site"], ref["bodies"][body]["rows"]
     t = [datetime.fromisoformat(r["utc"].replace("Z", "+00:00")) for r in rows]
     tp = ephem.topocentric(body, s["lat_deg"], s["east_lon_deg"] - 360.0, s["altitude_m"], ephem.utc_to_et(t))
     az = np.array([r["azimuth_deg"] for r in rows])

@@ -1,0 +1,419 @@
+{
+  "source": "https://ssd.jpl.nasa.gov/api/horizons.api",
+  "site_id": "pgda-site06",
+  "fetched": "2026-11-16T08:58:08Z",
+  "site": {
+    "east_lon_deg": 37.07,
+    "lat_deg": -85.3,
+    "altitude_m": 6760.754547379678
+  },
+  "quantity": "4 (apparent AZ-EL, airless), 20 (observer range)",
+  "bodies": {
+    "SUN": {
+      "query": {
+        "format": "text",
+        "COMMAND": "'10'",
+        "OBJ_DATA": "'NO'",
+        "MAKE_EPHEM": "'YES'",
+        "EPHEM_TYPE": "'OBSERVER'",
+        "CENTER": "'coord@301'",
+        "COORD_TYPE": "'GEODETIC'",
+        "SITE_COORD": "'37.070000,-85.300000,6.7607545'",
+        "TLIST": "(the utc values below)",
+        "TLIST_TYPE": "'JD'",
+        "TIME_TYPE": "'UT'",
+        "QUANTITIES": "'4,20'",
+        "ANG_FORMAT": "'DEG'",
+        "EXTRA_PREC": "'YES'",
+        "CSV_FORMAT": "'YES'"
+      },
+      "header": {
+        "Target body name": "Sun (10)                        {source: DE441}",
+        "Center body name": "Moon (301)                      {source: DE441}",
+        "Center geodetic": "37.07, -85.3, 6.76075           {E-lon(deg),Lat(deg),Alt(km)}",
+        "Center pole/equ": "MEAN_ME (high precision)        {East-longitude positive}",
+        "Center radii": "1737.4, 1737.4, 1737.4 km       {Equator_a, b, pole_c}"
+      },
+      "rows": [
+        {
+          "utc": "2024-01-01T00:00:00Z",
+          "horizons_time": "2024-Jan-01 00:00:00.000",
+          "azimuth_deg": 266.945885045,
+          "elevation_deg": 1.307716775,
+          "distance_au": 0.98483232352829
+        },
+        {
+          "utc": "2026-06-08T03:00:00Z",
+          "horizons_time": "2026-Jun-08 03:00:00.000",
+          "azimuth_deg": 229.113661205,
+          "elevation_deg": -4.583644846,
+          "distance_au": 1.0150778414063
+        },
+        {
+          "utc": "2028-05-15T00:00:00Z",
+          "horizons_time": "2028-May-15 00:00:00.000",
+          "azimuth_deg": 252.363975745,
+          "elevation_deg": -2.790694056,
+          "distance_au": 1.01160853170695
+        },
+        {
+          "utc": "2028-05-18T05:00:00Z",
+          "horizons_time": "2028-May-18 05:00:00.000",
+          "azimuth_deg": 213.164928894,
+          "elevation_deg": -5.264397049,
+          "distance_au": 1.01068975748397
+        },
+        {
+          "utc": "2028-05-21T10:00:00Z",
+          "horizons_time": "2028-May-21 10:00:00.000",
+          "azimuth_deg": 173.73978425,
+          "elevation_deg": -5.957496817,
+          "distance_au": 1.01007061474001
+        },
+        {
+          "utc": "2028-05-24T15:00:00Z",
+          "horizons_time": "2028-May-24 15:00:00.000",
+          "azimuth_deg": 134.320584957,
+          "elevation_deg": -4.520343263,
+          "distance_au": 1.01029021592682
+        },
+        {
+          "utc": "2028-05-27T20:00:00Z",
+          "horizons_time": "2028-May-27 20:00:00.000",
+          "azimuth_deg": 95.096856858,
+          "elevation_deg": -1.586615205,
+          "distance_au": 1.01160922362562
+        },
+        {
+          "utc": "2028-05-31T01:00:00Z",
+          "horizons_time": "2028-May-31 01:00:00.000",
+          "azimuth_deg": 55.991058704,
+          "elevation_deg": 1.534972741,
+          "distance_au": 1.01374469860777
+        },
+        {
+          "utc": "2028-06-03T06:00:00Z",
+          "horizons_time": "2028-Jun-03 06:00:00.000",
+          "azimuth_deg": 16.83889133,
+          "elevation_deg": 3.471569296,
+          "distance_au": 1.0159144178075
+        },
+        {
+          "utc": "2028-06-06T11:00:00Z",
+          "horizons_time": "2028-Jun-06 11:00:00.000",
+          "azimuth_deg": 337.654989225,
+          "elevation_deg": 3.391211847,
+          "distance_au": 1.01729268809504
+        },
+        {
+          "utc": "2028-06-09T16:00:00Z",
+          "horizons_time": "2028-Jun-09 16:00:00.000",
+          "azimuth_deg": 298.56568254,
+          "elevation_deg": 1.36374648,
+          "distance_au": 1.01749797395712
+        },
+        {
+          "utc": "2028-06-12T21:00:00Z",
+          "horizons_time": "2028-Jun-12 21:00:00.000",
+          "azimuth_deg": 259.540166447,
+          "elevation_deg": -1.677401147,
+          "distance_au": 1.01670892581291
+        },
+        {
+          "utc": "2028-06-14T00:00:00Z",
+          "horizons_time": "2028-Jun-14 00:00:00.000",
+          "azimuth_deg": 245.833048742,
+          "elevation_deg": -2.728344738,
+          "distance_au": 1.0162858161634
+        },
+        {
+          "utc": "2028-11-15T06:00:00Z",
+          "horizons_time": "2028-Nov-15 06:00:00.000",
+          "azimuth_deg": 163.068328386,
+          "elevation_deg": -3.303663124,
+          "distance_au": 0.98680550767052
+        },
+        {
+          "utc": "2030-04-22T09:00:00Z",
+          "horizons_time": "2030-Apr-22 09:00:00.000",
+          "azimuth_deg": 269.204277418,
+          "elevation_deg": -1.15966412,
+          "distance_au": 1.00638702345576
+        },
+        {
+          "utc": "2032-09-01T12:00:00Z",
+          "horizons_time": "2032-Sep-01 12:00:00.000",
+          "azimuth_deg": 183.565905234,
+          "elevation_deg": -3.451023815,
+          "distance_au": 1.00700236352299
+        },
+        {
+          "utc": "2034-02-08T15:00:00Z",
+          "horizons_time": "2034-Feb-08 15:00:00.000",
+          "azimuth_deg": 264.734326734,
+          "elevation_deg": -1.534460865,
+          "distance_au": 0.98781907173757
+        },
+        {
+          "utc": "2036-07-15T18:00:00Z",
+          "horizons_time": "2036-Jul-15 18:00:00.000",
+          "azimuth_deg": 236.318259213,
+          "elevation_deg": -1.968771433,
+          "distance_au": 1.01686680661751
+        },
+        {
+          "utc": "2038-12-22T21:00:00Z",
+          "horizons_time": "2038-Dec-22 21:00:00.000",
+          "azimuth_deg": 184.871071322,
+          "elevation_deg": -4.671205677,
+          "distance_au": 0.98199006669367
+        },
+        {
+          "utc": "2040-05-01T00:00:00Z",
+          "horizons_time": "2040-May-01 00:00:00.000",
+          "azimuth_deg": 270.980407707,
+          "elevation_deg": 0.690580427,
+          "distance_au": 1.00901934506112
+        },
+        {
+          "utc": "2042-10-08T03:00:00Z",
+          "horizons_time": "2042-Oct-08 03:00:00.000",
+          "azimuth_deg": 216.293027563,
+          "elevation_deg": -3.837036089,
+          "distance_au": 0.99828589156697
+        },
+        {
+          "utc": "2044-03-15T06:00:00Z",
+          "horizons_time": "2044-Mar-15 06:00:00.000",
+          "azimuth_deg": 310.213188171,
+          "elevation_deg": 2.858004706,
+          "distance_au": 0.99692390534781
+        },
+        {
+          "utc": "2046-08-22T09:00:00Z",
+          "horizons_time": "2046-Aug-22 09:00:00.000",
+          "azimuth_deg": 255.932571271,
+          "elevation_deg": -0.441833627,
+          "distance_au": 1.01273192825979
+        },
+        {
+          "utc": "2048-01-01T12:00:00Z",
+          "horizons_time": "2048-Jan-01 12:00:00.000",
+          "azimuth_deg": 316.657183355,
+          "elevation_deg": 3.334858683,
+          "distance_au": 0.98595772931947
+        },
+        {
+          "utc": "2050-06-08T15:00:00Z",
+          "horizons_time": "2050-Jun-08 15:00:00.000",
+          "azimuth_deg": 278.5705545,
+          "elevation_deg": 1.425031975,
+          "distance_au": 1.01674791795392
+        }
+      ]
+    },
+    "EARTH": {
+      "query": {
+        "format": "text",
+        "COMMAND": "'399'",
+        "OBJ_DATA": "'NO'",
+        "MAKE_EPHEM": "'YES'",
+        "EPHEM_TYPE": "'OBSERVER'",
+        "CENTER": "'coord@301'",
+        "COORD_TYPE": "'GEODETIC'",
+        "SITE_COORD": "'37.070000,-85.300000,6.7607545'",
+        "TLIST": "(the utc values below)",
+        "TLIST_TYPE": "'JD'",
+        "TIME_TYPE": "'UT'",
+        "QUANTITIES": "'4,20'",
+        "ANG_FORMAT": "'DEG'",
+        "EXTRA_PREC": "'YES'",
+        "CSV_FORMAT": "'YES'"
+      },
+      "header": {
+        "Target body name": "Earth (399)                     {source: DE441}",
+        "Center body name": "Moon (301)                      {source: DE441}",
+        "Center geodetic": "37.07, -85.3, 6.76075           {E-lon(deg),Lat(deg),Alt(km)}",
+        "Center pole/equ": "MEAN_ME (high precision)        {East-longitude positive}",
+        "Center radii": "1737.4, 1737.4, 1737.4 km       {Equator_a, b, pole_c}"
+      },
+      "rows": [
+        {
+          "utc": "2024-01-01T00:00:00Z",
+          "horizons_time": "2024-Jan-01 00:00:00.000",
+          "azimuth_deg": 322.643750641,
+          "elevation_deg": 8.185041428,
+          "distance_au": 0.00270358035865
+        },
+        {
+          "utc": "2026-06-08T03:00:00Z",
+          "horizons_time": "2026-Jun-08 03:00:00.000",
+          "azimuth_deg": 315.090699624,
+          "elevation_deg": 4.272648965,
+          "distance_au": 0.00258820407262
+        },
+        {
+          "utc": "2028-05-15T00:00:00Z",
+          "horizons_time": "2028-May-15 00:00:00.000",
+          "azimuth_deg": 326.002218327,
+          "elevation_deg": 5.225319066,
+          "distance_au": 0.00267694040828
+        },
+        {
+          "utc": "2028-05-18T05:00:00Z",
+          "horizons_time": "2028-May-18 05:00:00.000",
+          "azimuth_deg": 321.587277658,
+          "elevation_deg": 8.685653357,
+          "distance_au": 0.00269824696838
+        },
+        {
+          "utc": "2028-05-21T10:00:00Z",
+          "horizons_time": "2028-May-21 10:00:00.000",
+          "azimuth_deg": 318.255556456,
+          "elevation_deg": 9.932369919,
+          "distance_au": 0.00264184630821
+        },
+        {
+          "utc": "2028-05-24T15:00:00Z",
+          "horizons_time": "2028-May-24 15:00:00.000",
+          "azimuth_deg": 317.661739056,
+          "elevation_deg": 8.138008025,
+          "distance_au": 0.0025547953504
+        },
+        {
+          "utc": "2028-05-27T20:00:00Z",
+          "horizons_time": "2028-May-27 20:00:00.000",
+          "azimuth_deg": 319.46635667,
+          "elevation_deg": 3.698025391,
+          "distance_au": 0.00249222384707
+        },
+        {
+          "utc": "2028-05-31T01:00:00Z",
+          "horizons_time": "2028-May-31 01:00:00.000",
+          "azimuth_deg": 322.514517363,
+          "elevation_deg": -1.014432528,
+          "distance_au": 0.00247172699647
+        },
+        {
+          "utc": "2028-06-03T06:00:00Z",
+          "horizons_time": "2028-Jun-03 06:00:00.000",
+          "azimuth_deg": 325.87222518,
+          "elevation_deg": -3.055080563,
+          "distance_au": 0.00248782813752
+        },
+        {
+          "utc": "2028-06-06T11:00:00Z",
+          "horizons_time": "2028-Jun-06 11:00:00.000",
+          "azimuth_deg": 328.005310537,
+          "elevation_deg": -1.222018196,
+          "distance_au": 0.00254419605279
+        },
+        {
+          "utc": "2028-06-09T16:00:00Z",
+          "horizons_time": "2028-Jun-09 16:00:00.000",
+          "azimuth_deg": 327.250304442,
+          "elevation_deg": 3.051024443,
+          "distance_au": 0.00262943024935
+        },
+        {
+          "utc": "2028-06-12T21:00:00Z",
+          "horizons_time": "2028-Jun-12 21:00:00.000",
+          "azimuth_deg": 323.727777639,
+          "elevation_deg": 7.297985321,
+          "distance_au": 0.0026935693337
+        },
+        {
+          "utc": "2028-06-14T00:00:00Z",
+          "horizons_time": "2028-Jun-14 00:00:00.000",
+          "azimuth_deg": 322.18013793,
+          "elevation_deg": 8.431244771,
+          "distance_au": 0.00270041180566
+        },
+        {
+          "utc": "2028-11-15T06:00:00Z",
+          "horizons_time": "2028-Nov-15 06:00:00.000",
+          "azimuth_deg": 325.53608122,
+          "elevation_deg": -2.61104218,
+          "distance_au": 0.00243597345324
+        },
+        {
+          "utc": "2030-04-22T09:00:00Z",
+          "horizons_time": "2030-Apr-22 09:00:00.000",
+          "azimuth_deg": 327.736881073,
+          "elevation_deg": 5.301981941,
+          "distance_au": 0.00245217432021
+        },
+        {
+          "utc": "2032-09-01T12:00:00Z",
+          "horizons_time": "2032-Sep-01 12:00:00.000",
+          "azimuth_deg": 326.902349193,
+          "elevation_deg": -2.982266421,
+          "distance_au": 0.00270485053948
+        },
+        {
+          "utc": "2034-02-08T15:00:00Z",
+          "horizons_time": "2034-Feb-08 15:00:00.000",
+          "azimuth_deg": 323.528699212,
+          "elevation_deg": 5.298750575,
+          "distance_au": 0.00269625616765
+        },
+        {
+          "utc": "2036-07-15T18:00:00Z",
+          "horizons_time": "2036-Jul-15 18:00:00.000",
+          "azimuth_deg": 316.234966667,
+          "elevation_deg": -2.517775309,
+          "distance_au": 0.00263662418844
+        },
+        {
+          "utc": "2038-12-22T21:00:00Z",
+          "horizons_time": "2038-Dec-22 21:00:00.000",
+          "azimuth_deg": 320.750167854,
+          "elevation_deg": 8.095367457,
+          "distance_au": 0.00242462564049
+        },
+        {
+          "utc": "2040-05-01T00:00:00Z",
+          "horizons_time": "2040-May-01 00:00:00.000",
+          "azimuth_deg": 323.152019275,
+          "elevation_deg": 0.172415939,
+          "distance_au": 0.00244736409465
+        },
+        {
+          "utc": "2042-10-08T03:00:00Z",
+          "horizons_time": "2042-Oct-08 03:00:00.000",
+          "azimuth_deg": 329.83387808,
+          "elevation_deg": 10.200587676,
+          "distance_au": 0.00262457522781
+        },
+        {
+          "utc": "2044-03-15T06:00:00Z",
+          "horizons_time": "2044-Mar-15 06:00:00.000",
+          "azimuth_deg": 327.633252218,
+          "elevation_deg": 1.06419153,
+          "distance_au": 0.00258969286655
+        },
+        {
+          "utc": "2046-08-22T09:00:00Z",
+          "horizons_time": "2046-Aug-22 09:00:00.000",
+          "azimuth_deg": 318.408150611,
+          "elevation_deg": 10.081343476,
+          "distance_au": 0.00269319242099
+        },
+        {
+          "utc": "2048-01-01T12:00:00Z",
+          "horizons_time": "2048-Jan-01 12:00:00.000",
+          "azimuth_deg": 319.03242108,
+          "elevation_deg": 2.570351061,
+          "distance_au": 0.002662397256
+        },
+        {
+          "utc": "2050-06-08T15:00:00Z",
+          "horizons_time": "2050-Jun-08 15:00:00.000",
+          "azimuth_deg": 320.35635153,
+          "elevation_deg": 9.677490785,
+          "distance_au": 0.002462839193
+        }
+      ]
+    }
+  }
+}

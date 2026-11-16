@@ -3,6 +3,10 @@
 Fetch JPL Horizons reference az/el for the Sun and Earth at the served C1 site (step 4.7).
 
     uv run python scripts/horizons_check.py          # writes tests/engine/fixtures/horizons_site01_roi4.json
+    uv run python scripts/horizons_check.py --site pgda-site06   # writes .../horizons_pgda-site06.json
+
+With --site, the location is that curated site's served point (lss/registry/sites.yaml) at 1 m; the epochs are
+the same.
 
 The site is the served scenario's location at the served observer height (DEM surface + unit height,
 from the cached horizon), given to Horizons as a user-defined site on the Moon in east longitude,
@@ -15,6 +19,7 @@ Only the query and the parsed values are stored, with the header lines that iden
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 import urllib.parse
@@ -47,9 +52,14 @@ def jd_utc(t: datetime) -> float:
     return 2440587.5 + t.timestamp() / 86400.0
 
 
-def site() -> tuple[float, float, float]:
-    loc = SCENARIO.location
-    hz = cached_horizon(loc.lat, loc.lon, SCENARIO.unit_height_m)
+def site(site_id: str | None = None) -> tuple[float, float, float]:
+    if site_id is None:
+        loc, h = SCENARIO.location, SCENARIO.unit_height_m
+    else:
+        from lss.registry.sites import get_site
+
+        loc, h = get_site(site_id).location, 1.0
+    hz = cached_horizon(loc.lat, loc.lon, h)
     return loc.lon % 360.0, loc.lat, hz.observer_radius_m - MOON_RADIUS_M
 
 
@@ -101,11 +111,16 @@ def parse(text: str, times: list[datetime]) -> tuple[dict, list[dict]]:
     return header, rows
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--site", help="a curated site id (default: the served C1 scenario's location)")
+    a = ap.parse_args(argv)
     times = epochs()
-    east_lon, lat, alt_m = site()
+    east_lon, lat, alt_m = site(a.site)
+    out_path = OUT if a.site is None else OUT.with_name(f"horizons_{a.site}.json")
     out = {
         "source": API,
+        "site_id": a.site or "pgda-site01",
         "fetched": datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "site": {"east_lon_deg": east_lon, "lat_deg": lat, "altitude_m": alt_m},
         "quantity": "4 (apparent AZ-EL, airless), 20 (observer range)",
@@ -120,9 +135,9 @@ def main() -> int:
             "rows": rows,
         }
         print(body, header.get("Center pole/equ"), len(rows), "rows")
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8", newline="\n")
-    print(f"written {OUT}")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8", newline="\n")
+    print(f"written {out_path}")
     return 0
 
 

@@ -70,3 +70,19 @@ def test_fresh_computation_reproduces_the_fixture(site_id):
     h, hevery = horizon_response(res).model_dump(mode="json", by_alias=True), ref["horizon_every"]
     for k in ("azimuth_deg", "elevation_deg"):
         assert np.allclose(h[k][::hevery], ref["horizon"][k], atol=DEG_TOL, rtol=0), k
+
+
+def test_one_horizon_recomputed_from_scratch(tmp_path):
+    """The tests above read horizons from the cache; this one recomputes Site07's in an empty cache, so a
+    change to the ray caster that forgot to bump HORIZON_VERSION is caught (G2 review m7)."""
+    site_id = "pgda-site07"
+    if site_id not in REFS or not _have_data(site_id):
+        pytest.skip("Site07 fixture or data missing")
+    from lss.horizon import cached_horizon
+
+    loc = SITES[site_id].location
+    hz = cached_horizon(loc.lat, loc.lon, 1.0, directory=tmp_path)
+    assert any(tmp_path.iterdir())  # computed here, not read from LSS_DATA_DIR
+    ref = REFS[site_id]
+    every = ref["horizon_every"]
+    assert np.allclose(hz.elevation_deg[::every], ref["horizon"]["elevation_deg"], atol=DEG_TOL, rtol=0)

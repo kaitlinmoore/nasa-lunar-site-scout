@@ -477,6 +477,257 @@ def mazarico_summary() -> dict | None:
     return out
 
 
+# ------------------------------------------------------------ G2 review follow-ups (methodology 6.6, 6.7)
+
+ACC_SITE_WINDOW = (C1.datetime(2028, 1, 1, tzinfo=C1.UTC), C1.datetime(2029, 1, 1, tzinfo=C1.UTC))
+ACC_SITE_GRID_S = 600.0  # the shifted runs and their baseline share this grid (the served files use 60 s)
+
+
+def _partly_hidden_shares(body, dist_at):
+    """While the body is partly hidden: share of that time with the horizon set < 100 m and < 1 km away."""
+    g = body.grid
+    part = (g.fraction > 0) & (g.fraction < 1)
+    if not part.any():
+        return {"time_partly_hidden": 0.0, "lt_100m": None, "lt_1km": None}
+    d = dist_at(g.azimuth_deg[part])
+    return {
+        "time_partly_hidden": float(part.mean()),
+        "lt_100m": float((d < 100.0).mean()),
+        "lt_1km": float((d < 1000.0).mean()),
+    }
+
+
+def stage_accuracy_sites(fresh: bool) -> None:
+    """Section 6.6 at every PGDA site: 1 m over 2028, the horizon moved by -0.2 / +0.2 deg where terrain
+    closer than 1 km sets it, and what sets the horizon (G2 review M1)."""
+    from dataclasses import replace
+
+    from lss.contract import Scenario
+    from lss.metrics import comms_metrics, power_metrics
+    from lss.registry.sites import load_sites, site_points
+    from lss.series import SeriesParams, body_visibility, compute_series, ephemeris_sampler
+
+    path = C1.vdir() / "accuracy_sites.json"
+    data = json.loads(path.read_text(encoding="utf-8")) if path.is_file() and not fresh else {}
+    sites = {s.id: s for s in load_sites()}
+    params = SeriesParams(ACC_SITE_GRID_S)
+    for sid in site_points():
+        if sid in data:
+            continue
+        t0 = time.monotonic()
+        sc = Scenario(
+            location=sites[sid].location,
+            unit_height_m=1.0,
+            window_start=ACC_SITE_WINDOW[0],
+            window_end=ACC_SITE_WINDOW[1],
+            step=C1.timedelta(hours=6),
+        )
+        base = compute_series(sc, params)
+        hz = base.horizon
+        near = hz.distance_m < 1000.0
+        step = hz.params.azimuth_step_deg
+
+        def dist_at(az, hz=hz, step=step):
+            return hz.distance_m[np.round(np.asarray(az) / step).astype(int) % hz.distance_m.size]
+
+        row = {
+            "azimuths_lt_100m": float((hz.distance_m < 100.0).mean()),
+            "azimuths_lt_1km": float(near.mean()),
+            "sun_partly_hidden": _partly_hidden_shares(base.sun, dist_at),
+            "earth_partly_hidden": _partly_hidden_shares(base.earth, dist_at),
+        }
+        for label, d in (("base", 0.0), ("near_minus_0.2", -0.2), ("near_plus_0.2", 0.2)):
+            hz2 = replace(hz, elevation_deg=hz.elevation_deg + d * near)
+            bodies = {}
+            for name, limb in (("SUN", True), ("EARTH", False)):
+                sample = ephemeris_sampler(
+                    name, base.lat, base.lon, base.observer_height_m, base.window_start
+                )
+                bodies[name] = body_visibility(sample, hz2.elevation_at, base.duration_s, limb, params)
+            res = replace(base, horizon=hz2, sun=bodies["SUN"], earth=bodies["EARTH"])
+            p, c = power_metrics(res), comms_metrics(res)
+            row[label] = {
+                "illumination_fraction": p.illumination_fraction,
+                "earth_visibility_fraction": c.earth_visibility_fraction,
+                "longest_shadow_h": p.longest_shadow_h,
+                "longest_earth_gap_h": c.longest_earth_gap_h,
+            }
+        row["seconds"] = round(time.monotonic() - t0, 1)
+        data[sid] = row
+        C1.write_json(path, data)
+        print(f"  {sid}: {row['base']} ({row['seconds']} s)", flush=True)
+
+
+def served_heights_table() -> dict:
+    """2028 illumination and Earth visibility at 1, 2, 5, 10 m from the served files."""
+    from lss.registry.sites import site_points
+
+    served = get_settings_cache() / "served"
+    out = {}
+    for sid in site_points():
+        row = {}
+        for h in (1, 2, 5, 10):
+            f = served / f"c3_{sid}_{h}m_20280101_366d.json"
+            m = json.loads(f.read_text(encoding="utf-8"))["metrics"]
+            row[f"{h}m"] = {
+                "illumination_fraction": m["power"]["illumination_fraction"],
+                "earth_visibility_fraction": m["comms"]["earth_visibility_fraction"],
+            }
+        out[sid] = row
+    return out
+
+
+def get_settings_cache():
+    from lss.config import get_settings
+
+    return get_settings().cache_dir
+
+
+# Table 3, south pole, rank 38: the second point of Site20's cluster (Mazarico et al. 2011, p. 1078).
+MAZ_RANK38 = (31.81, 85.42, 80.21, 83.34, 82.17, 85.80)
+
+
+def stage_maz20(fresh: bool) -> None:
+    """Site20's cluster (G2 review M2): Table 3's rank 38 with the matched setting and on the served stack,
+    and the matched setting at the 7 x 7 pixel centres of our 240 m map around the published point (0 m)."""
+    from lss.contract import Location, Scenario
+    from lss.metrics import power_metrics
+    from lss.registry.terrain import POLAR_240M
+    from lss.series import compute_series
+    from lss.terrain.core import ps_from_latlon
+
+    path = C1.vdir() / "maz20.json"
+    data = json.loads(path.read_text(encoding="utf-8")) if path.is_file() and not fresh else {}
+    hz_dir = C1.vdir() / "mazarico_horizons"
+    lat38, lon38 = -MAZ_RANK38[1], MAZ_RANK38[0]
+    for h in MAZ_HEIGHTS_M:
+        key = f"rank38_matched_{h:g}m"
+        if key not in data:
+            data[key] = maz_run(lat38, lon38, h, hz_dir, "emulated")
+            C1.write_json(path, data)
+            print(f"  {key}: {data[key]}", flush=True)
+    for h in (1.0, 10.0):
+        key = f"rank38_stack_2028_{h:g}m"
+        if key not in data:
+            sc = Scenario(
+                location=Location(lat=lat38, lon=lon38),
+                unit_height_m=h,
+                window_start=ACC_SITE_WINDOW[0],
+                window_end=ACC_SITE_WINDOW[1],
+                step=C1.timedelta(hours=6),
+            )
+            res = compute_series(sc)
+            hz = res.horizon
+            pm = power_metrics(res)
+            data[key] = {
+                "mean_visible_disk_fraction": pm.mean_visible_disk_fraction,  # Table 3's quantity
+                "illumination_fraction": pm.illumination_fraction,
+                "horizon_max_deg": float(hz.elevation_deg.max()),
+                "near_field": hz.layers[0]["label"] if hz.layers else None,
+            }
+            C1.write_json(path, data)
+            print(f"  {key}: {data[key]}", flush=True)
+    # 7 x 7 pixel centres of the 240 m map (centres at 120 m + 240 m n) around the published point, 0 m.
+    x0, y0 = (float(v) for v in ps_from_latlon(*maz_point(20), "south"))
+    step = POLAR_240M.resolution_m
+    cx = np.floor(x0 / step) * step + step / 2
+    cy = np.floor(y0 / step) * step + step / 2
+    for i in range(-3, 4):
+        for j in range(-3, 4):
+            x, y = cx + i * step, cy + j * step
+            key = f"grid_{i:+d}_{j:+d}"
+            if key in data:
+                continue
+            lat, lon = (float(v) for v in latlon_from_ps(x, y, "south"))
+            r = maz_run(lat, lon, 0.0, hz_dir, "emulated")
+            data[key] = r | {"x": x, "y": y, "dist_m": float(np.hypot(x - x0, y - y0))}
+            C1.write_json(path, data)
+            print(f"  {key}: {r['avg_ill_pct']:.1f}% at {data[key]['dist_m']:.0f} m", flush=True)
+
+
+def maz20_summary() -> dict | None:
+    path = C1.vdir() / "maz20.json"
+    if not path.is_file():
+        return None
+    data = json.loads(path.read_text(encoding="utf-8"))
+    grid = [v for k, v in data.items() if k.startswith("grid_")]
+    bright = max(grid, key=lambda v: v["avg_ill_pct"])
+    above65 = [v for v in grid if v["avg_ill_pct"] > 65.0]
+    return {
+        "rank38_table3": {"0m": MAZ_RANK38[2:4], "10m": MAZ_RANK38[4:6]},
+        "rank38_matched": {f"{h:g}m": data[f"rank38_matched_{h:g}m"] for h in MAZ_HEIGHTS_M},
+        "rank38_stack_2028": {f"{h:g}m": data[f"rank38_stack_2028_{h:g}m"] for h in (1.0, 10.0)},
+        "grid_points": len(grid),
+        "grid_brightest": {"avg_ill_pct": bright["avg_ill_pct"], "dist_m": bright["dist_m"]},
+        "grid_nearest_above_65pct_m": min((v["dist_m"] for v in above65), default=None),
+        "grid_above_table3": sum(v["avg_ill_pct"] >= MAZARICO_TABLE3[20][2] for v in grid),
+        "rounding_halfwidth_m": {"latitude": 152.0, "longitude": 12.0},
+    }
+
+
+ROIFULL = ("pgda-site04", 3)  # the outlier in the figure comparison (G2 review m1)
+
+
+def stage_roifull(fresh: bool) -> None:
+    from lss.datafiles import BY_ID
+    from lss.registry.rois import read_rois
+    from lss.registry.sites import site_points
+
+    path = C1.vdir() / "roifull.json"  # separate from roisites.json, whose every-5th sample the tests pin
+    data = json.loads(path.read_text(encoding="utf-8")) if path.is_file() and not fresh else {}
+    sid, roi = ROIFULL
+    p = site_points()[sid]
+    r = {x.number: x for x in read_rois(BY_ID[f"site{p.tile[4:].lower()}_rois"].path)}[roi]
+    hz_dir = C1.vdir() / "roisites_horizons"
+    for i, (x, y) in enumerate(r.pixels):
+        key = f"{sid}_roi{roi}_px{i}"
+        if key in data:
+            continue
+        lat, lon = (float(v) for v in latlon_from_ps(x, y, "south"))
+        _, v = C1.sun_visibility(lat, lon, 1.0, *C1.BARKER, C1.BARKER_STEP_S, directory=hz_dir)
+        s, _ = C1.pixel_stats(v, C1.BARKER[0], C1.BARKER_STEP_S)
+        data[key] = {
+            "site": sid,
+            "roi": roi,
+            "x": float(x),
+            "y": float(y),
+            "full_roi_run": True,
+            **{k: s[k] for k in ("avg_ill_pct_hourly", "lcip_d_hourly", "lcsp_d_hourly")},
+        }
+        C1.write_json(path, data)
+        print(f"  {key}: {s['avg_ill_pct_hourly']:.2f}%", flush=True)
+
+
+def roifull_summary() -> dict | None:
+    """Site04 RoI 3, every pixel, against the every-5th sample and the figure read; and the sampling standard
+    error of every sampled RoI average (G2 review m1)."""
+    full_path, samp_path = C1.vdir() / "roifull.json", C1.vdir() / "roisites.json"
+    if not (full_path.is_file() and samp_path.is_file()):
+        return None
+    full = list(json.loads(full_path.read_text(encoding="utf-8")).values())
+    samp = json.loads(samp_path.read_text(encoding="utf-8"))
+    qs = ("avg_ill_pct", "lcip_d", "lcsp_d")
+    sid, roi = ROIFULL
+    fig = BARKER_SUPP_FIG_READS[sid]
+    out = {
+        "site": sid,
+        "roi": roi,
+        "pixels": len(full),
+        "full_average": {q: float(np.mean([v[f"{q}_hourly"] for v in full])) for q in qs},
+        "figure_read": {q: fig[q][roi - 1] for q in qs},
+    }
+    out["full_minus_figure"] = {q: out["full_average"][q] - out["figure_read"][q] for q in qs}
+    se = {}
+    for s in ("pgda-site04", "pgda-site07", "pgda-site11"):
+        for r in sorted({v["roi"] for k, v in samp.items() if v["site"] == s and "_roi" in k}):
+            vs = [v for k, v in samp.items() if v["site"] == s and v["roi"] == r and "_roi" in k]
+            se[f"{s}_roi{r}"] = {
+                q: float(np.std([v[f"{q}_hourly"] for v in vs], ddof=1) / np.sqrt(len(vs))) for q in qs
+            }
+    out["sampled_standard_errors"] = se
+    return out
+
+
 def stage_summary(_fresh: bool) -> None:
     s = {"format": 1, "generated_by": "scripts/validation_c3.py", "product69_standin": summary()}
     nf = C1.vdir() / "nearfield10m.json"
@@ -484,6 +735,13 @@ def stage_summary(_fresh: bool) -> None:
         s["nearfield_10m_site01"] = json.loads(nf.read_text(encoding="utf-8"))
     s["barker_roi_sites"] = roisites_summary()
     s["mazarico_table3"] = mazarico_summary()
+    acc = C1.vdir() / "accuracy_sites.json"
+    if acc.is_file():
+        s["accuracy_sites"] = json.loads(acc.read_text(encoding="utf-8")) | {
+            "served_heights": served_heights_table()
+        }
+    s["maz20"] = maz20_summary()
+    s["roifull"] = roifull_summary()
     C1.write_json(FIXTURE, s)
     p = s["product69_standin"]
     print(f"surface vs C1's ADJ map: {p['surface_diff_m']}")
@@ -503,6 +761,9 @@ STAGES = {
     "nearfield10m": stage_nearfield10m,
     "roisites": stage_roisites,
     "mazarico": stage_mazarico,
+    "accuracy_sites": stage_accuracy_sites,
+    "maz20": stage_maz20,
+    "roifull": stage_roifull,
     "summary": stage_summary,
 }
 

@@ -396,6 +396,10 @@ datasets:
     url: https://github.com/kaitlinmoore/nasa-lunar-site-scout
     coverage:
       description: Limits of the tool itself, not of any dataset
+    can_answer:
+      - >-
+        Share of a precomputed time window with the Sun's elevation in a band, at the site, measured from the
+        local horizontal whether or not terrain hides the Sun
     cannot_answer:
       - Time-dependent area search (not available yet)
       - Temperature queries (not available yet)

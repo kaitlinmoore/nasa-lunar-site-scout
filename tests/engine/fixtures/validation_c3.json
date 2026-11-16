@@ -1078,5 +1078,536 @@
         "pass": false
       }
     }
+  },
+  "accuracy_sites": {
+    "pgda-site01": {
+      "azimuths_lt_100m": 0.35777777777777775,
+      "azimuths_lt_1km": 0.5308333333333334,
+      "sun_partly_hidden": {
+        "time_partly_hidden": 0.10217246940517978,
+        "lt_100m": 0.35246053853296194,
+        "lt_1km": 0.5268337975858868
+      },
+      "earth_partly_hidden": {
+        "time_partly_hidden": 0.0846029788445119,
+        "lt_100m": 0.0,
+        "lt_1km": 0.0
+      },
+      "base": {
+        "illumination_fraction": 0.8748096681466302,
+        "earth_visibility_fraction": 0.6174262115719396,
+        "longest_shadow_h": 168.17333984375,
+        "longest_earth_gap_h": 281.4650065104167
+      },
+      "near_minus_0.2": {
+        "illumination_fraction": 0.9001418891355495,
+        "earth_visibility_fraction": 0.6174262115719396,
+        "longest_shadow_h": 136.31331380208334,
+        "longest_earth_gap_h": 281.4650065104167
+      },
+      "near_plus_0.2": {
+        "illumination_fraction": 0.8561069231432861,
+        "earth_visibility_fraction": 0.6174262115719396,
+        "longest_shadow_h": 180.37776692708334,
+        "longest_earth_gap_h": 281.4650065104167
+      },
+      "seconds": 13.3
+    },
+    "pgda-site04": {
+      "azimuths_lt_100m": 0.3011111111111111,
+      "azimuths_lt_1km": 0.38222222222222224,
+      "sun_partly_hidden": {
+        "time_partly_hidden": 0.11782563324162793,
+        "lt_100m": 0.40096618357487923,
+        "lt_1km": 0.506280193236715
+      },
+      "earth_partly_hidden": {
+        "time_partly_hidden": 0.08970685893179016,
+        "lt_100m": 0.5194585448392555,
+        "lt_1km": 1.0
+      },
+      "base": {
+        "illumination_fraction": 0.7480361465982184,
+        "earth_visibility_fraction": 0.5289610843623705,
+        "longest_shadow_h": 231.52311197916666,
+        "longest_earth_gap_h": 330.2547200520833
+      },
+      "near_minus_0.2": {
+        "illumination_fraction": 0.7675259560618027,
+        "earth_visibility_fraction": 0.5378748344231462,
+        "longest_shadow_h": 222.34163411458334,
+        "longest_earth_gap_h": 324.6700846354167
+      },
+      "near_plus_0.2": {
+        "illumination_fraction": 0.7248114126699942,
+        "earth_visibility_fraction": 0.5197131834973981,
+        "longest_shadow_h": 246.93245442708334,
+        "longest_earth_gap_h": 335.9873860677083
+      },
+      "seconds": 13.5
+    },
+    "pgda-site07": {
+      "azimuths_lt_100m": 0.36972222222222223,
+      "azimuths_lt_1km": 0.7080555555555555,
+      "sun_partly_hidden": {
+        "time_partly_hidden": 0.071719950668817,
+        "lt_100m": 0.4,
+        "lt_1km": 0.6544973544973545
+      },
+      "earth_partly_hidden": {
+        "time_partly_hidden": 0.08961199127217531,
+        "lt_100m": 0.5318653398263815,
+        "lt_1km": 1.0
+      },
+      "base": {
+        "illumination_fraction": 0.8227362201368729,
+        "earth_visibility_fraction": 0.5866424523488493,
+        "longest_shadow_h": 336.4722493489583,
+        "longest_earth_gap_h": 291.2425130208333
+      },
+      "near_minus_0.2": {
+        "illumination_fraction": 0.8391078909600078,
+        "earth_visibility_fraction": 0.5958833584440935,
+        "longest_shadow_h": 323.8125813802083,
+        "longest_earth_gap_h": 285.0491536458333
+      },
+      "near_plus_0.2": {
+        "illumination_fraction": 0.8066129609173402,
+        "earth_visibility_fraction": 0.5774529277011707,
+        "longest_shadow_h": 354.531494140625,
+        "longest_earth_gap_h": 297.2432454427083
+      },
+      "seconds": 14.9
+    },
+    "pgda-site11": {
+      "azimuths_lt_100m": 0.13055555555555556,
+      "azimuths_lt_1km": 0.375,
+      "sun_partly_hidden": {
+        "time_partly_hidden": 0.08272459918413813,
+        "lt_100m": 0.08738532110091743,
+        "lt_1km": 0.35160550458715595
+      },
+      "earth_partly_hidden": {
+        "time_partly_hidden": 0.08853049995256616,
+        "lt_100m": 0.0,
+        "lt_1km": 0.0
+      },
+      "base": {
+        "illumination_fraction": 0.8514953224168232,
+        "earth_visibility_fraction": 0.6500462229206986,
+        "longest_shadow_h": 254.651611328125,
+        "longest_earth_gap_h": 248.909912109375
+      },
+      "near_minus_0.2": {
+        "illumination_fraction": 0.857584848502367,
+        "earth_visibility_fraction": 0.6500462229206986,
+        "longest_shadow_h": 254.651611328125,
+        "longest_earth_gap_h": 248.909912109375
+      },
+      "near_plus_0.2": {
+        "illumination_fraction": 0.8450941816560413,
+        "earth_visibility_fraction": 0.6500462229206986,
+        "longest_shadow_h": 254.651611328125,
+        "longest_earth_gap_h": 248.909912109375
+      },
+      "seconds": 17.8
+    },
+    "pgda-site06": {
+      "azimuths_lt_100m": 0.5,
+      "azimuths_lt_1km": 0.9283333333333333,
+      "sun_partly_hidden": {
+        "time_partly_hidden": 0.11139360591974196,
+        "lt_100m": 0.2963719979560552,
+        "lt_1km": 0.9151762902401636
+      },
+      "earth_partly_hidden": {
+        "time_partly_hidden": 0.08957404420832939,
+        "lt_100m": 0.0,
+        "lt_1km": 1.0
+      },
+      "base": {
+        "illumination_fraction": 0.4659718673882082,
+        "earth_visibility_fraction": 0.6348753270772854,
+        "longest_shadow_h": 493.6748860677083,
+        "longest_earth_gap_h": 260.7247721354167
+      },
+      "near_minus_0.2": {
+        "illumination_fraction": 0.4962255805640346,
+        "earth_visibility_fraction": 0.6444966189413991,
+        "longest_shadow_h": 490.922607421875,
+        "longest_earth_gap_h": 254.44327799479166
+      },
+      "near_plus_0.2": {
+        "illumination_fraction": 0.4306518934535922,
+        "earth_visibility_fraction": 0.6253623012781288,
+        "longest_shadow_h": 499.3470052083333,
+        "longest_earth_gap_h": 266.8678385416667
+      },
+      "seconds": 16.8
+    },
+    "pgda-site20": {
+      "azimuths_lt_100m": 0.0,
+      "azimuths_lt_1km": 0.7511111111111111,
+      "sun_partly_hidden": {
+        "time_partly_hidden": 0.07390190683995826,
+        "lt_100m": 0.0,
+        "lt_1km": 0.472400513478819
+      },
+      "earth_partly_hidden": {
+        "time_partly_hidden": 0.10655535527938526,
+        "lt_100m": 0.0,
+        "lt_1km": 1.0
+      },
+      "base": {
+        "illumination_fraction": 0.17223130708473267,
+        "earth_visibility_fraction": 0.4395942757472749,
+        "longest_shadow_h": 4051.2368977864585,
+        "longest_earth_gap_h": 386.9373372395833
+      },
+      "near_minus_0.2": {
+        "illumination_fraction": 0.18738351623868682,
+        "earth_visibility_fraction": 0.4497347184941489,
+        "longest_shadow_h": 3522.58349609375,
+        "longest_earth_gap_h": 380.341552734375
+      },
+      "near_plus_0.2": {
+        "illumination_fraction": 0.15872033031767038,
+        "earth_visibility_fraction": 0.42930885134281793,
+        "longest_shadow_h": 4059.1468098958335,
+        "longest_earth_gap_h": 393.6215006510417
+      },
+      "seconds": 17.0
+    },
+    "pgda-site23": {
+      "azimuths_lt_100m": 0.6077777777777778,
+      "azimuths_lt_1km": 0.6630555555555555,
+      "sun_partly_hidden": {
+        "time_partly_hidden": 0.14509059861493218,
+        "lt_100m": 0.6007584673728259,
+        "lt_1km": 0.6462665097423826
+      },
+      "earth_partly_hidden": {
+        "time_partly_hidden": 0.09344464472061474,
+        "lt_100m": 1.0,
+        "lt_1km": 1.0
+      },
+      "base": {
+        "illumination_fraction": 0.5199951977894823,
+        "earth_visibility_fraction": 0.5145794672175618,
+        "longest_shadow_h": 526.7945963541666,
+        "longest_earth_gap_h": 338.145263671875
+      },
+      "near_minus_0.2": {
+        "illumination_fraction": 0.561019772388896,
+        "earth_visibility_fraction": 0.5241558721156719,
+        "longest_shadow_h": 519.8443196614584,
+        "longest_earth_gap_h": 332.1742350260417
+      },
+      "near_plus_0.2": {
+        "illumination_fraction": 0.4910499512534034,
+        "earth_visibility_fraction": 0.5049592778403323,
+        "longest_shadow_h": 530.8307291666666,
+        "longest_earth_gap_h": 344.1341145833333
+      },
+      "seconds": 17.0
+    },
+    "pgda-site42": {
+      "azimuths_lt_100m": 0.46694444444444444,
+      "azimuths_lt_1km": 0.475,
+      "sun_partly_hidden": {
+        "time_partly_hidden": 0.06570534104923631,
+        "lt_100m": 0.29714120704591396,
+        "lt_1km": 0.31591105977476175
+      },
+      "earth_partly_hidden": {
+        "time_partly_hidden": 0.12499762830850963,
+        "lt_100m": 1.0,
+        "lt_1km": 1.0
+      },
+      "base": {
+        "illumination_fraction": 0.47897759016600977,
+        "earth_visibility_fraction": 0.36665317370953815,
+        "longest_shadow_h": 457.3728841145833,
+        "longest_earth_gap_h": 428.3846842447917
+      },
+      "near_minus_0.2": {
+        "illumination_fraction": 0.4882496716256711,
+        "earth_visibility_fraction": 0.37824625873391965,
+        "longest_shadow_h": 452.4266764322917,
+        "longest_earth_gap_h": 421.5718587239583
+      },
+      "near_plus_0.2": {
+        "illumination_fraction": 0.4702573821410021,
+        "earth_visibility_fraction": 0.35479633491113105,
+        "longest_shadow_h": 462.5034993489583,
+        "longest_earth_gap_h": 435.3286946614583
+      },
+      "seconds": 17.6
+    },
+    "served_heights": {
+      "pgda-site01": {
+        "1m": {
+          "illumination_fraction": 0.8748096977933364,
+          "earth_visibility_fraction": 0.6174262301011308
+        },
+        "2m": {
+          "illumination_fraction": 0.9050984181703476,
+          "earth_visibility_fraction": 0.6174449223493473
+        },
+        "5m": {
+          "illumination_fraction": 0.9310221650633728,
+          "earth_visibility_fraction": 0.6175009990939967
+        },
+        "10m": {
+          "illumination_fraction": 0.9597351630094488,
+          "earth_visibility_fraction": 0.617594475158432
+        }
+      },
+      "pgda-site04": {
+        "1m": {
+          "illumination_fraction": 0.7480360539522617,
+          "earth_visibility_fraction": 0.5289610741713152
+        },
+        "2m": {
+          "illumination_fraction": 0.8392938332479508,
+          "earth_visibility_fraction": 0.5421977577603218
+        },
+        "5m": {
+          "illumination_fraction": 0.8628325471026868,
+          "earth_visibility_fraction": 0.556262095856102
+        },
+        "10m": {
+          "illumination_fraction": 0.880371301276943,
+          "earth_visibility_fraction": 0.5787565637807377
+        }
+      },
+      "pgda-site07": {
+        "1m": {
+          "illumination_fraction": 0.822736221989792,
+          "earth_visibility_fraction": 0.5866424393784153
+        },
+        "2m": {
+          "illumination_fraction": 0.8620994730001518,
+          "earth_visibility_fraction": 0.6046693562158469
+        },
+        "5m": {
+          "illumination_fraction": 0.8884717597336066,
+          "earth_visibility_fraction": 0.6398946682177823
+        },
+        "10m": {
+          "illumination_fraction": 0.8890279022939436,
+          "earth_visibility_fraction": 0.6461569271307681
+        }
+      },
+      "pgda-site11": {
+        "1m": {
+          "illumination_fraction": 0.8514891836957347,
+          "earth_visibility_fraction": 0.6500462192148604
+        },
+        "2m": {
+          "illumination_fraction": 0.8624537066683743,
+          "earth_visibility_fraction": 0.6500796162293184
+        },
+        "5m": {
+          "illumination_fraction": 0.878676221207119,
+          "earth_visibility_fraction": 0.650179851742752
+        },
+        "10m": {
+          "illumination_fraction": 0.8850681844594338,
+          "earth_visibility_fraction": 0.6503468812851017
+        }
+      },
+      "pgda-site06": {
+        "1m": {
+          "illumination_fraction": 0.46597188869677825,
+          "earth_visibility_fraction": 0.6348753326360428
+        },
+        "2m": {
+          "illumination_fraction": 0.6118107956108645,
+          "earth_visibility_fraction": 0.6471393893252884
+        },
+        "5m": {
+          "illumination_fraction": 0.8775085708627429,
+          "earth_visibility_fraction": 0.6770177251726625
+        },
+        "10m": {
+          "illumination_fraction": 0.9016074147597906,
+          "earth_visibility_fraction": 0.727495615252163
+        }
+      },
+      "pgda-site20": {
+        "1m": {
+          "illumination_fraction": 0.17223127929094567,
+          "earth_visibility_fraction": 0.43959431002627886
+        },
+        "2m": {
+          "illumination_fraction": 0.18864270264116575,
+          "earth_visibility_fraction": 0.4500656303957005
+        },
+        "5m": {
+          "illumination_fraction": 0.24662857657862777,
+          "earth_visibility_fraction": 0.4805718241855457
+        },
+        "10m": {
+          "illumination_fraction": 0.35971071930024284,
+          "earth_visibility_fraction": 0.5242096706962469
+        }
+      },
+      "pgda-site23": {
+        "1m": {
+          "illumination_fraction": 0.5199996308985086,
+          "earth_visibility_fraction": 0.5145794422031535
+        },
+        "2m": {
+          "illumination_fraction": 0.7374277658005085,
+          "earth_visibility_fraction": 0.5960618797909077
+        },
+        "5m": {
+          "illumination_fraction": 0.8537808592564132,
+          "earth_visibility_fraction": 0.6971624841093655
+        },
+        "10m": {
+          "illumination_fraction": 0.8553870881479584,
+          "earth_visibility_fraction": 0.8173126683932909
+        }
+      },
+      "pgda-site42": {
+        "1m": {
+          "illumination_fraction": 0.47897760220998414,
+          "earth_visibility_fraction": 0.3666531477686703
+        },
+        "2m": {
+          "illumination_fraction": 0.5157320171974612,
+          "earth_visibility_fraction": 0.4216679844627543
+        },
+        "5m": {
+          "illumination_fraction": 0.7209291811342593,
+          "earth_visibility_fraction": 0.5616152681722449
+        },
+        "10m": {
+          "illumination_fraction": 0.8183504513414541,
+          "earth_visibility_fraction": 0.6434815194292653
+        }
+      }
+    }
+  },
+  "maz20": {
+    "rank38_table3": {
+      "0m": [
+        80.21,
+        83.34
+      ],
+      "10m": [
+        82.17,
+        85.8
+      ]
+    },
+    "rank38_matched": {
+      "0m": {
+        "avg_ill_pct": 57.870969991760916,
+        "visibility_pct": 64.66112843724413
+      },
+      "10m": {
+        "avg_ill_pct": 77.27683971507416,
+        "visibility_pct": 81.10194206018456
+      }
+    },
+    "rank38_stack_2028": {
+      "1m": {
+        "mean_visible_disk_fraction": 0.33436275448048197,
+        "illumination_fraction": 0.3945700427149742,
+        "horizon_max_deg": 5.6310451660305825,
+        "near_field": "5 m PGDA site map"
+      },
+      "10m": {
+        "mean_visible_disk_fraction": 0.7540035714328589,
+        "illumination_fraction": 0.806691039223778,
+        "horizon_max_deg": 2.9779862571092153,
+        "near_field": "5 m PGDA site map"
+      }
+    },
+    "grid_points": 49,
+    "grid_brightest": {
+      "avg_ill_pct": 72.66903919261965,
+      "dist_m": 650.4403297550499
+    },
+    "grid_nearest_above_65pct_m": 402.24200216831855,
+    "grid_above_table3": 0,
+    "rounding_halfwidth_m": {
+      "latitude": 152.0,
+      "longitude": 12.0
+    }
+  },
+  "roifull": {
+    "site": "pgda-site04",
+    "roi": 3,
+    "pixels": 126,
+    "full_average": {
+      "avg_ill_pct": 74.73138635487047,
+      "lcip_d": 104.73412698412699,
+      "lcsp_d": 11.590939153439155
+    },
+    "figure_read": {
+      "avg_ill_pct": 74.5,
+      "lcip_d": 104.8,
+      "lcsp_d": 11.68
+    },
+    "full_minus_figure": {
+      "avg_ill_pct": 0.231386354870466,
+      "lcip_d": -0.06587301587300942,
+      "lcsp_d": -0.08906084656084445
+    },
+    "sampled_standard_errors": {
+      "pgda-site04_roi1": {
+        "avg_ill_pct": 0.45390815905253395,
+        "lcip_d": 6.562262219485058,
+        "lcsp_d": 0.1581011186004575
+      },
+      "pgda-site04_roi2": {
+        "avg_ill_pct": 0.277699867304797,
+        "lcip_d": 4.141523950485263,
+        "lcsp_d": 0.26394600826464043
+      },
+      "pgda-site04_roi3": {
+        "avg_ill_pct": 0.710066937081021,
+        "lcip_d": 9.153914593626576,
+        "lcsp_d": 0.7746102628651155
+      },
+      "pgda-site04_roi4": {
+        "avg_ill_pct": 0.8737635300948142,
+        "lcip_d": 5.690111873271201,
+        "lcsp_d": 0.43926489606521874
+      },
+      "pgda-site07_roi1": {
+        "avg_ill_pct": 0.26832547036099214,
+        "lcip_d": 2.4432825113106813,
+        "lcsp_d": 0.24800998624650303
+      },
+      "pgda-site07_roi2": {
+        "avg_ill_pct": 0.32354384010226345,
+        "lcip_d": 2.727402335841049,
+        "lcsp_d": 0.22524328521259016
+      },
+      "pgda-site11_roi1": {
+        "avg_ill_pct": 0.3214827366342054,
+        "lcip_d": 1.157040976387179,
+        "lcsp_d": 0.29296707385861787
+      },
+      "pgda-site11_roi2": {
+        "avg_ill_pct": 0.16460992212359057,
+        "lcip_d": 6.202125468803171e-15,
+        "lcsp_d": 0.6636520175876851
+      },
+      "pgda-site11_roi3": {
+        "avg_ill_pct": 0.18606000523636343,
+        "lcip_d": 0.04221920168695369,
+        "lcsp_d": 0.35305956359419904
+      },
+      "pgda-site11_roi4": {
+        "avg_ill_pct": 0.18560483354290072,
+        "lcip_d": 1.001801579362269,
+        "lcsp_d": 0.4512252454251406
+      }
+    }
   }
 }

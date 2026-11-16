@@ -3,9 +3,9 @@
 
 _Owned by stream A (engine and science). Other streams link to this page but do not edit it._
 
-Status: **C1 thin slice complete** (signed off at G1, 2026-11-15; served result validated in section 6). Later
-slices (C2 onward) add to it. Every convention here is also stated in the code that implements it and covered
-by a test.
+Status: **C3 complete** (G1 signed off 2026-11-15; G2 review 2026-11-16). Served: 8 PGDA sites and 6 Apollo
+sites, each at 1, 2, 5 and 10 m over three windows (section 6.5). Every convention here is also stated in the
+code that implements it and covered by a test.
 
 ## 1. Data
 
@@ -275,8 +275,8 @@ Implemented in `lss/horizon/core.py` (numba ray caster) and `lss/horizon/cache.p
   sample, the next coarser layer is used. Samples that no layer covers are counted, never silently dropped.
   The count is stored with each cached horizon. A location where a whole azimuth has no data is rejected.
   `scripts/precompute_c1.py` refuses to write a served result whose horizon has any uncovered sample. At Site01
-  there are none. Before C3 adds sites, a non-zero count will either fail the request or be carried into the
-  fidelity label (to be decided).
+  there are none. `scripts/precompute_c3.py` likewise refuses one, so no served result has an uncovered
+  sample.
 
 ### 3.2 Numerical settings and convergence
 
@@ -330,7 +330,10 @@ served numbers far more than these numerical settings do (section 6.6).
 - It covers Site01 only (two points, two heights).
 - Distant terrain does not set the horizon here (400 km and 800 km agree exactly; 200 km also did at these
   points). 400 km is kept because other sites can see farther terrain, and the extra range is cheap.
-- C3 repeats the study for other site types.
+- **Other sites** (G2 review, engine runs at Site06, 07, 20, 23 and 42, 1 m and 10 m): a 700 km range
+  changes no azimuth (the farthest horizon-setting terrain is 226 km away) and no ray sample is uncovered. The
+  defaults against the reference sampling at 1 m: at most 0.0073–0.0079° at four sites and 0.0141° at Site06
+  (99th percentile 0.0025°), just above the accepted 0.01°.
 
 **A 10 m near field** (for locations beyond the 5 m maps; Kaitlin, 2026-11-15: measure first). The served
 Site01 point was recomputed with the PGDA product 90 10 m map (`LDEM_83S_10MPP_ADJ`, to 83°S) in place of the
@@ -583,15 +586,19 @@ If other bodies get azimuth statistics, the same rule applies.
 with the Sun's elevation in [a, b] is taken from a time histogram stored in each served file
 (`sun_elevation_histogram`, file format 3).
 - **Quantity:** the apparent elevation of the Sun's disc centre above the local horizontal plane, as in
-  `sun_elevation_deg`, with no refraction. The terrain plays no part, so a band can include times when the Sun is
-  hidden.
+  `sun_elevation_deg`, with no refraction. **Terrain is ignored:** a band counts the time whether or not terrain
+  hides the Sun. For a low band at a polar site this matters: at Site20, 1 m, the Sun's elevation is between 0°
+  and 2° for 15.5% of the 30-day window, and the Sun is never visible then.
 - **Histogram:** the seconds spent in each 0.1° bin over the window. They come from the 60 s internal grid, with
   the elevation taken as linear between grid points, so each interval's time is split across the bins it
   crosses. The seconds sum to the window length.
 - **Band fraction:** the seconds in the bins inside [a, b], divided by the window length. It is exact for that
   piecewise-linear track when a and b are multiples of 0.1°; otherwise the end bins are prorated linearly,
   as if their time were spread evenly across the bin.
-  Tested against brute force on a densely sampled track (2·10⁻⁵).
+  - At bin edges the fraction equals the exact piecewise-linear value to rounding (checked against brute force
+    to 2·10⁻⁵ on a test track).
+  - Off the edges the proration adds an error of up to about the time in one bin: 5·10⁻⁴ for 1.03°–3.37° at
+    Site20, 1 m, 30 days (0.25343 against 0.25293).
 
 ### 5.4 Communications (F4): `CommsMetrics`
 
@@ -655,9 +662,10 @@ applied by default.
     fractions, Earth segment fractions, shadow count, longest shadow and Sun–Earth overlap all match.
 - **Limits (polar geometry).** Two approximations hold for bodies near the horizon, as at the poles. A disc
   point's azimuth az + x / cos(el) degrades as a body nears the zenith. The azimuth arc assumes the azimuth
-  moves less than 180° between 60 s samples, which also fails near the zenith. Neither matters at the served
-  site, where the Sun and Earth stay within a few degrees of the horizontal. Both get a synthetic
-  high-elevation test before mid-latitude sites (C7).
+  moves less than 180° between 60 s samples, which also fails near the zenith. Neither matters at the polar
+  sites: the Sun stays within about 6° of the horizontal and the Earth within about 11° (10.6° at the 85°S
+  sites, where the G2 review's exact-sphere fractions agree with ours). Both get a synthetic high-elevation test
+  before mid-latitude sites (C7).
 - **Cost.** The served scenario (30 days, both bodies) takes about 2 s with the horizon cached; two years of
   Sun-only visibility take about 35 s (development PC).
 
@@ -667,15 +675,17 @@ For the `terrain` and `site_summary` operations (C api's request RA4).
 - **Slope at a pixel:** central differences, tan(slope) = hypot(dz/dx, dz/dy), with
   dz/dx = (z[col + 1] − z[col − 1]) / (2 Δx), and likewise along rows. It is the angle between the local
   surface and the plane normal to the sphere's radius.
-  - This is the definition of Barker et al. (2021)'s published 5 m slope maps (product 78 `*_slp.tif`). Ours
-    reproduces Site01's map to a median 0.0001° and a 99th percentile of 0.001° (tested). A 3×3 Horn estimate
+  - It reproduces Barker et al. (2021)'s published 5 m slope maps (product 78 `*_slp.tif`), whose method is
+    not stated: Site01's map to a median 0.0001° and a 99th percentile of 0.001° (tested). A 3×3 Horn estimate
     would differ from it by a median 0.10°, up to 17° on crater walls.
   - Chosen for that reason (Kaitlin, 2026-11-15).
 - **Ground distances.** The polar stereographic map is conformal and true at the pole, with scale factor
   k = 1 + (ρ / 2R)² at map distance ρ from the pole: 1.0002 at 88°S, 1.0037 at 83°S. A map step Δx is a
   ground step Δx / k.
 - **Statistics within a radius:** min, max and mean over the pixels whose centres lie within that ground
-  distance of the point. The slope at the point is the slope of the pixel containing it.
+  distance of the point. The slope at the point is the slope of the pixel containing it, on that radius's own
+  map, so one site has two values: Site07 1.61° on the 5 m map and 0.57° on the 10 m map; Site04 5.07° and
+  5.76°.
 - **Layers** (Kaitlin, 2026-11-15):
   - 1 km statistics are measured on the 5 m site tile.
   - 10 km statistics are measured on the 10 m polar map over the whole circle, because the 5 m tiles reach only
@@ -732,6 +742,7 @@ Why each tolerance has its size:
 | Check | Tolerance | Result | Verdict |
 |---|---|---|---|
 | Sun and Earth az/el vs JPL Horizons, 25 epochs 2024–2050 | 1″ | ≤ 0.05″ | pass |
+| The same at a second site, Site06 (85.3°S, 37°E) | 1″ | ≤ 0.05″ | pass |
 | Barker RoI 4 average illumination (≥ 1st percentile) | −1.0 pp | 77.46% vs 69.61% | pass |
 | Barker RoI 4 LCIP (≥ 1st percentile) | −2 d | 192.2 d vs 136.49 d | pass |
 | Barker RoI 4 LCSP (≤ 99th percentile) | +1 d | 10.05 d vs 13.27 d | pass |
@@ -741,7 +752,7 @@ Why each tolerance has its size:
 | Product 69, Sun, 5 × 5 pixels: mean \|difference\| | 5 pp | 8.7 pp (no bias: mean −1.7 pp); 7.56 pp without the zero pixel (diagnostic) | **miss**; inconclusive at this resolution; accepted for G1 as a stated difference (section 6.3) |
 | Product 69 rerun (C3), stand-in terrain `LDEM_75S_60M`: Sun at 0 m / 2 m; Earth | Sun 9.6 pp (derived); Earth 5 pp | Sun 7.28 / 17.74 pp; Earth 2.80 / 4.30 pp | Sun pass at 0 m (miss at 2 m); Earth pass |
 | Ridge-top: the Sun is seen only below the local horizontal | (stated) | confirmed four ways (section 6.4) | confirmed |
-| Barker RoI definition at Site04, 07, 11 (sampled pixels > 70%) | 0.5 pp | Site04 70.02%, Site11 70.01%; Site07 one pixel at 69.03% | pass, pass, **miss** (section 6.7) |
+| Barker RoI definition at Site04, 07, 11 (sampled pixels > 70%) | 0.5 pp | Site04 70.02%, Site11 70.01%; Site07 one pixel at 69.03%, enclosed by the outline | pass, pass, **miss** (section 6.7) |
 | Mazarico et al. (2011) Table 3, 8 sites, matched method | from 120 m shifts | all four comparisons above tolerance; at 10 m the 7 points other than rank 20 agree within 1.4 pp | **miss** (section 6.7) |
 
 How well the served numbers themselves are known (the terrain map limits them, not the numerics) is in
@@ -762,9 +773,10 @@ section 6.6.
   difference is 0.02″ and the largest elevation difference 0.05″. Distances agree to 14 m (Sun) and 4 m (Earth).
   The DE421 vs DE441 and frame-realisation differences are invisible at this level. Light bending, which
   Horizons includes and we don't, is far smaller still for these geometries.
-- **Limit.** This covers one site, close to the pole. Other sites are checked only against SPICE's own
-  `azlcpo` with the same kernels, which tests the ENU algebra but not the frame or the ephemeris. When C3 adds
-  sites, the Horizons fixture gets one far from the pole at an eastern longitude.
+- **Second site** (G2 review m3): Site06, 85.30°S 37.07°E at 1 m, far from the pole at an eastern longitude
+  (`scripts/horizons_check.py --site pgda-site06`, fixture `horizons_pgda-site06.json`, same epochs). The
+  largest separation is 0.044″ for the Sun and 0.050″ for the Earth, with the Earth up to 10.2° high. Other sites
+  are checked against SPICE's own `azlcpo` with the same kernels.
 
 ### 6.2 Barker et al. (2021): RoI 4 bound
 
@@ -985,6 +997,12 @@ illumination and product 69 all agree with this.
   result over the same window. Each is written by `scripts/regression_c3.py` from the served file, so it is
   exactly what the API serves. `tests/engine/test_regression_c3.py` recomputes each with the same tolerances.
   Each fixture keeps the metrics, every 24th hourly sample and every 10th horizon azimuth.
+- **Served scenarios (C3).** Every curated site with a PGDA tile (8) and every Apollo site (6), each at 1, 2, 5
+  and 10 m over three windows: 2028-05-15 + 30 d at PT1H (the C1 window), the year 2028 at PT6H, and
+  2028-11-15 + 10 d at PT1H. That is 168 files in `LSS_DATA_DIR/cache/served/` (file format 3, with the horizon
+  and the Sun-elevation histogram), written by `scripts/precompute_c1.py` and `scripts/precompute_c3.py`, which
+  also keeps `cache/served_c3_index.json`. Metrics always come from the 60 s internal grid; the window's step sets
+  only the series.
 - **Apollo sites: low fidelity.** The six Apollo landing sites are served at 1, 2, 5 and 10 m over the three
   standard windows (72 scenarios, `scripts/precompute_c3.py --sites apollo-11 …`). Their results use the
   low-fidelity global layer: the 237 m LOLA map `LDEM_128` is their only terrain, near and far (section 3.5).
@@ -1008,10 +1026,11 @@ illumination and product 69 all agree with this.
 
   How well these values are known is in section 6.6.
 
-### 6.6 Accuracy of the served numbers
+### 6.6 Accuracy of the served numbers at Site01
 
-The served values are exact for the nominal 5 m map, up to the numerical errors measured in sections 3.2 and
-5.5. How far they can be trusted beyond that depends on the terrain map, mostly within a few hundred metres of
+This section is measured on the served C1 scenario (Site01, 1 m, 2028-05-15 + 30 d). Section 6.6.1 gives the
+same measure at every PGDA site. The served values are exact for the nominal 5 m map, up to the numerical errors
+measured in sections 3.2 and 5.5. How far they can be trusted beyond that depends on the terrain map, mostly within a few hundred metres of
 the site.
 
 **Sensitivity to the horizon** (`scripts/validation_c1.py`, stage `accuracy`). This is the served scenario
@@ -1068,10 +1087,58 @@ same table to within 0.02 percentage points and 0.1 h.
 planned (S6). They would replace the uniform shifts above with the real error distribution.
 
 
+#### 6.6.1 Every PGDA site (1 m, 2028)
+
+`scripts/validation_c3.py`, stage `accuracy_sites`: the year 2028 at 1 m with the horizon moved by −0.2° / +0.2°
+where terrain closer than 1 km sets it, as in the last row of section 6.6. Each site's shifted runs and their
+baseline share a 600 s grid; the baseline equals the served values to 0.1 pp. Illumination here is
+`illumination_fraction` (time with any part of the Sun visible).
+
+| Site | Azimuths with the horizon set < 100 m / < 1 km | While the Earth is partly hidden: horizon set < 100 m / < 1 km | Illumination % (−0.2° / +0.2°) | Earth visible % (−0.2° / +0.2°) |
+|---|---|---|---|---|
+| Site01 | 36% / 53% | 0% / 0% | 87.5 (90.0 / 85.6) | 61.7 (61.7 / 61.7) |
+| Site04 | 30% / 38% | 52% / 100% | 74.8 (76.8 / 72.5) | 52.9 (53.8 / 52.0) |
+| Site07 | 37% / 71% | 53% / 100% | 82.3 (83.9 / 80.7) | 58.7 (59.6 / 57.7) |
+| Site11 | 13% / 38% | 0% / 0% | 85.1 (85.8 / 84.5) | 65.0 (65.0 / 65.0) |
+| Site06 | 50% / 93% | 0% / 100% | 46.6 (49.6 / 43.1) | 63.5 (64.4 / 62.5) |
+| Site20 | 0% / 75% | 0% / 100% | 17.2 (18.7 / 15.9) | 44.0 (45.0 / 42.9) |
+| Site23 | 61% / 66% | 100% / 100% | 52.0 (56.1 / 49.1) | 51.5 (52.4 / 50.5) |
+| Site42 | 47% / 48% | 100% / 100% | 47.9 (48.8 / 47.0) | 36.7 (37.8 / 35.5) |
+
+The served values at 1 / 2 / 5 / 10 m (2028):
+
+| Site | Illumination % | Earth visible % |
+|---|---|---|
+| Site01 | 87.5 / 90.5 / 93.1 / 96.0 | 61.7 / 61.7 / 61.8 / 61.8 |
+| Site04 | 74.8 / 83.9 / 86.3 / 88.0 | 52.9 / 54.2 / 55.6 / 57.9 |
+| Site07 | 82.3 / 86.2 / 88.8 / 88.9 | 58.7 / 60.5 / 64.0 / 64.6 |
+| Site11 | 85.1 / 86.2 / 87.9 / 88.5 | 65.0 / 65.0 / 65.0 / 65.0 |
+| Site06 | 46.6 / 61.2 / 87.8 / 90.2 | 63.5 / 64.7 / 67.7 / 72.7 |
+| Site20 | 17.2 / 18.9 / 24.7 / 36.0 | 44.0 / 45.0 / 48.1 / 52.4 |
+| Site23 | 52.0 / 73.7 / 85.4 / 85.5 | 51.5 / 59.6 / 69.7 / 81.7 |
+| Site42 | 47.9 / 51.6 / 72.1 / 81.8 | 36.7 / 42.2 / 56.2 / 64.3 |
+
+- **Sun.** By this measure the other sites are no less certain than Site01. A ±0.2° near-field shift moves the 2028
+  illumination by under 1 pp (Site11, Site42) to about 4 pp (Site23). Section 6.6's 64.8–74.1% is the 30-day
+  window, when the Sun is low.
+- **Earth.** Its metrics are insensitive to near-field terrain only at Site01 and Site11. At the other six sites
+  the Earth's horizon is set by terrain closer than 1 km while the Earth is partly hidden, and at Site23 and
+  Site42 by terrain closer than 100 m. The same shift moves Earth visibility by about ±1 pp and the longest Earth
+  gap by about ±6 h there.
+- **±0.2° is a lower bound where terrain is closer than 100 m.** It is Barker's median height error (0.37 m) seen
+  from 100 m. The same error is 0.4° from 50 m and 0.7° from 30 m. At Site23 the horizon is set by terrain closer
+  than 100 m at 61% of azimuths. The height columns show the scale directly: one metre more moves Site23's 2028
+  illumination from 52.0% to 73.7% and its Earth visibility from 51.5% to 59.6%; Site06 goes from 61.2% to 87.8%
+  between 2 m and 5 m.
+- **So at 1–2 m the Mazarico points and Site04 depend on terrain within tens of metres,** for the Sun and the
+  Earth, and the uniform shift understates their uncertainty.
+- Barker's height errors (median RMS 0.30–0.50 m) are published for the RoIs at Sites 1, 4, 7 and 11, not for
+  Site06, 20, 23 and 42.
+
 ### 6.7 The other curated sites against published numbers
 
-`scripts/validation_c3.py`, stages `roisites` and `mazarico`; checked by `tests/engine/test_validation_c3.py`.
-Tolerances were fixed before the runs.
+`scripts/validation_c3.py`, stages `roisites`, `roifull`, `mazarico` and `maz20`; checked by
+`tests/engine/test_validation_c3.py`. Tolerances were fixed before the runs.
 
 **Barker et al. (2021) RoIs at Site04, 07 and 11.** Every 5th pixel of every RoI, plus the largest RoI's
 centroid, at 1 m over 2024–2025: the same quantities, grid and hourly sampling as at Site01 (section 6.2).
@@ -1081,10 +1148,19 @@ centroid, at 1 m over 2024–2025: the same quantities, grid and hourly sampling
   - Site11: 194 pixels, 70.01–81.73%. **Pass.**
   - Site07: 163 pixels, 69.03–82.70%. **Miss.** One pixel, inside RoI 2, is at 69.03%, 0.97 pp below 70%;
     the other 162 pass.
+  - **What the Site07 miss means.** The pixel is enclosed by RoI 2's outline, at least 3 pixels from it in every
+    direction, and its eight neighbours average 70.09–74.23% (G2 review). Barker's RoI is a connected set of
+    pixels above 70%, and its outline is the set's outer boundary, so the outline can enclose a pixel below 70%.
+    Site01's RoI 2 outline encloses 304 pixels where Table 2 gives 302 (section 1.4). Requiring every enclosed
+    pixel to be above 70% is therefore stronger than Barker's definition. The one enclosed pixel at 69.03% is
+    not evidence against the engine.
+  - **What a pass means.** The sample is every 5th pixel (20% of each RoI, spread evenly). A pass shows that no
+    sampled pixel fails, not that every pixel passes.
 - **Values read from figures** (Barker et al. 2021, Appendix A. Supplementary data, Figs. S9, S14, S19: the
   nominal-DEM RoI averages, open circles). The circles were digitised from 400 dpi renders against the
-  gridlines, to about ±0.15 pp, ±0.6 d and ±0.08 d. Ours are averages over the sampled pixels of each RoI.
-  This is an approximate check, with no tolerance.
+  gridlines, to about ±0.15 pp, ±0.6 d and ±0.08 d. Ours are averages over the sampled pixels of each RoI;
+  their sampling standard errors (from the pixels' spread) are 0.16–0.87 pp, up to 9.2 d (LCIP) and up to
+  0.77 d (LCSP), larger than the reading precision. This is an approximate check, with no tolerance.
 
   | Site, RoI | Average illumination, ours / figure | LCIP (d), ours / figure | LCSP (d), ours / figure |
   |---|---|---|---|
@@ -1101,6 +1177,9 @@ centroid, at 1 m over 2024–2025: the same quantities, grid and hourly sampling
 
   Average illumination agrees to within 0.6 pp at 9 of the 10 RoIs (Site04 RoI 3: +1.2 pp). LCSP agrees to
   within 0.5 d at all 10, and LCIP to within 3.5 d at 9 (Site04 RoI 3: +15.5 d).
+  - **Site04 RoI 3, every pixel** (stage `roifull`, 126 pixels): 74.73%, 104.7 d and 11.59 d, against the
+    figure's 74.5%, 104.8 d and 11.68 d. The sampled outlier was sampling scatter: the sampled averages were 1.4
+    (illumination) and 1.7 (LCIP) standard errors from the full ones.
 - **Barker's text** gives an LCIP of "~150–175 days" at 5 m for the sites other than Site01. At the three
   largest-RoI centroids we get 147 d (Site04), 174 d (Site07) and 146 d (Site11).
 
@@ -1111,6 +1190,17 @@ area) and visibility (share of time steps with any part visible) at the surface 
 - **Two settings.** The primary comparison uses a first ray sample at 240 m and a 0.5° azimuth step, to match
   Mazarico's method, which takes the horizon from the other grid elements along 720 lines. The engine's own
   setting (first sample at 1 m, 0.1° step) is also reported.
+- **Matched and not matched.** Matched, from the paper (sections 2.2 and 3.3): 720 azimuths, the horizon taken
+  as a straight segment between neighbouring azimuths, the Sun as a disc with its visible area fraction, the
+  period and step, and visibility as "any part". The first ray sample at 240 m is an assumption: the paper says
+  only that the node spacing "increases radially". Not matched:
+  - their map is a polar gnomonic 240 m grid from data to January 2010, 37.2% of its pixels filled (Mazarico
+    et al. 2011, section 2 and Fig. 1); ours is the 2023 adjusted stereographic map (product 90);
+  - their lunar orientation is Seidelmann et al. (2007), ours the DE421 mean-Earth frame;
+  - their points are grid elements, published rounded to 0.01°; ours are the rounded coordinates, 42–137 m from
+    the nearest of our pixel centres (G2 review).
+- **One-sided by construction.** Table 3 lists the 50 highest values of their map, so a recomputation near those
+  points is expected to come out lower. All 16 matched-setting differences in average illumination are negative.
 - **Tolerance:** for each setting, the mean |change| when every point moves half a pixel (120 m) in the four
   map directions. A setting passes if the mean |difference| over the eight points is within it.
 - **Result: every comparison misses its tolerance.**
@@ -1127,17 +1217,27 @@ area) and visibility (share of time steps with any part visible) at the surface 
 - **Rank 20 (Site20).** On our 240 m map, its published coordinate lies on the flank of the Leibnitz beta
   plateau: the horizon rises to +5.7° within 0.3–0.5 km to the north and west. We get 24.6% at the surface and
   45.6% at 10 m, against 82.2% and 83.3%. Moving the point 120 m in any map direction gives 21–33% at the surface.
-  The well-lit ground is beyond that distance, within the coordinate's 0.01° rounding (about 300 m in latitude)
-  and the difference between their 2010 map and ours.
+  - **The nearest well-lit ground is outside the rounding.** A coordinate rounded to 0.01° is uncertain by
+    ±152 m in latitude and ±12 m in longitude here. With the matched setting at the 49 pixel centres of our
+    240 m map within ±720 m (stage `maz20`), the nearest above 65% at the surface is 402 m away and the brightest,
+    72.7%, is 650 m away. None reaches Table 3's 82.2%.
+  - **Table 3's rank 38** (31.81°E, 85.42°S) is a second point in this cluster, 360 m to the north-north-east,
+    at 80.2% (surface) and 82.2% (10 m). With the matched setting we get 57.9% and 77.3% there.
+  - **So the two maps differ here.** On Mazarico's 2010 map both points of the cluster were above 80% at the
+    surface; on ours neither is, and nothing within 720 m is. Section 1.4.1 records how Site20's served point
+    was then chosen.
 - **At 10 m the other seven points agree closely:** average illumination within 1.4 pp and visibility within
   0.4 pp with the matched setting.
 - **At the surface the differences remain** (ours lower by 6–8 pp on average, up to 17 pp, with the matched
   setting). At 0 m the horizon depends on the terrain closest to the observer, where the two methods differ
   most. With the engine's own setting a 0 m observer on a 240 m surface is shadowed by its own pixel's slope
   (section 6.3), which is why that setting is lower still.
-- **Consequence for the served Site20 point,** which is the same published coordinate (section 1.4): it is lit
-  17% of 2028 at 1 m and 36% at 10 m on the 5 m map. It does not represent the well-lit part of the plateau
-  that Table 3 describes.
+- **Consequence for the four served Mazarico points**, which are the published coordinates (section 1.4). On
+  the 5 m maps over 2028 their mean visible disc fraction (Table 3's quantity) is 41.2% at 1 m and 87.5% at 10 m
+  (Site06), 45.1% and 82.4% (Site23), 44.1% and 77.9% (Site42), and 13.7% and 30.3% (Site20); the time with any
+  part of the Sun visible is 46.6%, 52.0%, 47.9% and 17.2% at 1 m. So at 1–2 m none of the four represents the
+  well-lit ground Table 3 describes; Site06, 23 and 42 reach Table 3's level at 5–10 m, Site20 at no height.
+  Rank 38, on the same maps, gives 33.4% at 1 m and 75.4% at 10 m.
 
 ## References
 
