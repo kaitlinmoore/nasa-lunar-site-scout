@@ -28,7 +28,7 @@ from lss.nl.vocabulary import (
     HeightSource,
 )
 
-PROMPT_VERSION = "p8-draft"
+PROMPT_VERSION = "p9-draft"
 
 ROUTE_SYSTEM = """\
 You are the first step of a natural-language interface to a terrain-aware lunar landing-site \
@@ -71,6 +71,9 @@ doesn't model in the way asked (e.g. along a path, or at a moment it can't know)
 computes the same quantity at a site or over a time window, use that operation with outcome \
 "partial" and cite the limit for the part it can't answer. Use "unsupported" only when no operation \
 answers any useful part of the question.
+   A question about something no dataset or operation measures at all (no registry entry provides \
+it) stays "unsupported", even if an operation could return other information about the same place: \
+never substitute a different quantity for the one asked.
 7. Finding sites or landing zones that meet conditions over time (e.g. sunlight or Earth \
 visibility during a window), or ranking sites, works on the curated sites: use compare across \
 them (only the sites of a region, if the question names a region that matches a site's \

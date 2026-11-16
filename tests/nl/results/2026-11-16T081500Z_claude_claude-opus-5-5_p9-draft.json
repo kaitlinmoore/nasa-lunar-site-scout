@@ -1,0 +1,1432 @@
+{
+  "run_at": "2026-11-16T08:15:00+00:00",
+  "provider": "claude",
+  "model": "claude-opus-5-5",
+  "effort": "low",
+  "fallbacks": false,
+  "prompt_version": "p9-draft",
+  "schema_version": "nl-output-6",
+  "eval_set_version": 1,
+  "reference_date": "2026-11-15",
+  "counts": {
+    "items_in_set": 26,
+    "run": 21,
+    "scored": 21,
+    "blocked": 0
+  },
+  "scores": {
+    "a_structured_query": {
+      "correct": 13,
+      "total": 15,
+      "score": 0.8666666666666667,
+      "of_which_clarify": {
+        "correct": 1,
+        "total": 1
+      }
+    },
+    "b_refusal_reason": {
+      "correct": 8,
+      "total": 13,
+      "score": 0.6153846153846154
+    },
+    "valid_output": {
+      "correct": 21,
+      "total": 21,
+      "score": 1.0
+    }
+  },
+  "scores_by_split": {
+    "dev": {
+      "a_structured_query": {
+        "correct": 13,
+        "total": 15,
+        "score": 0.8666666666666667,
+        "of_which_clarify": {
+          "correct": 1,
+          "total": 1
+        }
+      },
+      "b_refusal_reason": {
+        "correct": 8,
+        "total": 13,
+        "score": 0.6153846153846154
+      },
+      "valid_output": {
+        "correct": 21,
+        "total": 21,
+        "score": 1.0
+      }
+    },
+    "holdout": {
+      "a_structured_query": {
+        "correct": 0,
+        "total": 0,
+        "score": null,
+        "of_which_clarify": {
+          "correct": 0,
+          "total": 0
+        }
+      },
+      "b_refusal_reason": {
+        "correct": 0,
+        "total": 0,
+        "score": null
+      },
+      "valid_output": {
+        "correct": 0,
+        "total": 0,
+        "score": null
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 202562,
+    "output_tokens": 6364,
+    "est_cost_usd": 0.9375,
+    "unpriced_models": []
+  },
+  "items": [
+    {
+      "id": "k1",
+      "source": "kaitlin",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "split": "dev",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Summary of Connecting Ridge and its surroundings: slope statistics and all nearby features within 10000 m, plus metrics at 5.0 m height from 2026-11-15 to 2026-12-15 UTC.",
+        "query": {
+          "operation": "site_summary",
+          "params": {
+            "location": {
+              "site_id": "pgda-site01"
+            },
+            "radius_m": 10000,
+            "feature_types": [],
+            "scenario": {
+              "location": {
+                "site_id": "pgda-site01"
+              },
+              "unit_height_m": 5.0,
+              "window_start": "2026-11-15T00:00:00Z",
+              "window_end": "2026-12-15T00:00:00Z"
+            }
+          }
+        },
+        "height_source": "default",
+        "window_source": "default",
+        "slope_source": "not_applicable",
+        "radius_source": "nearby_default",
+        "site_source": "selected_site",
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"site_summary\",\"interpretation\":\"The user wants an overview of the selected site, Connecting Ridge (pgda-site01), and its surroundings: its metrics, the slope around it and nearby features.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GiwG1xn4nTLpf5YmiL",
+            "input_tokens": 5466,
+            "output_tokens": 87
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Summary of Connecting Ridge and its surroundings: slope statistics and all nearby features within 10000 m, plus metrics at 5.0 m height from 2026-11-15 to 2026-12-15 UTC.\",\"params\":{\"location\":{\"site_id\":\"pgda-site01\"},\"radius_m\":10000,\"feature_types\":[],\"scenario\":{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":5.0,\"window_start\":\"2026-11-15T00:00:00Z\",\"window_end\":\"2026-12-15T00:00:00Z\"}},\"height_source\":\"default\",\"window_source\":\"default\",\"slope_source\":\"not_applicable\",\"radius_source\":\"nearby_default\",\"site_source\":\"selected_site\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6Gj3PrsWnjhRQWiQLpt",
+            "input_tokens": 5482,
+            "output_tokens": 250
+          }
+        }
+      ]
+    },
+    {
+      "id": "k1-no-site",
+      "source": "kaitlin",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "clarify",
+      "split": "dev",
+      "outcome": "clarify",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "clarify",
+        "interpretation": "The user wants a summary of what is known at and around a site, but no site is named or currently selected.",
+        "question": "Which site would you like a summary for? For example, Shackleton Rim, Connecting Ridge, Malapert Massif, or one of the Apollo landing sites.",
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"clarify\",\"operation\":null,\"interpretation\":\"The user wants a summary of what is known at and around a site, but no site is named or currently selected.\",\"limitations\":[],\"question\":\"Which site would you like a summary for? For example, Shackleton Rim, Connecting Ridge, Malapert Massif, or one of the Apollo landing sites.\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GjK6BosknApAeJTtKu",
+            "input_tokens": 5460,
+            "output_tokens": 118
+          }
+        }
+      ]
+    },
+    {
+      "id": "k2",
+      "source": "kaitlin",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "split": "dev",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Slope at Connecting Ridge and the slope statistics within 1000 m around it.",
+        "query": {
+          "operation": "terrain",
+          "params": {
+            "location": {
+              "site_id": "pgda-site01"
+            },
+            "radius_m": 1000
+          }
+        },
+        "height_source": "not_applicable",
+        "window_source": "not_applicable",
+        "slope_source": "not_applicable",
+        "radius_source": "around_default",
+        "site_source": "selected_site",
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"terrain\",\"interpretation\":\"The user wants the slope of the terrain at and around the currently selected site, Connecting Ridge (pgda-site01).\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GjRxRhTEgaVuTvXiu4",
+            "input_tokens": 5459,
+            "output_tokens": 72
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Slope at Connecting Ridge and the slope statistics within 1000 m around it.\",\"params\":{\"location\":{\"site_id\":\"pgda-site01\"},\"radius_m\":1000},\"height_source\":\"not_applicable\",\"window_source\":\"not_applicable\",\"slope_source\":\"not_applicable\",\"radius_source\":\"around_default\",\"site_source\":\"selected_site\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GjYpSMRjmSwPRFxZ7u",
+            "input_tokens": 4759,
+            "output_tokens": 125
+          }
+        }
+      ]
+    },
+    {
+      "id": "k3",
+      "source": "kaitlin",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "partial",
+      "split": "dev",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [
+        "outcome answer != expected partial",
+        "operation proximity != expected site_summary",
+        "missing citation ('aussel_2025_boulders', 'Any boulder information at the poles')"
+      ],
+      "query_correct": false,
+      "reason_correct": false,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Find hazards (craters and mapped hazards) near Connecting Ridge.",
+        "query": {
+          "operation": "proximity",
+          "params": {
+            "location": {
+              "site_id": "pgda-site01"
+            },
+            "types": [
+              "crater",
+              "hazard"
+            ],
+            "radius_m": 10000
+          }
+        },
+        "height_source": "not_applicable",
+        "window_source": "not_applicable",
+        "slope_source": "not_applicable",
+        "radius_source": "nearby_default",
+        "site_source": "selected_site",
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"proximity\",\"interpretation\":\"List the hazards near the currently selected site, Connecting Ridge (pgda-site01), with their straight-line distances.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GjmE43PpJbYRJ9rPzb",
+            "input_tokens": 5461,
+            "output_tokens": 72
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Find hazards (craters and mapped hazards) near Connecting Ridge.\",\"params\":{\"location\":{\"site_id\":\"pgda-site01\"},\"types\":[\"crater\",\"hazard\"],\"radius_m\":10000},\"height_source\":\"not_applicable\",\"window_source\":\"not_applicable\",\"slope_source\":\"not_applicable\",\"radius_source\":\"nearby_default\",\"site_source\":\"selected_site\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6Gju93hzy89ZnDqA8LN",
+            "input_tokens": 4861,
+            "output_tokens": 137
+          }
+        }
+      ]
+    },
+    {
+      "id": "k4",
+      "source": "kaitlin",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "partial",
+      "split": "dev",
+      "outcome": "partial",
+      "valid": true,
+      "problems": [
+        "missing citation ('pgda_81_mosaic_5m', 'High-confidence single-pixel slope (~90% of 5 m pixels are interpolated)')"
+      ],
+      "query_correct": true,
+      "reason_correct": false,
+      "error": null,
+      "output": {
+        "outcome": "partial",
+        "interpretation": "Search everywhere within 6 degrees of the lunar south pole (poleward of 84\u00b0S) for areas with slope under 5 degrees covering at least 100 square meters of flat terrain.",
+        "query": {
+          "operation": "search",
+          "params": {
+            "area": {
+              "kind": "cap",
+              "pole": "south",
+              "max_colatitude_deg": 6
+            },
+            "criteria": {
+              "max_slope_deg": 5,
+              "min_flat_area_m2": 100,
+              "near_feature_types": []
+            }
+          }
+        },
+        "height_source": "not_applicable",
+        "window_source": "not_applicable",
+        "slope_source": "user",
+        "radius_source": "not_applicable",
+        "site_source": "not_applicable",
+        "limitations": [
+          {
+            "topic": "Detecting flat areas as small as 100 m\u00b2 between 84\u00b0S and 87\u00b0S, where the terrain data's 20 m pixels cover 400 m\u00b2 each",
+            "citations": [
+              {
+                "dataset_id": "pgda_90_south_pole_dems",
+                "cannot_answer": "Flat areas smaller than one pixel (20 m pixel = 400 m\u00b2) equatorward of 87\u00b0S"
+              }
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"partial\",\"operation\":\"search\",\"interpretation\":\"Find areas within 6\u00b0 of the lunar south pole (poleward of 84\u00b0S) that contain at least 100 m\u00b2 of contiguous flat terrain with slope under 5\u00b0.\",\"limitations\":[{\"topic\":\"Detecting flat areas as small as 100 m\u00b2 between 84\u00b0S and 87\u00b0S, where the terrain data's 20 m pixels cover 400 m\u00b2 each\",\"citations\":[{\"dataset_id\":\"pgda_90_south_pole_dems\",\"cannot_answer\":\"Flat areas smaller than one pixel (20 m pixel = 400 m\u00b2) equatorward of 87\u00b0S\"}]}]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6Gk5GmATkR3sSTeKBZN",
+            "input_tokens": 5493,
+            "output_tokens": 379
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Search everywhere within 6 degrees of the lunar south pole (poleward of 84\u00b0S) for areas with slope under 5 degrees covering at least 100 square meters of flat terrain.\",\"params\":{\"area\":{\"kind\":\"cap\",\"pole\":\"south\",\"max_colatitude_deg\":6},\"criteria\":{\"max_slope_deg\":5,\"min_flat_area_m2\":100,\"near_feature_types\":[]}},\"height_source\":\"not_applicable\",\"window_source\":\"not_applicable\",\"slope_source\":\"user\",\"radius_source\":\"not_applicable\",\"site_source\":\"not_applicable\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GkMEgkgYfwBuxxw4vf",
+            "input_tokens": 6792,
+            "output_tokens": 202
+          }
+        }
+      ]
+    },
+    {
+      "id": "k5",
+      "source": "kaitlin",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "unsupported",
+      "split": "dev",
+      "outcome": "unsupported",
+      "valid": true,
+      "problems": [],
+      "query_correct": null,
+      "reason_correct": true,
+      "error": null,
+      "output": {
+        "outcome": "unsupported",
+        "interpretation": "The user wants to know which candidate landing sites have no boulders larger than 0.5 m within a 50 m landing ellipse.",
+        "limitations": [
+          {
+            "topic": "Counting sub-meter boulders within a landing ellipse at candidate sites",
+            "citations": [
+              {
+                "dataset_id": "aussel_2025_boulders",
+                "cannot_answer": "Individual sub-meter boulders in a landing ellipse"
+              },
+              {
+                "dataset_id": "aussel_2025_boulders",
+                "cannot_answer": "Any boulder information at the poles"
+              },
+              {
+                "dataset_id": "pgda_81_mosaic_5m",
+                "cannot_answer": "Hazards smaller than a few pixels (e.g. sub-meter boulders)"
+              },
+              {
+                "dataset_id": "pgda_98_polar_roughness",
+                "cannot_answer": "Individual boulders or meter-scale hazards"
+              }
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"unsupported\",\"operation\":null,\"interpretation\":\"The user wants to know which candidate landing sites have no boulders larger than 0.5 m within a 50 m landing ellipse.\",\"limitations\":[{\"topic\":\"Counting sub-meter boulders within a landing ellipse at candidate sites\",\"citations\":[{\"dataset_id\":\"aussel_2025_boulders\",\"cannot_answer\":\"Individual sub-meter boulders in a landing ellipse\"},{\"dataset_id\":\"aussel_2025_boulders\",\"cannot_answer\":\"Any boulder information at the poles\"},{\"dataset_id\":\"pgda_81_mosaic_5m\",\"cannot_answer\":\"Hazards smaller than a few pixels (e.g. sub-meter boulders)\"},{\"dataset_id\":\"pgda_98_polar_roughness\",\"cannot_answer\":\"Individual boulders or meter-scale hazards\"}]}],\"question\":null}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GkZzf3vjuu6raUoctz",
+            "input_tokens": 5481,
+            "output_tokens": 313
+          }
+        }
+      ]
+    },
+    {
+      "id": "k6",
+      "source": "kaitlin",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "partial",
+      "split": "dev",
+      "outcome": "partial",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": true,
+      "error": null,
+      "output": {
+        "outcome": "partial",
+        "interpretation": "Compare all curated sites in the Shackleton region for a 5 m lander height over 10 days starting 2028-11-15 00:00 UTC, keeping only sites with no shadow periods in that window (continuous sunlight) and a slope at the point under 5 degrees. I read \"continuous sunlight for at least 10 days\" as no shadow at all during those 10 days.",
+        "query": {
+          "operation": "compare",
+          "params": {
+            "scenarios": [],
+            "across": {
+              "region": "shackleton",
+              "unit_height_m": 5.0,
+              "window_start": "2028-11-15T00:00:00Z",
+              "window_days": 10
+            },
+            "filters": [
+              {
+                "metric": "power.shadow_count",
+                "op": "eq",
+                "value": 0
+              },
+              {
+                "metric": "terrain.slope_at_point_deg",
+                "op": "lt",
+                "value": 5
+              }
+            ],
+            "rank": null
+          }
+        },
+        "height_source": "default",
+        "window_source": "user",
+        "slope_source": "safe_default",
+        "radius_source": "not_applicable",
+        "site_source": "user",
+        "limitations": [
+          {
+            "topic": "Area-wide search for landing zones with continuous sunlight over a time window (only curated sites are evaluated)",
+            "citations": [
+              {
+                "dataset_id": "lss_tool_capabilities",
+                "cannot_answer": "Time-dependent area search (not available yet)"
+              }
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"partial\",\"operation\":\"compare\",\"interpretation\":\"Find landing zones in the Shackleton region that are safe (e.g. low slope) and stay continuously sunlit for at least 10 days starting 15 November 2028. This is answered by comparing the curated Shackleton-region sites over that window, filtered for no shadow and a slope limit.\",\"limitations\":[{\"topic\":\"Area-wide search for landing zones with continuous sunlight over a time window (only curated sites are evaluated)\",\"citations\":[{\"dataset_id\":\"lss_tool_capabilities\",\"cannot_answer\":\"Time-dependent area search (not available yet)\"}]}]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6Gko1jgMUjnertssucY",
+            "input_tokens": 5495,
+            "output_tokens": 218
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Compare all curated sites in the Shackleton region for a 5 m lander height over 10 days starting 2028-11-15 00:00 UTC, keeping only sites with no shadow periods in that window (continuous sunlight) and a slope at the point under 5 degrees. I read \\\"continuous sunlight for at least 10 days\\\" as no shadow at all during those 10 days.\",\"params\":{\"scenarios\":[],\"across\":{\"region\":\"shackleton\",\"unit_height_m\":5.0,\"window_start\":\"2028-11-15T00:00:00Z\",\"window_days\":10},\"filters\":[{\"metric\":\"power.shadow_count\",\"op\":\"eq\",\"value\":0},{\"metric\":\"terrain.slope_at_point_deg\",\"op\":\"lt\",\"value\":5}],\"rank\":null},\"height_source\":\"default\",\"window_source\":\"user\",\"slope_source\":\"safe_default\",\"radius_source\":\"not_applicable\",\"site_source\":\"user\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6Gm1Me2Fb9E4U65o47P",
+            "input_tokens": 7734,
+            "output_tokens": 307
+          }
+        }
+      ]
+    },
+    {
+      "id": "k7",
+      "source": "kaitlin",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "partial",
+      "split": "dev",
+      "outcome": "partial",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": true,
+      "error": null,
+      "output": {
+        "outcome": "partial",
+        "interpretation": "Across all curated sites at 5 m height over the precomputed year 2028, rank the top five by the fraction of time the Sun's elevation is between 10 and 25 degrees, keeping only sites with some time in that band. I read 'Sun angle during descent' as the Sun's elevation above the horizon at the site.",
+        "query": {
+          "operation": "compare",
+          "params": {
+            "scenarios": [],
+            "across": {
+              "site_ids": [],
+              "region": null,
+              "unit_height_m": 5.0,
+              "window_start": "2028-01-01T00:00:00Z",
+              "window_end": "2029-01-01T00:00:00Z",
+              "window_days": null,
+              "step": "PT6H"
+            },
+            "filters": [
+              {
+                "metric": {
+                  "kind": "sun_elevation_band_fraction",
+                  "min_deg": 10,
+                  "max_deg": 25
+                },
+                "op": "gt",
+                "value": 0
+              }
+            ],
+            "rank": {
+              "metric": {
+                "kind": "sun_elevation_band_fraction",
+                "min_deg": 10,
+                "max_deg": 25
+              },
+              "order": "desc",
+              "limit": 5
+            }
+          }
+        },
+        "height_source": "default",
+        "window_source": "ranking_default",
+        "slope_source": "not_applicable",
+        "radius_source": "not_applicable",
+        "site_source": "not_applicable",
+        "limitations": [
+          {
+            "topic": "Sun angle along the descent trajectory (the engine computes Sun elevation at the site, not along the descent path)",
+            "citations": [
+              {
+                "dataset_id": "lss_tool_capabilities",
+                "cannot_answer": "Sun angle along a descent trajectory (Sun elevation is computed at the site)"
+              }
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"partial\",\"operation\":\"compare\",\"interpretation\":\"Rank the curated sites to find the top five where the Sun elevation is between 10 and 25 degrees, as a proxy for Sun angle during descent for optical hazard-detection camera contrast.\",\"limitations\":[{\"topic\":\"Sun angle along the descent trajectory (the engine computes Sun elevation at the site, not along the descent path)\",\"citations\":[{\"dataset_id\":\"lss_tool_capabilities\",\"cannot_answer\":\"Sun angle along a descent trajectory (Sun elevation is computed at the site)\"}]}]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GmJ2EnLv2Y1pWkPmgx",
+            "input_tokens": 5495,
+            "output_tokens": 202
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Across all curated sites at 5 m height over the precomputed year 2028, rank the top five by the fraction of time the Sun's elevation is between 10 and 25 degrees, keeping only sites with some time in that band. I read 'Sun angle during descent' as the Sun's elevation above the horizon at the site.\",\"params\":{\"scenarios\":[],\"across\":{\"site_ids\":[],\"region\":null,\"unit_height_m\":5.0,\"window_start\":\"2028-01-01T00:00:00Z\",\"window_end\":\"2029-01-01T00:00:00Z\",\"window_days\":null,\"step\":\"PT6H\"},\"filters\":[{\"metric\":{\"kind\":\"sun_elevation_band_fraction\",\"min_deg\":10,\"max_deg\":25},\"op\":\"gt\",\"value\":0}],\"rank\":{\"metric\":{\"kind\":\"sun_elevation_band_fraction\",\"min_deg\":10,\"max_deg\":25},\"order\":\"desc\",\"limit\":5}},\"height_source\":\"default\",\"window_source\":\"ranking_default\",\"slope_source\":\"not_applicable\",\"radius_source\":\"not_applicable\",\"site_source\":\"not_applicable\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GmWGSPBoQ4K2qRWnj3",
+            "input_tokens": 7734,
+            "output_tokens": 376
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8",
+      "source": "kaitlin",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "unsupported",
+      "split": "dev",
+      "outcome": "unsupported",
+      "valid": true,
+      "problems": [],
+      "query_correct": null,
+      "reason_correct": true,
+      "error": null,
+      "output": {
+        "outcome": "unsupported",
+        "interpretation": "The user wants to find high-latitude sites whose temperatures during lunar night are warm enough to cut battery heating requirements by 20 percent.",
+        "limitations": [
+          {
+            "topic": "Site temperatures during lunar night",
+            "citations": [
+              {
+                "dataset_id": "lss_tool_capabilities",
+                "cannot_answer": "Temperature queries (not available yet)"
+              }
+            ]
+          },
+          {
+            "topic": "Battery heating requirement reduction",
+            "citations": [
+              {
+                "dataset_id": "diviner_polar_temperature",
+                "cannot_answer": "Spacecraft thermal or battery-heating requirements (needs a spacecraft thermal model)"
+              }
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"unsupported\",\"operation\":null,\"interpretation\":\"The user wants to find high-latitude sites whose temperatures during lunar night are warm enough to cut battery heating requirements by 20 percent.\",\"limitations\":[{\"topic\":\"Site temperatures during lunar night\",\"citations\":[{\"dataset_id\":\"lss_tool_capabilities\",\"cannot_answer\":\"Temperature queries (not available yet)\"}]},{\"topic\":\"Battery heating requirement reduction\",\"citations\":[{\"dataset_id\":\"diviner_polar_temperature\",\"cannot_answer\":\"Spacecraft thermal or battery-heating requirements (needs a spacecraft thermal model)\"}]}],\"question\":null}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GmootPN9LMswSS9zAJ",
+            "input_tokens": 5484,
+            "output_tokens": 236
+          }
+        }
+      ]
+    },
+    {
+      "id": "k9",
+      "source": "kaitlin",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "partial",
+      "split": "dev",
+      "outcome": "partial",
+      "valid": true,
+      "problems": [
+        "unexpected citation ('aussel_2025_boulders', 'Any boulder information at the poles')",
+        "unexpected citation ('pgda_81_mosaic_5m', 'Hazards smaller than a few pixels (e.g. sub-meter boulders)')"
+      ],
+      "query_correct": true,
+      "reason_correct": false,
+      "error": null,
+      "output": {
+        "outcome": "partial",
+        "interpretation": "Search wherever the terrain data covers for terrain with slope under 5 degrees within 1000 m of a permanently shadowed region or an ice detection; I read \"high hydrogen signatures\" as ice detections, since the engine has no separate hydrogen-signature filter.",
+        "query": {
+          "operation": "search",
+          "params": {
+            "area": {
+              "kind": "all"
+            },
+            "criteria": {
+              "max_slope_deg": 5,
+              "near_feature_types": [
+                "psr",
+                "ice_detection"
+              ],
+              "max_feature_distance_m": 1000
+            }
+          }
+        },
+        "height_source": "not_applicable",
+        "window_source": "not_applicable",
+        "slope_source": "safe_default",
+        "radius_source": "user",
+        "site_source": "not_applicable",
+        "limitations": [
+          {
+            "topic": "Drive distance of 1 km (only straight-line distances are computed)",
+            "citations": [
+              {
+                "dataset_id": "lss_tool_capabilities",
+                "cannot_answer": "Drive routes or traverse distances (distances are straight-line)"
+              }
+            ]
+          },
+          {
+            "topic": "Identifying PSRs with high hydrogen signatures at ~1 km scale",
+            "citations": [
+              {
+                "dataset_id": "orbital_neutron_hydrogen",
+                "cannot_answer": "Hydrogen concentration at ~1 km scale (orbital neutron maps resolve ~10 km at best)"
+              },
+              {
+                "dataset_id": "m3_surface_ice",
+                "cannot_answer": "Subsurface hydrogen at km scale (neutron data are far coarser)"
+              }
+            ]
+          },
+          {
+            "topic": "Safety with respect to small hazards such as boulders",
+            "citations": [
+              {
+                "dataset_id": "pgda_81_mosaic_5m",
+                "cannot_answer": "Hazards smaller than a few pixels (e.g. sub-meter boulders)"
+              },
+              {
+                "dataset_id": "aussel_2025_boulders",
+                "cannot_answer": "Any boulder information at the poles"
+              }
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"partial\",\"operation\":\"search\",\"interpretation\":\"Find safe (low-slope, flat) landing areas within 1 km of a permanently shadowed region, preferably one with high hydrogen signatures.\",\"limitations\":[{\"topic\":\"Drive distance of 1 km (only straight-line distances are computed)\",\"citations\":[{\"dataset_id\":\"lss_tool_capabilities\",\"cannot_answer\":\"Drive routes or traverse distances (distances are straight-line)\"}]},{\"topic\":\"Identifying PSRs with high hydrogen signatures at ~1 km scale\",\"citations\":[{\"dataset_id\":\"orbital_neutron_hydrogen\",\"cannot_answer\":\"Hydrogen concentration at ~1 km scale (orbital neutron maps resolve ~10 km at best)\"},{\"dataset_id\":\"m3_surface_ice\",\"cannot_answer\":\"Subsurface hydrogen at km scale (neutron data are far coarser)\"}]},{\"topic\":\"Safety with respect to small hazards such as boulders\",\"citations\":[{\"dataset_id\":\"pgda_81_mosaic_5m\",\"cannot_answer\":\"Hazards smaller than a few pixels (e.g. sub-meter boulders)\"},{\"dataset_id\":\"aussel_2025_boulders\",\"cannot_answer\":\"Any boulder information at the poles\"}]}]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6Gn31dxn8V9r28bWpbn",
+            "input_tokens": 5489,
+            "output_tokens": 456
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Search wherever the terrain data covers for terrain with slope under 5 degrees within 1000 m of a permanently shadowed region or an ice detection; I read \\\"high hydrogen signatures\\\" as ice detections, since the engine has no separate hydrogen-signature filter.\",\"params\":{\"area\":{\"kind\":\"all\"},\"criteria\":{\"max_slope_deg\":5,\"near_feature_types\":[\"psr\",\"ice_detection\"],\"max_feature_distance_m\":1000}},\"height_source\":\"not_applicable\",\"window_source\":\"not_applicable\",\"slope_source\":\"safe_default\",\"radius_source\":\"user\",\"site_source\":\"not_applicable\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GnNvCxiH2cZkARaAn5",
+            "input_tokens": 6788,
+            "output_tokens": 220
+          }
+        }
+      ]
+    },
+    {
+      "id": "s1",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "split": "dev",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Sunlight metrics for Connecting Ridge at 2 m height from 1 December 2028 through 31 December 2028 (UTC).",
+        "query": {
+          "operation": "metrics",
+          "params": {
+            "scenario": {
+              "location": {
+                "site_id": "pgda-site01"
+              },
+              "unit_height_m": 2.0,
+              "window_start": "2028-12-01T00:00:00Z",
+              "window_end": "2029-01-01T00:00:00Z"
+            }
+          }
+        },
+        "height_source": "user",
+        "window_source": "user",
+        "slope_source": "not_applicable",
+        "radius_source": "not_applicable",
+        "site_source": "user",
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"metrics\",\"interpretation\":\"The user wants the sunlight (illumination/power) at the Connecting Ridge site (pgda-site01), observed from 2 m above the surface, over the window December 1 to December 31, 2028.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GndWYjLDPnUDxDEtQA",
+            "input_tokens": 5479,
+            "output_tokens": 97
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Sunlight metrics for Connecting Ridge at 2 m height from 1 December 2028 through 31 December 2028 (UTC).\",\"params\":{\"scenario\":{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":2.0,\"window_start\":\"2028-12-01T00:00:00Z\",\"window_end\":\"2029-01-01T00:00:00Z\"}},\"height_source\":\"user\",\"window_source\":\"user\",\"slope_source\":\"not_applicable\",\"radius_source\":\"not_applicable\",\"site_source\":\"user\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GnmqMdGwmnjufc1Aax",
+            "input_tokens": 5153,
+            "output_tokens": 186
+          }
+        }
+      ]
+    },
+    {
+      "id": "s2",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "split": "dev",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Earth visibility fraction for a lander at Connecting Ridge, from 2029-01-01T00:00:00Z to 2029-02-01T00:00:00Z.",
+        "query": {
+          "operation": "metrics",
+          "params": {
+            "scenario": {
+              "location": {
+                "site_id": "pgda-site01"
+              },
+              "unit_height_m": 5.0,
+              "window_start": "2029-01-01T00:00:00Z",
+              "window_end": "2029-02-01T00:00:00Z"
+            }
+          }
+        },
+        "height_source": "lander_proxy",
+        "window_source": "user",
+        "slope_source": "not_applicable",
+        "radius_source": "not_applicable",
+        "site_source": "user",
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"metrics\",\"interpretation\":\"Compute the Earth-visibility fraction at Connecting Ridge (pgda-site01) over the window of January 2029.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6Gnyki2MRkMB122K1N3",
+            "input_tokens": 5473,
+            "output_tokens": 74
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Earth visibility fraction for a lander at Connecting Ridge, from 2029-01-01T00:00:00Z to 2029-02-01T00:00:00Z.\",\"params\":{\"scenario\":{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":5.0,\"window_start\":\"2029-01-01T00:00:00Z\",\"window_end\":\"2029-02-01T00:00:00Z\"}},\"height_source\":\"lander_proxy\",\"window_source\":\"user\",\"slope_source\":\"not_applicable\",\"radius_source\":\"not_applicable\",\"site_source\":\"user\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6Go64iQ1pAF8q8HUhm8",
+            "input_tokens": 5147,
+            "output_tokens": 201
+          }
+        }
+      ]
+    },
+    {
+      "id": "s4",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "split": "dev",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Compare Earth visibility at Connecting Ridge for unit heights of 1 m and 10 m over November 2028 (2028-11-01 00:00 UTC to 2028-12-01 00:00 UTC).",
+        "query": {
+          "operation": "compare",
+          "params": {
+            "scenarios": [
+              {
+                "location": {
+                  "site_id": "pgda-site01"
+                },
+                "unit_height_m": 1.0,
+                "window_start": "2028-11-01T00:00:00Z",
+                "window_end": "2028-12-01T00:00:00Z"
+              },
+              {
+                "location": {
+                  "site_id": "pgda-site01"
+                },
+                "unit_height_m": 10.0,
+                "window_start": "2028-11-01T00:00:00Z",
+                "window_end": "2028-12-01T00:00:00Z"
+              }
+            ],
+            "filters": []
+          }
+        },
+        "height_source": "user",
+        "window_source": "user",
+        "slope_source": "not_applicable",
+        "radius_source": "not_applicable",
+        "site_source": "user",
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"compare\",\"interpretation\":\"Compare Earth visibility metrics at Connecting Ridge (pgda-site01) for observer heights of 1 m and 10 m above the surface during November 2028.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GoEE6G5xVr37KR1o5n",
+            "input_tokens": 5479,
+            "output_tokens": 87
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Compare Earth visibility at Connecting Ridge for unit heights of 1 m and 10 m over November 2028 (2028-11-01 00:00 UTC to 2028-12-01 00:00 UTC).\",\"params\":{\"scenarios\":[{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":1.0,\"window_start\":\"2028-11-01T00:00:00Z\",\"window_end\":\"2028-12-01T00:00:00Z\"},{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":10.0,\"window_start\":\"2028-11-01T00:00:00Z\",\"window_end\":\"2028-12-01T00:00:00Z\"}],\"filters\":[]},\"height_source\":\"user\",\"window_source\":\"user\",\"slope_source\":\"not_applicable\",\"radius_source\":\"not_applicable\",\"site_source\":\"user\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GoPDarxADKxtu94YNu",
+            "input_tokens": 7718,
+            "output_tokens": 293
+          }
+        }
+      ]
+    },
+    {
+      "id": "s6",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "split": "dev",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Horizon profile from Connecting Ridge at a unit height of 2 m above the surface.",
+        "query": {
+          "operation": "horizon",
+          "params": {
+            "location": {
+              "site_id": "pgda-site01"
+            },
+            "unit_height_m": 2
+          }
+        },
+        "height_source": "user",
+        "window_source": "not_applicable",
+        "slope_source": "not_applicable",
+        "radius_source": "not_applicable",
+        "site_source": "user",
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"horizon\",\"interpretation\":\"Show the terrain horizon profile at the Connecting Ridge site (pgda-site01), as seen from an observer height of 2 m.\",\"limitations\":[],\"question\":null}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GogRvzqDg3ckLroQCp",
+            "input_tokens": 5465,
+            "output_tokens": 82
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Horizon profile from Connecting Ridge at a unit height of 2 m above the surface.\",\"params\":{\"location\":{\"site_id\":\"pgda-site01\"},\"unit_height_m\":2},\"height_source\":\"user\",\"window_source\":\"not_applicable\",\"slope_source\":\"not_applicable\",\"radius_source\":\"not_applicable\",\"site_source\":\"user\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6Goog1BP9ntDbBhNbWX",
+            "input_tokens": 4722,
+            "output_tokens": 123
+          }
+        }
+      ]
+    },
+    {
+      "id": "s7",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "answer",
+      "split": "dev",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": null,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "List the curated sites in the Apollo category.",
+        "query": {
+          "operation": "sites",
+          "params": {
+            "category": "apollo"
+          }
+        },
+        "height_source": "not_applicable",
+        "window_source": "not_applicable",
+        "slope_source": "not_applicable",
+        "radius_source": "not_applicable",
+        "site_source": "not_applicable",
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"sites\",\"interpretation\":\"The user wants a list of the curated sites in the Apollo category.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GowTZWKNfbRfB7W8Gb",
+            "input_tokens": 5455,
+            "output_tokens": 53
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"List the curated sites in the Apollo category.\",\"params\":{\"category\":\"apollo\"},\"height_source\":\"not_applicable\",\"window_source\":\"not_applicable\",\"slope_source\":\"not_applicable\",\"radius_source\":\"not_applicable\",\"site_source\":\"not_applicable\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6Gp268KddrKvUNMNP9U",
+            "input_tokens": 4239,
+            "output_tokens": 96
+          }
+        }
+      ]
+    },
+    {
+      "id": "s9",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "partial",
+      "split": "dev",
+      "outcome": "partial",
+      "valid": true,
+      "problems": [],
+      "query_correct": true,
+      "reason_correct": true,
+      "error": null,
+      "output": {
+        "outcome": "partial",
+        "interpretation": "Find craters within 10 km (10000 m) of Connecting Ridge.",
+        "query": {
+          "operation": "proximity",
+          "params": {
+            "location": {
+              "site_id": "pgda-site01"
+            },
+            "types": [
+              "crater"
+            ],
+            "radius_m": 10000
+          }
+        },
+        "height_source": "not_applicable",
+        "window_source": "not_applicable",
+        "slope_source": "not_applicable",
+        "radius_source": "user",
+        "site_source": "user",
+        "limitations": [
+          {
+            "topic": "Craters smaller than about 1 km",
+            "citations": [
+              {
+                "dataset_id": "robbins_craters",
+                "cannot_answer": "Craters smaller than ~1 km"
+              }
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"partial\",\"operation\":\"proximity\",\"interpretation\":\"List craters within a 10 km straight-line distance of the Connecting Ridge site (pgda-site01).\",\"limitations\":[{\"topic\":\"Craters smaller than about 1 km\",\"citations\":[{\"dataset_id\":\"robbins_craters\",\"cannot_answer\":\"Craters smaller than ~1 km\"}]}],\"question\":null}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GpAWdbcimET6NW3FEG",
+            "input_tokens": 5463,
+            "output_tokens": 135
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Find craters within 10 km (10000 m) of Connecting Ridge.\",\"params\":{\"location\":{\"site_id\":\"pgda-site01\"},\"types\":[\"crater\"],\"radius_m\":10000},\"height_source\":\"not_applicable\",\"window_source\":\"not_applicable\",\"slope_source\":\"not_applicable\",\"radius_source\":\"user\",\"site_source\":\"user\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GpKn1DTK2GB5am8hbf",
+            "input_tokens": 4863,
+            "output_tokens": 125
+          }
+        }
+      ]
+    },
+    {
+      "id": "s10",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "partial",
+      "split": "dev",
+      "outcome": "answer",
+      "valid": true,
+      "problems": [
+        "outcome answer != expected partial",
+        "missing citation ('pgda_81_mosaic_5m', 'High-confidence single-pixel slope (~90% of 5 m pixels are interpolated)')"
+      ],
+      "query_correct": false,
+      "reason_correct": false,
+      "error": null,
+      "output": {
+        "outcome": "answer",
+        "interpretation": "Search for spots with slope under 10\u00b0 within 2 km (2000 m) of Connecting Ridge.",
+        "query": {
+          "operation": "search",
+          "params": {
+            "area": {
+              "kind": "circle",
+              "center": {
+                "site_id": "pgda-site01"
+              },
+              "radius_m": 2000
+            },
+            "criteria": {
+              "max_slope_deg": 10,
+              "near_feature_types": []
+            }
+          }
+        },
+        "height_source": "not_applicable",
+        "window_source": "not_applicable",
+        "slope_source": "user",
+        "radius_source": "user",
+        "site_source": "user",
+        "limitations": []
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"answer\",\"operation\":\"search\",\"interpretation\":\"Search the terrain within 2 km of the Connecting Ridge site (pgda-site01) for flat areas with slope below 10\u00b0.\",\"limitations\":[]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GpTgVkWJRGUdubMxJy",
+            "input_tokens": 5471,
+            "output_tokens": 75
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Search for spots with slope under 10\u00b0 within 2 km (2000 m) of Connecting Ridge.\",\"params\":{\"area\":{\"kind\":\"circle\",\"center\":{\"site_id\":\"pgda-site01\"},\"radius_m\":2000},\"criteria\":{\"max_slope_deg\":10,\"near_feature_types\":[]}},\"height_source\":\"not_applicable\",\"window_source\":\"not_applicable\",\"slope_source\":\"user\",\"radius_source\":\"user\",\"site_source\":\"user\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6Gpc2nq2mofhY5MJvDd",
+            "input_tokens": 6770,
+            "output_tokens": 161
+          }
+        }
+      ]
+    },
+    {
+      "id": "s12",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "unsupported",
+      "split": "dev",
+      "outcome": "unsupported",
+      "valid": true,
+      "problems": [],
+      "query_correct": null,
+      "reason_correct": true,
+      "error": null,
+      "output": {
+        "outcome": "unsupported",
+        "interpretation": "The user wants the solar illumination (sunlight/power) at Connecting Ridge (pgda-site01) over the year 2055.",
+        "limitations": [
+          {
+            "topic": "Sunlight at Connecting Ridge during 2055 (after the ephemeris coverage ends)",
+            "citations": [
+              {
+                "dataset_id": "spice_de421",
+                "cannot_answer": "Dates after 2050-12-31 23:58:50 UTC (orientation kernel end); needs newer kernels + frame alignment"
+              }
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"unsupported\",\"operation\":null,\"interpretation\":\"The user wants the solar illumination (sunlight/power) at Connecting Ridge (pgda-site01) over the year 2055.\",\"limitations\":[{\"topic\":\"Sunlight at Connecting Ridge during 2055 (after the ephemeris coverage ends)\",\"citations\":[{\"dataset_id\":\"spice_de421\",\"cannot_answer\":\"Dates after 2050-12-31 23:58:50 UTC (orientation kernel end); needs newer kernels + frame alignment\"}]}]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GpnYpKPXqymRiAPG4z",
+            "input_tokens": 5464,
+            "output_tokens": 190
+          }
+        }
+      ]
+    },
+    {
+      "id": "s13",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "unsupported",
+      "split": "dev",
+      "outcome": "unsupported",
+      "valid": true,
+      "problems": [],
+      "query_correct": null,
+      "reason_correct": true,
+      "error": null,
+      "output": {
+        "outcome": "unsupported",
+        "interpretation": "The user wants to know the amount (abundance) of water ice contained in Shackleton crater.",
+        "limitations": [
+          {
+            "topic": "Amount of water ice in Shackleton crater",
+            "citations": [
+              {
+                "dataset_id": "m3_surface_ice",
+                "cannot_answer": "Ice abundance or depth"
+              }
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"unsupported\",\"operation\":null,\"interpretation\":\"The user wants to know the amount (abundance) of water ice contained in Shackleton crater.\",\"limitations\":[{\"topic\":\"Amount of water ice in Shackleton crater\",\"citations\":[{\"dataset_id\":\"m3_surface_ice\",\"cannot_answer\":\"Ice abundance or depth\"}]}]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6Gpx9m5sRtFtMF3JPZ1",
+            "input_tokens": 5459,
+            "output_tokens": 128
+          }
+        }
+      ]
+    },
+    {
+      "id": "s14",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "unsupported",
+      "split": "dev",
+      "outcome": "partial",
+      "valid": true,
+      "problems": [
+        "outcome partial != expected unsupported"
+      ],
+      "query_correct": null,
+      "reason_correct": false,
+      "error": null,
+      "output": {
+        "outcome": "partial",
+        "interpretation": "Find permanently shadowed regions within 10 km of Connecting Ridge, as a starting point for identifying the nearest one for a rover drive; route planning itself isn't performed by this operation.",
+        "query": {
+          "operation": "proximity",
+          "params": {
+            "location": {
+              "site_id": "pgda-site01"
+            },
+            "types": [
+              "psr"
+            ],
+            "radius_m": 10000
+          }
+        },
+        "height_source": "not_applicable",
+        "window_source": "not_applicable",
+        "slope_source": "not_applicable",
+        "radius_source": "nearby_default",
+        "site_source": "user",
+        "limitations": [
+          {
+            "topic": "Planning a rover drive route and traverse distance to the PSR",
+            "citations": [
+              {
+                "dataset_id": "lss_tool_capabilities",
+                "cannot_answer": "Drive routes or traverse distances (distances are straight-line)"
+              }
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"partial\",\"operation\":\"proximity\",\"interpretation\":\"The user wants a rover drive route from Connecting Ridge (pgda-site01) to the nearest permanently shadowed region. The engine can give the straight-line distance from the site to nearby permanently shadowed regions, but not a drive route.\",\"limitations\":[{\"topic\":\"Planning a rover drive route and traverse distance to the PSR\",\"citations\":[{\"dataset_id\":\"lss_tool_capabilities\",\"cannot_answer\":\"Drive routes or traverse distances (distances are straight-line)\"}]}]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GqATwcBqBvJRhDwvzn",
+            "input_tokens": 5477,
+            "output_tokens": 194
+          }
+        },
+        {
+          "stage": "fill",
+          "raw": "{\"interpretation\":\"Find permanently shadowed regions within 10 km of Connecting Ridge, as a starting point for identifying the nearest one for a rover drive; route planning itself isn't performed by this operation.\",\"params\":{\"location\":{\"site_id\":\"pgda-site01\"},\"types\":[\"psr\"],\"radius_m\":10000},\"height_source\":\"not_applicable\",\"window_source\":\"not_applicable\",\"slope_source\":\"not_applicable\",\"radius_source\":\"nearby_default\",\"site_source\":\"user\"}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GqLtFHmMLvFzH3JLcB",
+            "input_tokens": 4877,
+            "output_tokens": 166
+          }
+        }
+      ]
+    },
+    {
+      "id": "s15",
+      "source": "si_supplied",
+      "status": "ready",
+      "blocked_reasons": [],
+      "scored": true,
+      "expected_outcome": "unsupported",
+      "split": "dev",
+      "outcome": "unsupported",
+      "valid": true,
+      "problems": [],
+      "query_correct": null,
+      "reason_correct": true,
+      "error": null,
+      "output": {
+        "outcome": "unsupported",
+        "interpretation": "The user asks about current weather conditions on Mars, which is outside lunar landing-site planning.",
+        "limitations": [
+          {
+            "topic": "Weather on Mars",
+            "citations": [
+              {
+                "dataset_id": "lss_tool_capabilities",
+                "cannot_answer": "Questions outside lunar landing-site planning"
+              }
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "stage": "route",
+          "raw": "{\"outcome\":\"unsupported\",\"operation\":null,\"interpretation\":\"The user asks about current weather conditions on Mars, which is outside lunar landing-site planning.\",\"limitations\":[{\"topic\":\"Weather on Mars\",\"citations\":[{\"dataset_id\":\"lss_tool_capabilities\",\"cannot_answer\":\"Questions outside lunar landing-site planning\"}]}]}",
+          "meta": {
+            "served_by": "claude-opus-5-5",
+            "stop_reason": "end_turn",
+            "request_id": "req_011Ch6GqYLpnEUtEPuMPfj1T",
+            "input_tokens": 5455,
+            "output_tokens": 128
+          }
+        }
+      ]
+    }
+  ],
+  "split_run": "dev"
+}
