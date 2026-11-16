@@ -174,6 +174,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/terrain/views": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Terrain Views */
+        get: operations["terrain_views_api_terrain_views_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/terrain/view/{site_id}/{view}/{layer}.png": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Terrain View Image */
+        get: operations["terrain_view_image_api_terrain_view__site_id___view___layer__png_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/site_summary": {
         parameters: {
             query?: never;
@@ -485,7 +519,7 @@ export interface components {
         CompareResponse: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -532,6 +566,11 @@ export interface components {
              * @default 0
              */
             beyond_limit: number;
+            /**
+             * Compared Keys
+             * @description Scenario.key() of each entry of `compared`, same order (contract 0.13.0; stream B)
+             */
+            compared_keys?: string[];
         };
         /**
          * CompareUnprocessableError
@@ -602,7 +641,7 @@ export interface components {
         DatasetsResponse: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -706,7 +745,7 @@ export interface components {
         FeaturesResponse: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -755,7 +794,7 @@ export interface components {
         HealthResponse: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -777,7 +816,7 @@ export interface components {
         HorizonProfile: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -825,7 +864,7 @@ export interface components {
         Job: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -894,7 +933,7 @@ export interface components {
         LocateResponse: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -974,7 +1013,7 @@ export interface components {
         MetricsResponse: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -998,7 +1037,7 @@ export interface components {
         NLAnswer: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -1040,7 +1079,7 @@ export interface components {
         NLClarification: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -1074,7 +1113,7 @@ export interface components {
         NLUnsupported: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -1106,6 +1145,21 @@ export interface components {
          */
         NoTerrainError: {
             detail: components["schemas"]["NoTerrainDetail"];
+        };
+        /** NotFoundDetail */
+        NotFoundDetail: {
+            /**
+             * Reason
+             * @description Plain-language explanation, suitable to show to visitors
+             */
+            reason: string;
+        };
+        /**
+         * NotFoundError
+         * @description 404 from GET /api/terrain/view/...: no such precomputed image.
+         */
+        NotFoundError: {
+            detail: components["schemas"]["NotFoundDetail"];
         };
         /** NotServedDetail */
         NotServedDetail: {
@@ -1219,7 +1273,7 @@ export interface components {
         ProximityResponse: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -1356,7 +1410,7 @@ export interface components {
         ScenariosResponse: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -1443,7 +1497,7 @@ export interface components {
         SeriesResponse: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -1559,7 +1613,7 @@ export interface components {
         SiteSummaryResponse: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -1591,7 +1645,7 @@ export interface components {
         SitesResponse: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -1649,7 +1703,7 @@ export interface components {
         StaticIndex: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -1675,6 +1729,12 @@ export interface components {
              * @description Path of the SitesResponse file
              */
             sites: string;
+            /**
+             * Terrain Views
+             * @description Path of the TerrainViewsResponse file; images at terrain_view/{site_id}/{view}/{layer}.png (0.13.0)
+             * @default null
+             */
+            terrain_views: string | null;
             /**
              * Nl Answers
              * @description Cached showcase answers, the same as POST /api/nl returns (0.12.0)
@@ -1814,7 +1874,7 @@ export interface components {
         TerrainResponse: {
             /**
              * Contract Version
-             * @default 0.12.0
+             * @default 0.13.0
              */
             contract_version: string;
             /**
@@ -1845,6 +1905,152 @@ export interface components {
          * @description 422 from POST /api/terrain: tell the two apart by `detail` (an object vs a list).
          */
         TerrainUnprocessableError: components["schemas"]["TerrainNotServedError"] | components["schemas"]["InvalidRequestError"];
+        /**
+         * TerrainView
+         * @description One precomputed square view around a site. The images are 8-bit greyscale PNGs (hillshade: shade;
+         *     slope: class number) with no colour-profile chunks, so canvas reads the values exactly. The image's top
+         *     edge is the polar stereographic grid's +y (`map_up`), not geographic north.
+         */
+        TerrainView: {
+            /** Site Id */
+            site_id: string;
+            /**
+             * View
+             * @description View name, e.g. '2km' (±1 km) or '20km' (±10 km)
+             */
+            view: string;
+            /** @description The site's served point; the bounds snap to the pixel grid (≤ 1 px) */
+            center: components["schemas"]["Location"];
+            /**
+             * Bounds Ps M
+             * @description [left, bottom, right, top] in the projection below, m
+             */
+            bounds_ps_m: number[];
+            /**
+             * Proj4
+             * @description The images' projection (south polar stereographic on the 1737.4 km sphere)
+             */
+            proj4: string;
+            /** Map Up */
+            map_up: string;
+            /** Pixel M */
+            pixel_m: number;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /**
+             * Layers
+             * @description Images available: GET /api/terrain/view/{site_id}/{view}/{layer}.png (static copy: terrain_view/{site_id}/{view}/{layer}.png)
+             */
+            layers: components["schemas"]["TerrainViewLayer"][];
+            source: components["schemas"]["TerrainViewSource"];
+            hillshade?: components["schemas"]["TerrainViewHillshade"] | null;
+            slope?: components["schemas"]["TerrainViewSlope"] | null;
+        };
+        /** TerrainViewHillshade */
+        TerrainViewHillshade: {
+            /**
+             * Light Azimuth Map Deg
+             * @description Light direction, deg clockwise from map up (grid +y)
+             */
+            light_azimuth_map_deg: number;
+            /** Light Altitude Deg */
+            light_altitude_deg: number;
+            /** Note */
+            note?: string | null;
+        };
+        /**
+         * TerrainViewLayer
+         * @description Layers of the 2D site view's terrain images (GET /api/terrain/view/{site_id}/{view}/{layer}.png).
+         *     Only hillshade and slope are precomputed (Kaitlin, 2026-11-16); elevation is reserved.
+         * @enum {string}
+         */
+        TerrainViewLayer: "hillshade" | "slope" | "elevation";
+        /** TerrainViewSlope */
+        TerrainViewSlope: {
+            /** Definition */
+            definition: string;
+            /**
+             * Class Edges Deg
+             * @description Upper edges of the classes; the last class is open-ended
+             */
+            class_edges_deg: number[];
+            /**
+             * Class Labels
+             * @description One label per class value 0..n (PNG pixel value = class)
+             */
+            class_labels: string[];
+            /**
+             * Nodata
+             * @description PNG pixel value with no slope (show transparent)
+             */
+            nodata: number;
+            /**
+             * Palette Light
+             * @description Suggested colour per class, light theme (stream A)
+             */
+            palette_light: string[];
+            /**
+             * Palette Dark
+             * @description Suggested colour per class, dark theme (stream A)
+             */
+            palette_dark: string[];
+        };
+        /** TerrainViewSource */
+        TerrainViewSource: {
+            /**
+             * Dataset Id
+             * @description Registry id of the map the images were made from
+             */
+            dataset_id: string;
+            /** Url */
+            url: string;
+            /**
+             * Source Pixel M
+             * @description The source map's pixel size, m
+             */
+            source_pixel_m?: number | null;
+            /**
+             * Block Mean
+             * @description Source pixels averaged per image pixel, per axis
+             */
+            block_mean?: number | null;
+        };
+        /**
+         * TerrainViewsQuery
+         * @description Query parameters of GET /api/terrain/views.
+         */
+        TerrainViewsQuery: {
+            /**
+             * Site Id
+             * @description Only this site's views
+             * @default null
+             */
+            site_id: string | null;
+        };
+        /**
+         * TerrainViewsResponse
+         * @description Precomputed terrain views, by site in the site list's order, then by view size (smallest first).
+         *     Sites without views (e.g. off the polar maps) are simply absent.
+         */
+        TerrainViewsResponse: {
+            /**
+             * Contract Version
+             * @default 0.13.0
+             */
+            contract_version: string;
+            /**
+             * Placeholder
+             * @description True when the values are placeholders, not computed results.
+             * @default false
+             */
+            _placeholder: boolean;
+            /** Note */
+            _note?: string | null;
+            /** Views */
+            views: components["schemas"]["TerrainView"][];
+        };
         /** UnavailableDetail */
         UnavailableDetail: {
             /**
@@ -2259,6 +2465,88 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UnavailableError"];
+                };
+            };
+        };
+    };
+    terrain_views_api_terrain_views_get: {
+        parameters: {
+            query?: {
+                site_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TerrainViewsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Precomputed terrain images are unusable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnavailableError"];
+                };
+            };
+        };
+    };
+    terrain_view_image_api_terrain_view__site_id___view___layer__png_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                site_id: string;
+                view: string;
+                layer: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 8-bit greyscale PNG (see TerrainView) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": unknown;
+                };
+            };
+            /** @description No such precomputed image */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotFoundError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -88,8 +88,6 @@ export function readResult(answer: NLAnswer): NlResult {
     case 'compare': {
       const p = isRecord(params) ? params : {}
       const query = {
-        scenarios: (Array.isArray(p.scenarios) ? p.scenarios : []) as S['Scenario'][],
-        across: isRecord(p.across),
         filters: (Array.isArray(p.filters) ? p.filters : []) as S['MetricFilter'][],
         rank: (isRecord(p.rank) ? p.rank : null) as S['CompareRank'] | null,
       }

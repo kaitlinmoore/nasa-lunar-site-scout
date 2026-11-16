@@ -2,7 +2,6 @@
 // Live comparison mapping (Phase 2 step 3.3), and the keyed mapping for comparisons with filters, a rank
 // or a site template (NL answers). Pure, no build-time values, so it can be unit-tested.
 import { scenarioId } from '../scenario'
-import { scenarioKey } from './scenarioKey'
 import type { components } from './schema'
 
 type S = components['schemas']
@@ -70,7 +69,7 @@ export type ColumnOutcome =
 
 export type ComparisonColumn = {
   scenario: Scenario
-  /** The server's scenario key (checked against every key the API sent for this column). */
+  /** The server's scenario key for this column (`compared_keys`, contract 0.13.0). */
   key: string
   result: MetricsResponse | null
   outcome: ColumnOutcome
@@ -95,21 +94,20 @@ export function compareMetricLabel(metric: MetricFilter['metric']): string {
 
 /**
  * A comparison answered with filters, a rank or an `across` template (contract 0.10.0+), one column
- * per compared scenario (`response.compared`, or the request's scenarios when an older API left it
- * empty and there was no template). Items are matched to columns by scenario key; every index and
- * key in the response must fit, or this throws and nothing is shown.
+ * per compared scenario (`response.compared`), keyed by `response.compared_keys` (same order; contract
+ * 0.13.0). Items are matched to columns by scenario key; every index and key in the response must
+ * fit, or this throws and nothing is shown.
  */
 export function mapComparison(
   response: CompareResponse,
-  query: { scenarios: Scenario[]; across: boolean; filters: MetricFilter[]; rank: CompareRank | null },
+  query: { filters: MetricFilter[]; rank: CompareRank | null },
 ): KeyedComparison {
   const where = '/api/compare'
-  let compared = response.compared ?? []
-  if (compared.length === 0) {
-    if (query.across) throw new Error(`${where}: the answer doesn't list the compared scenarios; not shown`)
-    compared = query.scenarios
+  const compared = response.compared ?? []
+  const keys = response.compared_keys ?? []
+  if (compared.length === 0 || keys.length !== compared.length) {
+    throw new Error(`${where}: the answer doesn't list the compared scenarios with their keys; not shown`)
   }
-  const keys = compared.map(scenarioKey)
   if (new Set(keys).size !== keys.length) throw new Error(`${where}: a scenario is compared twice; not shown`)
   const column = new Map(keys.map((k, i) => [k, i]))
   const checkIndex = (index: number, key: string, list: string) => {
@@ -133,10 +131,7 @@ export function mapComparison(
   for (const item of response.items) {
     const i = column.get(item.scenario_key)
     if (i === undefined) throw new Error(`${where}: a result is for no compared scenario; not shown`)
-    if (
-      scenarioKey(item.scenario) !== item.scenario_key ||
-      scenarioId(item.scenario) !== scenarioId(compared[i])
-    ) {
+    if (scenarioId(item.scenario) !== scenarioId(compared[i])) {
       throw new Error(`${where}: result ${item.scenario_key} is not the scenario it claims; not shown`)
     }
     if (outcomes[i])
