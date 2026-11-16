@@ -242,7 +242,6 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
       {metrics.kind === 'error' && <ApiProblemView what="metrics" error={metrics.error} />}
       {data && !metricsForSite && (
         <section className="card">
-          <h2>{site.name}</h2>
           <p className="muted">
             No computed scenario for this site yet. So far only the C1 thin-slice scenario has results.
           </p>

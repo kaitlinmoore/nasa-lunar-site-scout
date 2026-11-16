@@ -1,5 +1,5 @@
 {
-  "contract_version": "0.5.0",
+  "contract_version": "0.7.0",
   "_placeholder": true,
   "_note": "TEST ONLY: made-up sites for checking crowded layouts (web/test-data). Only Site01 is real; no other site has results.",
   "sites": [

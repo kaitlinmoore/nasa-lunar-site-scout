@@ -22,6 +22,7 @@ import {
   ConstantProperty,
   defined,
   DirectionalLight,
+  DistanceDisplayCondition,
   Ellipsoid,
   EllipsoidalOccluder,
   Entity,
@@ -105,6 +106,19 @@ const FOCUS_VIEW = { pitchDeg: -55, rangeM: 900_000, durationS: 1.2 }
  */
 const CARD = { gap: 36, margin: 8, raise: 24 }
 
+/**
+ * Site labels show only when the camera is this close to the site (Kaitlin, 2026-11-15, readiness
+ * fix P2): further out, the polar sites' labels pile into an unreadable stack. The crowded-site test
+ * separated the markers at about 180 km. The "South pole" cue label isn't affected.
+ */
+const SITE_LABEL_MAX_DISTANCE_M = 300_000
+
+/** Click tolerance in CSS pixels around the cursor when collecting the markers it hits. */
+const PICK_SIZE_PX = 10
+
+/** Several site markers under one click (readiness fix P3): a chooser at the click point. */
+type Chooser = { x: number; y: number; ids: string[]; flipX: boolean; flipY: boolean }
+
 type Controls = {
   zoomIn: () => void
   zoomOut: () => void
@@ -152,6 +166,7 @@ export default function MoonGlobe({
   // "You're looking at the Moon's south pole" note: shown at the start view, hidden once the
   // view moves, shown again after Reset (Kaitlin, 2026-11-15: both the pole label and this note).
   const [poleNote, setPoleNote] = useState(true)
+  const [chooser, setChooser] = useState<Chooser | null>(null)
 
   useEffect(() => {
     onSelectRef.current = onSelect
@@ -213,6 +228,10 @@ export default function MoonGlobe({
     // Hide the south-pole note on the user's first move (drag, wheel, pinch or a zoom button).
     // Not on camera.moveStart: Cesium fires that on the first frame after setView, too.
     const hideNote = () => setPoleNote(false)
+    const onUserInput = () => {
+      hideNote()
+      setChooser(null)
+    }
     for (const type of [
       ScreenSpaceEventType.LEFT_DOWN,
       ScreenSpaceEventType.RIGHT_DOWN,
@@ -220,7 +239,7 @@ export default function MoonGlobe({
       ScreenSpaceEventType.WHEEL,
       ScreenSpaceEventType.PINCH_START,
     ]) {
-      v.screenSpaceEventHandler.setInputAction(hideNote, type)
+      v.screenSpaceEventHandler.setInputAction(onUserInput, type)
     }
 
     // On-screen controls: zoom by a fraction of the current height, clamped to the same limits
@@ -324,6 +343,7 @@ export default function MoonGlobe({
             pixelOffset: new Cartesian2(0, -labelOffset),
             heightReference: HeightReference.CLAMP_TO_3D_TILE,
             disableDepthTestDistance: Number.POSITIVE_INFINITY,
+            distanceDisplayCondition: new DistanceDisplayCondition(0, SITE_LABEL_MAX_DISTANCE_M),
           },
         }),
       )
@@ -420,17 +440,40 @@ export default function MoonGlobe({
       }
     }
 
-    // Click a site marker -> its card; click elsewhere -> no card. Pointer cursor over site markers.
+    // Click: every site marker under the cursor (within PICK_SIZE_PX). One -> its card; several ->
+    // a chooser listing them (readiness fix P3; the top marker alone hid the others); none -> no
+    // card. Pointer cursor over site markers.
     const siteIds = new Set(sites.map((s) => s.id))
     const pickedSiteId = (pos: Cartesian2): string | undefined => {
       const picked = scene.pick(pos)
       const id = defined(picked) && picked.id instanceof Entity ? picked.id.id : undefined
       return id !== undefined && siteIds.has(id) ? id : undefined
     }
+    const pickedSiteIds = (pos: Cartesian2): string[] => {
+      const ids: string[] = []
+      for (const picked of scene.drillPick(pos, 100, PICK_SIZE_PX, PICK_SIZE_PX)) {
+        const id = defined(picked) && picked.id instanceof Entity ? picked.id.id : undefined
+        if (id !== undefined && siteIds.has(id) && !ids.includes(id)) ids.push(id)
+      }
+      return ids
+    }
     const handler = v.screenSpaceEventHandler
     handler.removeInputAction(ScreenSpaceEventType.LEFT_DOUBLE_CLICK) // no entity tracking
     handler.setInputAction((e: { position: Cartesian2 }) => {
-      onSelectRef.current(pickedSiteId(e.position) ?? null)
+      const ids = pickedSiteIds(e.position)
+      if (ids.length > 1) {
+        onSelectRef.current(null)
+        setChooser({
+          x: e.position.x,
+          y: e.position.y,
+          ids,
+          flipX: e.position.x > v.canvas.clientWidth / 2,
+          flipY: e.position.y > v.canvas.clientHeight / 2,
+        })
+      } else {
+        setChooser(null)
+        onSelectRef.current(ids[0] ?? null)
+      }
     }, ScreenSpaceEventType.LEFT_CLICK)
     handler.setInputAction((e: { endPosition: Cartesian2 }) => {
       v.canvas.style.cursor = pickedSiteId(e.endPosition) ? 'pointer' : ''
@@ -461,6 +504,14 @@ export default function MoonGlobe({
     }
   }, [sites, ionToken])
 
+  // Escape closes the chooser.
+  useEffect(() => {
+    if (!chooser) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setChooser(null)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [chooser])
+
   // Selection: re-place the card; bring a hidden site into view (e.g. picked from the list).
   useEffect(() => {
     selectedRef.current = selectedSiteId
@@ -489,6 +540,37 @@ export default function MoonGlobe({
       <div ref={cardAnchor} className="globe-card-anchor" hidden={!card || status.kind === 'error'}>
         {status.kind !== 'error' && card}
       </div>
+      {chooser && (
+        <div
+          className={`globe-chooser${chooser.flipX ? ' flip-x' : ''}${chooser.flipY ? ' flip-y' : ''}`}
+          style={{ left: chooser.x, top: chooser.y }}
+          role="dialog"
+          aria-label={`${chooser.ids.length} sites here`}
+        >
+          <div className="globe-chooser-head">
+            {chooser.ids.length} sites here
+            <button type="button" aria-label="Close" title="Close" onClick={() => setChooser(null)}>
+              ✕
+            </button>
+          </div>
+          <ul>
+            {chooser.ids.map((id) => (
+              <li key={id}>
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => {
+                    setChooser(null)
+                    onSelectRef.current(id)
+                  }}
+                >
+                  {sites.find((s) => s.id === id)?.name ?? id}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {status.kind === 'ready' && poleNote && (
         <p className="globe-note" role="note">
           You're looking at the Moon's south pole (north is up).

@@ -91,6 +91,8 @@
   --page-width-wide: 92rem;
   --panel-max-height: calc(100vh - 2rem);
   --card-width: 18rem;
+  --chooser-width: 16rem;
+  --chooser-max-height: 18rem;
   --card-min-width: 26rem;
 
   font-family: var(--font-sans);
@@ -382,3 +384,35 @@ a.button:hover { background: var(--control-bg-hover); }
   .globe-layout.with-panel > .card { position: static; }
   .site-panel { max-height: none; overflow: visible; }
 }
+
+/* Chooser when one click hits several site markers (readiness fix P3). Opens toward the side of
+   the canvas with room: .flip-x / .flip-y flip it left / up of the click point. */
+.globe-chooser {
+  position: absolute;
+  z-index: 3;
+  width: var(--chooser-width);
+  max-height: var(--chooser-max-height);
+  overflow-y: auto;
+  margin: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--globe-overlay-bg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+.globe-chooser.flip-x { transform: translateX(calc(-100% - 2 * var(--space-2))); }
+.globe-chooser.flip-y { transform: translateY(calc(-100% - 2 * var(--space-2))); }
+.globe-chooser.flip-x.flip-y {
+  transform: translate(calc(-100% - 2 * var(--space-2)), calc(-100% - 2 * var(--space-2)));
+}
+.globe-chooser-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
+}
+.globe-chooser ul { list-style: none; margin: 0; padding: 0; }
+.globe-chooser li + li { margin-top: var(--space-1); }
+.globe-chooser .link-button { text-align: left; font-size: var(--text-md); }
