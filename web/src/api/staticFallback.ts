@@ -56,6 +56,13 @@ function entryFor(idx: StaticIndex, scenario: Scenario) {
   return idx.scenarios.find((e) => scenarioId(e.scenario) === id)
 }
 
+/** Terrain views (contract 0.13.0): the copy's TerrainViewsResponse; images at terrain_view/{site}/{view}/{layer}.png. */
+export async function staticTerrainViews(): Promise<Schemas['TerrainViewsResponse']> {
+  const path = (await staticIndex()).terrain_views
+  if (!path) throw new Error('saved copy: no terrain views')
+  return getStaticJson<Schemas['TerrainViewsResponse']>(path)
+}
+
 export async function staticSites(): Promise<SitesResponse> {
   return getStaticJson<SitesResponse>((await staticIndex()).sites)
 }

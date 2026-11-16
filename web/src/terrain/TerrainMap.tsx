@@ -1,6 +1,6 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 // The 2D map itself (OpenLayers): hillshade, slope classes on top, and the site point, in the images'
-// own polar stereographic grid. No reprojection: every image pixel is drawn where view.json puts it.
+// own polar stereographic grid. No reprojection: every image pixel is drawn where the view's bounds put it.
 import 'ol/ol.css'
 import { useEffect, useRef } from 'react'
 import OlMap from 'ol/Map'
@@ -18,7 +18,7 @@ import Projection from 'ol/proj/Projection'
 import ImageStatic from 'ol/source/ImageStatic'
 import VectorSource from 'ol/source/Vector'
 import { Circle, Fill, Stroke, Style } from 'ol/style'
-import type { TerrainView } from './viewData'
+import type { LoadedView } from './viewData'
 
 /** How far in you can zoom: this many screen pixels per image pixel. */
 const MAX_MAGNIFICATION = 8
@@ -34,7 +34,7 @@ export default function TerrainMap({
   slopeOpacity,
   onPointer,
 }: {
-  view: TerrainView
+  view: LoadedView
   sitePoint: [number, number]
   showSlope: boolean
   /** 0 to 1. */
@@ -49,8 +49,8 @@ export default function TerrainMap({
   }, [onPointer])
 
   useEffect(() => {
-    const { meta, grid } = view
-    const extent = meta.bounds_ps_m
+    const { view: meta, grid } = view
+    const extent = meta.bounds_ps_m as [number, number, number, number]
     // Ground metres per grid metre come from the stereographic scale factor (polarGrid.ts), so the
     // scale bar is right on the Moon; OpenLayers' default would measure on the Earth.
     const projection = new Projection({
@@ -62,10 +62,17 @@ export default function TerrainMap({
     const hillshade = new ImageLayer({
       source: new ImageStatic({ url: view.hillshadeUrl, imageExtent: extent, projection }),
     })
-    const slope = new ImageLayer({
-      // Class colours must stay exact: no smoothing between pixels.
-      source: new ImageStatic({ url: view.slopeUrl, imageExtent: extent, projection, interpolate: false }),
-    })
+    const slope = view.slopeUrl
+      ? new ImageLayer({
+          // Class colours must stay exact: no smoothing between pixels.
+          source: new ImageStatic({
+            url: view.slopeUrl,
+            imageExtent: extent,
+            projection,
+            interpolate: false,
+          }),
+        })
+      : null
     slopeLayer.current = slope
     const site = new VectorLayer({
       source: new VectorSource({ features: [new Feature(new Point(sitePoint))] }),
@@ -79,7 +86,7 @@ export default function TerrainMap({
     })
     const map = new OlMap({
       target: target.current ?? undefined,
-      layers: [hillshade, slope, site],
+      layers: slope ? [hillshade, slope, site] : [hillshade, site],
       controls: defaultControls({ attribution: false, rotate: false }).extend([
         new ScaleLine({ units: 'metric' }),
       ]),

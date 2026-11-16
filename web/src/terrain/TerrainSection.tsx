@@ -1,28 +1,31 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// 2D site view (C5, Phase 2 step 3.6): stream A's terrain images for the site, hillshade with the
-// slope classes on top, in a plain card (layout waits for Kaitlin's layout pass). A separate chunk,
-// so OpenLayers and proj4 load only when this card is shown.
+// 2D site view (C5, Phase 2 step 3.6): the site's precomputed terrain images (contract 0.13.0),
+// hillshade with the slope classes on top, in a plain card (layout waits for Kaitlin's layout pass).
+// A separate chunk, so OpenLayers and proj4 load only with the site panel.
 import { useEffect, useMemo, useState } from 'react'
-import type { Site } from '../api/client'
+import { ApiError, type Site } from '../api/client'
+import type { DataSource } from '../api/source'
+import ApiProblemView from '../ApiProblemView'
 import TerrainMap, { DEFAULT_SLOPE_OPACITY, type PointerInfo } from './TerrainMap'
 import {
+  type LoadedView,
   loadView,
   loadViews,
   release,
+  type SiteViews,
   slopeClassAt,
   slopePalette,
   type TerrainView,
-  type TerrainViewMeta,
 } from './viewData'
 
-type Load<T> = { kind: 'loading' } | { kind: 'ok'; data: T } | { kind: 'error'; message: string }
+type Load<T> = { kind: 'loading' } | { kind: 'ok'; data: T } | { kind: 'error'; error: unknown }
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
-/** "2 × 2 km, 5 m pixels", from the description itself. */
-function viewLabel(m: TerrainViewMeta): string {
-  const [l, b, r, t] = m.bounds_ps_m
-  return `${(r - l) / 1000} × ${(t - b) / 1000} km, ${m.pixel_m} m pixels`
+/** "2 × 2 km, 5 m pixels", from the view itself. */
+function viewLabel(v: TerrainView): string {
+  const [l, b, r, t] = v.bounds_ps_m
+  return `${(r - l) / 1000} × ${(t - b) / 1000} km, ${v.pixel_m} m pixels`
 }
 
 /** "89.4527° S, 137.1487° W" for the pointer position (converted here, so rounded). */
@@ -30,80 +33,82 @@ function pointerLatLon(lat: number, lon: number): string {
   return `${Math.abs(lat).toFixed(4)}° ${lat < 0 ? 'S' : 'N'}, ${Math.abs(lon).toFixed(4)}° ${lon < 0 ? 'W' : 'E'}`
 }
 
-export default function TerrainSection({ site }: { site: Site }) {
-  const [metas, setMetas] = useState<Load<TerrainViewMeta[]>>({ kind: 'loading' })
-  const [viewId, setViewId] = useState<string | null>(null)
-  // The loaded view, tagged with the description it's for (a different one means: still loading).
-  const [loadedView, setLoadedView] = useState<{ meta: TerrainViewMeta; load: Load<TerrainView> } | null>(
-    null,
-  )
+export default function TerrainSection({ site, source }: { site: Site; source: DataSource }) {
+  const [views, setViews] = useState<Load<SiteViews>>({ kind: 'loading' })
+  const [viewName, setViewName] = useState<string | null>(null)
+  // The loaded view, tagged with the view it's for (a different one means: still loading).
+  const [loaded, setLoaded] = useState<{ view: TerrainView; load: Load<LoadedView> } | null>(null)
   const [showSlope, setShowSlope] = useState(true)
   const [slopeOpacity, setSlopeOpacity] = useState(DEFAULT_SLOPE_OPACITY)
 
   useEffect(() => {
     let cancelled = false
-    loadViews(site.id)
-      .then((list) => {
+    loadViews(source, site.id)
+      .then((data) => {
         if (cancelled) return
-        setMetas({ kind: 'ok', data: list })
-        setViewId(list[0]?.view ?? null) // the smallest extent first
+        setViews({ kind: 'ok', data })
+        setViewName(data.views[0]?.view ?? null) // the smallest extent first
       })
-      .catch((e: unknown) => !cancelled && setMetas({ kind: 'error', message: message(e) }))
+      .catch((error: unknown) => !cancelled && setViews({ kind: 'error', error }))
     return () => {
       cancelled = true
     }
-  }, [site.id])
+  }, [source, site.id])
 
-  const views = metas.kind === 'ok' ? metas.data : []
-  const meta = views.find((m) => m.view === viewId)
+  const list = views.kind === 'ok' ? views.data.views : []
+  const from = views.kind === 'ok' ? views.data.from : 'live'
+  const view = list.find((v) => v.view === viewName)
   useEffect(() => {
-    if (!meta) return
+    if (!view) return
     let cancelled = false
-    let loaded: TerrainView | null = null
-    loadView(meta)
-      .then((v) => {
-        if (cancelled) return release(v)
-        loaded = v
-        setLoadedView({ meta, load: { kind: 'ok', data: v } })
+    let done: LoadedView | null = null
+    loadView(from, view)
+      .then((l) => {
+        if (cancelled) return release(l)
+        done = l
+        setLoaded({ view, load: { kind: 'ok', data: l } })
       })
-      .catch(
-        (e: unknown) => !cancelled && setLoadedView({ meta, load: { kind: 'error', message: message(e) } }),
-      )
+      .catch((error: unknown) => !cancelled && setLoaded({ view, load: { kind: 'error', error } }))
     return () => {
       cancelled = true
-      if (loaded) release(loaded)
+      if (done) release(done)
     }
-  }, [meta])
+  }, [from, view])
 
-  const view = loadedView && loadedView.meta === meta ? loadedView.load : null
-  const data = view?.kind === 'ok' ? view.data : null
-  // The site's point (from the site list) in the images' grid; the images must be centred on it.
+  const current = loaded && loaded.view === view ? loaded.load : null
+  const data = current?.kind === 'ok' ? current.data : null
+  // The site's point (from the site list) in the images' grid; the view must be centred on it.
   const placed = useMemo(() => {
     if (!data) return null
     const point = data.grid.fromLatLon(site.location.lat, site.location.lon)
-    const [cx, cy] = data.meta.center_ps_m
-    const offset = Math.hypot(point[0] - cx, point[1] - cy)
-    return { point, offset, ok: offset <= data.meta.pixel_m }
+    const offset = Math.hypot(point[0] - data.centerPs[0], point[1] - data.centerPs[1])
+    return { point, offset, ok: offset <= data.view.pixel_m }
   }, [data, site.location.lat, site.location.lon])
 
   let body
-  if (metas.kind === 'loading') body = <p className="muted">Loading the terrain images…</p>
-  else if (metas.kind === 'error') body = <TerrainError message={metas.message} />
-  else if (views.length === 0) {
-    body = <p className="muted">No terrain images for this site yet.</p>
-  } else if (!view || view.kind === 'loading') body = <p className="muted">Loading the terrain images…</p>
-  else if (view.kind === 'error') body = <TerrainError message={view.message} />
-  else if (placed && !placed.ok) {
+  if (source === 'fixtures') body = <p className="muted">Fixture mode has no terrain images.</p>
+  else if (views.kind === 'loading') body = <p className="muted">Loading the terrain images…</p>
+  else if (views.kind === 'error') {
+    body =
+      views.error instanceof ApiError ? (
+        <ApiProblemView what="the terrain images" error={views.error} />
+      ) : (
+        <TerrainError message={message(views.error)} />
+      )
+  } else if (list.length === 0) body = <p className="muted">No terrain images for this site yet.</p>
+  else if (!current || current.kind === 'loading') body = <p className="muted">Loading the terrain images…</p>
+  else if (current.kind === 'error') body = <TerrainError message={message(current.error)} />
+  else if (placed && !placed.ok && data) {
     body = (
       <TerrainError
-        message={`these images are centred ${placed.offset.toFixed(1)} m from this site's location (more than one ${view.data.meta.pixel_m} m pixel), so they aren't shown`}
+        message={`these images are centred ${placed.offset.toFixed(1)} m from this site's location (more than one ${data.view.pixel_m} m pixel), so they aren't shown`}
       />
     )
   } else if (data && placed) {
     body = (
       <TerrainBody
-        key={data.meta.view}
-        view={data}
+        key={data.view.view}
+        loaded={data}
         sitePoint={placed.point}
         showSlope={showSlope}
         slopeOpacity={slopeOpacity}
@@ -114,43 +119,43 @@ export default function TerrainSection({ site }: { site: Site }) {
   return (
     <section className="card terrain-view">
       <h2>Terrain map</h2>
-      <div className="banner notice" role="note">
-        Pilot terrain images from stream A, read from the local data folder by the dev server. The API doesn't
-        serve them yet.
-      </div>
-      {views.length > 0 && (
+      {list.length > 0 && (
         <div className="terrain-controls">
           <fieldset>
             <legend className="visually-hidden">Map extent</legend>
-            {views.map((m) => (
-              <label key={m.view}>
+            {list.map((v) => (
+              <label key={v.view}>
                 <input
                   type="radio"
                   name={`terrain-view-${site.id}`}
-                  checked={viewId === m.view}
-                  onChange={() => setViewId(m.view)}
+                  checked={viewName === v.view}
+                  onChange={() => setViewName(v.view)}
                 />{' '}
-                {viewLabel(m)}
+                {viewLabel(v)}
               </label>
             ))}
           </fieldset>
-          <label>
-            <input type="checkbox" checked={showSlope} onChange={(e) => setShowSlope(e.target.checked)} />{' '}
-            Slope classes
-          </label>
-          <label>
-            Opacity{' '}
-            <input
-              type="range"
-              min={10}
-              max={100}
-              step={10}
-              value={Math.round(slopeOpacity * 100)}
-              disabled={!showSlope}
-              onChange={(e) => setSlopeOpacity(Number(e.target.value) / 100)}
-            />{' '}
-            {Math.round(slopeOpacity * 100)} %
-          </label>
+          {data?.slopeUrl && (
+            <>
+              <label>
+                <input type="checkbox" checked={showSlope} onChange={(e) => setShowSlope(e.target.checked)} />{' '}
+                Slope classes
+              </label>
+              <label>
+                Opacity{' '}
+                <input
+                  type="range"
+                  min={10}
+                  max={100}
+                  step={10}
+                  value={Math.round(slopeOpacity * 100)}
+                  disabled={!showSlope}
+                  onChange={(e) => setSlopeOpacity(Number(e.target.value) / 100)}
+                />{' '}
+                {Math.round(slopeOpacity * 100)} %
+              </label>
+            </>
+          )}
         </div>
       )}
       {body}
@@ -161,37 +166,43 @@ export default function TerrainSection({ site }: { site: Site }) {
 function TerrainError({ message }: { message: string }) {
   return (
     <div className="banner error" role="alert">
-      <strong>Can't draw the terrain map:</strong> {message}.
+      <strong>Can't draw the terrain map:</strong> {message}
+      {/[.?!)]$/.test(message) ? '' : '.'}
     </div>
   )
 }
 
 function TerrainBody({
-  view,
+  loaded,
   sitePoint,
   showSlope,
   slopeOpacity,
 }: {
-  view: TerrainView
+  loaded: LoadedView
   sitePoint: [number, number]
   showSlope: boolean
   slopeOpacity: number
 }) {
   const [pointer, setPointer] = useState<PointerInfo>(null)
-  const { meta, grid } = view
-  const palette = slopePalette(meta)
+  const { view, grid, centerPs } = loaded
+  const slope = loaded.slopeUrl ? view.slope : null
+  const palette = slope ? slopePalette(slope) : []
   // True north at the map centre, degrees clockwise from up (grid north): straight away from the
   // south pole, which is the grid origin.
-  const [cx, cy] = meta.center_ps_m
-  const northDeg = (Math.atan2(cx, cy) * 180) / Math.PI
-  const cls = pointer ? slopeClassAt(view, pointer.x, pointer.y) : null
-  const [lat, lon] = pointer && cls !== null ? grid.toLatLon(pointer.x, pointer.y) : [0, 0]
+  const northDeg = (Math.atan2(centerPs[0], centerPs[1]) * 180) / Math.PI
+  const [left, bottom, right, top] = view.bounds_ps_m
+  const inside = pointer
+    ? pointer.x >= left && pointer.x <= right && pointer.y >= bottom && pointer.y <= top
+    : false
+  const cls = pointer && inside ? slopeClassAt(loaded, pointer.x, pointer.y) : null
+  const [lat, lon] = pointer && inside ? grid.toLatLon(pointer.x, pointer.y) : [0, 0]
+  const src = view.source
 
   return (
     <>
       <div className="terrain-map-wrap">
         <TerrainMap
-          view={view}
+          view={loaded}
           sitePoint={sitePoint}
           showSlope={showSlope}
           slopeOpacity={slopeOpacity}
@@ -207,43 +218,64 @@ function TerrainBody({
         </div>
       </div>
       <p className="terrain-pointer muted" aria-live="off">
-        {pointer && cls !== null ? (
+        {pointer && inside ? (
           <>
-            Pointer: {pointerLatLon(lat, lon)} · slope{' '}
-            {cls === meta.slope.nodata ? 'no data' : meta.slope.class_labels[cls]}
+            Pointer: {pointerLatLon(lat, lon)}
+            {slope && cls !== null && (
+              <> · slope {cls === slope.nodata ? 'no data' : slope.class_labels[cls]}</>
+            )}
           </>
         ) : (
           'Point at the map to read the slope class there. Drag to move; Ctrl + wheel or + / − to zoom.'
         )}
       </p>
       <ul className="legend">
-        <li>Slope{showSlope ? '' : ' (hidden)'}:</li>
-        {meta.slope.class_labels.map((label, i) => (
-          <li key={label}>
-            <span
-              className="legend-swatch terrain-swatch"
-              style={{ background: palette[i], opacity: slopeOpacity }}
-              aria-hidden="true"
-            />{' '}
-            {label}
-          </li>
-        ))}
+        {slope ? (
+          <>
+            <li>Slope{showSlope ? '' : ' (hidden)'}:</li>
+            {slope.class_labels.map((label, i) => (
+              <li key={label}>
+                <span
+                  className="legend-swatch terrain-swatch"
+                  style={{ background: palette[i], opacity: slopeOpacity }}
+                  aria-hidden="true"
+                />{' '}
+                {label}
+              </li>
+            ))}
+          </>
+        ) : (
+          <li>This view has no slope image.</li>
+        )}
         <li>
           <span className="terrain-site-swatch" aria-hidden="true" /> Site point
         </li>
       </ul>
       <div className="definition">
         <p>
-          Up is grid north: {meta.map_up}. The N arrow shows true north at the map's centre; the south pole
+          Up is grid north: {view.map_up}. The N arrow shows true north at the map's centre; the south pole
           lies the opposite way. Grid: south polar stereographic on the {grid.radiusM / 1000} km lunar sphere.
         </p>
         <p>
-          Shading: {meta.hillshade.note} (light from {meta.hillshade.light_azimuth_map_deg}° on the map,{' '}
-          {meta.hillshade.light_altitude_deg}° high). Slope: {meta.slope.definition}.
+          {view.hillshade && (
+            <>
+              Shading: {view.hillshade.note ?? 'cartographic shading'} (light from{' '}
+              {view.hillshade.light_azimuth_map_deg}° on the map, {view.hillshade.light_altitude_deg}°
+              high).{' '}
+            </>
+          )}
+          {slope && <>Slope: {slope.definition}.</>}
         </p>
         <p>
-          Source: <a href={meta.source.url}>{meta.source.dataset_id}</a> ({meta.source.file_id}),{' '}
-          {meta.pixel_m} m pixels, {meta.width} × {meta.height} px.
+          Source: <a href={src.url}>{src.dataset_id}</a>
+          {src.source_pixel_m != null && <>, {src.source_pixel_m} m pixels</>}
+          {src.block_mean != null && src.block_mean > 1 && (
+            <>
+              {' '}
+              (each image pixel the mean of {src.block_mean} × {src.block_mean})
+            </>
+          )}
+          ; image {view.width} × {view.height} px at {view.pixel_m} m.
         </p>
       </div>
     </>

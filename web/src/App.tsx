@@ -318,19 +318,10 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
           <SiteScreen data={data}>{skySection}</SiteScreen>
         </>
       )}
-      {/* 2D site view (C5): fixture mode only, from stream A's pilot images on the dev server, until
-          C api serves GET /api/terrain/views (contract 0.13.0). */}
-      {source === 'fixtures' &&
-        (import.meta.env.DEV ? (
-          <Suspense fallback={<p className="muted">Loading the terrain map…</p>}>
-            <TerrainSection key={site.id} site={site} />
-          </Suspense>
-        ) : (
-          <section className="card">
-            <h2>Terrain map</h2>
-            <p className="muted">The terrain map's pilot images are served by the dev server only.</p>
-          </section>
-        ))}
+      {/* 2D site view (C5): the site's terrain images (contract 0.13.0), static copy as fallback. */}
+      <Suspense fallback={<p className="muted">Loading the terrain map…</p>}>
+        <TerrainSection key={site.id} site={site} source={source} />
+      </Suspense>
       {/* Questions (C7b), below the dashboard; a fresh box per site. It sends the chosen scenario. */}
       <NlBox key={site.id} site={site} scenario={entry ? entry.scenario : null} source={source} />
     </>

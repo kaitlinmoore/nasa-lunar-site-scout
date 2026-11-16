@@ -12,15 +12,11 @@
 // - Cesium (C7a globe): its static runtime files (Workers, ThirdParty, Assets, Widgets) are
 //   copied to /cesium/ and CESIUM_BASE_URL points there (Cesium's documented Vite setup).
 //   The token is logged by length only, never printed.
-// - 2D site view (C5, fixture mode until C api's GET /api/terrain/views, contract 0.13.0): the DEV
-//   server serves stream A's terrain images from LSS_DATA_DIR/cache/terrain_view at
-//   /dev-terrain-view/ (hillshade and slope PNGs, plus <site>/views.json listing that site's
-//   view.json bodies). Not part of any build.
-import { createReadStream, existsSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { parseEnv } from 'node:util'
 import react from '@vitejs/plugin-react'
-import { defineConfig, type Plugin, searchForWorkspaceRoot } from 'vite'
+import { defineConfig, searchForWorkspaceRoot } from 'vite'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 const repoRoot = resolve(import.meta.dirname, '..')
@@ -65,53 +61,12 @@ const fieldDocs = Object.fromEntries(
   }),
 )
 
-// Same lookup as lss/config.py: LSS_DATA_DIR from the environment or .env, else the shared folder
-// next to the worktrees.
-const dataDir = process.env.LSS_DATA_DIR || fileEnv.LSS_DATA_DIR || resolve(repoRoot, '..', 'lss-data')
-const terrainViewDir = resolve(dataDir, 'cache', 'terrain_view')
-
-/** Dev only: stream A's terrain images at /dev-terrain-view/ (see the header). */
-function devTerrainViews(): Plugin {
-  const route = /^\/dev-terrain-view\/([a-z0-9-]+)\/(?:views\.json|([a-z0-9]+)\/(hillshade|slope)\.png)$/
-  return {
-    name: 'lss-dev-terrain-views',
-    apply: 'serve',
-    configureServer(server) {
-      console.info(
-        `Terrain images (2D view, dev only): ${terrainViewDir}${existsSync(terrainViewDir) ? '' : ' (missing)'}`,
-      )
-      server.middlewares.use('/dev-terrain-view', (req, res) => {
-        const m = route.exec(`/dev-terrain-view${(req.url ?? '').split('?')[0]}`)
-        const siteDir = m ? resolve(terrainViewDir, m[1]) : ''
-        const notFound = () => {
-          res.statusCode = 404
-          res.setHeader('Content-Type', 'application/json')
-          res.end(JSON.stringify({ detail: { reason: 'No terrain images for this site or view.' } }))
-        }
-        if (!m || !existsSync(siteDir)) return notFound()
-        if (!m[2]) {
-          const views = readdirSync(siteDir, { withFileTypes: true })
-            .filter((d) => d.isDirectory() && existsSync(resolve(siteDir, d.name, 'view.json')))
-            .map((d) => JSON.parse(readFileSync(resolve(siteDir, d.name, 'view.json'), 'utf-8')))
-          res.setHeader('Content-Type', 'application/json')
-          return res.end(JSON.stringify({ views }))
-        }
-        const file = resolve(siteDir, m[2], `${m[3]}.png`)
-        if (!existsSync(file)) return notFound()
-        res.setHeader('Content-Type', 'image/png')
-        createReadStream(file).pipe(res)
-      })
-    },
-  }
-}
-
 /** Where Cesium's static runtime files are served from (relative to the site root). */
 const cesiumBaseUrl = 'cesium'
 
 export default defineConfig({
   plugins: [
     react(),
-    devTerrainViews(),
     viteStaticCopy({
       targets: [
         {
