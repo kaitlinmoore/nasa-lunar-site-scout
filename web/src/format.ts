@@ -252,3 +252,8 @@ export function truncateText(text: string, max: number): string {
   const space = cut.lastIndexOf(' ')
   return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,;:.–-]+$/, '')}…`
 }
+
+/** Menu label for the saved page: "Saved scenarios (2)"; no count when none are saved. */
+export function formatSavedLabel(scenarioCount: number): string {
+  return scenarioCount > 0 ? `Saved scenarios (${scenarioCount})` : 'Saved scenarios'
+}

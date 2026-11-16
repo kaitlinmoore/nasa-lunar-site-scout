@@ -36,9 +36,10 @@ The header shows which source is in use. Fixture data goes through the same gene
 ## Views and URLs
 
 - `/` (plus any `?source=`): the **globe** (C7a), the start page.
-- `?view=saved`: saved items and the comparison (C6).
+- `?view=saved`: saved scenarios and the comparison (C6). The menu item, "Saved scenarios (n)", appears only once a scenario is saved (or while on that page); after "Save this scenario" on a site's screen, a "Compare saved scenarios →" link appears next to the button.
 - `?site=<id>`: the globe with that site's screen open in a side panel (the globe zooms toward the site). Back/forward work, and other query params (like `?source=fixtures`) are kept when moving between views. No router dependency (`src/route.ts`).
 - **Choosing a site** (Kaitlin, 2026-11-15, layout "card, then panel"): clicking a marker or a site in the list shows a card next to the marker (name, the start of the description, "See details", ✕; Escape or a click elsewhere closes it; a list click turns the globe to the site if it's out of view). "See details" opens the side panel beside the globe with the full site screen, and the globe zooms toward the site; closing the panel returns to the whole Moon. The globe stays mounted throughout. On narrow screens the panel stacks under the globe. Without a globe (no token, no WebGL) a list click opens the panel directly, or the card shows under the error.
+- **Pinned sites** live on the globe (Kaitlin, 2026-11-15): a pinned site's marker has an accent ring and "★" before its name, the card has a Pin / Unpin button (as does the site screen), and the site list shows a "★ Pinned" group first. Pins are kept in the saved-items document, so export/import carry them, but the saved page shows only scenarios and the comparison.
 - A site's screen shows results only when they're for that site's location. So far only the C1 thin-slice scenario (Site01) has results; any other site says "No computed scenario for this site yet".
 
 ## Globe (C7a)

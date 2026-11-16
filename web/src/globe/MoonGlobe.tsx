@@ -19,6 +19,7 @@ import {
   Cartesian3,
   Cesium3DTileset,
   Color,
+  ConstantProperty,
   defined,
   DirectionalLight,
   Ellipsoid,
@@ -111,6 +112,8 @@ type Controls = {
   showSite: (siteId: string) => void
   /** Re-place the card (after the selection or its content changed). */
   refresh: () => void
+  /** Restyle markers so pinned sites stand out. */
+  setPinned: (siteIds: string[]) => void
 }
 
 export default function MoonGlobe({
@@ -119,6 +122,7 @@ export default function MoonGlobe({
   onSelect,
   selectedSiteId,
   focusSiteId,
+  pinnedSiteIds,
   card,
 }: {
   sites: Site[]
@@ -129,6 +133,8 @@ export default function MoonGlobe({
   selectedSiteId: string | null
   /** The site whose side panel is open (the globe zooms toward it), if any. */
   focusSiteId: string | null
+  /** Pinned sites: drawn with a distinct marker (ring colour, size, ★ before the name). */
+  pinnedSiteIds: string[]
   /** The card's content, anchored next to the selected site's marker. */
   card: ReactNode
 }) {
@@ -136,6 +142,7 @@ export default function MoonGlobe({
   const cardAnchor = useRef<HTMLDivElement>(null)
   const selectedRef = useRef(selectedSiteId)
   const focusRef = useRef(focusSiteId)
+  const pinnedRef = useRef(pinnedSiteIds)
   const onSelectRef = useRef(onSelect)
   const controls = useRef<Controls | null>(null)
   const [status, setStatus] = useState<Status>({ kind: 'loading' })
@@ -258,6 +265,19 @@ export default function MoonGlobe({
         placeCard()
         scene.requestRender()
       },
+      setPinned: (siteIds) => {
+        const pinned = new Set(siteIds)
+        for (const site of sites) {
+          const entity = v.entities.getById(site.id)
+          if (!entity?.point || !entity.label) continue
+          const isPinned = pinned.has(site.id)
+          entity.point.outlineColor = new ConstantProperty(isPinned ? pinColor : outlineColor)
+          entity.point.outlineWidth = new ConstantProperty(isPinned ? pinOutlineWidth : outlineWidth)
+          entity.point.pixelSize = new ConstantProperty(isPinned ? pinSize : markerSize)
+          entity.label.text = new ConstantProperty(isPinned ? `★ ${site.name}` : site.name)
+        }
+        scene.requestRender()
+      },
     }
 
     // Site markers: clamped to the rendered tileset surface; no height is read back.
@@ -271,6 +291,9 @@ export default function MoonGlobe({
     const markerSize = tokenNumber('--globe-marker-size', 12)
     const outlineWidth = tokenNumber('--globe-marker-outline-width', 2)
     const labelOffset = tokenNumber('--globe-label-offset', 14)
+    const pinColor = Color.fromCssColorString(token('--globe-pin') || 'deepskyblue')
+    const pinSize = tokenNumber('--globe-pin-size', 15)
+    const pinOutlineWidth = tokenNumber('--globe-pin-outline-width', 3)
     for (const site of sites) {
       const position = positions.get(site.id) as Cartesian3
       const entity = v.entities.add(
@@ -400,6 +423,8 @@ export default function MoonGlobe({
       v.canvas.style.cursor = pickedSiteId(e.endPosition) ? 'pointer' : ''
     }, ScreenSpaceEventType.MOUSE_MOVE)
 
+    controls.current.setPinned(pinnedRef.current)
+
     // Deep link to a site's panel: start zoomed toward it.
     if (focusRef.current) controls.current.focusSite(focusRef.current, true)
 
@@ -429,6 +454,13 @@ export default function MoonGlobe({
     if (selectedSiteId) controls.current?.showSite(selectedSiteId)
     controls.current?.refresh()
   }, [selectedSiteId, card])
+
+  // Pinned sites: restyle their markers whenever the pins change.
+  const pinnedKey = pinnedSiteIds.join('\n')
+  useEffect(() => {
+    pinnedRef.current = pinnedKey ? pinnedKey.split('\n') : []
+    controls.current?.setPinned(pinnedRef.current)
+  }, [pinnedKey])
 
   // Side panel: zoom toward its site when it opens or changes; back to the whole Moon when it closes.
   useEffect(() => {

@@ -21,7 +21,7 @@ import {
   thinSliceScenario,
 } from './api/source'
 import ApiProblemView from './ApiProblemView'
-import { formatLatLon } from './format'
+import { formatLatLon, formatSavedLabel } from './format'
 import GlobeView from './globe/GlobeView'
 import { navigate, type Route, routeHref, useRoute } from './route'
 import SavedView from './saved/SavedView'
@@ -101,15 +101,24 @@ function NavLink({ to, current, children }: { to: Route; current: Route; childre
   )
 }
 
+/**
+ * Main menu. "Saved scenarios" appears only once a scenario is saved (Kaitlin, 2026-11-15): a new
+ * visitor doesn't see a link to an empty list before they know saving exists. It also shows while
+ * you're on that page. Pinned sites live on the globe, so they don't count here.
+ */
 function Nav({ route }: { route: Route }) {
+  const { doc } = useSaved()
+  const anythingSaved = doc.scenarios.length > 0
   return (
     <nav className="nav">
       <NavLink to={{ view: 'globe' }} current={route}>
         Moon
       </NavLink>
-      <NavLink to={{ view: 'saved' }} current={route}>
-        Saved and compare
-      </NavLink>
+      {(anythingSaved || route.view === 'saved') && (
+        <NavLink to={{ view: 'saved' }} current={route}>
+          {formatSavedLabel(doc.scenarios.length)}
+        </NavLink>
+      )}
     </nav>
   )
 }
@@ -150,6 +159,18 @@ function SiteActions({ site, scenario }: { site: Site; scenario: Scenario | null
         >
           {isSaved ? 'Scenario saved' : 'Save this scenario'}
         </button>
+      )}
+      {/* Where saving happens is where the saved list gets introduced (Kaitlin, 2026-11-15). */}
+      {isSaved && (
+        <a
+          href={routeHref({ view: 'saved' })}
+          onClick={(e) => {
+            e.preventDefault()
+            navigate({ view: 'saved' })
+          }}
+        >
+          Compare saved scenarios →
+        </a>
       )}
       {error && (
         <span className="error" role="alert">

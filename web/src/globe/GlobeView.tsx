@@ -6,10 +6,13 @@
 // Site selection (Kaitlin, 2026-11-15, layout (c)): clicking a marker or a list entry shows a
 // card on the globe (name, start of the description, "See details"); "See details" opens the
 // site's side panel beside the globe (`?site=<id>`), and the globe zooms toward the site.
+// Pinned sites (Kaitlin, 2026-11-15) live here: a distinct marker, a Pin/Unpin button on the card,
+// and a "Pinned" group first in the site list.
 import { lazy, Suspense, useEffect, useState } from 'react'
 import type { Site, SitesResponse } from '../api/client'
 import { formatLatLon, truncateText } from '../format'
 import { navigate, routeHref } from '../route'
+import { type PinnedSite, useSaved } from '../saved/store'
 
 const MoonGlobe = lazy(() => import('./MoonGlobe'))
 
@@ -24,6 +27,8 @@ function detailsRoute(siteId: string) {
 
 /** The card shown next to a selected site's marker. */
 function SiteCard({ site, onClose }: { site: Site; onClose: () => void }) {
+  const saved = useSaved()
+  const pinned = saved.isPinned(site.id)
   const description = site.description?.trim()
   const route = detailsRoute(site.id)
   return (
@@ -45,7 +50,14 @@ function SiteCard({ site, onClose }: { site: Site; onClose: () => void }) {
         }}
       >
         See details
-      </a>
+      </a>{' '}
+      <button
+        type="button"
+        aria-pressed={pinned}
+        onClick={() => (pinned ? saved.unpinSite(site.id) : saved.pinSite(site))}
+      >
+        {pinned ? '★ Pinned' : '☆ Pin site'}
+      </button>
     </div>
   )
 }
@@ -59,6 +71,7 @@ function SiteList({
   selected: string | null
   onSelect: (siteId: string) => void
 }) {
+  if (sites.length === 0) return null
   return (
     <ul className="site-list">
       {sites.map((site) => (
@@ -88,6 +101,13 @@ export default function GlobeView({
   focusSiteId: string | null
 }) {
   const [selected, setSelected] = useState<string | null>(null)
+  const { doc, unpinSite } = useSaved()
+  const pins: PinnedSite[] = doc.pinned_sites
+  const pinnedIds = new Set(pins.map((p) => p.site_id))
+  const pinnedSites = data.sites.filter((s) => pinnedIds.has(s.id))
+  const otherSites = data.sites.filter((s) => !pinnedIds.has(s.id))
+  // A pin whose site isn't in the current list (e.g. imported from another build).
+  const missingPins = pins.filter((p) => !data.sites.some((s) => s.id === p.site_id))
   const selectedSite = data.sites.find((s) => s.id === selected) ?? null
   // With the panel open for a site, its card would repeat the panel: don't show it.
   const cardSite = selectedSite && selectedSite.id !== focusSiteId ? selectedSite : null
@@ -100,6 +120,7 @@ export default function GlobeView({
     return () => window.removeEventListener('keydown', onKey)
   }, [cardSite])
 
+  const listSelected = selected ?? focusSiteId
   // Without a globe (no token), a list click goes straight to the site's panel.
   const select = (siteId: string) => (ION_TOKEN ? setSelected(siteId) : navigate(detailsRoute(siteId)))
 
@@ -120,6 +141,7 @@ export default function GlobeView({
             onSelect={setSelected}
             selectedSiteId={cardSite?.id ?? null}
             focusSiteId={focusSiteId}
+            pinnedSiteIds={pins.map((p) => p.site_id)}
             card={cardSite ? <SiteCard site={cardSite} onClose={() => setSelected(null)} /> : null}
           />
         </Suspense>
@@ -142,11 +164,31 @@ export default function GlobeView({
           surface and no values are taken from it. Every number in this tool comes from our own API.
         </p>
       </details>
-      <h3 className="list-heading">Curated sites</h3>
+      {pins.length > 0 && (
+        <>
+          <h3 className="list-heading">★ Pinned</h3>
+          <SiteList sites={pinnedSites} selected={listSelected} onSelect={select} />
+          {missingPins.length > 0 && (
+            <ul className="site-list">
+              {missingPins.map((p) => (
+                <li key={p.site_id}>
+                  {p.name} <span className="muted">(not in the current site list)</span>{' '}
+                  <button type="button" className="link-button" onClick={() => unpinSite(p.site_id)}>
+                    Unpin
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+      <h3 className="list-heading">{pins.length > 0 ? 'Other curated sites' : 'Curated sites'}</h3>
       {data.sites.length === 0 ? (
         <p className="muted">No curated sites.</p>
+      ) : otherSites.length === 0 ? (
+        <p className="muted">All curated sites are pinned.</p>
       ) : (
-        <SiteList sites={data.sites} selected={cardSite?.id ?? focusSiteId} onSelect={select} />
+        <SiteList sites={otherSites} selected={listSelected} onSelect={select} />
       )}
     </section>
   )

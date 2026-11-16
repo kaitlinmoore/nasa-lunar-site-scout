@@ -63,6 +63,9 @@
   --globe-marker-outline-width: 2px;
   --globe-label-font: 600 14px system-ui, sans-serif;
   --globe-label-offset: 14px;
+  --globe-pin: #58a6ff;
+  --globe-pin-size: 15px;
+  --globe-pin-outline-width: 3px;
   --globe-pole: #c9d1d9;
   --globe-pole-size: 6px;
   --globe-pole-font: 500 12px system-ui, sans-serif;
@@ -343,6 +346,7 @@ input[type='checkbox'] { padding: 0; }
 }
 .site-card h3 { margin: 0 var(--space-6) var(--space-2) 0; font-size: var(--text-h2); }
 .site-card p { margin: 0 0 var(--space-3); font-size: var(--text-md); }
+.site-card button[aria-pressed='true'] { color: var(--globe-pin); }
 .site-card-close { position: absolute; top: var(--space-2); right: var(--space-2); padding: 0 var(--space-2); }
 .globe-card-static { margin: var(--space-3) 0; }
 a.button {

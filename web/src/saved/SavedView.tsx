@@ -1,6 +1,8 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 // Saved items and comparison (C6). Minimal layout on purpose (Kaitlin judges it later).
-// - Pinned sites, saved scenarios (browser storage), export/import as portable JSON.
+// - Saved scenarios (browser storage), export/import as portable JSON. Pinned sites are kept in
+//   the same document (so export/import carry them) but shown on the globe, not here (Kaitlin,
+//   2026-11-15: the globe is for "where", this page for "where + when").
 // - A small form makes scenarios for several sites × several dates.
 // - The comparison is the saved scenarios ticked for it, side by side.
 import { type FormEvent, type ReactNode, useEffect, useRef, useState } from 'react'
@@ -14,7 +16,6 @@ import {
 import { type DataSource, loadCompare } from '../api/source'
 import {
   formatExactRange,
-  formatLatLon,
   formatScenarioSummary,
   formatUtcInput,
   parseUtcInput,
@@ -334,28 +335,10 @@ export default function SavedView({
       <section className="card">
         <h2>Saved items</h2>
         <p className="definition">
-          Kept in this browser. Export them as a JSON file to keep a copy or move them to another browser.
+          Your saved scenarios and pinned sites are kept in this browser. Export them as a JSON file to keep a
+          copy or move them to another browser.
         </p>
         <ImportExport />
-      </section>
-
-      <section className="card">
-        <h2>Pinned sites</h2>
-        {doc.pinned_sites.length === 0 ? (
-          <p className="muted">No pinned sites. Pin one from its site screen.</p>
-        ) : (
-          <ul className="saved-list">
-            {doc.pinned_sites.map((p) => (
-              <li key={p.site_id}>
-                <SiteLink siteId={p.site_id}>{p.name}</SiteLink>{' '}
-                <span className="muted value">{formatLatLon(p.location.lat, p.location.lon)}</span>{' '}
-                <button type="button" className="link-button" onClick={() => saved.unpinSite(p.site_id)}>
-                  Unpin
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
 
       <section className="card">
