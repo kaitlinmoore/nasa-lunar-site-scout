@@ -569,6 +569,21 @@ For the `terrain` and `site_summary` operations (C api's request RA4).
     therefore low confidence, with a median RMS slope error of 1.9° (Barker et al. 2021, section 4).
   - The maximum within a radius picks out crater walls and the steepest single pixel, not a typical value.
 
+### 5.7 Terrain images for the 2D site view (`lss.terrain.views`)
+
+Georeferenced PNGs on the DEM's own south polar stereographic grid (`scripts/terrain_views.py`). "Map up" is the
+grid's +y axis, not geographic north. The views are square and centred on each site's served point: 2 km from
+the 5 m site map and 10 km from the 10 m polar map, the same maps as the 1 km and 10 km slope statistics
+(section 5.6).
+- **Hillshade:** cartographic shading for reading the relief, not the real Sun. Light from map azimuth 315° at
+  45° elevation, with the gradient by central differences.
+- **Slope:** the definition of section 5.6, in five classes: under 5°, 5–10°, 10–15°, 15–20°, 20° or more. The
+  image stores the class number; the client chooses the colours. The suggested colours are one-hue blue ramps
+  for light and dark surfaces, flattest lightest on light surfaces. Both pass the ordinal checks of the dataviz
+  validator (monotone lightness, visible steps, end step at least 2:1 against the surface).
+- **Elevation:** height above the 1737.4 km sphere in 0.1 m steps (16-bit, with an offset).
+- A pixel without data, or with a neighbour without data, is marked as no data.
+
 ## 6. Validation results (step 4.7)
 
 All numbers below come from committed scripts. Their outputs are committed too and checked by tests:
