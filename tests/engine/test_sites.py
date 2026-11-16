@@ -47,3 +47,20 @@ def test_roi_point_is_the_largest_rois_centroid(site_id):
     r = largest(read_rois(f.path))
     assert (r.number, r.area_m2) == (p.roi, p.roi_area_m2)
     assert r.centroid_ps == p.ps_m  # Site01: exactly Barker's Table 2 centroid
+
+
+# Mazarico et al. (2011) Table 3, south pole: rank -> (east longitude, south latitude), as published.
+MAZARICO_TABLE3 = {6: (37.07, 85.30), 20: (31.73, 85.43), 23: (357.70, 85.97), 42: (243.65, 85.83)}
+
+
+def test_mazarico_points_are_table_3_as_published():
+    sites = {s.id: s for s in load_sites()}
+    got = {}
+    for sid, p in site_points().items():
+        if p.rule != "mazarico_2011":
+            continue
+        rank = int(p.tile[4:])  # product 78 site numbers are the Table 3 ranks
+        loc = sites[sid].location
+        got[rank] = (round(loc.lon % 360.0, 2), round(-loc.lat, 2))
+        assert f"rank {rank}" in (p.centroid_from or "") and "Table 3" in sites[sid].source
+    assert got == MAZARICO_TABLE3

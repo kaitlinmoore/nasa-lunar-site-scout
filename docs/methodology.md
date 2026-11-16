@@ -108,7 +108,7 @@ The site list is registry data: `lss/registry/sites.yaml`, loaded by `lss/regist
   tabulated centroids are pixel centres, and this rule reproduces all seven at Site01 (Table 2) exactly.
 - Areas match Table 2 for 6 of the 7 Site01 RoIs. RoI 2 comes out two pixels larger (7,600 against 7,550 m²).
 
-**Sites so far** (all with Barker's 100 DEM clones):
+**Sites at the centroid of the largest RoI** (all with Barker's 100 DEM clones):
 
 | Site | Largest RoI | Area | PS (km) | Lat, lon | Slope at the point |
 |---|---|---|---|---|---|
@@ -120,12 +120,27 @@ The site list is registry data: `lss/registry/sites.yaml`, loaded by `lss/regist
 Slopes here use the definition of section 5.6 (central differences at 5 m). Site01's 1.4° in section 1.3 used a
 ±10 m baseline.
 
-**Not yet placed.**
-- Site06's RoI archive link on the PGDA page returns a "Not Found" page, so Site06 falls under the Mazarico rule.
-- Mazarico et al. (2011) Table 3, the source of the coordinates for Site06, 20, 23 and 42, is behind a paywall
-  and has not been read.
-- The other 19 product 78 tiles (Haworth, Shoemaker, DM, SL, NP and LM series) are not Mazarico sites, so
-  neither rule gives them a point yet.
+**Sites at the Mazarico et al. (2011) coordinate.** These tiles have no published RoIs. Site06's RoI archive
+link on the PGDA page returns a "Not Found" page.
+- **Source:** Mazarico et al. (2011, Table 3), the 50 most illuminated spots near each pole on a 240 m map.
+  Illumination there is the mean visible fraction of the solar disc at surface level, 1970–2044 at 6 h steps.
+  The coordinates are given to 0.01°, about 300 m in latitude at these sites, so each point is that precise.
+- The product 78 site numbers are the Table 3 ranks.
+
+| Site | Table 3 rank | Average illumination (Table 3, surface) | PS (km) | Lat, lon | Slope at the point |
+|---|---|---|---|---|---|
+| Site06 Nobile rim 1 | 6 | 85.95% | 85.958, 113.780 | −85.30, 37.07 | **8.0°** |
+| Site20 Leibnitz beta plateau | 20 | 82.22% | 72.919, 117.928 | −85.43, 31.73 | **7.2°** |
+| Site23 Malapert massif | 23 | 81.76% | −4.906, 122.155 | −85.97, −2.30 | **6.6°** |
+| Site42 de Gerlache-Kocher massif | 42 | 79.59% | −113.360, −56.149 | −85.83, −116.35 | **6.8°** |
+
+**Slope check: all four are steeper than the RoI points.** Their slopes are 6.6–8.0° at the point, and the
+mean slope within 100 m is 5.0–8.0°. The RoI centroids are at 1.1–5.1°, and Site01's own Mazarico point is on
+an 8.6° slope. The coordinates were picked on a 240 m map, where this relief is invisible. Flagged to Kaitlin
+(2026-11-15). The points are kept as published, because the rule takes Mazarico's coordinate.
+
+**Left out of C3** (Kaitlin, 2026-11-15): the other 19 product 78 tiles (Haworth, Shoemaker, DM, SL, NP and LM
+series). They are not Mazarico sites, so neither rule gives them a point.
 
 ## 2. Frames, time scales and topocentric geometry
 
