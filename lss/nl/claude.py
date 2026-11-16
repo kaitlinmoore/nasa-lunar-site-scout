@@ -26,6 +26,26 @@ FALLBACK_BETA = "server-side-fallback-2026-07-01"
 FALLBACK_MODELS = frozenset({"claude-opus-5-5", "claude-sonnet-5-5", "claude-fable-5-2"})
 
 
+# USD per million tokens (input, output), standard rates. Source: Anthropic pricing as cached in
+# the claude-api skill, 2026-11-03. Estimates only (eval reports, the /api/nl spend cap); the Console has
+# the bill.
+PRICES_PER_MTOK: dict[str, tuple[float, float]] = {
+    "claude-opus-5-5": (4.00, 20.00),
+    "claude-sonnet-5-5": (2.00, 10.00),
+    "claude-haiku-5-5": (0.10, 0.50),
+}
+
+
+def estimate_cost_usd(meta: dict[str, Any] | None) -> float | None:
+    """Estimated cost of one call from its `last_meta`, priced by the serving model (None: unpriced)."""
+    meta = meta or {}
+    i, o = meta.get("input_tokens") or 0, meta.get("output_tokens") or 0
+    prices = PRICES_PER_MTOK.get(meta.get("served_by"))
+    if prices is None:
+        return None if (i or o) else 0.0
+    return (i * prices[0] + o * prices[1]) / 1e6
+
+
 class ProviderError(RuntimeError):
     """The model didn't return a usable answer (refusal, truncation, no text)."""
 

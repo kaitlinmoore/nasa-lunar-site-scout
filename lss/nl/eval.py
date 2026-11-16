@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Any
 
 from lss.config import REPO_ROOT
+from lss.nl.claude import PRICES_PER_MTOK
 from lss.nl.evalset import EvalItem, EvalSet, ItemStatus, Split, label_output, load_eval_set
 from lss.nl.interpret import interpret
 from lss.nl.prompt import PROMPT_VERSION
@@ -50,13 +51,7 @@ from lss.nl.validate import (
 
 RESULTS_DIR = REPO_ROOT / "tests" / "nl" / "results"
 
-# USD per million tokens (input, output), standard rates. Source: Anthropic pricing as cached in
-# the claude-api skill, 2026-11-03. Used only to estimate a run's spend; check the Console for the bill.
-PRICES_PER_MTOK: dict[str, tuple[float, float]] = {
-    "claude-opus-5-5": (4.00, 20.00),
-    "claude-sonnet-5-5": (2.00, 10.00),
-    "claude-haiku-5-5": (0.10, 0.50),
-}
+# Prices live with the provider (lss.nl.claude), shared with the /api/nl spend cap.
 
 
 def _usage(results: list[ItemResult]) -> dict[str, Any]:
@@ -241,8 +236,12 @@ def run_eval(
 
 def _scores(results: list[ItemResult]) -> dict[str, Any]:
     scored = [r for r in results if r.scored]
+    clarify = [r for r in results if r.expected_outcome == Outcome.clarify.value]
+    a = _score(results, "query_correct")
+    # Clarifications count in (a); their share is reported with it (project author, 2026-11-15).
+    a["of_which_clarify"] = {k: v for k, v in _score(clarify, "query_correct").items() if k != "score"}
     return {
-        "a_structured_query": _score(results, "query_correct"),
+        "a_structured_query": a,
         "b_refusal_reason": _score(results, "reason_correct"),
         "valid_output": {
             "correct": sum(r.valid for r in scored),

@@ -33,7 +33,7 @@ from pydantic import (
     model_validator,
 )
 
-CONTRACT_VERSION = "0.7.0"
+CONTRACT_VERSION = "0.8.0"
 
 Latitude = Annotated[float, Field(ge=-90.0, le=90.0, description="Planetocentric latitude, deg")]
 Longitude = Annotated[
@@ -742,8 +742,12 @@ class Job(Response):
 # ---------------------------------------------------------------------- NL (F11)
 
 
+# Longest NL question accepted (contract 0.8.0): bounds the cost of one request.
+NL_MAX_TEXT_CHARS = 1000
+
+
 class NLRequest(Model):
-    text: str = Field(min_length=1)
+    text: str = Field(min_length=1, max_length=NL_MAX_TEXT_CHARS)
     selected_site_id: str | None = None
     selected_scenario: Scenario | None = None
 
@@ -899,6 +903,17 @@ class NoTerrainError(Model):
     """422 from POST /api/locate: no terrain data in this version covers the location."""
 
     detail: NoTerrainDetail
+
+
+class RateLimitedDetail(Model):
+    reason: str = Field(description="Plain-language explanation, suitable to show to visitors")
+    retry_after_s: int = Field(ge=1, description="Seconds until this client may ask again")
+
+
+class RateLimitedError(Model):
+    """429 from POST /api/nl: this client asked too many live questions (contract 0.8.0)."""
+
+    detail: RateLimitedDetail
 
 
 class UnprocessableError(RootModel[NotServedError | InvalidRequestError]):

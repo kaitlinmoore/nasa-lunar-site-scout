@@ -3,8 +3,8 @@
   "info": {
     "title": "Lunar Site Scout API",
     "description": "Contract v0. Not affiliated with or endorsed by NASA.",
-    "version": "0.7.0",
-    "x-contract-version": "0.7.0"
+    "version": "0.8.0",
+    "x-contract-version": "0.8.0"
   },
   "paths": {
     "/api/health": {
@@ -312,6 +312,75 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UnavailableError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/nl": {
+      "post": {
+        "summary": "Nl",
+        "operationId": "nl_api_nl_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NLRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/NLAnswer"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NLUnsupported"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NLClarification"
+                    }
+                  ],
+                  "title": "Response Nl Api Nl Post"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many live questions from this client",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Live questions unavailable (daily spend cap reached, or the model can't be reached)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnavailableError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -685,7 +754,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.7.0"
+            "default": "0.8.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -939,7 +1008,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.7.0"
+            "default": "0.8.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1137,7 +1206,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.7.0",
+            "default": "0.8.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1241,7 +1310,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.7.0"
+            "default": "0.8.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1276,7 +1345,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.7.0"
+            "default": "0.8.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1398,7 +1467,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.7.0",
+            "default": "0.8.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1495,25 +1564,25 @@
         "type": "string"
       },
       "Limitation": {
-        "additionalProperties": false,
         "properties": {
           "reason": {
-            "title": "Reason",
-            "type": "string"
+            "type": "string",
+            "title": "Reason"
           },
           "datasets_considered": {
             "items": {
               "type": "string"
             },
-            "title": "Datasets Considered",
-            "type": "array"
+            "type": "array",
+            "title": "Datasets Considered"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "reason"
         ],
-        "title": "Limitation",
-        "type": "object"
+        "title": "Limitation"
       },
       "LocateRequest": {
         "properties": {
@@ -1545,7 +1614,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.7.0"
+            "default": "0.8.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1684,7 +1753,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.7.0"
+            "default": "0.8.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1745,18 +1814,17 @@
         "title": "MetricsResponse"
       },
       "NLAnswer": {
-        "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.7.0",
+            "type": "string",
             "title": "Contract Version",
-            "type": "string"
+            "default": "0.8.0"
           },
           "_placeholder": {
-            "default": false,
-            "description": "True when the values are placeholders, not computed results.",
+            "type": "boolean",
             "title": "Placeholder",
-            "type": "boolean"
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
           },
           "_note": {
             "anyOf": [
@@ -1767,13 +1835,12 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Note"
           },
           "interpretation": {
-            "description": "Echo of how the request was understood",
+            "type": "string",
             "title": "Interpretation",
-            "type": "string"
+            "description": "Echo of how the request was understood"
           },
           "structured_query": {
             "$ref": "#/components/schemas/StructuredQuery"
@@ -1788,48 +1855,46 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "The operation's response body, as the endpoint returns it",
-            "title": "Result"
+            "title": "Result",
+            "description": "The operation's response body, as the endpoint returns it"
           },
           "limitations": {
-            "description": "For partial answers: what was not answered and why",
             "items": {
               "$ref": "#/components/schemas/Limitation"
             },
+            "type": "array",
             "title": "Limitations",
-            "type": "array"
+            "description": "For partial answers: what was not answered and why"
           },
           "assumptions": {
-            "description": "Defaults and readings the user didn't state (e.g. a proxy height), shown with the echo",
             "items": {
               "type": "string"
             },
+            "type": "array",
             "title": "Assumptions",
-            "type": "array"
+            "description": "Defaults and readings the user didn't state (e.g. a proxy height), shown with the echo"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "interpretation",
           "structured_query"
         ],
-        "title": "NLAnswer",
-        "type": "object"
+        "title": "NLAnswer"
       },
       "NLClarification": {
-        "additionalProperties": false,
-        "description": "The request can't be answered until the user says more (e.g. which site); nothing was run.",
         "properties": {
           "contract_version": {
-            "default": "0.7.0",
+            "type": "string",
             "title": "Contract Version",
-            "type": "string"
+            "default": "0.8.0"
           },
           "_placeholder": {
-            "default": false,
-            "description": "True when the values are placeholders, not computed results.",
+            "type": "boolean",
             "title": "Placeholder",
-            "type": "boolean"
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
           },
           "_note": {
             "anyOf": [
@@ -1840,34 +1905,35 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Note"
           },
           "interpretation": {
-            "description": "Echo of how the request was understood",
+            "type": "string",
             "title": "Interpretation",
-            "type": "string"
+            "description": "Echo of how the request was understood"
           },
           "question": {
-            "description": "What the user needs to say or select",
+            "type": "string",
             "title": "Question",
-            "type": "string"
+            "description": "What the user needs to say or select"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "interpretation",
           "question"
         ],
         "title": "NLClarification",
-        "type": "object"
+        "description": "The request can't be answered until the user says more (e.g. which site); nothing was run."
       },
       "NLRequest": {
-        "additionalProperties": false,
         "properties": {
           "text": {
+            "type": "string",
+            "maxLength": 1000,
             "minLength": 1,
-            "title": "Text",
-            "type": "string"
+            "title": "Text"
           },
           "selected_site_id": {
             "anyOf": [
@@ -1878,7 +1944,6 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Selected Site Id"
           },
           "selected_scenario": {
@@ -1889,29 +1954,28 @@
               {
                 "type": "null"
               }
-            ],
-            "default": null
+            ]
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "text"
         ],
-        "title": "NLRequest",
-        "type": "object"
+        "title": "NLRequest"
       },
       "NLUnsupported": {
-        "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.7.0",
+            "type": "string",
             "title": "Contract Version",
-            "type": "string"
+            "default": "0.8.0"
           },
           "_placeholder": {
-            "default": false,
-            "description": "True when the values are placeholders, not computed results.",
+            "type": "boolean",
             "title": "Placeholder",
-            "type": "boolean"
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
           },
           "_note": {
             "anyOf": [
@@ -1922,7 +1986,6 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Note"
           },
           "unsupported": {
@@ -1937,16 +2000,16 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "Echo of how the request was understood",
-            "title": "Interpretation"
+            "title": "Interpretation",
+            "description": "Echo of how the request was understood"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "unsupported"
         ],
-        "title": "NLUnsupported",
-        "type": "object"
+        "title": "NLUnsupported"
       },
       "NoTerrainDetail": {
         "properties": {
@@ -2022,7 +2085,7 @@
         "description": "422: a valid request for a scenario (or location and height) with no precomputed result."
       },
       "Operation": {
-        "description": "API operations a structured query can target; `params` = that endpoint's request.",
+        "type": "string",
         "enum": [
           "sites",
           "locate",
@@ -2037,7 +2100,7 @@
           "site_summary"
         ],
         "title": "Operation",
-        "type": "string"
+        "description": "API operations a structured query can target; `params` = that endpoint's request."
       },
       "PointsArea": {
         "additionalProperties": false,
@@ -2223,7 +2286,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.7.0",
+            "default": "0.8.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -2277,6 +2340,42 @@
         ],
         "title": "ProximityResponse",
         "type": "object"
+      },
+      "RateLimitedDetail": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Plain-language explanation, suitable to show to visitors"
+          },
+          "retry_after_s": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Retry After S",
+            "description": "Seconds until this client may ask again"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason",
+          "retry_after_s"
+        ],
+        "title": "RateLimitedDetail"
+      },
+      "RateLimitedError": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/RateLimitedDetail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "RateLimitedError",
+        "description": "429 from POST /api/nl: this client asked too many live questions (contract 0.8.0)."
       },
       "RootModel_Union_CompareNotServedError__InvalidRequestError__": {
         "anyOf": [
@@ -2590,7 +2689,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.7.0"
+            "default": "0.8.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2805,7 +2904,7 @@
         "description": "Each part is null when it was not requested or has no result; limitations say which and why.",
         "properties": {
           "contract_version": {
-            "default": "0.7.0",
+            "default": "0.8.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -2906,7 +3005,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.7.0"
+            "default": "0.8.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3028,7 +3127,7 @@
         "description": "index.json of the static fallback: every served scenario and where its files are.",
         "properties": {
           "contract_version": {
-            "default": "0.7.0",
+            "default": "0.8.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -3077,23 +3176,23 @@
         "type": "object"
       },
       "StructuredQuery": {
-        "additionalProperties": false,
         "properties": {
           "operation": {
             "$ref": "#/components/schemas/Operation"
           },
           "params": {
             "additionalProperties": true,
-            "description": "Request body or query for the operation's endpoint",
+            "type": "object",
             "title": "Params",
-            "type": "object"
+            "description": "Request body or query for the operation's endpoint"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "operation"
         ],
-        "title": "StructuredQuery",
-        "type": "object"
+        "title": "StructuredQuery"
       },
       "TerrainLayer": {
         "properties": {
@@ -3159,7 +3258,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.7.0",
+            "default": "0.8.0",
             "title": "Contract Version",
             "type": "string"
           },

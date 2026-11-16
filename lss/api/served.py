@@ -39,7 +39,8 @@ from lss.contract import (
 # - drop a version, and its snapshot, once stream A has regenerated its served files at a newer version.
 #   0.5.0: Site01 file from C1; drop when A regenerates it with horizons (request RA1).
 #   0.6.0: listed for files A writes before contract 0.7.0 reaches its worktree.
-COMPATIBLE_VERSIONS = frozenset({"0.5.0", "0.6.0"})
+#   0.7.0: listed for the same reason, when contract 0.8.0 (NL endpoint errors) landed.
+COMPATIBLE_VERSIONS = frozenset({"0.5.0", "0.6.0", "0.7.0"})
 
 
 class ServedFileError(ValueError):

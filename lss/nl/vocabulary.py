@@ -151,3 +151,11 @@ def safe_slope_text(terrain: str) -> str:
     the project author's decision, 2026-11-15, contract note C9).
     """
     return f"Safe: slope under 5°, measured on {terrain} (default; no slope limit was given)."
+
+
+# Claude-drafted (2026-11-16), pending the project author's review: the "safe" disclosure when the
+# operation that would measure the slope is not available yet, so no terrain data can be named.
+SAFE_NOT_MEASURED_TEXT = (
+    "Safe: slope under 5° (default; no slope limit was given). Not measured: this version can't run "
+    "that search yet."
+)

@@ -139,7 +139,12 @@ def test_perfect_outputs_score_one():
             BOULDERS: refusal(CITE_81, CITE_AUSSEL),
         }
     )
-    assert report["scores"]["a_structured_query"] == {"correct": 2, "total": 2, "score": 1.0}
+    assert report["scores"]["a_structured_query"] == {
+        "correct": 2,
+        "total": 2,
+        "score": 1.0,
+        "of_which_clarify": {"correct": 0, "total": 0},
+    }
     assert report["scores"]["b_refusal_reason"] == {"correct": 1, "total": 1, "score": 1.0}
     assert report["counts"] == {"items_in_set": 4, "run": 3, "scored": 3, "blocked": 1}
     assert report["prompt_version"] == PROMPT_VERSION
@@ -286,7 +291,12 @@ def test_scores_are_reported_per_split():
     by = report["scores_by_split"]
     assert by["holdout"]["b_refusal_reason"] == {"correct": 1, "total": 1, "score": 1.0}
     assert by["holdout"]["a_structured_query"]["total"] == 0
-    assert by["dev"]["a_structured_query"] == {"correct": 2, "total": 2, "score": 1.0}
+    assert by["dev"]["a_structured_query"] == {
+        "correct": 2,
+        "total": 2,
+        "score": 1.0,
+        "of_which_clarify": {"correct": 0, "total": 0},
+    }
     assert by["dev"]["b_refusal_reason"]["total"] == 0
 
 

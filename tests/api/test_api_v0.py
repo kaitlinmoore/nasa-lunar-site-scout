@@ -195,7 +195,8 @@ def test_compare_partial_lists_the_unserved_in_order(served_path):
     body = CompareResponse.model_validate(r.json())
     assert [i.scenario_key for i in body.items] == [SCENARIO.key()]
     assert [n.index for n in body.not_served] == [0, 2]
-    assert all(n.reason == app_module.NOT_SERVED_REASON for n in body.not_served)
+    assert all(n.reason == app_module.COMPARE_NOT_SERVED_REASON for n in body.not_served)
+    assert "listed" not in app_module.COMPARE_NOT_SERVED_REASON  # a compare answer lists no scenarios
     assert body.not_served[0].scenario_key != SCENARIO.key()
 
 
@@ -204,6 +205,7 @@ def test_compare_none_served_is_422(served_path):
     assert r.status_code == 422
     d = CompareNotServedError.model_validate(r.json()).detail
     assert [n.index for n in d.not_served] == [0]
+    assert d.reason == app_module.COMPARE_NOT_SERVED_REASON
 
 
 def test_compare_empty_is_validation_422(served_path):

@@ -47,6 +47,15 @@ def test_clarify_label_is_scored_in_a():
     assert res.outcome == "clarify" and res.query_correct is True and res.reason_correct is None
 
 
+def test_clarify_count_is_reported_inside_a():
+    from lss.nl.eval import oracle_provider, run_eval
+
+    report = run_eval(oracle_provider(EVAL), EVAL)
+    a = report["scores"]["a_structured_query"]
+    assert a["of_which_clarify"] == {"correct": 1, "total": 1}
+    assert report["scores_by_split"]["holdout"]["a_structured_query"]["of_which_clarify"]["total"] == 0
+
+
 @pytest.mark.parametrize("item", READY, ids=lambda i: i.id)
 def test_ready_label_passes_validation(item):
     """Every ready label, as an NL output, passes the same validator the LLM faces."""

@@ -22,9 +22,10 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from lss.api import nl as nl_service
 from lss.api.served import (
     Served,
     ServedFileError,
@@ -50,13 +51,20 @@ from lss.contract import (
     LocateResponse,
     LocateUnprocessableError,
     MetricsResponse,
+    NLAnswer,
+    NLClarification,
+    NLRequest,
+    NLUnsupported,
     NoTerrainDetail,
     NotServedDetail,
+    Operation,
+    RateLimitedError,
     Scenario,
     ScenarioRequest,
     SeriesResponse,
     ServedScenario,
     SiteCategory,
+    SitesQuery,
     SitesResponse,
     UnavailableDetail,
     UnavailableError,
@@ -64,7 +72,9 @@ from lss.contract import (
 )
 
 # Visitor-facing wording. NOT_SERVED_REASON and UNAVAILABLE_REASON: Kaitlin, 2026-11-15.
-# HORIZON_NOT_SERVED_REASON and NO_TERRAIN_REASON: Claude-drafted on the same pattern, pending her review.
+# HORIZON_NOT_SERVED_REASON and NO_TERRAIN_REASON: Claude-drafted, approved by her 2026-11-15.
+# COMPARE_NOT_SERVED_REASON: Claude-drafted, pending her review. A compare answer lists no served scenarios
+# (stream B, 2026-11-16), so its reason must not refer to a list.
 # A 503's technical cause goes in `detail.technical`, never in the reason.
 NOT_SERVED_REASON = (
     "This version has precomputed results only for the scenarios listed with this message. A request must "
@@ -73,6 +83,10 @@ NOT_SERVED_REASON = (
 HORIZON_NOT_SERVED_REASON = (
     "This version has precomputed horizon profiles only for the locations and unit heights listed with this "
     "message. A request must match one of them exactly: the same location and unit height."
+)
+COMPARE_NOT_SERVED_REASON = (
+    "This version has no precomputed result for this scenario. Results exist only for precomputed "
+    "scenarios, matched exactly on location, unit height, time window and time step."
 )
 NO_TERRAIN_REASON = "No terrain data in this version covers this location."
 UNAVAILABLE_REASON = (
@@ -160,9 +174,9 @@ def compare_served(req: CompareRequest) -> CompareResponse:
         if key in served:
             items.append(served[key].metrics)
         else:
-            missing.append(CompareNotServed(index=i, scenario_key=key, reason=NOT_SERVED_REASON))
+            missing.append(CompareNotServed(index=i, scenario_key=key, reason=COMPARE_NOT_SERVED_REASON))
     if not items:
-        detail = CompareNotServedDetail(reason=NOT_SERVED_REASON, not_served=missing)
+        detail = CompareNotServedDetail(reason=COMPARE_NOT_SERVED_REASON, not_served=missing)
         raise HTTPException(422, detail=detail.model_dump(mode="json"))
     return CompareResponse(items=items, not_served=missing)
 
@@ -199,6 +213,45 @@ LOCATE_ERRORS = {
 }
 
 
+def sites_for(query: SitesQuery) -> SitesResponse:
+    resp = _fixture_sites()
+    if query.category is None:
+        return resp
+    return resp.model_copy(update={"sites": [s for s in resp.sites if s.category == query.category]})
+
+
+# What /api/nl can run: the same functions as the endpoints, on precomputed results only. Operations not
+# listed here (proximity, search, terrain, site_summary) are answered "not available yet".
+NL_EXECUTORS = {
+    Operation.metrics: lambda r: served_for(r.scenario).metrics,
+    Operation.series: lambda r: served_for(r.scenario).series,
+    Operation.compare: compare_served,
+    Operation.horizon: horizon_for,
+    Operation.sites: sites_for,
+    Operation.locate: locate,
+}
+
+
+@lru_cache(maxsize=1)
+def get_nl_service() -> nl_service.NLService:
+    return nl_service.NLService(
+        executors=NL_EXECUTORS,
+        provider_factory=nl_service.default_provider,
+        cache=nl_service.load_cache(nl_service.cache_dir()),
+    )
+
+
+NL_SERVICE = Depends(get_nl_service)  # tests override get_nl_service (app.dependency_overrides)
+
+NL_ERRORS = {
+    429: {"model": RateLimitedError, "description": "Too many live questions from this client"},
+    503: {
+        "model": UnavailableError,
+        "description": "Live questions unavailable (daily spend cap reached, or the model can't be reached)",
+    },
+}
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
@@ -220,10 +273,7 @@ def create_app() -> FastAPI:
 
     @app.get("/api/sites", response_model=SitesResponse, response_model_by_alias=True)
     def sites(category: SiteCategory | None = None) -> SitesResponse:
-        resp = _fixture_sites()
-        if category is None:
-            return resp
-        return resp.model_copy(update={"sites": [s for s in resp.sites if s.category == category]})
+        return sites_for(SitesQuery(category=category))
 
     @app.get("/api/datasets", response_model=DatasetsResponse, response_model_by_alias=True)
     def datasets() -> DatasetsResponse:
@@ -267,6 +317,20 @@ def create_app() -> FastAPI:
     )
     def compare(req: CompareRequest) -> CompareResponse:
         return compare_served(req)
+
+    @app.post(
+        "/api/nl",
+        response_model=NLAnswer | NLUnsupported | NLClarification,
+        response_model_by_alias=True,
+        responses=NL_ERRORS,
+    )
+    def nl(
+        req: NLRequest, request: Request, service: nl_service.NLService = NL_SERVICE
+    ) -> NLAnswer | NLUnsupported | NLClarification:
+        client = nl_service.client_address(
+            request.headers.get("x-forwarded-for"), request.client.host if request.client else None
+        )
+        return service.answer(req, client)
 
     return app
 

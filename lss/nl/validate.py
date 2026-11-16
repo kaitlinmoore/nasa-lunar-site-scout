@@ -46,6 +46,7 @@ from lss.nl.vocabulary import (
     RADIUS_DEFAULTS,
     RADIUS_KEYS,
     SAFE_MAX_SLOPE_DEG,
+    SAFE_NOT_MEASURED_TEXT,
     SLOPE_KEYS,
     UNIT_HEIGHT_PROXIES_M,
     HeightSource,
@@ -337,9 +338,14 @@ def to_limitations(output: NLOutput, ctx: NLContext) -> list[Limitation]:
     return result
 
 
-def _all_assumptions(validated: ValidatedOutput, slope_terrain: str | None) -> list[str]:
+def _all_assumptions(
+    validated: ValidatedOutput, slope_terrain: str | None, slope_measured: bool = True
+) -> list[str]:
     assumptions = list(validated.assumptions)
     if validated.output.slope_source == SlopeSource.safe_default:
+        if not slope_measured:
+            assumptions.insert(0, SAFE_NOT_MEASURED_TEXT)
+            return assumptions
         if not slope_terrain:
             raise NLValidationError(
                 [
@@ -352,7 +358,10 @@ def _all_assumptions(validated: ValidatedOutput, slope_terrain: str | None) -> l
 
 
 def to_response(
-    validated: ValidatedOutput, ctx: NLContext, slope_terrain: str | None = None
+    validated: ValidatedOutput,
+    ctx: NLContext,
+    slope_terrain: str | None = None,
+    slope_measured: bool = True,
 ) -> NLAnswer | NLUnsupported | NLClarification:
     """Build the contract response. `result` stays None: the engine fills it, never the LLM.
 
@@ -360,6 +369,8 @@ def to_response(
     `slope_terrain` names the terrain data the slope was measured on; it is required when "safe" was
     read as the default slope limit (D-safe). It comes from the engine's result (the terrain layer the
     slope was computed on), so a "safe" query is only answered once that result exists.
+    `slope_measured=False`: the operation could not run (not available yet), so no slope was measured
+    and the disclosure says so instead of naming terrain data.
     """
     out = validated.output
     interpretation = out.interpretation.strip()
@@ -377,5 +388,5 @@ def to_response(
         structured_query=validated.structured_query,
         result=None,
         limitations=limitations,
-        assumptions=[a.strip() for a in _all_assumptions(validated, slope_terrain)],
+        assumptions=[a.strip() for a in _all_assumptions(validated, slope_terrain, slope_measured)],
     )
