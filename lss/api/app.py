@@ -304,7 +304,7 @@ def compare_served(req: CompareRequest) -> CompareResponse:
     return CompareResponse(
         items=out.items,
         not_served=missing,
-        compared=compared if req.across is not None else [],
+        compared=compared,  # always, so a client can take its columns from the response
         evaluated=out.evaluated,
         filtered_out=out.filtered_out,
         rank_ties=out.rank_ties,

@@ -211,9 +211,9 @@ def test_filters_on_the_endpoint_and_an_empty_answer(client):
     r = client.post("/api/compare", json=req)
     assert r.status_code == 200
     body = CompareResponse.model_validate(r.json())
-    assert (
-        body.items == [] and len(body.filtered_out) == 2 and body.compared == []
-    )  # no `across`: not repeated
+    assert body.items == [] and len(body.filtered_out) == 2
+    # `compared` is always filled (a client takes its columns from it), even without `across`
+    assert [sc.key() for sc in body.compared] == [Scenario.model_validate(s).key() for s in req["scenarios"]]
 
 
 def test_unknown_site_or_region_is_a_request_error(client):

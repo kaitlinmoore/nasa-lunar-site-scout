@@ -1110,7 +1110,7 @@
             },
             "type": "array",
             "title": "Compared",
-            "description": "Every compared scenario in order: the request's scenarios, then one per `across` site (contract 0.10.0). Indexes in not_served and filtered_out refer to this list"
+            "description": "Every compared scenario in order: the request's scenarios, then one per `across` site (contract 0.10.0; always filled). Indexes in not_served and filtered_out refer to this list; items are matched to it by scenario_key"
           },
           "evaluated": {
             "items": {

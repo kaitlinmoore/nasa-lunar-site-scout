@@ -695,7 +695,8 @@ class CompareResponse(Response):
     compared: list[Scenario] = Field(
         default_factory=list,
         description="Every compared scenario in order: the request's scenarios, then one per `across` site "
-        "(contract 0.10.0). Indexes in not_served and filtered_out refer to this list",
+        "(contract 0.10.0; always filled). Indexes in not_served and filtered_out refer to this list; items "
+        "are matched to it by scenario_key",
     )
     evaluated: list[EvaluatedValue] = Field(
         default_factory=list, description="Every value a filter or the rank used, per served scenario"
