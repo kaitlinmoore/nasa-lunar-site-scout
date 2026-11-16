@@ -25,6 +25,7 @@ import {
   type NlResult,
   readResult,
 } from './response'
+import { SiteSummaryView, TerrainView } from './TerrainViews'
 
 const MAX_CHARS = __NL_MAX_TEXT_CHARS__
 
@@ -151,6 +152,18 @@ function ResultView({ result }: { result: NlResult }) {
               ))}
             </ul>
           )}
+        </div>
+      )
+    case 'terrain':
+      return (
+        <div className="nl-result">
+          <TerrainView terrain={result.result} />
+        </div>
+      )
+    case 'site_summary':
+      return (
+        <div className="nl-result">
+          <SiteSummaryView summary={result.result} />
         </div>
       )
     case 'locate': {

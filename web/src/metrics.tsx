@@ -29,7 +29,7 @@ export function Value({
   )
 }
 
-function StatValue({ stat, field }: { stat: Stat | undefined; field: string }) {
+export function StatValue({ stat, field }: { stat: Stat | undefined; field: string }) {
   const parts = [
     ['min', stat?.min],
     ['mean', stat?.mean],

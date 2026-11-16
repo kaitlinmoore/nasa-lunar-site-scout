@@ -47,6 +47,8 @@ export type NlResult =
   | { op: 'horizon'; result: S['HorizonProfile'] }
   | { op: 'sites'; result: S['SitesResponse'] }
   | { op: 'locate'; result: S['LocateResponse'] }
+  | { op: 'terrain'; result: S['TerrainResponse'] }
+  | { op: 'site_summary'; result: S['SiteSummaryResponse'] }
   /** A result this page can't show (an operation without a view, or fields missing). */
   | { op: 'unreadable'; operation: string; why: string }
 
@@ -58,6 +60,8 @@ const REQUIRED: Record<string, string[]> = {
   horizon: ['location', 'unit_height_m', 'azimuth_deg', 'elevation_deg'],
   sites: ['sites'],
   locate: ['location', 'terrain_stack', 'fidelity'],
+  terrain: ['location', 'radius_m'],
+  site_summary: ['location', 'radius_m'],
 }
 
 /** An answer's result as its operation's response type, or why it can't be shown. */
@@ -91,6 +95,10 @@ export function readResult(answer: NLAnswer): NlResult {
       return { op: 'sites', result: result as S['SitesResponse'] }
     case 'locate':
       return { op: 'locate', result: result as S['LocateResponse'] }
+    case 'terrain':
+      return { op: 'terrain', result: result as S['TerrainResponse'] }
+    case 'site_summary':
+      return { op: 'site_summary', result: result as S['SiteSummaryResponse'] }
   }
   return unreadable(`this page has no view for the "${operation}" operation yet`)
 }

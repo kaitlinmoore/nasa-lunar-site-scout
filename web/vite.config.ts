@@ -47,6 +47,7 @@ const documented = [
   'BodyTrack',
   'HorizonProfile',
   'SeriesResponse',
+  'TerrainResponse',
 ]
 const fieldDocs = Object.fromEntries(
   documented.map((name) => {
