@@ -1270,7 +1270,7 @@ export interface components {
             name: string;
             /**
              * Short Name
-             * @description Short display name, e.g. 'Connecting ridge' (contract 0.9.0; Kaitlin, 2026-11-16). Null: show name
+             * @description Short display name in title case, e.g. 'Connecting Ridge' (contract 0.9.0; Kaitlin, 2026-11-16). Null: show name
              */
             short_name?: string | null;
             /**
