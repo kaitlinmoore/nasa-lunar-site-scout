@@ -40,6 +40,8 @@ import {
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { displayName } from '../siteNames'
+import type { FeatureLabelRow } from './featureLabelData'
+import { attachFeatureLabels } from './featureLabels'
 import { globeLabelStyle, labelPadding } from './labelStyle'
 import { type MarkerCircle, poleLabelRightEdge } from './poleLabel'
 import type { Site } from '../api/client'
@@ -149,6 +151,7 @@ export default function MoonGlobe({
   focusSiteId,
   pinnedSiteIds,
   card,
+  featureLabels,
 }: {
   sites: Site[]
   token: string
@@ -162,6 +165,8 @@ export default function MoonGlobe({
   pinnedSiteIds: string[]
   /** The card's content, anchored next to the selected site's marker. */
   card: ReactNode
+  /** IAU feature names to draw (featureLabels.ts), or null for none. */
+  featureLabels: FeatureLabelRow[] | null
 }) {
   const container = useRef<HTMLDivElement>(null)
   const cardAnchor = useRef<HTMLDivElement>(null)
@@ -170,6 +175,7 @@ export default function MoonGlobe({
   const pinnedRef = useRef(pinnedSiteIds)
   const onSelectRef = useRef(onSelect)
   const controls = useRef<Controls | null>(null)
+  const viewerRef = useRef<Viewer | null>(null)
   const [status, setStatus] = useState<Status>({ kind: 'loading' })
   // "You're looking at the Moon's south pole" note: shown at the start view, hidden once the
   // view moves, shown again after Reset (Kaitlin, 2026-11-15: both the pole label and this note).
@@ -215,6 +221,7 @@ export default function MoonGlobe({
     }
     const v = viewer
     const scene = v.scene
+    viewerRef.current = v
 
     // Display-only lighting: a light that always points where the camera looks.
     scene.sun = undefined
@@ -479,10 +486,13 @@ export default function MoonGlobe({
     // card. Pointer cursor over site markers.
     const siteIds = new Set(sites.map((s) => s.id))
     const siteOrder = new Map(sites.map((s, i) => [s.id, i]))
+    // The topmost few picks, not just the top one: a feature name may be drawn over a marker.
     const pickedSiteId = (pos: Cartesian2): string | undefined => {
-      const picked = scene.pick(pos)
-      const id = defined(picked) && picked.id instanceof Entity ? picked.id.id : undefined
-      return id !== undefined && siteIds.has(id) ? id : undefined
+      for (const picked of scene.drillPick(pos, 4)) {
+        const id = defined(picked) && picked.id instanceof Entity ? picked.id.id : undefined
+        if (id !== undefined && siteIds.has(id)) return id
+      }
+      return undefined
     }
     const pickedSiteIds = (pos: Cartesian2): string[] => {
       const ids: string[] = []
@@ -536,9 +546,18 @@ export default function MoonGlobe({
     return () => {
       cancelled = true
       controls.current = null
+      viewerRef.current = null
       if (!v.isDestroyed()) v.destroy()
     }
   }, [sites, ionToken])
+
+  // IAU feature names (featureLabels.ts), once the Moon is drawn.
+  const ready = status.kind === 'ready'
+  useEffect(() => {
+    const v = viewerRef.current
+    if (!ready || !v || v.isDestroyed() || !featureLabels) return
+    return attachFeatureLabels(v, featureLabels)
+  }, [ready, featureLabels])
 
   // Escape closes the chooser.
   useEffect(() => {

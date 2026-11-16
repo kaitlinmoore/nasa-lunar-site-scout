@@ -56,6 +56,20 @@ function entryFor(idx: StaticIndex, scenario: Scenario) {
   return idx.scenarios.find((e) => scenarioId(e.scenario) === id)
 }
 
+/** Every IAU feature name, satellite features included (contract 0.14.0); filtered by the caller. */
+export async function staticFeatureLabels(): Promise<Schemas['FeatureLabelsResponse']> {
+  const path = (await staticIndex()).feature_labels
+  if (!path) throw new Error('saved copy: no feature labels')
+  return getStaticJson<Schemas['FeatureLabelsResponse']>(path)
+}
+
+/** The dataset registry (GET /api/datasets), for attribution. */
+export async function staticDatasets(): Promise<Schemas['DatasetsResponse']> {
+  const path = (await staticIndex()).datasets
+  if (!path) throw new Error('saved copy: no dataset list')
+  return getStaticJson<Schemas['DatasetsResponse']>(path)
+}
+
 /** Terrain views (contract 0.13.0): the copy's TerrainViewsResponse; images at terrain_view/{site}/{view}/{layer}.png. */
 export async function staticTerrainViews(): Promise<Schemas['TerrainViewsResponse']> {
   const path = (await staticIndex()).terrain_views

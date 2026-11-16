@@ -208,6 +208,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/features/labels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Feature Labels */
+        get: operations["feature_labels_api_features_labels_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/site_summary": {
         parameters: {
             query?: never;
@@ -519,7 +536,7 @@ export interface components {
         CompareResponse: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -641,7 +658,7 @@ export interface components {
         DatasetsResponse: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -724,6 +741,96 @@ export interface components {
             distance_m: number;
         };
         /**
+         * FeatureLabelsQuery
+         * @description Query parameters of GET /api/features/labels. Every filter is optional; with none, every name except
+         *     satellite features is returned.
+         */
+        FeatureLabelsQuery: {
+            /**
+             * Types
+             * @description IAU type codes, e.g. AA (crater); empty = all
+             */
+            types?: string[];
+            /**
+             * Min Diameter Km
+             * @description Only features at least this wide
+             * @default null
+             */
+            min_diameter_km: number | null;
+            /**
+             * Include Satellite
+             * @description Include satellite features (type SF; also included when `types` names SF)
+             * @default false
+             */
+            include_satellite: boolean;
+            /**
+             * @description Only centres inside; lon_min > lon_max means the box crosses ±180°
+             * @default null
+             */
+            bbox: components["schemas"]["BBox"] | null;
+            /**
+             * Limit
+             * @description The largest N after the other filters
+             * @default null
+             */
+            limit: number | null;
+        };
+        /**
+         * FeatureLabelsResponse
+         * @description IAU-adopted names of lunar features, for labels only (positions identify features; about 300 m).
+         *     Compact rows, largest first: [id, name, type, lat, lon, diameter_km] (`fields`). Coordinates are
+         *     planetocentric, east longitude -180..180, mean Earth/polar axis (LOLA frame), as elsewhere in this API.
+         */
+        FeatureLabelsResponse: {
+            /**
+             * Contract Version
+             * @default 0.14.0
+             */
+            contract_version: string;
+            /**
+             * Placeholder
+             * @description True when the values are placeholders, not computed results.
+             * @default false
+             */
+            _placeholder: boolean;
+            /** Note */
+            _note?: string | null;
+            /**
+             * Dataset Id
+             * @description Registry entry, e.g. iau_gazetteer_moon (citation, licence)
+             */
+            dataset_id: string;
+            /**
+             * Fields
+             * @description Column names of each row: id, name, type, lat, lon, diameter_km
+             */
+            fields: string[];
+            /**
+             * Types
+             * @description IAU type code -> description, e.g. AA -> 'Crater, craters'
+             */
+            types: {
+                [key: string]: string;
+            };
+            /**
+             * Total
+             * @description Names in the source before filtering
+             */
+            total: number;
+            /**
+             * Rows
+             * @description One feature per row, largest diameter first (ties by name)
+             */
+            rows: [
+                number,
+                string,
+                string,
+                number,
+                number,
+                number
+            ][];
+        };
+        /**
          * FeatureType
          * @enum {string}
          */
@@ -745,7 +852,7 @@ export interface components {
         FeaturesResponse: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -794,7 +901,7 @@ export interface components {
         HealthResponse: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -816,7 +923,7 @@ export interface components {
         HorizonProfile: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -864,7 +971,7 @@ export interface components {
         Job: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -933,7 +1040,7 @@ export interface components {
         LocateResponse: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -1013,7 +1120,7 @@ export interface components {
         MetricsResponse: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -1037,7 +1144,7 @@ export interface components {
         NLAnswer: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -1079,7 +1186,7 @@ export interface components {
         NLClarification: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -1113,7 +1220,7 @@ export interface components {
         NLUnsupported: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -1273,7 +1380,7 @@ export interface components {
         ProximityResponse: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -1410,7 +1517,7 @@ export interface components {
         ScenariosResponse: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -1497,7 +1604,7 @@ export interface components {
         SeriesResponse: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -1613,7 +1720,7 @@ export interface components {
         SiteSummaryResponse: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -1645,7 +1752,7 @@ export interface components {
         SitesResponse: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -1703,7 +1810,7 @@ export interface components {
         StaticIndex: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -1729,6 +1836,12 @@ export interface components {
              * @description Path of the SitesResponse file
              */
             sites: string;
+            /**
+             * Feature Labels
+             * @description Path of a FeatureLabelsResponse with every name, satellite features included (0.14.0); filter it in the client
+             * @default null
+             */
+            feature_labels: string | null;
             /**
              * Terrain Views
              * @description Path of the TerrainViewsResponse file; images at terrain_view/{site_id}/{view}/{layer}.png (0.13.0)
@@ -1874,7 +1987,7 @@ export interface components {
         TerrainResponse: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -2037,7 +2150,7 @@ export interface components {
         TerrainViewsResponse: {
             /**
              * Contract Version
-             * @default 0.13.0
+             * @default 0.14.0
              */
             contract_version: string;
             /**
@@ -2547,6 +2660,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    feature_labels_api_features_labels_get: {
+        parameters: {
+            query?: {
+                /** @description IAU type codes, e.g. AA, ME; repeat */
+                types?: string[] | null;
+                min_diameter_km?: number | null;
+                include_satellite?: boolean;
+                /** @description lat_min,lat_max,lon_min,lon_max (degrees) */
+                bbox?: string | null;
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeatureLabelsResponse"];
+                };
+            };
+            /** @description A malformed filter (FastAPI validation) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description The installed IAU names file is unusable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnavailableError"];
                 };
             };
         };

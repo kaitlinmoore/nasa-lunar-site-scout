@@ -363,7 +363,7 @@ export default function App() {
     const site = siteId ? sites.data.sites.find((s) => s.id === siteId) : undefined
     body = (
       <div className={`globe-layout${siteId ? ' with-panel' : ''}`}>
-        <GlobeView data={sites.data} focusSiteId={site ? site.id : null} />
+        <GlobeView data={sites.data} focusSiteId={site ? site.id : null} source={source} />
         {siteId && (
           <aside className="site-panel" aria-label="Site details">
             <button

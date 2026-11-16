@@ -10,9 +10,11 @@
 // and a "Pinned" group first in the site list.
 import { lazy, Suspense, useEffect, useState } from 'react'
 import type { Site, SitesResponse } from '../api/client'
+import type { DataSource } from '../api/source'
 import { formatLatLon, truncateText } from '../format'
 import { displayName, subtitleOf } from '../siteNames'
 import { navigate, routeHref } from '../route'
+import { type FeatureLabels, loadFeatureLabels } from './featureLabelData'
 import { type PinnedSite, useSaved } from '../saved/store'
 
 const MoonGlobe = lazy(() => import('./MoonGlobe'))
@@ -99,11 +101,25 @@ function SiteList({
 export default function GlobeView({
   data,
   focusSiteId,
+  source,
 }: {
   data: SitesResponse
   focusSiteId: string | null
+  source: DataSource
 }) {
   const [selected, setSelected] = useState<string | null>(null)
+  // IAU feature names for the globe (contract 0.14.0); the globe works without them.
+  const [features, setFeatures] = useState<FeatureLabels | null>(null)
+  const [featuresProblem, setFeaturesProblem] = useState<string | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    loadFeatureLabels(source)
+      .then((f) => !cancelled && setFeatures(f))
+      .catch((e: unknown) => !cancelled && setFeaturesProblem(e instanceof Error ? e.message : String(e)))
+    return () => {
+      cancelled = true
+    }
+  }, [source])
   const { doc, unpinSite } = useSaved()
   const pins: PinnedSite[] = doc.pinned_sites
   const pinnedIds = new Set(pins.map((p) => p.site_id))
@@ -139,6 +155,7 @@ export default function GlobeView({
       {ION_TOKEN ? (
         <Suspense fallback={<p className="muted">Loading the globe…</p>}>
           <MoonGlobe
+            featureLabels={features?.rows ?? null}
             sites={data.sites}
             token={ION_TOKEN}
             onSelect={setSelected}
@@ -166,6 +183,21 @@ export default function GlobeView({
           about 2.5 km above the LOLA heights our calculations use, so site markers are placed on its rendered
           surface and no values are taken from it. Every number in this tool comes from our own API.
         </p>
+        {features && (
+          <p>
+            Feature names:{' '}
+            {features.dataset ? (
+              <>
+                <a href={features.dataset.url}>{features.dataset.name}</a> ({features.dataset.provider});{' '}
+                {features.dataset.license}
+              </>
+            ) : (
+              <span className="mono">{features.datasetId}</span>
+            )}{' '}
+            Names label features only; their positions identify the features (to about 300 m).
+          </p>
+        )}
+        {featuresProblem && <p className="muted">Feature names couldn't be loaded ({featuresProblem}).</p>}
       </details>
       {pins.length > 0 && (
         <>
