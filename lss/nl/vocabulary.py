@@ -144,7 +144,7 @@ def selected_window_text(start: datetime, end: datetime, step: timedelta) -> str
 
 
 # Disclosure for a Sun elevation band in a compare filter or rank (Fable G2 review m5, 2026-11-16).
-# Claude-drafted, pending the project author's review.
+# Claude-drafted, approved by the project author (2026-11-16).
 SUN_BAND_TEXT = (
     "Sun elevation: measured above the local horizontal at each site, whether or not terrain hides the Sun."
 )
