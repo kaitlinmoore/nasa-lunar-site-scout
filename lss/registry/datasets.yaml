@@ -279,6 +279,45 @@ datasets:
     license: Not yet checked (USGS Astrogeology distribution terms)
     status: planned
 
+  - id: iau_gazetteer_moon
+    # Stream E (2026-11-16), for landmark labels on the 3D globe (Kaitlin). scripts/fetch_iau_names.py writes
+    # LSS_DATA_DIR/cache/features/iau_names.json from the Moon centre-point shapefile (MOON_nomenclature_center_pts
+    # .zip; 9,087 names, all "Adopted by IAU", on 2026-11-16). Checked: the shapefile's points equal its
+    # center_lat/center_lon fields; Mons Mouton (Feature 16070) matches its Gazetteer page; Statio
+    # Tranquillitatis is within 3 m of the Apollo 11 LM position of Wagner et al. (2017) (mean Earth, DE421).
+    # Frame: Gazetteer news, 2012-06-04 ("Coordinates of Named Lunar Features Now Available in LOLA Reference
+    # Frame"): "referred to the mean Earth/polar axis reference coordinate system for the Moon". Terms: Gazetteer
+    # FAQ ("Everything in the Gazetteer of Planetary Nomenclature is in the public domain") and the shapefile
+    # metadata (use constraints "Public domain.").
+    name: Gazetteer of Planetary Nomenclature, the Moon (IAU WGPSN)
+    kind: features
+    provider: IAU Working Group for Planetary System Nomenclature / USGS Astrogeology Science Center
+    url: https://planetarynames.wr.usgs.gov/Page/MOON/target
+    coverage:
+      description: Global
+      lat_min: -90
+      lat_max: 90
+    resolution_note: >-
+      Feature centres and approximate diameters, for identifying features. The Gazetteer expects its coordinates
+      to be precise to 2 decimal places (about 300 m in latitude); some landing-site features are given to 4.
+      Planetocentric latitude and east longitude on a sphere, in the LOLA reference frame (mean Earth/polar axis),
+      the same frame as the terrain maps used here.
+    can_answer:
+      - Official IAU names of lunar surface features, with their type, approximate centre and size
+      - Which named features are near a location
+    cannot_answer:
+      - Feature outlines or precise positions (the Gazetteer's positions identify features only)
+      - Names not (yet) approved by the IAU, or informal names
+      - Geological interpretation of named features (the IAU endorses none)
+    citation: >-
+      International Astronomical Union Working Group for Planetary System Nomenclature. "Gazetteer of Planetary
+      Nomenclature." Accessed 2026-11-16. https://planetarynames.wr.usgs.gov/
+    license: Public domain (Gazetteer FAQ and the shapefile metadata; checked 2026-11-16).
+    status: planned
+    notes: >-
+      Only names with approval status "Adopted by IAU" are kept. Satellite features (lettered craters such as
+      "Marco Polo P") are 7,064 of the 9,087 names.
+
   - id: m3_surface_ice
     name: M3 surface-exposed water ice detections (Li et al. 2018)
     kind: features
