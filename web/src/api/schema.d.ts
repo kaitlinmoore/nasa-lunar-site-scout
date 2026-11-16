@@ -145,6 +145,40 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AllArea
+         * @description Wherever the terrain data covers (Kaitlin, 2026-11-15); the result states the coverage used.
+         */
+        AllArea: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "all";
+        };
+        /** BBox */
+        BBox: {
+            /**
+             * Lat Min
+             * @description Planetocentric latitude, deg
+             */
+            lat_min: number;
+            /**
+             * Lat Max
+             * @description Planetocentric latitude, deg
+             */
+            lat_max: number;
+            /**
+             * Lon Min
+             * @description East-positive longitude, deg, -180..180
+             */
+            lon_min: number;
+            /**
+             * Lon Max
+             * @description East-positive longitude, deg, -180..180
+             */
+            lon_max: number;
+        };
+        /**
          * BodyTrack
          * @description Per-sample values for one body; every list has the length of `SeriesResponse.time`.
          */
@@ -169,6 +203,38 @@ export interface components {
              * @description Disc centre elevation minus the terrain horizon elevation at its azimuth, deg
              */
             clearance_deg?: number[] | null;
+        };
+        /**
+         * CapArea
+         * @description A polar cap: everything within max_colatitude_deg of a pole (e.g. 6 = poleward of 84°).
+         */
+        CapArea: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "cap";
+            /**
+             * Pole
+             * @enum {string}
+             */
+            pole: "south" | "north";
+            /** Max Colatitude Deg */
+            max_colatitude_deg: number;
+        };
+        /**
+         * CircleArea
+         * @description Everything within radius_m of a centre, at the terrain data's own resolution (contract 0.7.0).
+         */
+        CircleArea: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "circle";
+            center: components["schemas"]["Location"];
+            /** Radius M */
+            radius_m: number;
         };
         /**
          * CommsMetrics
@@ -271,7 +337,7 @@ export interface components {
         CompareResponse: {
             /**
              * Contract Version
-             * @default 0.6.0
+             * @default 0.7.0
              */
             contract_version: string;
             /**
@@ -362,7 +428,7 @@ export interface components {
         DatasetsResponse: {
             /**
              * Contract Version
-             * @default 0.6.0
+             * @default 0.7.0
              */
             contract_version: string;
             /**
@@ -435,11 +501,24 @@ export interface components {
          * @enum {string}
          */
         FeatureType: "crater" | "psr" | "ice_detection" | "hazard" | "landing_site" | "named_feature";
+        /**
+         * FeaturesQuery
+         * @description Query parameters of GET /api/features (bbox as lat_min,lat_max,lon_min,lon_max).
+         */
+        FeaturesQuery: {
+            /** @default null */
+            bbox: components["schemas"]["BBox"] | null;
+            /**
+             * Types
+             * @description Empty = every type
+             */
+            types?: components["schemas"]["FeatureType"][];
+        };
         /** FeaturesResponse */
         FeaturesResponse: {
             /**
              * Contract Version
-             * @default 0.6.0
+             * @default 0.7.0
              */
             contract_version: string;
             /**
@@ -483,7 +562,7 @@ export interface components {
         HealthResponse: {
             /**
              * Contract Version
-             * @default 0.6.0
+             * @default 0.7.0
              */
             contract_version: string;
             /**
@@ -505,7 +584,7 @@ export interface components {
         HorizonProfile: {
             /**
              * Contract Version
-             * @default 0.6.0
+             * @default 0.7.0
              */
             contract_version: string;
             /**
@@ -553,7 +632,7 @@ export interface components {
         Job: {
             /**
              * Contract Version
-             * @default 0.6.0
+             * @default 0.7.0
              */
             contract_version: string;
             /**
@@ -622,7 +701,7 @@ export interface components {
         LocateResponse: {
             /**
              * Contract Version
-             * @default 0.6.0
+             * @default 0.7.0
              */
             contract_version: string;
             /**
@@ -683,7 +762,7 @@ export interface components {
         MetricsResponse: {
             /**
              * Contract Version
-             * @default 0.6.0
+             * @default 0.7.0
              */
             contract_version: string;
             /**
@@ -707,7 +786,7 @@ export interface components {
         NLAnswer: {
             /**
              * Contract Version
-             * @default 0.6.0
+             * @default 0.7.0
              */
             contract_version: string;
             /**
@@ -740,6 +819,43 @@ export interface components {
              * @description For partial answers: what was not answered and why
              */
             limitations?: components["schemas"]["Limitation"][];
+            /**
+             * Assumptions
+             * @description Defaults and readings the user didn't state (e.g. a proxy height), shown with the echo
+             */
+            assumptions?: string[];
+        };
+        /**
+         * NLClarification
+         * @description The request can't be answered until the user says more (e.g. which site); nothing was run.
+         */
+        NLClarification: {
+            /**
+             * Contract Version
+             * @default 0.7.0
+             */
+            contract_version: string;
+            /**
+             * Placeholder
+             * @description True when the values are placeholders, not computed results.
+             * @default false
+             */
+            _placeholder: boolean;
+            /**
+             * Note
+             * @default null
+             */
+            _note: string | null;
+            /**
+             * Interpretation
+             * @description Echo of how the request was understood
+             */
+            interpretation: string;
+            /**
+             * Question
+             * @description What the user needs to say or select
+             */
+            question: string;
         };
         /** NLRequest */
         NLRequest: {
@@ -757,7 +873,7 @@ export interface components {
         NLUnsupported: {
             /**
              * Contract Version
-             * @default 0.6.0
+             * @default 0.7.0
              */
             contract_version: string;
             /**
@@ -772,6 +888,12 @@ export interface components {
              */
             _note: string | null;
             unsupported: components["schemas"]["Limitation"];
+            /**
+             * Interpretation
+             * @description Echo of how the request was understood
+             * @default null
+             */
+            interpretation: string | null;
         };
         /** NoTerrainDetail */
         NoTerrainDetail: {
@@ -818,7 +940,7 @@ export interface components {
          * @description API operations a structured query can target; `params` = that endpoint's request.
          * @enum {string}
          */
-        Operation: "sites" | "locate" | "horizon" | "series" | "metrics" | "compare" | "features" | "proximity" | "search";
+        Operation: "sites" | "locate" | "horizon" | "series" | "metrics" | "compare" | "features" | "proximity" | "search" | "terrain" | "site_summary";
         /** PointsArea */
         PointsArea: {
             /**
@@ -900,7 +1022,7 @@ export interface components {
         ProximityResponse: {
             /**
              * Contract Version
-             * @default 0.6.0
+             * @default 0.7.0
              */
             contract_version: string;
             /**
@@ -915,8 +1037,17 @@ export interface components {
              */
             _note: string | null;
             location: components["schemas"]["Location"];
-            /** Results */
+            /**
+             * Results
+             * @description Closest first, at most 10 (PROXIMITY_MAX_RESULTS)
+             */
             results: components["schemas"]["FeatureDistance"][];
+            /**
+             * Total
+             * @description How many features of the requested types lie within radius_m (results: the closest)
+             * @default null
+             */
+            total: number | null;
         };
         /** RootModel[Union[CompareNotServedError, InvalidRequestError]] */
         RootModel_Union_CompareNotServedError__InvalidRequestError__: components["schemas"]["CompareNotServedError"] | components["schemas"]["InvalidRequestError"];
@@ -992,6 +1123,7 @@ export interface components {
         SearchCriteria: {
             /**
              * Max Slope Deg
+             * @description Strict bound: candidates have slope < max_slope_deg (Kaitlin, 2026-11-15)
              * @default null
              */
             max_slope_deg: number | null;
@@ -1011,7 +1143,7 @@ export interface components {
         /** SearchRequest */
         SearchRequest: {
             /** Area */
-            area: components["schemas"]["PointsArea"] | components["schemas"]["MaskArea"];
+            area: components["schemas"]["PointsArea"] | components["schemas"]["MaskArea"] | components["schemas"]["CircleArea"] | components["schemas"]["CapArea"] | components["schemas"]["AllArea"];
             criteria: components["schemas"]["SearchCriteria"];
         };
         /** SearchResult */
@@ -1020,6 +1152,17 @@ export interface components {
             candidates: components["schemas"]["SearchCandidate"][];
             /** @default null */
             fidelity: components["schemas"]["FidelityLabel"] | null;
+            /**
+             * @description The DEM the slopes were measured on
+             * @default null
+             */
+            slope_layer: components["schemas"]["TerrainLayer"] | null;
+            /**
+             * Coverage
+             * @description Where the search ran, in words (required for an AllArea search)
+             * @default null
+             */
+            coverage: string | null;
             /** Limitations */
             limitations?: string[];
         };
@@ -1027,7 +1170,7 @@ export interface components {
         SeriesResponse: {
             /**
              * Contract Version
-             * @default 0.6.0
+             * @default 0.7.0
              */
             contract_version: string;
             /**
@@ -1099,11 +1242,74 @@ export interface components {
          * @enum {string}
          */
         SiteCategory: "pgda" | "apollo" | "artemis_iii" | "clps" | "commercial" | "international" | "custom";
+        /**
+         * SiteSummaryRequest
+         * @description Body of POST /api/site_summary: what is known at and around one location.
+         */
+        SiteSummaryRequest: {
+            location: components["schemas"]["Location"];
+            /**
+             * Radius M
+             * @description Radius for the slope statistics and the nearby features, m
+             */
+            radius_m: number;
+            /**
+             * Feature Types
+             * @description Feature types to list; empty = every type
+             */
+            feature_types?: components["schemas"]["FeatureType"][];
+            /**
+             * @description For the metrics part; its location must be this request's location
+             * @default null
+             */
+            scenario: components["schemas"]["Scenario"] | null;
+        };
+        /**
+         * SiteSummaryResponse
+         * @description Each part is null when it was not requested or has no result; limitations say which and why.
+         */
+        SiteSummaryResponse: {
+            /**
+             * Contract Version
+             * @default 0.7.0
+             */
+            contract_version: string;
+            /**
+             * Placeholder
+             * @description True when the values are placeholders, not computed results.
+             * @default false
+             */
+            _placeholder: boolean;
+            /**
+             * Note
+             * @default null
+             */
+            _note: string | null;
+            location: components["schemas"]["Location"];
+            /** Radius M */
+            radius_m: number;
+            /** @default null */
+            metrics: components["schemas"]["MetricsResponse"] | null;
+            /** @default null */
+            terrain: components["schemas"]["TerrainResponse"] | null;
+            /** @default null */
+            features: components["schemas"]["ProximityResponse"] | null;
+            /** Limitations */
+            limitations?: string[];
+        };
+        /**
+         * SitesQuery
+         * @description Query parameters of GET /api/sites.
+         */
+        SitesQuery: {
+            /** @default null */
+            category: components["schemas"]["SiteCategory"] | null;
+        };
         /** SitesResponse */
         SitesResponse: {
             /**
              * Contract Version
-             * @default 0.6.0
+             * @default 0.7.0
              */
             contract_version: string;
             /**
@@ -1155,7 +1361,7 @@ export interface components {
         StaticIndex: {
             /**
              * Contract Version
-             * @default 0.6.0
+             * @default 0.7.0
              */
             contract_version: string;
             /**
@@ -1206,6 +1412,55 @@ export interface components {
             resolution_m: number;
             /** Max Range Km */
             max_range_km?: number | null;
+        };
+        /**
+         * TerrainRequest
+         * @description Body of POST /api/terrain: slope at a point and around it.
+         */
+        TerrainRequest: {
+            location: components["schemas"]["Location"];
+            /**
+             * Radius M
+             * @description Radius of the circle the slope statistics cover, m
+             */
+            radius_m: number;
+        };
+        /** TerrainResponse */
+        TerrainResponse: {
+            /**
+             * Contract Version
+             * @default 0.7.0
+             */
+            contract_version: string;
+            /**
+             * Placeholder
+             * @description True when the values are placeholders, not computed results.
+             * @default false
+             */
+            _placeholder: boolean;
+            /**
+             * Note
+             * @default null
+             */
+            _note: string | null;
+            location: components["schemas"]["Location"];
+            /** Radius M */
+            radius_m: number;
+            /**
+             * Slope At Point Deg
+             * @description Slope at the location, deg (definition: docs/methodology.md)
+             * @default null
+             */
+            slope_at_point_deg: number | null;
+            /** @description Slope over the DEM pixels within radius_m: min, max and mean, deg */
+            slope_deg?: components["schemas"]["Stat"];
+            /**
+             * @description The DEM the slopes were measured on (its resolution sets what they can show)
+             * @default null
+             */
+            slope_layer: components["schemas"]["TerrainLayer"] | null;
+            /** Limitations */
+            limitations?: string[];
         };
         /** UnavailableDetail */
         UnavailableDetail: {
