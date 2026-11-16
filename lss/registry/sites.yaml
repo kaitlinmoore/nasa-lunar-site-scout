@@ -333,3 +333,290 @@ sites:
       archive (LRO-L-LROC-5-RDR-V1.0, EXTRAS/SHAPEFILE/ANTHROPOGENIC_OBJECTS) and on NASA NSSDCA's Apollo
       Landing Site Coordinates page (planetocentric mean Earth/polar axis frame, DE421 ephemeris). Site name and
       landing date: NSSDCA, https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo17info.html.
+
+  # Artemis III candidate regions (plan 4.3; Kaitlin, 2026-11-16): NASA's nine regions of 28 October 2024
+  # (release 24-136), in the release's order. Point rule (Kaitlin): the centre of the region's 1 km grid box in
+  # McClernan (2024), doi:10.5066/P1MEQ6UK (ScienceBase item 671a6fa8d34efed5620f89f8), read from each zip's
+  # <stem>_PolarLGRS_ACC_1km_S_Grid.shp header (= the dbf ULX/LRX/ULY/LRY extent; full rectangles of 1 km cells).
+  # The grid's .prj: stereographic, latitude of origin -90, central meridian 0, scale factor 0.994, false
+  # easting/northing 500 km, 1737.4 km sphere; so engine PS metres = (LPS - 500 km) / 0.994. The inverse is
+  # checked against the bounds published in each region's 1 km XML (tests/engine/test_sites_artemis.py).
+  # VERIFY: the frame of the USGS grids (not stated; LROC QuickMap regions, mean Earth assumed). No `point`:
+  # these are not product 78 tile sites. Wording approved by Kaitlin 2026-11-16 (short names end in " region"
+  # to stay distinct from the curated sites). docs/methodology.md section 1.4.3.
+  - id: artemis3-peak-near-cabeus-b
+    name: Peak near Cabeus B (Artemis III candidate region, NASA 2024)
+    short_name: Peak near Cabeus B region
+    subtitle: Artemis III candidate region · NASA, Oct 2024
+    category: artemis_iii
+    location: {lat: -83.651364, lon: -68.726263}
+    description: >-
+      One of nine regions near the Moon's south pole that NASA named on 28 October 2024 as candidate landing
+      regions for Artemis III, each containing several potential landing sites. In February 2026 NASA made
+      Artemis III a crewed test flight in Earth orbit in 2027, with the first landing planned for Artemis IV
+      in 2028; NASA's Artemis IV page (updated March 2026) still shows these nine regions. NASA does not give
+      a centre for each region. The point used here is the centre of the 1 km navigation grid the U.S.
+      Geological Survey made for the region (McClernan 2024), about 21 by 21 km; the centre is this project's
+      calculation from the USGS grid and is about 193 km from the pole. It is a geometric centre, not a
+      landing site.
+    dataset_ids: [pgda_90_south_pole_dems]
+    has_dem_clones: false
+    source: >-
+      Region: NASA (2024), NASA Provides Update on Artemis III Moon Landing Regions, release 24-136, 28
+      October 2024,
+      https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/. Point:
+      centre of the region's 1 km grid in McClernan, M. T. (2024), Down Selected Artemis III Candidate Landing
+      Site Navigational Grids, U.S. Geological Survey data release, doi:10.5066/P1MEQ6UK
+      (Peak_Near_Cabeus_B.zip, Peak_Near_Cabeus_B_PolarLGRS_ACC_1km_S_Grid: lunar polar stereographic easting
+      311-332 km, northing 559-580 km; false easting and northing 500 km, scale factor 0.994, 1737.4 km
+      sphere). The centre, 83.651364 S, 68.726263 W, is this project's calculation (the release does not state
+      the frame; mean Earth assumed, not yet checked). Mission change: NASA release 26-022, 27 February 2026,
+      https://www.nasa.gov/news-release/nasa-adds-mission-to-artemis-lunar-program-updates-architecture/; NASA
+      Artemis IV page, https://www.nasa.gov/mission/artemis-iv/ (updated 16 March 2026).
+
+  - id: artemis3-haworth
+    name: Haworth (Artemis III candidate region, NASA 2024)
+    short_name: Haworth region
+    subtitle: Artemis III candidate region · NASA, Oct 2024
+    category: artemis_iii
+    location: {lat: -86.766106, lon: -22.619865}
+    description: >-
+      One of nine regions near the Moon's south pole that NASA named on 28 October 2024 as candidate landing
+      regions for Artemis III, each containing several potential landing sites. In February 2026 NASA made
+      Artemis III a crewed test flight in Earth orbit in 2027, with the first landing planned for Artemis IV
+      in 2028; NASA's Artemis IV page (updated March 2026) still shows these nine regions. NASA does not give
+      a centre for each region. The point used here is the centre of the 1 km navigation grid the U.S.
+      Geological Survey made for the region (McClernan 2024), about 31 by 30 km; the centre is this project's
+      calculation from the USGS grid and is about 98 km from the pole. It is a geometric centre, not a landing
+      site.
+    dataset_ids: [pgda_90_south_pole_dems]
+    has_dem_clones: false
+    source: >-
+      Region: NASA (2024), NASA Provides Update on Artemis III Moon Landing Regions, release 24-136, 28
+      October 2024,
+      https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/. Point:
+      centre of the region's 1 km grid in McClernan, M. T. (2024), Down Selected Artemis III Candidate Landing
+      Site Navigational Grids, U.S. Geological Survey data release, doi:10.5066/P1MEQ6UK (Haworth.zip,
+      Haworth_PolarLGRS_ACC_1km_S_Grid: lunar polar stereographic easting 447-478 km, northing 575-605 km;
+      false easting and northing 500 km, scale factor 0.994, 1737.4 km sphere). The centre, 86.766106 S,
+      22.619865 W, is this project's calculation (the release does not state the frame; mean Earth assumed,
+      not yet checked). Mission change: NASA release 26-022, 27 February 2026,
+      https://www.nasa.gov/news-release/nasa-adds-mission-to-artemis-lunar-program-updates-architecture/; NASA
+      Artemis IV page, https://www.nasa.gov/mission/artemis-iv/ (updated 16 March 2026).
+
+  - id: artemis3-malapert-massif
+    name: Malapert Massif (Artemis III candidate region, NASA 2024)
+    short_name: Malapert Massif region
+    subtitle: Artemis III candidate region · NASA, Oct 2024
+    category: artemis_iii
+    location: {lat: -85.987196, lon: -0.236758}
+    description: >-
+      One of nine regions near the Moon's south pole that NASA named on 28 October 2024 as candidate landing
+      regions for Artemis III, each containing several potential landing sites. In February 2026 NASA made
+      Artemis III a crewed test flight in Earth orbit in 2027, with the first landing planned for Artemis IV
+      in 2028; NASA's Artemis IV page (updated March 2026) still shows these nine regions. NASA does not give
+      a centre for each region. The point used here is the centre of the 1 km navigation grid the U.S.
+      Geological Survey made for the region (McClernan 2024), about 21 by 22 km; the centre is this project's
+      calculation from the USGS grid and is about 122 km from the pole. It is a geometric centre, not a
+      landing site. The point is 4.4 km from the Malapert Massif site.
+    dataset_ids: [pgda_78_site_dems, pgda_90_south_pole_dems]
+    has_dem_clones: false
+    source: >-
+      Region: NASA (2024), NASA Provides Update on Artemis III Moon Landing Regions, release 24-136, 28
+      October 2024,
+      https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/. Point:
+      centre of the region's 1 km grid in McClernan, M. T. (2024), Down Selected Artemis III Candidate Landing
+      Site Navigational Grids, U.S. Geological Survey data release, doi:10.5066/P1MEQ6UK (Malapert_Massif.zip,
+      Malapert_Massif_PolarLGRS_ACC_1km_S_Grid: lunar polar stereographic easting 489-510 km, northing 610-632
+      km; false easting and northing 500 km, scale factor 0.994, 1737.4 km sphere). The centre, 85.987196 S,
+      0.236758 W, is this project's calculation (the release does not state the frame; mean Earth assumed, not
+      yet checked). Mission change: NASA release 26-022, 27 February 2026,
+      https://www.nasa.gov/news-release/nasa-adds-mission-to-artemis-lunar-program-updates-architecture/; NASA
+      Artemis IV page, https://www.nasa.gov/mission/artemis-iv/ (updated 16 March 2026).
+
+  - id: artemis3-mons-mouton-plateau
+    name: Mons Mouton Plateau (Artemis III candidate region, NASA 2024)
+    short_name: Mons Mouton Plateau region
+    subtitle: Artemis III candidate region · NASA, Oct 2024
+    category: artemis_iii
+    location: {lat: -84.337470, lon: 30.618605}
+    description: >-
+      One of nine regions near the Moon's south pole that NASA named on 28 October 2024 as candidate landing
+      regions for Artemis III, each containing several potential landing sites. In February 2026 NASA made
+      Artemis III a crewed test flight in Earth orbit in 2027, with the first landing planned for Artemis IV
+      in 2028; NASA's Artemis IV page (updated March 2026) still shows these nine regions. NASA does not give
+      a centre for each region. The point used here is the centre of the 1 km navigation grid the U.S.
+      Geological Survey made for the region (McClernan 2024), about 78 by 58 km; the centre is this project's
+      calculation from the USGS grid and is about 172 km from the pole. It is a geometric centre, not a
+      landing site. This region's grid is much larger than the others, so its centre stands for the region
+      only loosely.
+    dataset_ids: [pgda_90_south_pole_dems]
+    has_dem_clones: false
+    source: >-
+      Region: NASA (2024), NASA Provides Update on Artemis III Moon Landing Regions, release 24-136, 28
+      October 2024,
+      https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/. Point:
+      centre of the region's 1 km grid in McClernan, M. T. (2024), Down Selected Artemis III Candidate Landing
+      Site Navigational Grids, U.S. Geological Survey data release, doi:10.5066/P1MEQ6UK
+      (Mons_Mouton_Plateau.zip, Mons_Mouton_Plateau_PolarLGRS_ACC_1km_S_Grid: lunar polar stereographic
+      easting 548-626 km, northing 618-676 km; false easting and northing 500 km, scale factor 0.994, 1737.4
+      km sphere). The centre, 84.337470 S, 30.618605 E, is this project's calculation (the release does not
+      state the frame; mean Earth assumed, not yet checked). Mission change: NASA release 26-022, 27 February
+      2026,
+      https://www.nasa.gov/news-release/nasa-adds-mission-to-artemis-lunar-program-updates-architecture/; NASA
+      Artemis IV page, https://www.nasa.gov/mission/artemis-iv/ (updated 16 March 2026).
+
+  - id: artemis3-mons-mouton
+    name: Mons Mouton (Artemis III candidate region, NASA 2024)
+    short_name: Mons Mouton region
+    subtitle: Artemis III candidate region · NASA, Oct 2024
+    category: artemis_iii
+    location: {lat: -85.421795, lon: 31.675469}
+    description: >-
+      One of nine regions near the Moon's south pole that NASA named on 28 October 2024 as candidate landing
+      regions for Artemis III, each containing several potential landing sites. In February 2026 NASA made
+      Artemis III a crewed test flight in Earth orbit in 2027, with the first landing planned for Artemis IV
+      in 2028; NASA's Artemis IV page (updated March 2026) still shows these nine regions. NASA does not give
+      a centre for each region. The point used here is the centre of the 1 km navigation grid the U.S.
+      Geological Survey made for the region (McClernan 2024), about 17 by 17 km; the centre is this project's
+      calculation from the USGS grid and is about 139 km from the pole. It is a geometric centre, not a
+      landing site. Mons Mouton is the mountain sometimes known informally as Leibnitz Beta, named by the IAU
+      in 2022 after NASA mathematician Melba Roy Mouton. The point is 0.3 km from the Leibnitz Beta Plateau
+      site.
+    dataset_ids: [pgda_78_site_dems, pgda_90_south_pole_dems]
+    has_dem_clones: false
+    source: >-
+      Region: NASA (2024), NASA Provides Update on Artemis III Moon Landing Regions, release 24-136, 28
+      October 2024,
+      https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/. Point:
+      centre of the region's 1 km grid in McClernan, M. T. (2024), Down Selected Artemis III Candidate Landing
+      Site Navigational Grids, U.S. Geological Survey data release, doi:10.5066/P1MEQ6UK (Mons_Mouton.zip,
+      Mons_Mouton_PolarLGRS_ACC_1km_S_Grid: lunar polar stereographic easting 564-581 km, northing 609-626 km;
+      false easting and northing 500 km, scale factor 0.994, 1737.4 km sphere). The centre, 85.421795 S,
+      31.675469 E, is this project's calculation (the release does not state the frame; mean Earth assumed,
+      not yet checked). Mission change: NASA release 26-022, 27 February 2026,
+      https://www.nasa.gov/news-release/nasa-adds-mission-to-artemis-lunar-program-updates-architecture/; NASA
+      Artemis IV page, https://www.nasa.gov/mission/artemis-iv/ (updated 16 March 2026). Name: USGS Gazetteer
+      of Planetary Nomenclature, Mons Mouton, feature 16070 (adopted by the IAU 13 May 2022),
+      https://planetarynames.wr.usgs.gov/Feature/16070; informal name Leibnitz Beta: NASA SVS 5074 (15
+      February 2023), https://svs.gsfc.nasa.gov/5074.
+
+  - id: artemis3-nobile-rim-1
+    name: Nobile Rim 1 (Artemis III candidate region, NASA 2024)
+    short_name: Nobile Rim 1 region
+    subtitle: Artemis III candidate region · NASA, Oct 2024
+    category: artemis_iii
+    location: {lat: -85.433807, lon: 37.327588}
+    description: >-
+      One of nine regions near the Moon's south pole that NASA named on 28 October 2024 as candidate landing
+      regions for Artemis III, each containing several potential landing sites. In February 2026 NASA made
+      Artemis III a crewed test flight in Earth orbit in 2027, with the first landing planned for Artemis IV
+      in 2028; NASA's Artemis IV page (updated March 2026) still shows these nine regions. NASA does not give
+      a centre for each region. The point used here is the centre of the 1 km navigation grid the U.S.
+      Geological Survey made for the region (McClernan 2024), about 21 by 21 km; the centre is this project's
+      calculation from the USGS grid and is about 138 km from the pole. It is a geometric centre, not a
+      landing site. The point is 4.1 km from the Nobile Rim site.
+    dataset_ids: [pgda_78_site_dems, pgda_90_south_pole_dems]
+    has_dem_clones: false
+    source: >-
+      Region: NASA (2024), NASA Provides Update on Artemis III Moon Landing Regions, release 24-136, 28
+      October 2024,
+      https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/. Point:
+      centre of the region's 1 km grid in McClernan, M. T. (2024), Down Selected Artemis III Candidate Landing
+      Site Navigational Grids, U.S. Geological Survey data release, doi:10.5066/P1MEQ6UK (Nobile_Rim_1.zip,
+      Nobile_Rim_1_PolarLGRS_ACC_1km_S_Grid: lunar polar stereographic easting 573-594 km, northing 599-620
+      km; false easting and northing 500 km, scale factor 0.994, 1737.4 km sphere). The centre, 85.433807 S,
+      37.327588 E, is this project's calculation (the release does not state the frame; mean Earth assumed,
+      not yet checked). Mission change: NASA release 26-022, 27 February 2026,
+      https://www.nasa.gov/news-release/nasa-adds-mission-to-artemis-lunar-program-updates-architecture/; NASA
+      Artemis IV page, https://www.nasa.gov/mission/artemis-iv/ (updated 16 March 2026).
+
+  - id: artemis3-nobile-rim-2
+    name: Nobile Rim 2 (Artemis III candidate region, NASA 2024)
+    short_name: Nobile Rim 2 region
+    subtitle: Artemis III candidate region · NASA, Oct 2024
+    category: artemis_iii
+    location: {lat: -83.954459, lon: 58.793809}
+    description: >-
+      One of nine regions near the Moon's south pole that NASA named on 28 October 2024 as candidate landing
+      regions for Artemis III, each containing several potential landing sites. In February 2026 NASA made
+      Artemis III a crewed test flight in Earth orbit in 2027, with the first landing planned for Artemis IV
+      in 2028; NASA's Artemis IV page (updated March 2026) still shows these nine regions. NASA does not give
+      a centre for each region. The point used here is the centre of the 1 km navigation grid the U.S.
+      Geological Survey made for the region (McClernan 2024), about 20 by 21 km; the centre is this project's
+      calculation from the USGS grid and is about 183 km from the pole. It is a geometric centre, not a
+      landing site.
+    dataset_ids: [pgda_90_south_pole_dems]
+    has_dem_clones: false
+    source: >-
+      Region: NASA (2024), NASA Provides Update on Artemis III Moon Landing Regions, release 24-136, 28
+      October 2024,
+      https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/. Point:
+      centre of the region's 1 km grid in McClernan, M. T. (2024), Down Selected Artemis III Candidate Landing
+      Site Navigational Grids, U.S. Geological Survey data release, doi:10.5066/P1MEQ6UK (Nobile_Rim_2.zip,
+      Nobile_Rim_2_PolarLGRS_ACC_1km_S_Grid: lunar polar stereographic easting 646-666 km, northing 584-605
+      km; false easting and northing 500 km, scale factor 0.994, 1737.4 km sphere). The centre, 83.954459 S,
+      58.793809 E, is this project's calculation (the release does not state the frame; mean Earth assumed,
+      not yet checked). Mission change: NASA release 26-022, 27 February 2026,
+      https://www.nasa.gov/news-release/nasa-adds-mission-to-artemis-lunar-program-updates-architecture/; NASA
+      Artemis IV page, https://www.nasa.gov/mission/artemis-iv/ (updated 16 March 2026).
+
+  - id: artemis3-de-gerlache-rim-2
+    name: de Gerlache Rim 2 (Artemis III candidate region, NASA 2024)
+    short_name: de Gerlache Rim 2 region
+    subtitle: Artemis III candidate region · NASA, Oct 2024
+    category: artemis_iii
+    location: {lat: -88.226338, lon: -65.112588}
+    description: >-
+      One of nine regions near the Moon's south pole that NASA named on 28 October 2024 as candidate landing
+      regions for Artemis III, each containing several potential landing sites. In February 2026 NASA made
+      Artemis III a crewed test flight in Earth orbit in 2027, with the first landing planned for Artemis IV
+      in 2028; NASA's Artemis IV page (updated March 2026) still shows these nine regions. NASA does not give
+      a centre for each region. The point used here is the centre of the 1 km navigation grid the U.S.
+      Geological Survey made for the region (McClernan 2024), about 21 by 21 km; the centre is this project's
+      calculation from the USGS grid and is about 54 km from the pole. It is a geometric centre, not a landing
+      site.
+    dataset_ids: [pgda_90_south_pole_dems]
+    has_dem_clones: false
+    source: >-
+      Region: NASA (2024), NASA Provides Update on Artemis III Moon Landing Regions, release 24-136, 28
+      October 2024,
+      https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/. Point:
+      centre of the region's 1 km grid in McClernan, M. T. (2024), Down Selected Artemis III Candidate Landing
+      Site Navigational Grids, U.S. Geological Survey data release, doi:10.5066/P1MEQ6UK
+      (de_Gerlache_Rim_2.zip, de_Gerlache_Rim_2_PolarLGRS_ACC_1km_S_Grid: lunar polar stereographic easting
+      441-462 km, northing 512-533 km; false easting and northing 500 km, scale factor 0.994, 1737.4 km
+      sphere). The centre, 88.226338 S, 65.112588 W, is this project's calculation (the release does not state
+      the frame; mean Earth assumed, not yet checked). Mission change: NASA release 26-022, 27 February 2026,
+      https://www.nasa.gov/news-release/nasa-adds-mission-to-artemis-lunar-program-updates-architecture/; NASA
+      Artemis IV page, https://www.nasa.gov/mission/artemis-iv/ (updated 16 March 2026).
+
+  - id: artemis3-slater-plain
+    name: Slater Plain (Artemis III candidate region, NASA 2024)
+    short_name: Slater Plain region
+    subtitle: Artemis III candidate region · NASA, Oct 2024
+    category: artemis_iii
+    location: {lat: -87.169725, lon: 125.459618}
+    description: >-
+      One of nine regions near the Moon's south pole that NASA named on 28 October 2024 as candidate landing
+      regions for Artemis III, each containing several potential landing sites. In February 2026 NASA made
+      Artemis III a crewed test flight in Earth orbit in 2027, with the first landing planned for Artemis IV
+      in 2028; NASA's Artemis IV page (updated March 2026) still shows these nine regions. NASA does not give
+      a centre for each region. The point used here is the centre of the 1 km navigation grid the U.S.
+      Geological Survey made for the region (McClernan 2024), about 21 by 21 km; the centre is this project's
+      calculation from the USGS grid and is about 86 km from the pole. It is a geometric centre, not a landing
+      site.
+    dataset_ids: [pgda_90_south_pole_dems]
+    has_dem_clones: false
+    source: >-
+      Region: NASA (2024), NASA Provides Update on Artemis III Moon Landing Regions, release 24-136, 28
+      October 2024,
+      https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/. Point:
+      centre of the region's 1 km grid in McClernan, M. T. (2024), Down Selected Artemis III Candidate Landing
+      Site Navigational Grids, U.S. Geological Survey data release, doi:10.5066/P1MEQ6UK (Slater_Plain.zip,
+      Slater_Plain_PolarLGRS_ACC_1km_S_Grid: lunar polar stereographic easting 559-580 km, northing 440-461
+      km; false easting and northing 500 km, scale factor 0.994, 1737.4 km sphere). The centre, 87.169725 S,
+      125.459618 E, is this project's calculation (the release does not state the frame; mean Earth assumed,
+      not yet checked). Mission change: NASA release 26-022, 27 February 2026,
+      https://www.nasa.gov/news-release/nasa-adds-mission-to-artemis-lunar-program-updates-architecture/; NASA
+      Artemis IV page, https://www.nasa.gov/mission/artemis-iv/ (updated 16 March 2026).

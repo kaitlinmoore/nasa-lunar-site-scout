@@ -186,6 +186,31 @@ Coordinates page, which gives the frame as the mean Earth/polar axis system of D
 The table's stated uncertainties are 0.3–3.5 m. Place names and UT landing dates: NSSDCA mission pages.
 Terrain there is the global layer (section 3.5).
 
+#### 1.4.3 Artemis III candidate regions
+
+Nine entries (`artemis3-*`, category `artemis_iii`; Kaitlin, 2026-11-16): the regions NASA named on 28 October
+2024 (release 24-136), in the release's order. In February 2026 NASA made Artemis III a crewed test flight in
+Earth orbit in 2027 and planned the first landing for Artemis IV in 2028 (release 26-022); NASA's Artemis IV
+page (updated 16 March 2026) still shows the same nine regions. No newer list was found (checked 2026-11-16).
+
+NASA gives no centre or outline for the regions. The point for each is the centre of the region's 1 km
+navigation grid in McClernan (2024), a U.S. Geological Survey data release made for these nine regions: the
+extent in each zip's `<region>_PolarLGRS_ACC_1km_S_Grid.shp` header, which equals the extent of the grid's cells
+(full rectangles of 1 km cells). The grid's projection file gives a south polar stereographic projection on the
+1737.4 km sphere with scale factor 0.994 and false easting and northing of 500 km, so the engine's polar
+stereographic metres (scale factor 1, origin at the pole) are (grid metres − 500 km) / 0.994. Each region's
+metadata also publishes latitude and longitude bounds to 4 decimals; every one of the 36 values equals a box
+corner's latitude or longitude, as converted here, to 0.00005°, which checks the conversion. The release does not
+state the frame; the mean Earth frame is assumed and has not been checked.
+
+The boxes are 17 to 31 km on a side, except Mons Mouton Plateau (78 by 58 km), whose centre represents its region
+only loosely. A box centre is a geometric point, not a landing site: the slope at the centre on the finest map
+there (section 5.6; 5 m or 80 m) ranges from 1.5° to 16.4° (Nobile Rim 1, on the 5 m map). Three centres lie on 5 m PGDA site maps (Malapert
+Massif, Mons Mouton and Nobile Rim 1, 0.3 to 4.4 km from the curated sites there) and get the high-fidelity stack;
+the other six use the 80 m and 240 m polar maps (medium). Short names end in "region" so that they stay distinct
+from the curated sites. `tests/engine/test_sites_artemis.py` pins each box and bound as published and recomputes
+the centres and the distances stated in the descriptions.
+
 ## 2. Frames, time scales and topocentric geometry
 
 Implemented in `lss/ephem/core.py`; tested in `tests/engine/test_ephem.py`.
@@ -1130,6 +1155,13 @@ area) and visibility (share of time steps with any part visible) at the surface 
 - Mazarico, E., Barker, M. K., & Nicholas, J. B. (2018). Advanced illumination modeling for data analysis and
   calibration. Application to the Moon. *Advances in Space Research* 62(11), 3214–3228.
   doi:10.1016/j.asr.2018.08.022
+- McClernan, M. T. (2024). Down Selected Artemis III Candidate Landing Site Navigational Grids. U.S. Geological
+  Survey data release. doi:10.5066/P1MEQ6UK (section 1.4.3)
+- NASA (2024). NASA Provides Update on Artemis III Moon Landing Regions. Release 24-136, 28 October 2024.
+  https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/ (section 1.4.3)
+- NASA (2026). NASA Adds Mission to Artemis Lunar Program, Updates Architecture. Release 26-022, 27 February
+  2026. https://www.nasa.gov/news-release/nasa-adds-mission-to-artemis-lunar-program-updates-architecture/
+  (section 1.4.3)
 - Neumann, G. A. (2010). Lunar Orbiter Laser Altimeter Raw Data Set, LRO-L-LOLA-4-GDR-V1.0. NASA Planetary
   Data System. PDS4 bundle: Smith, D. E., & Neumann, G. A. (2023). Lunar Reconnaissance Orbiter LOLA Processed
   Data (RDR) Bundle. doi:10.17189/tnyt-7007 (`LDEM_75S_60M`, section 6.3)
