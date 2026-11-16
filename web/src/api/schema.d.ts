@@ -140,6 +140,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/terrain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Terrain */
+        post: operations["terrain_api_terrain_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/site_summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Site Summary Endpoint */
+        post: operations["site_summary_endpoint_api_site_summary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/nl": {
         parameters: {
             query?: never;
@@ -354,7 +388,7 @@ export interface components {
         CompareResponse: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -445,7 +479,7 @@ export interface components {
         DatasetsResponse: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -486,17 +520,11 @@ export interface components {
             /** Id */
             id: string;
             type: components["schemas"]["FeatureType"];
-            /**
-             * Name
-             * @default null
-             */
-            name: string | null;
+            /** Name */
+            name?: string | null;
             location: components["schemas"]["Location"];
-            /**
-             * Diameter M
-             * @default null
-             */
-            diameter_m: number | null;
+            /** Diameter M */
+            diameter_m?: number | null;
             /** Dataset Id */
             dataset_id: string;
             /** Properties */
@@ -535,7 +563,7 @@ export interface components {
         FeaturesResponse: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -579,7 +607,7 @@ export interface components {
         HealthResponse: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -601,7 +629,7 @@ export interface components {
         HorizonProfile: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -649,7 +677,7 @@ export interface components {
         Job: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -718,7 +746,7 @@ export interface components {
         LocateResponse: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -779,7 +807,7 @@ export interface components {
         MetricsResponse: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -803,7 +831,7 @@ export interface components {
         NLAnswer: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -845,7 +873,7 @@ export interface components {
         NLClarification: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -879,7 +907,7 @@ export interface components {
         NLUnsupported: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -1024,7 +1052,7 @@ export interface components {
         ProximityResponse: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -1033,11 +1061,8 @@ export interface components {
              * @default false
              */
             _placeholder: boolean;
-            /**
-             * Note
-             * @default null
-             */
-            _note: string | null;
+            /** Note */
+            _note?: string | null;
             location: components["schemas"]["Location"];
             /**
              * Results
@@ -1047,9 +1072,8 @@ export interface components {
             /**
              * Total
              * @description How many features of the requested types lie within radius_m (results: the closest)
-             * @default null
              */
-            total: number | null;
+            total?: number | null;
         };
         /** RateLimitedDetail */
         RateLimitedDetail: {
@@ -1077,6 +1101,8 @@ export interface components {
         RootModel_Union_NoTerrainError__InvalidRequestError__: components["schemas"]["NoTerrainError"] | components["schemas"]["InvalidRequestError"];
         /** RootModel[Union[NotServedError, InvalidRequestError]] */
         RootModel_Union_NotServedError__InvalidRequestError__: components["schemas"]["NotServedError"] | components["schemas"]["InvalidRequestError"];
+        /** RootModel[Union[TerrainNotServedError, InvalidRequestError]] */
+        RootModel_Union_TerrainNotServedError__InvalidRequestError__: components["schemas"]["TerrainNotServedError"] | components["schemas"]["InvalidRequestError"];
         /**
          * Scenario
          * @description The unit of everything (plan section 3.1): results are keyed by `Scenario.key()`.
@@ -1192,7 +1218,7 @@ export interface components {
         SeriesResponse: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -1237,8 +1263,21 @@ export interface components {
         Site: {
             /** Id */
             id: string;
-            /** Name */
+            /**
+             * Name
+             * @description Full technical name, e.g. 'Site01 Connecting ridge (Barker 2021 RoI 4)'
+             */
             name: string;
+            /**
+             * Short Name
+             * @description Short display name, e.g. 'Connecting ridge' (contract 0.9.0; Kaitlin, 2026-11-16). Null: show name
+             */
+            short_name?: string | null;
+            /**
+             * Subtitle
+             * @description Small line under the display name, e.g. 'PGDA Site01 · Barker 2021 RoI 4'
+             */
+            subtitle?: string | null;
             category: components["schemas"]["SiteCategory"];
             location: components["schemas"]["Location"];
             /** Description */
@@ -1280,11 +1319,8 @@ export interface components {
              * @description Feature types to list; empty = every type
              */
             feature_types?: components["schemas"]["FeatureType"][];
-            /**
-             * @description For the metrics part; its location must be this request's location
-             * @default null
-             */
-            scenario: components["schemas"]["Scenario"] | null;
+            /** @description For the metrics part; its location must be this request's location */
+            scenario?: components["schemas"]["Scenario"] | null;
         };
         /**
          * SiteSummaryResponse
@@ -1293,7 +1329,7 @@ export interface components {
         SiteSummaryResponse: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -1302,20 +1338,14 @@ export interface components {
              * @default false
              */
             _placeholder: boolean;
-            /**
-             * Note
-             * @default null
-             */
-            _note: string | null;
+            /** Note */
+            _note?: string | null;
             location: components["schemas"]["Location"];
             /** Radius M */
             radius_m: number;
-            /** @default null */
-            metrics: components["schemas"]["MetricsResponse"] | null;
-            /** @default null */
-            terrain: components["schemas"]["TerrainResponse"] | null;
-            /** @default null */
-            features: components["schemas"]["ProximityResponse"] | null;
+            metrics?: components["schemas"]["MetricsResponse"] | null;
+            terrain?: components["schemas"]["TerrainResponse"] | null;
+            features?: components["schemas"]["ProximityResponse"] | null;
             /** Limitations */
             limitations?: string[];
         };
@@ -1331,7 +1361,7 @@ export interface components {
         SitesResponse: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -1383,7 +1413,7 @@ export interface components {
         StaticIndex: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -1400,6 +1430,11 @@ export interface components {
             /** Scenarios */
             scenarios: components["schemas"]["StaticEntry"][];
             /**
+             * Terrain
+             * @description Precomputed slope statistics (contract 0.9.0)
+             */
+            terrain?: components["schemas"]["StaticTerrainEntry"][];
+            /**
              * Sites
              * @description Path of the SitesResponse file
              */
@@ -1409,6 +1444,22 @@ export interface components {
              * @description Path of the DatasetsResponse file
              */
             datasets: string;
+        };
+        /** StaticTerrainEntry */
+        StaticTerrainEntry: {
+            location: components["schemas"]["Location"];
+            /** Radius M */
+            radius_m: number;
+            /**
+             * Terrain Key
+             * @description TerrainRequest.key() of this location and radius
+             */
+            terrain_key: string;
+            /**
+             * Path
+             * @description Path of the TerrainResponse file
+             */
+            path: string;
         };
         /** StructuredQuery */
         StructuredQuery: {
@@ -1435,6 +1486,40 @@ export interface components {
             /** Max Range Km */
             max_range_km?: number | null;
         };
+        /** TerrainNotServedDetail */
+        TerrainNotServedDetail: {
+            /**
+             * Reason
+             * @description Plain-language explanation, suitable to show to visitors
+             */
+            reason: string;
+            /**
+             * Terrain Key
+             * @description TerrainRequest.key() of the request
+             */
+            terrain_key: string;
+            /**
+             * Served
+             * @description Every location and radius with precomputed statistics
+             */
+            served: components["schemas"]["TerrainOption"][];
+        };
+        /**
+         * TerrainNotServedError
+         * @description 422 from POST /api/terrain: no precomputed slope statistics for this location and radius.
+         */
+        TerrainNotServedError: {
+            detail: components["schemas"]["TerrainNotServedDetail"];
+        };
+        /**
+         * TerrainOption
+         * @description One location and radius with precomputed slope statistics (contract 0.9.0).
+         */
+        TerrainOption: {
+            location: components["schemas"]["Location"];
+            /** Radius M */
+            radius_m: number;
+        };
         /**
          * TerrainRequest
          * @description Body of POST /api/terrain: slope at a point and around it.
@@ -1451,7 +1536,7 @@ export interface components {
         TerrainResponse: {
             /**
              * Contract Version
-             * @default 0.8.0
+             * @default 0.9.0
              */
             contract_version: string;
             /**
@@ -1460,30 +1545,28 @@ export interface components {
              * @default false
              */
             _placeholder: boolean;
-            /**
-             * Note
-             * @default null
-             */
-            _note: string | null;
+            /** Note */
+            _note?: string | null;
             location: components["schemas"]["Location"];
             /** Radius M */
             radius_m: number;
             /**
              * Slope At Point Deg
              * @description Slope at the location, deg (definition: docs/methodology.md)
-             * @default null
              */
-            slope_at_point_deg: number | null;
+            slope_at_point_deg?: number | null;
             /** @description Slope over the DEM pixels within radius_m: min, max and mean, deg */
             slope_deg?: components["schemas"]["Stat"];
-            /**
-             * @description The DEM the slopes were measured on (its resolution sets what they can show)
-             * @default null
-             */
-            slope_layer: components["schemas"]["TerrainLayer"] | null;
+            /** @description The DEM the slopes were measured on (its resolution sets what they can show) */
+            slope_layer?: components["schemas"]["TerrainLayer"] | null;
             /** Limitations */
             limitations?: string[];
         };
+        /**
+         * TerrainUnprocessableError
+         * @description 422 from POST /api/terrain: tell the two apart by `detail` (an object vs a list).
+         */
+        TerrainUnprocessableError: components["schemas"]["TerrainNotServedError"] | components["schemas"]["InvalidRequestError"];
         /** UnavailableDetail */
         UnavailableDetail: {
             /**
@@ -1816,6 +1899,81 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UnavailableError"];
+                };
+            };
+        };
+    };
+    terrain_api_terrain_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TerrainRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TerrainResponse"];
+                };
+            };
+            /** @description No precomputed slope statistics for this location and radius (TerrainNotServedError), or a malformed request (InvalidRequestError, FastAPI validation) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TerrainUnprocessableError"];
+                };
+            };
+            /** @description No usable precomputed results are installed */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnavailableError"];
+                };
+            };
+        };
+    };
+    site_summary_endpoint_api_site_summary_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteSummaryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
