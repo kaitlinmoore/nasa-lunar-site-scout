@@ -186,6 +186,9 @@ class NLService:
     limiter: RateLimiter = field(default_factory=lambda: RateLimiter(RATE_PER_MINUTE, RATE_PER_DAY))
     meter: SpendMeter = field(default_factory=lambda: SpendMeter(DAILY_SPEND_USD))
     cache: Mapping[tuple, NLResult] = field(default_factory=dict)
+    # Reasons that refer to "the list with this message" -> their list-free versions: an NL answer lists
+    # nothing (stream B, 2026-11-16).
+    list_free_reasons: Mapping[str, str] = field(default_factory=dict)
     today: Callable[[], date] = field(default=lambda: datetime.now(UTC).date())
     _provider: Provider | None = None
 
@@ -278,6 +281,7 @@ class NLService:
             body = run(OPERATION_PARAMS[op].model_validate(params))
         except HTTPException as e:
             reason = e.detail.get("reason") if isinstance(e.detail, dict) else None
+            reason = self.list_free_reasons.get(reason, reason) if reason else None
             return None, Limitation(reason=reason or "No result for this request."), None, False
         except ValidationError:
             return None, Limitation(reason=NOT_UNDERSTOOD_REASON), None, False

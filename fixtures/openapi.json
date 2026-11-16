@@ -3,8 +3,8 @@
   "info": {
     "title": "Lunar Site Scout API",
     "description": "Contract v0. Not affiliated with or endorsed by NASA.",
-    "version": "0.10.0",
-    "x-contract-version": "0.10.0"
+    "version": "0.11.0",
+    "x-contract-version": "0.11.0"
   },
   "paths": {
     "/api/health": {
@@ -54,6 +54,62 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SitesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scenarios": {
+      "get": {
+        "summary": "Scenarios",
+        "operationId": "scenarios_api_scenarios_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenariosResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No usable precomputed results are installed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnavailableError"
                 }
               }
             }
@@ -1013,7 +1069,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.10.0"
+            "default": "0.11.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1309,7 +1365,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.10.0"
+            "default": "0.11.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1550,7 +1606,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.10.0",
+            "default": "0.11.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1665,7 +1721,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.10.0"
+            "default": "0.11.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1700,7 +1756,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.10.0"
+            "default": "0.11.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1822,7 +1878,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.10.0",
+            "default": "0.11.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1969,7 +2025,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.10.0"
+            "default": "0.11.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2168,7 +2224,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.10.0"
+            "default": "0.11.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2233,7 +2289,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.10.0"
+            "default": "0.11.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2303,7 +2359,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.10.0"
+            "default": "0.11.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2384,7 +2440,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.10.0"
+            "default": "0.11.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2702,7 +2758,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.10.0"
+            "default": "0.11.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2882,6 +2938,44 @@
         "title": "Scenario",
         "description": "The unit of everything (plan section 3.1): results are keyed by `Scenario.key()`."
       },
+      "ScenarioEntry": {
+        "properties": {
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Id",
+            "description": "The curated site at this scenario's location; null if none"
+          },
+          "scenario_key": {
+            "type": "string",
+            "title": "Scenario Key"
+          },
+          "scenario": {
+            "$ref": "#/components/schemas/Scenario"
+          },
+          "has_horizon": {
+            "type": "boolean",
+            "title": "Has Horizon",
+            "description": "POST /api/horizon has this location and unit height"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "site_id",
+          "scenario_key",
+          "scenario",
+          "has_horizon"
+        ],
+        "title": "ScenarioEntry",
+        "description": "One precomputed scenario, with the curated site it belongs to (matched on its exact location)."
+      },
       "ScenarioField": {
         "type": "string",
         "enum": [
@@ -2907,6 +3001,67 @@
         ],
         "title": "ScenarioRequest",
         "description": "Body of POST /api/series and POST /api/metrics."
+      },
+      "ScenariosQuery": {
+        "additionalProperties": false,
+        "description": "Query parameters of GET /api/scenarios (contract 0.11.0).",
+        "properties": {
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Only this curated site's scenarios",
+            "title": "Site Id"
+          }
+        },
+        "title": "ScenariosQuery",
+        "type": "object"
+      },
+      "ScenariosResponse": {
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "title": "Contract Version",
+            "default": "0.11.0"
+          },
+          "_placeholder": {
+            "type": "boolean",
+            "title": "Placeholder",
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioEntry"
+            },
+            "type": "array",
+            "title": "Scenarios"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scenarios"
+        ],
+        "title": "ScenariosResponse",
+        "description": "Every precomputed scenario this API version serves (stream B's site page picker, Kaitlin's option b):\nby site in the site list's order, then by unit height, window start, window end, step."
       },
       "SearchCandidate": {
         "additionalProperties": false,
@@ -3121,7 +3276,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.10.0"
+            "default": "0.11.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3368,7 +3523,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.10.0"
+            "default": "0.11.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3465,7 +3620,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.10.0"
+            "default": "0.11.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3549,6 +3704,19 @@
             "title": "Scenario Key",
             "type": "string"
           },
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The curated site at this location (0.11.0)",
+            "title": "Site Id"
+          },
           "metrics": {
             "description": "Path of this scenario's MetricsResponse file",
             "title": "Metrics",
@@ -3587,7 +3755,7 @@
         "description": "index.json of the static fallback: every served scenario and where its files are.",
         "properties": {
           "contract_version": {
-            "default": "0.10.0",
+            "default": "0.11.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -3628,6 +3796,19 @@
             "description": "Path of the SitesResponse file",
             "title": "Sites",
             "type": "string"
+          },
+          "scenario_list": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Path of the ScenariosResponse file, what GET /api/scenarios returns (0.11.0)",
+            "title": "Scenario List"
           },
           "datasets": {
             "description": "Path of the DatasetsResponse file",
@@ -3850,7 +4031,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.10.0"
+            "default": "0.11.0"
           },
           "_placeholder": {
             "type": "boolean",

@@ -44,7 +44,8 @@ from lss.contract import (
 #   0.7.0 and 0.8.0 dropped 2026-11-16: A regenerated every served and terrain file at 0.9.0 (RA5).
 #   0.9.0: every installed served and terrain file (contract 0.10.0 only added compare filter / rank and
 #   Site.regions); drop once A regenerates them at 0.10.0 or later.
-COMPATIBLE_VERSIONS = frozenset({"0.9.0"})
+#   0.10.0: listed for files A writes (e.g. RA8) before contract 0.11.0 (GET /api/scenarios) reaches it.
+COMPATIBLE_VERSIONS = frozenset({"0.9.0", "0.10.0"})
 
 
 class ServedFileError(ValueError):

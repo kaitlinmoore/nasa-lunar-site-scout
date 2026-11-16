@@ -7,7 +7,8 @@ on the web host, so the demo still works when the API is down.
 
 Writes, under OUT_DIR (deploy/deploy-web.sh uses web/dist/static-api):
 - `index.json`: a StaticIndex, listing every served scenario and the paths of its files;
-- `sites.json`, `datasets.json`: what GET /api/sites and /api/datasets return;
+- `sites.json`, `datasets.json`, `scenarios.json`: what GET /api/sites, /api/datasets and /api/scenarios
+  return;
 - `metrics/<scenario_key>.json`, `series/<scenario_key>.json`: what POST /api/metrics and /api/series return;
 - `horizon/<horizon_key>.json`: what POST /api/horizon returns, where a served file has a horizon;
 - `terrain/<terrain_key>.json`: what POST /api/terrain returns (precomputed slope statistics).
@@ -31,7 +32,7 @@ from pydantic import BaseModel
 
 from lss.api import app as api
 from lss.api.served import horizons, load_all, load_terrain, served_dir, terrain_dir
-from lss.contract import CONTRACT_VERSION, StaticEntry, StaticIndex, StaticTerrainEntry
+from lss.contract import CONTRACT_VERSION, ScenariosResponse, StaticEntry, StaticIndex, StaticTerrainEntry
 
 INDEX_NOTE = "Static copy of the API's precomputed results, for when the API is unavailable (plan 4.7)."
 
@@ -66,11 +67,13 @@ def export(out_dir: Path, served_from: Path | None = None, terrain_from: Path | 
         _write(out_dir / rel, sv.horizon)
         horizon_paths[hkey] = rel
 
+    sites = api._sites().sites
     entries = []
     for key, sv in served.items():
         entry = StaticEntry(
             scenario=sv.scenario,
             scenario_key=key,
+            site_id=api.site_of(sv, sites),
             metrics=f"metrics/{key}.json",
             series=f"series/{key}.json",
             horizon=horizon_paths.get(sv.horizon_key),
@@ -92,8 +95,14 @@ def export(out_dir: Path, served_from: Path | None = None, terrain_from: Path | 
 
     _write(out_dir / "sites.json", api._sites())
     _write(out_dir / "datasets.json", api._datasets())
+    _write(out_dir / "scenarios.json", ScenariosResponse(scenarios=api.build_scenarios(served, sites)))
     index = StaticIndex(
-        scenarios=entries, terrain=terrain, sites="sites.json", datasets="datasets.json", _note=INDEX_NOTE
+        scenarios=entries,
+        terrain=terrain,
+        sites="sites.json",
+        datasets="datasets.json",
+        scenario_list="scenarios.json",
+        _note=INDEX_NOTE,
     )
     _write(out_dir / "index.json", index)
     return index
@@ -123,6 +132,10 @@ def check_api(index: StaticIndex, out_dir: Path, api_url: str) -> None:
         static = json.loads((out_dir / entry.metrics).read_text(encoding="utf-8"))
         if live != static:
             raise StaticExportError(f"the API's metrics for {entry.scenario_key} differ from the static copy")
+    if _get_json(f"{base}/api/scenarios") != json.loads(
+        (out_dir / "scenarios.json").read_text(encoding="utf-8")
+    ):
+        raise StaticExportError("the API's scenario list differs from the static copy")
     for t in index.terrain:
         live = _get_json(
             f"{base}/api/terrain", {"location": t.location.model_dump(mode="json"), "radius_m": t.radius_m}

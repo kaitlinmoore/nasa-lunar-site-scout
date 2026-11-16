@@ -33,7 +33,7 @@ from pydantic import (
     model_validator,
 )
 
-CONTRACT_VERSION = "0.10.0"
+CONTRACT_VERSION = "0.11.0"
 
 Latitude = Annotated[float, Field(ge=-90.0, le=90.0, description="Planetocentric latitude, deg")]
 Longitude = Annotated[
@@ -138,6 +138,28 @@ class Site(Model):
 def display_name(site: Site) -> str:
     """What to call a site in text meant for people: its short name, else its full name."""
     return site.short_name or site.name
+
+
+class ScenariosQuery(Model):
+    """Query parameters of GET /api/scenarios (contract 0.11.0)."""
+
+    site_id: str | None = Field(default=None, description="Only this curated site's scenarios")
+
+
+class ScenarioEntry(Model):
+    """One precomputed scenario, with the curated site it belongs to (matched on its exact location)."""
+
+    site_id: str | None = Field(description="The curated site at this scenario's location; null if none")
+    scenario_key: str
+    scenario: Scenario
+    has_horizon: bool = Field(description="POST /api/horizon has this location and unit height")
+
+
+class ScenariosResponse(Response):
+    """Every precomputed scenario this API version serves (stream B's site page picker, Kaitlin's option b):
+    by site in the site list's order, then by unit height, window start, window end, step."""
+
+    scenarios: list[ScenarioEntry]
 
 
 class SitesResponse(Response):
@@ -1135,6 +1157,7 @@ class TerrainUnprocessableError(RootModel[TerrainNotServedError | InvalidRequest
 class StaticEntry(Model):
     scenario: Scenario
     scenario_key: str
+    site_id: str | None = Field(default=None, description="The curated site at this location (0.11.0)")
     metrics: str = Field(description="Path of this scenario's MetricsResponse file")
     series: str = Field(description="Path of this scenario's SeriesResponse file")
     horizon: str | None = Field(
@@ -1157,4 +1180,8 @@ class StaticIndex(Response):
         default_factory=list, description="Precomputed slope statistics (contract 0.9.0)"
     )
     sites: str = Field(description="Path of the SitesResponse file")
+    scenario_list: str | None = Field(
+        default=None,
+        description="Path of the ScenariosResponse file, what GET /api/scenarios returns (0.11.0)",
+    )
     datasets: str = Field(description="Path of the DatasetsResponse file")

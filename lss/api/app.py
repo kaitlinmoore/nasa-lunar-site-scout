@@ -4,6 +4,7 @@ FastAPI app, API v0 (plan section 4.3). Results are precomputed only (plan secti
 nothing is computed live, so the API needs no DEMs, kernels or numba.
 
 - `GET /api/health`; `GET /api/sites` (the curated site registry, lss/registry/sites.yaml);
+  `GET /api/scenarios` (every precomputed scenario, by site);
   `GET /api/datasets` (the capability registry).
 - `POST /api/locate`: the terrain stack and fidelity label from the registry's resolver, which uses static
   layer extents only (no DEM reads).
@@ -67,7 +68,10 @@ from lss.contract import (
     Operation,
     RateLimitedError,
     Scenario,
+    ScenarioEntry,
     ScenarioRequest,
+    ScenariosQuery,
+    ScenariosResponse,
     SeriesResponse,
     ServedScenario,
     SiteCategory,
@@ -106,6 +110,9 @@ NO_TERRAIN_REASON = "No terrain data in this version covers this location."
 # TERRAIN_NOT_SERVED_REASON (with the list): Kaitlin's wording, 2026-11-16.
 # SUMMARY_NO_TERRAIN_REASON (inside a site summary, no list): Claude-drafted, approved by her 2026-11-16.
 TERRAIN_NOT_SERVED_REASON = "Slope statistics are available only for the locations and radii listed here."
+# Inside an NL answer nothing is listed, so the reasons that refer to a list are replaced by list-free ones
+# (stream B, 2026-11-16; as for the comparison). HORIZON_NO_LIST_REASON: Claude-drafted, pending review.
+HORIZON_NO_LIST_REASON = "This version has no precomputed horizon profile for this location and unit height."
 SUMMARY_NO_TERRAIN_REASON = "This version has no precomputed slope statistics for this location and radius."
 UNAVAILABLE_REASON = (
     "Results are temporarily unavailable: the server has no usable precomputed results installed."
@@ -336,6 +343,47 @@ LOCATE_ERRORS = {
 }
 
 
+def site_of(sv: Served, sites) -> str | None:
+    """The curated site at a served scenario's exact location, or None."""
+    point = (sv.scenario.location.lat, sv.scenario.location.lon)
+    return next((s.id for s in sites if (s.location.lat, s.location.lon) == point), None)
+
+
+def build_scenarios(served: dict[str, Served], sites, site_id: str | None = None) -> list[ScenarioEntry]:
+    """ScenarioEntry for every served scenario (optionally one site's), in site-list order, then by unit
+    height and window. Shared by GET /api/scenarios and the static copy."""
+    order = {s.id: i for i, s in enumerate(sites)}
+    with_horizon = set(horizons(served))
+    entries = []
+    for key, sv in served.items():
+        sid = site_of(sv, sites)
+        if site_id is not None and sid != site_id:
+            continue
+        entries.append(
+            ScenarioEntry(
+                site_id=sid,
+                scenario_key=key,
+                scenario=sv.scenario,
+                has_horizon=sv.horizon_key in with_horizon,
+            )
+        )
+    entries.sort(
+        key=lambda e: (
+            order.get(e.site_id, len(order)),
+            e.scenario.unit_height_m,
+            e.scenario.window_start,
+            e.scenario.window_end,
+            e.scenario.step,
+        )
+    )
+    return entries
+
+
+def scenarios_for(query: ScenariosQuery) -> ScenariosResponse:
+    """Every served scenario, with its curated site (exact location match), in site-list order."""
+    return ScenariosResponse(scenarios=build_scenarios(served_results(), _sites().sites, query.site_id))
+
+
 def sites_for(query: SitesQuery) -> SitesResponse:
     resp = _sites()
     if query.category is None:
@@ -357,11 +405,19 @@ NL_EXECUTORS = {
 }
 
 
+LIST_FREE_REASONS = {
+    NOT_SERVED_REASON: COMPARE_NOT_SERVED_REASON,
+    HORIZON_NOT_SERVED_REASON: HORIZON_NO_LIST_REASON,
+    TERRAIN_NOT_SERVED_REASON: SUMMARY_NO_TERRAIN_REASON,
+}
+
+
 @lru_cache(maxsize=1)
 def get_nl_service() -> nl_service.NLService:
     return nl_service.NLService(
         executors=NL_EXECUTORS,
         provider_factory=nl_service.default_provider,
+        list_free_reasons=LIST_FREE_REASONS,
         cache=nl_service.load_cache(nl_service.cache_dir()),
     )
 
@@ -399,6 +455,17 @@ def create_app() -> FastAPI:
     @app.get("/api/sites", response_model=SitesResponse, response_model_by_alias=True)
     def sites(category: SiteCategory | None = None) -> SitesResponse:
         return sites_for(SitesQuery(category=category))
+
+    @app.get(
+        "/api/scenarios",
+        response_model=ScenariosResponse,
+        response_model_by_alias=True,
+        responses={
+            503: {"model": UnavailableError, "description": "No usable precomputed results are installed"}
+        },
+    )
+    def scenarios(site_id: str | None = None) -> ScenariosResponse:
+        return scenarios_for(ScenariosQuery(site_id=site_id))
 
     @app.get("/api/datasets", response_model=DatasetsResponse, response_model_by_alias=True)
     def datasets() -> DatasetsResponse:
