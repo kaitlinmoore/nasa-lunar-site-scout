@@ -42,7 +42,8 @@ import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { displayName } from '../siteNames'
 import type { FeatureLabelRow } from './featureLabelData'
 import { attachFeatureLabels } from './featureLabels'
-import { globeLabelStyle, labelPadding } from './labelStyle'
+import type { ScreenBox } from './declutter'
+import { globeLabelStyle, labelBoxSize, labelPadding } from './labelStyle'
 import { type MarkerCircle, poleLabelRightEdge } from './poleLabel'
 import type { Site } from '../api/client'
 
@@ -176,6 +177,10 @@ export default function MoonGlobe({
   const onSelectRef = useRef(onSelect)
   const controls = useRef<Controls | null>(null)
   const viewerRef = useRef<Viewer | null>(null)
+  /** What the feature names must keep clear of on screen, this frame (set once the globe is built). */
+  const obstaclesRef = useRef<() => ScreenBox[]>(() => [])
+  /** Where the near-site feature names go this frame; the South Pole label steps around them. */
+  const nearNamesRef = useRef<() => ScreenBox[]>(() => [])
   const [status, setStatus] = useState<Status>({ kind: 'loading' })
   // "You're looking at the Moon's south pole" note: shown at the start view, hidden once the
   // view moves, shown again after Reset (Kaitlin, 2026-11-15: both the pole label and this note).
@@ -430,13 +435,62 @@ export default function MoonGlobe({
         const outline = m.entity.point.outlineWidth?.getValue() ?? outlineWidth
         circles.push({ dx: win.x - pole.x, dy: win.y - pole.y, r: size / 2 + outline })
       }
-      const right = Math.round(poleLabelRightEdge(circles, poleLabelBox, poleRadius, POLE_LABEL_GAP_PX))
+      const names = nearNamesRef.current().map((b) => ({
+        x0: b.x0 - pole.x,
+        y0: b.y0 - pole.y,
+        x1: b.x1 - pole.x,
+        y1: b.y1 - pole.y,
+      }))
+      const right = Math.round(
+        poleLabelRightEdge(circles, poleLabelBox, poleRadius, POLE_LABEL_GAP_PX, names),
+      )
       if (right !== poleLabelRight) {
         poleLabelRight = right
         poleEntity.label.pixelOffset = new ConstantProperty(new Cartesian2(right, 0))
         scene.requestRender()
       }
     })
+
+    // What the feature names keep clear of (featureLabels.ts, declutter.ts): every visible marker, the
+    // site labels shown at this distance, and the South Pole label.
+    const pad = labelPadding()
+    obstaclesRef.current = () => {
+      const boxes: ScreenBox[] = []
+      const camera = scene.camera.positionWC
+      for (const m of markers) {
+        if (!m.entity.show || !m.entity.point) continue
+        const win = SceneTransforms.worldToWindowCoordinates(scene, m.position)
+        if (!win) continue
+        const r =
+          (m.entity.point.pixelSize?.getValue() ?? markerSize) / 2 +
+          (m.entity.point.outlineWidth?.getValue() ?? outlineWidth)
+        boxes.push({ x0: win.x - r, y0: win.y - r, x1: win.x + r, y1: win.y + r })
+        if (m.entity === poleEntity) {
+          const right =
+            win.x + (Number.isNaN(poleLabelRight) ? -(poleRadius + POLE_LABEL_GAP_PX) : poleLabelRight)
+          boxes.push({
+            // The same box poleLabelRightEdge places (its width includes the backing).
+            x0: right - poleLabelBox.width,
+            y0: win.y - poleLabelBox.height / 2,
+            x1: right,
+            y1: win.y + poleLabelBox.height / 2,
+          })
+          continue
+        }
+        const label = m.entity.label
+        if (!label || label.show?.getValue() === false) continue
+        if (Cartesian3.distance(camera, m.position) > SITE_LABEL_MAX_DISTANCE_M) continue
+        const size = labelBoxSize(String(label.text?.getValue() ?? ''), labelFont)
+        const bottom = win.y - labelOffset + pad.y
+        boxes.push({
+          x0: win.x - size.width / 2,
+          y0: bottom - size.height,
+          x1: win.x + size.width / 2,
+          y1: bottom,
+        })
+      }
+      return boxes
+    }
 
     // The card: anchored next to the selected site's marker after every render; hidden when the
     // site is beyond the limb or off screen. Flips to the marker's left near the right edge.
@@ -556,8 +610,13 @@ export default function MoonGlobe({
   useEffect(() => {
     const v = viewerRef.current
     if (!ready || !v || v.isDestroyed() || !featureLabels) return
-    return attachFeatureLabels(v, featureLabels)
-  }, [ready, featureLabels])
+    const names = attachFeatureLabels(v, featureLabels, sites, () => obstaclesRef.current())
+    nearNamesRef.current = names.nearSiteBoxes
+    return () => {
+      nearNamesRef.current = () => []
+      names.detach()
+    }
+  }, [ready, featureLabels, sites])
 
   // Escape closes the chooser.
   useEffect(() => {

@@ -36,3 +36,27 @@ export function globeLabelStyle(font: string, fill: Color) {
     backgroundPadding: new Cartesian2(pad.x, pad.y),
   }
 }
+
+const sizes = new Map<string, { width: number; height: number }>()
+let measureCtx: CanvasRenderingContext2D | null | undefined
+
+/**
+ * A label's box on screen, CSS px, backing included (for the declutter and the pole label): text
+ * width from the canvas's own measure, height from the font size. Cached per font and text.
+ */
+export function labelBoxSize(text: string, font: string): { width: number; height: number } {
+  const key = `${font}\n${text}`
+  const hit = sizes.get(key)
+  if (hit) return hit
+  if (measureCtx === undefined) measureCtx = document.createElement('canvas').getContext('2d')
+  const pad = labelPadding()
+  const px = Number(/(\d+(?:\.\d+)?)px/.exec(font)?.[1] ?? 12)
+  let width = text.length * px * 0.6
+  if (measureCtx) {
+    measureCtx.font = font
+    width = measureCtx.measureText(text).width
+  }
+  const size = { width: width + 2 * pad.x, height: px * 1.2 + 2 * pad.y }
+  sizes.set(key, size)
+  return size
+}
