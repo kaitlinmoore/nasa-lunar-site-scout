@@ -485,7 +485,7 @@ export interface components {
         CompareResponse: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -602,7 +602,7 @@ export interface components {
         DatasetsResponse: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -706,7 +706,7 @@ export interface components {
         FeaturesResponse: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -755,7 +755,7 @@ export interface components {
         HealthResponse: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -777,7 +777,7 @@ export interface components {
         HorizonProfile: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -825,7 +825,7 @@ export interface components {
         Job: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -894,7 +894,7 @@ export interface components {
         LocateResponse: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -974,7 +974,7 @@ export interface components {
         MetricsResponse: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -998,7 +998,7 @@ export interface components {
         NLAnswer: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -1040,7 +1040,7 @@ export interface components {
         NLClarification: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -1074,7 +1074,7 @@ export interface components {
         NLUnsupported: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -1219,7 +1219,7 @@ export interface components {
         ProximityResponse: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -1356,7 +1356,7 @@ export interface components {
         ScenariosResponse: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -1443,7 +1443,7 @@ export interface components {
         SeriesResponse: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -1559,7 +1559,7 @@ export interface components {
         SiteSummaryResponse: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -1591,7 +1591,7 @@ export interface components {
         SitesResponse: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -1649,7 +1649,7 @@ export interface components {
         StaticIndex: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
@@ -1676,6 +1676,11 @@ export interface components {
              */
             sites: string;
             /**
+             * Nl Answers
+             * @description Cached showcase answers, the same as POST /api/nl returns (0.12.0)
+             */
+            nl_answers?: components["schemas"]["StaticNLEntry"][];
+            /**
              * Scenario List
              * @description Path of the ScenariosResponse file, what GET /api/scenarios returns (0.11.0)
              * @default null
@@ -1686,6 +1691,18 @@ export interface components {
              * @description Path of the DatasetsResponse file
              */
             datasets: string;
+        };
+        /**
+         * StaticNLEntry
+         * @description A cached showcase answer (C8): the request it answers and the path of its NL response file.
+         */
+        StaticNLEntry: {
+            request: components["schemas"]["NLRequest"];
+            /**
+             * Path
+             * @description Path of the NLAnswer / NLUnsupported / NLClarification file
+             */
+            path: string;
         };
         /** StaticTerrainEntry */
         StaticTerrainEntry: {
@@ -1795,7 +1812,7 @@ export interface components {
         TerrainResponse: {
             /**
              * Contract Version
-             * @default 0.11.0
+             * @default 0.12.0
              */
             contract_version: string;
             /**
