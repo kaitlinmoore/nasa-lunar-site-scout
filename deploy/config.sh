@@ -29,3 +29,5 @@ TERRAIN_SRC="${LSS_DATA_DIR_POSIX}/cache/terrain"
 NL_CACHE_SRC="${LSS_DATA_DIR_POSIX}/cache/nl"
 # Terrain images for the 2D site view (stream A; contract 0.13.0): <site>/<view>/{view.json,*.png}.
 TERRAIN_VIEW_SRC="${LSS_DATA_DIR_POSIX}/cache/terrain_view"
+# IAU feature names for the globe labels (stream E's scripts/fetch_iau_names.py; contract 0.14.0).
+FEATURES_SRC="${LSS_DATA_DIR_POSIX}/cache/features"

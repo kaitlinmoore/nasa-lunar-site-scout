@@ -14,7 +14,9 @@ Writes, under OUT_DIR (deploy/deploy-web.sh uses web/dist/static-api):
 - `terrain/<terrain_key>.json`: what POST /api/terrain returns (precomputed slope statistics);
 - `nl/<name>.json`: the cached showcase answers (C8), what POST /api/nl returns for their requests;
 - `terrain_views.json` + `terrain_view/<site>/<view>/<layer>.png`: what GET /api/terrain/views and the image
-  route return (contract 0.13.0).
+  route return (contract 0.13.0);
+- `feature_labels.json`: every IAU feature name (satellite features included), what GET /api/features/labels
+  returns with `include_satellite=true` (contract 0.14.0); the web filters it itself.
 
 The files are built with the API's own loader (lss.api.served) and response code, so they are the API's
 bodies, and every one must carry the current CONTRACT_VERSION. `--check-api` also requires the deployed
@@ -35,12 +37,14 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from lss.api import app as api
+from lss.api.feature_labels import load_labels, select
 from lss.api.nl import cache_dir as nl_cache_dir
 from lss.api.nl import load_cache_entries
 from lss.api.served import horizons, load_all, load_terrain, served_dir, terrain_dir
 from lss.api.terrain_views import load_views, terrain_view_dir
 from lss.contract import (
     CONTRACT_VERSION,
+    FeatureLabelsQuery,
     ScenariosResponse,
     StaticEntry,
     StaticIndex,
@@ -73,6 +77,7 @@ def export(
     terrain_from: Path | None = None,
     nl_from: Path | None = None,
     terrain_view_from: Path | None = None,
+    features_from: Path | None = None,
 ) -> StaticIndex:
     """Write the static fallback to out_dir (replacing it); returns the index."""
     served = load_all(served_from or served_dir())
@@ -128,6 +133,9 @@ def export(
             shutil.copyfile(sv.image(layer), dest)
     _write(out_dir / "terrain_views.json", TerrainViewsResponse(views=[sv.view for sv in views.values()]))
 
+    labels = load_labels(features_from) if features_from else load_labels()
+    _write(out_dir / "feature_labels.json", select(labels, FeatureLabelsQuery(include_satellite=True)))
+
     _write(out_dir / "sites.json", api._sites())
     _write(out_dir / "datasets.json", api._datasets())
     _write(out_dir / "scenarios.json", ScenariosResponse(scenarios=api.build_scenarios(served, sites)))
@@ -138,6 +146,7 @@ def export(
         datasets="datasets.json",
         scenario_list="scenarios.json",
         terrain_views="terrain_views.json",
+        feature_labels="feature_labels.json",
         nl_answers=nl_answers,
         _note=INDEX_NOTE,
     )
@@ -176,6 +185,9 @@ def check_api(index: StaticIndex, out_dir: Path, api_url: str) -> None:
     static_views = json.loads((out_dir / "terrain_views.json").read_text(encoding="utf-8"))
     if _get_json(f"{base}/api/terrain/views") != static_views:
         raise StaticExportError("the API's terrain views differ from the static copy")
+    static_labels = json.loads((out_dir / "feature_labels.json").read_text(encoding="utf-8"))
+    if _get_json(f"{base}/api/features/labels?include_satellite=true") != static_labels:
+        raise StaticExportError("the API's feature labels differ from the static copy")
     for a in index.nl_answers:
         live = _get_json(f"{base}/api/nl", a.request.model_dump(mode="json", exclude_none=True))
         if live != json.loads((out_dir / a.path).read_text(encoding="utf-8")):
@@ -199,10 +211,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--terrain-view-dir", type=Path, default=None, help="default: LSS_DATA_DIR/cache/terrain_view"
     )
+    parser.add_argument(
+        "--features-dir", type=Path, default=None, help="default: LSS_DATA_DIR/cache/features"
+    )
     parser.add_argument("--check-api", metavar="URL", default=None, help="compare with the deployed API")
     args = parser.parse_args(argv)
     try:
-        index = export(args.out_dir, args.served_dir, args.terrain_dir, args.nl_dir, args.terrain_view_dir)
+        index = export(
+            args.out_dir,
+            args.served_dir,
+            args.terrain_dir,
+            args.nl_dir,
+            args.terrain_view_dir,
+            args.features_dir,
+        )
         if args.check_api:
             check_api(index, args.out_dir, args.check_api)
     except StaticExportError as e:

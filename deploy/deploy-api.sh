@@ -26,8 +26,13 @@ rm -rf bundle/terrain_view
 mkdir -p bundle/terrain_view
 touch bundle/terrain_view/.keep
 if [ -d "$TERRAIN_VIEW_SRC" ]; then cp -r "$TERRAIN_VIEW_SRC"/. bundle/terrain_view/; fi
+# IAU feature names for the globe labels (contract 0.14.0): the one names file.
+rm -rf bundle/features
+mkdir -p bundle/features
+touch bundle/features/.keep
+if [ -f "$FEATURES_SRC/iau_names.json" ]; then cp "$FEATURES_SRC/iau_names.json" bundle/features/; fi
 # Check everything exactly as the API will load it (contract version, keys, not placeholder).
-uv run python -c "from pathlib import Path; from lss.api.served import load_all, load_terrain; from lss.api.nl import load_cache_entries; from lss.api.terrain_views import load_views; from lss.registry.sites import load_sites; s = load_all(Path('bundle/served')); t = load_terrain(Path('bundle/terrain')); n = load_cache_entries(Path('bundle/nl')); v = load_views(Path('bundle/terrain_view'), sites=load_sites()); assert s, 'no served results staged'; assert t, 'no slope statistics staged'; print(f'Staged {len(s)} served results, {len(t)} slope statistics, {len(n)} cached NL answers and {len(v)} terrain views')"
+uv run python -c "from pathlib import Path; from lss.api.served import load_all, load_terrain; from lss.api.nl import load_cache_entries; from lss.api.terrain_views import load_views; from lss.registry.sites import load_sites; s = load_all(Path('bundle/served')); t = load_terrain(Path('bundle/terrain')); n = load_cache_entries(Path('bundle/nl')); v = load_views(Path('bundle/terrain_view'), sites=load_sites()); from lss.api.feature_labels import load_labels; f = load_labels(Path('bundle/features')); assert s, 'no served results staged'; assert t, 'no slope statistics staged'; print(f'Staged {len(s)} served results, {len(t)} slope statistics, {len(n)} cached NL answers, {len(v)} terrain views and {len(f.rows) if f else 0} feature names')"
 
 # The NL key comes from Secret Manager (never a plain env var or a file in the image).
 if ! gcloud secrets describe "$NL_SECRET" --project "$GCP_PROJECT" >/dev/null 2>&1; then

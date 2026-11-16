@@ -33,7 +33,7 @@ from pydantic import (
     model_validator,
 )
 
-CONTRACT_VERSION = "0.13.0"
+CONTRACT_VERSION = "0.14.0"
 
 Latitude = Annotated[float, Field(ge=-90.0, le=90.0, description="Planetocentric latitude, deg")]
 Longitude = Annotated[
@@ -932,6 +932,45 @@ class FeaturesQuery(Model):
     types: list[FeatureType] = Field(default_factory=list, description="Empty = every type")
 
 
+# ---- IAU feature names for globe labels (contract 0.14.0; stream E's cache/features/iau_names.json) ----
+
+FEATURE_LABEL_FIELDS = ("id", "name", "type", "lat", "lon", "diameter_km")
+SATELLITE_TYPE = "SF"  # IAU "Satellite Feature": lettered craters such as "Marco Polo P"
+
+
+class FeatureLabelsQuery(Model):
+    """Query parameters of GET /api/features/labels. Every filter is optional; with none, every name except
+    satellite features is returned."""
+
+    types: list[str] = Field(
+        default_factory=list, description="IAU type codes, e.g. AA (crater); empty = all"
+    )
+    min_diameter_km: float | None = Field(
+        default=None, ge=0.0, description="Only features at least this wide"
+    )
+    include_satellite: bool = Field(
+        default=False, description="Include satellite features (type SF; also included when `types` names SF)"
+    )
+    bbox: BBox | None = Field(
+        default=None, description="Only centres inside; lon_min > lon_max means the box crosses ±180°"
+    )
+    limit: int | None = Field(default=None, ge=1, description="The largest N after the other filters")
+
+
+class FeatureLabelsResponse(Response):
+    """IAU-adopted names of lunar features, for labels only (positions identify features; about 300 m).
+    Compact rows, largest first: [id, name, type, lat, lon, diameter_km] (`fields`). Coordinates are
+    planetocentric, east longitude -180..180, mean Earth/polar axis (LOLA frame), as elsewhere in this API."""
+
+    dataset_id: str = Field(description="Registry entry, e.g. iau_gazetteer_moon (citation, licence)")
+    fields: list[str] = Field(description="Column names of each row: id, name, type, lat, lon, diameter_km")
+    types: dict[str, str] = Field(description="IAU type code -> description, e.g. AA -> 'Crater, craters'")
+    total: int = Field(ge=0, description="Names in the source before filtering")
+    rows: list[tuple[int, str, str, float, float, float]] = Field(
+        description="One feature per row, largest diameter first (ties by name)"
+    )
+
+
 # ------------------------------------------------------------- areas, search, jobs
 
 
@@ -1276,6 +1315,11 @@ class StaticIndex(Response):
         default_factory=list, description="Precomputed slope statistics (contract 0.9.0)"
     )
     sites: str = Field(description="Path of the SitesResponse file")
+    feature_labels: str | None = Field(
+        default=None,
+        description="Path of a FeatureLabelsResponse with every name, satellite features included (0.14.0); "
+        "filter it in the client",
+    )
     terrain_views: str | None = Field(
         default=None,
         description="Path of the TerrainViewsResponse file; images at "

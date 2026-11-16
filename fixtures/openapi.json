@@ -3,8 +3,8 @@
   "info": {
     "title": "Lunar Site Scout API",
     "description": "Contract v0. Not affiliated with or endorsed by NASA.",
-    "version": "0.13.0",
-    "x-contract-version": "0.13.0"
+    "version": "0.14.0",
+    "x-contract-version": "0.14.0"
   },
   "paths": {
     "/api/health": {
@@ -535,6 +535,129 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/features/labels": {
+      "get": {
+        "summary": "Feature Labels",
+        "operationId": "feature_labels_api_features_labels_get",
+        "parameters": [
+          {
+            "name": "types",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IAU type codes, e.g. AA, ME; repeat",
+              "title": "Types"
+            },
+            "description": "IAU type codes, e.g. AA, ME; repeat"
+          },
+          {
+            "name": "min_diameter_km",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Diameter Km"
+            }
+          },
+          {
+            "name": "include_satellite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Satellite"
+            }
+          },
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "lat_min,lat_max,lon_min,lon_max (degrees)",
+              "title": "Bbox"
+            },
+            "description": "lat_min,lat_max,lon_min,lon_max (degrees)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureLabelsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A malformed filter (FastAPI validation)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The installed IAU names file is unusable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnavailableError"
                 }
               }
             }
@@ -1188,7 +1311,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1492,7 +1615,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1690,6 +1813,162 @@
         ],
         "title": "FeatureDistance"
       },
+      "FeatureLabelsQuery": {
+        "additionalProperties": false,
+        "description": "Query parameters of GET /api/features/labels. Every filter is optional; with none, every name except\nsatellite features is returned.",
+        "properties": {
+          "types": {
+            "description": "IAU type codes, e.g. AA (crater); empty = all",
+            "items": {
+              "type": "string"
+            },
+            "title": "Types",
+            "type": "array"
+          },
+          "min_diameter_km": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Only features at least this wide",
+            "title": "Min Diameter Km"
+          },
+          "include_satellite": {
+            "default": false,
+            "description": "Include satellite features (type SF; also included when `types` names SF)",
+            "title": "Include Satellite",
+            "type": "boolean"
+          },
+          "bbox": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BBox"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Only centres inside; lon_min > lon_max means the box crosses ±180°"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The largest N after the other filters",
+            "title": "Limit"
+          }
+        },
+        "title": "FeatureLabelsQuery",
+        "type": "object"
+      },
+      "FeatureLabelsResponse": {
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "title": "Contract Version",
+            "default": "0.14.0"
+          },
+          "_placeholder": {
+            "type": "boolean",
+            "title": "Placeholder",
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "dataset_id": {
+            "type": "string",
+            "title": "Dataset Id",
+            "description": "Registry entry, e.g. iau_gazetteer_moon (citation, licence)"
+          },
+          "fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fields",
+            "description": "Column names of each row: id, name, type, lat, lon, diameter_km"
+          },
+          "types": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Types",
+            "description": "IAU type code -> description, e.g. AA -> 'Crater, craters'"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total",
+            "description": "Names in the source before filtering"
+          },
+          "rows": {
+            "items": {
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array",
+              "maxItems": 6,
+              "minItems": 6
+            },
+            "type": "array",
+            "title": "Rows",
+            "description": "One feature per row, largest diameter first (ties by name)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "dataset_id",
+          "fields",
+          "types",
+          "total",
+          "rows"
+        ],
+        "title": "FeatureLabelsResponse",
+        "description": "IAU-adopted names of lunar features, for labels only (positions identify features; about 300 m).\nCompact rows, largest first: [id, name, type, lat, lon, diameter_km] (`fields`). Coordinates are\nplanetocentric, east longitude -180..180, mean Earth/polar axis (LOLA frame), as elsewhere in this API."
+      },
       "FeatureType": {
         "type": "string",
         "enum": [
@@ -1733,7 +2012,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.13.0",
+            "default": "0.14.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1848,7 +2127,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1883,7 +2162,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2005,7 +2284,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.13.0",
+            "default": "0.14.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -2152,7 +2431,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2351,7 +2630,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2416,7 +2695,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2486,7 +2765,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2567,7 +2846,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2914,7 +3193,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3184,7 +3463,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3432,7 +3711,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3679,7 +3958,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3776,7 +4055,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3911,7 +4190,7 @@
         "description": "index.json of the static fallback: every served scenario and where its files are.",
         "properties": {
           "contract_version": {
-            "default": "0.13.0",
+            "default": "0.14.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -3952,6 +4231,19 @@
             "description": "Path of the SitesResponse file",
             "title": "Sites",
             "type": "string"
+          },
+          "feature_labels": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Path of a FeatureLabelsResponse with every name, satellite features included (0.14.0); filter it in the client",
+            "title": "Feature Labels"
           },
           "terrain_views": {
             "anyOf": [
@@ -4228,7 +4520,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -4574,7 +4866,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.13.0"
+            "default": "0.14.0"
           },
           "_placeholder": {
             "type": "boolean",

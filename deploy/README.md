@@ -101,6 +101,14 @@ colour-profile chunks, centre within one pixel of the site's served point); the 
 `/data/cache/terrain_view`. `deploy-web.sh` publishes the same files in the static copy
 (`terrain_view/…`, `terrain_views.json`) and checks the list against the deployed API.
 
+## IAU feature names for the globe labels (contract 0.14.0)
+
+Stream E's `scripts/fetch_iau_names.py` writes `LSS_DATA_DIR/cache/features/iau_names.json` (9,087 IAU-adopted
+names, 465 KB). `deploy-api.sh` stages it into `bundle/features/` and checks it with the API's loader; the
+`Dockerfile` copies it to `/data/cache/features`. `GET /api/features/labels` filters it (type, minimum diameter,
+satellite features, box, limit; gzip over 1 KB). `deploy-web.sh` publishes every name as `feature_labels.json`
+in the static copy (about 200 KB gzipped) and checks it against the deployed API.
+
 ## Cached showcase answers (C8)
 
 The project owner chooses the showcase questions (candidates: `reference/logs/c8-candidates.md`, private).

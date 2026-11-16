@@ -1,5 +1,5 @@
 {
-  "contract_version": "0.13.0",
+  "contract_version": "0.14.0",
   "_placeholder": false,
   "_note": "Generated from lss/registry/sites.yaml (curated sites).",
   "sites": [

@@ -21,7 +21,7 @@ if ! ls bundle/served/*.json >/dev/null 2>&1; then
   exit 1
 fi
 uv run python -m lss.api.static_export web/dist/static-api --served-dir bundle/served \
-  --terrain-dir bundle/terrain --nl-dir bundle/nl --terrain-view-dir bundle/terrain_view --check-api "$API_URL"
+  --terrain-dir bundle/terrain --nl-dir bundle/nl --terrain-view-dir bundle/terrain_view --features-dir bundle/features --check-api "$API_URL"
 
 # Firebase config is generated (gitignored) from deploy/firebase.json with the site ID from config.sh,
 # so the site ID lives in one place.

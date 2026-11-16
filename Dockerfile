@@ -21,6 +21,8 @@ COPY bundle/terrain /data/cache/terrain
 COPY bundle/nl /data/cache/nl
 # Terrain images for the 2D site view (contract 0.13.0), staged by deploy/deploy-api.sh.
 COPY bundle/terrain_view /data/cache/terrain_view
+# IAU feature names for the globe labels (contract 0.14.0), staged by deploy/deploy-api.sh.
+COPY bundle/features /data/cache/features
 RUN uv sync --frozen --no-dev
 # /api/nl calls the Anthropic API over TLS. httpx2 (the anthropic SDK's HTTP client) verifies against the
 # OS CA store on Linux, so the build fails here if the image has no CA certificates.

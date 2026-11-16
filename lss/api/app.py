@@ -15,6 +15,8 @@ nothing is computed live, so the API needs no DEMs, kernels or numba.
 - `POST /api/site_summary`: slope statistics, metrics for a served scenario, and (later, S3) nearby features.
 - `GET /api/terrain/views`, `GET /api/terrain/view/{site_id}/{view}/{layer}.png`: precomputed terrain
   images for the 2D site view (stream A's cache/terrain_view/; contract 0.13.0).
+- `GET /api/features/labels`: IAU feature names for the globe labels, filtered (stream E's cache/features/;
+  contract 0.14.0).
 
 A valid request with no precomputed result gets a 422 with a plain-language reason and what is served; no
 usable results installed gets a 503 (contract error models in lss.contract).
@@ -27,13 +29,17 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse
 
 from lss.api import compare as compare_rules
 from lss.api import nl as nl_service
+from lss.api.feature_labels import FeatureLabelsError, Labels, load_labels, select
 from lss.api.served import (
     Served,
     ServedFileError,
@@ -52,15 +58,19 @@ from lss.api.terrain_views import ServedView, TerrainViewError, load_views
 from lss.config import get_settings
 from lss.contract import (
     CONTRACT_VERSION,
+    BBox,
     CompareNotServed,
     CompareNotServedDetail,
     CompareRequest,
     CompareResponse,
     CompareUnprocessableError,
     DatasetsResponse,
+    FeatureLabelsQuery,
+    FeatureLabelsResponse,
     HealthResponse,
     HorizonProfile,
     HorizonRequest,
+    InvalidRequestError,
     LocateRequest,
     LocateResponse,
     LocateUnprocessableError,
@@ -215,6 +225,36 @@ def terrain_image(site_id: str, view: str, layer: str) -> Path:
             404, detail=NotFoundDetail(reason=NO_TERRAIN_IMAGE_REASON).model_dump(mode="json")
         )
     return path
+
+
+@lru_cache(maxsize=1)
+def _labels() -> Labels | None:
+    return load_labels()
+
+
+def feature_labels_for(query: FeatureLabelsQuery) -> FeatureLabelsResponse:
+    try:
+        labels = _labels()
+    except FeatureLabelsError as e:
+        raise unavailable(f"the IAU feature names are unusable: {e}") from e
+    return select(labels, query)
+
+
+def parse_bbox(text: str | None) -> BBox | None:
+    """`lat_min,lat_max,lon_min,lon_max` (degrees) -> BBox; a malformed value is FastAPI's usual 422."""
+    if text is None:
+        return None
+    try:
+        lat_min, lat_max, lon_min, lon_max = (float(v) for v in text.split(","))
+        box = BBox(lat_min=lat_min, lat_max=lat_max, lon_min=lon_min, lon_max=lon_max)
+        if box.lat_min > box.lat_max:
+            raise ValueError("lat_min is above lat_max")
+    except ValueError as e:
+        msg = f"bbox must be lat_min,lat_max,lon_min,lon_max in degrees ({e})"
+        raise RequestValidationError(
+            [{"type": "value_error", "loc": ("query", "bbox"), "msg": msg, "input": text}]
+        ) from e
+    return box
 
 
 def site_summary(req: SiteSummaryRequest) -> SiteSummaryResponse:
@@ -494,6 +534,8 @@ def create_app() -> FastAPI:
         description="Contract v0. Not affiliated with or endorsed by NASA.",
         separate_input_output_schemas=False,
     )
+    # Compress JSON over 1 KB (the label list, series, scenario lists); PNGs are already compressed.
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.cors_origins),
@@ -590,6 +632,31 @@ def create_app() -> FastAPI:
     )
     def terrain_view_image(site_id: str, view: str, layer: str) -> FileResponse:
         return FileResponse(terrain_image(site_id, view, layer), media_type="image/png")
+
+    @app.get(
+        "/api/features/labels",
+        response_model=FeatureLabelsResponse,
+        response_model_by_alias=True,
+        responses={
+            422: {"model": InvalidRequestError, "description": "A malformed filter (FastAPI validation)"},
+            503: {"model": UnavailableError, "description": "The installed IAU names file is unusable"},
+        },
+    )
+    def feature_labels(
+        types: Annotated[list[str] | None, Query(description="IAU type codes, e.g. AA, ME; repeat")] = None,
+        min_diameter_km: Annotated[float | None, Query(ge=0.0)] = None,
+        include_satellite: bool = False,
+        bbox: Annotated[str | None, Query(description="lat_min,lat_max,lon_min,lon_max (degrees)")] = None,
+        limit: Annotated[int | None, Query(ge=1)] = None,
+    ) -> FeatureLabelsResponse:
+        query = FeatureLabelsQuery(
+            types=types or [],
+            min_diameter_km=min_diameter_km,
+            include_satellite=include_satellite,
+            bbox=parse_bbox(bbox),
+            limit=limit,
+        )
+        return feature_labels_for(query)
 
     @app.post("/api/site_summary", response_model=SiteSummaryResponse, response_model_by_alias=True)
     def site_summary_endpoint(req: SiteSummaryRequest) -> SiteSummaryResponse:
