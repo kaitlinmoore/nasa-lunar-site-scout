@@ -70,7 +70,7 @@ RATE_LIMITED_REASON = "Too many questions from this connection. Please wait a li
 PAUSED_REASON = "Live questions are paused until tomorrow (UTC): the demo's daily limit has been reached."
 NL_UNAVAILABLE_REASON = "Live questions are temporarily unavailable. Please try again later."
 # Appended only when cached example answers exist (C8), so the text never promises examples that aren't
-# there (stream B, 2026-11-16). The short forms above: Claude-drafted rewording, pending review.
+# there (stream B, 2026-11-16). The short forms above: Claude-drafted, approved by the project author.
 EXAMPLES_STILL_WORK = " The example questions still work."
 NOT_UNDERSTOOD_REASON = (
     "The question couldn't be turned into a query this tool supports. Try rephrasing it, or ask about one "

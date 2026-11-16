@@ -116,9 +116,9 @@ class SiteSource(StrEnum):
 
 
 def selected_site_text(name: str) -> str:
-    """Disclosure when the selected site stood in for an unnamed one. Claude-drafted (2026-11-16), pending
-    the project author's review. Replaces the model's own note, so every disclosure comes from code."""
-    return f"Site: {name}, the selected site (the question named no site)."
+    """Disclosure when the selected site stood in for an unnamed one (wording: the project author's choice,
+    2026-11-16). Replaces the model's own note, so every disclosure comes from code."""
+    return f"Using the selected site, {name}."
 
 
 class SlopeSource(StrEnum):

@@ -357,7 +357,7 @@ def _fragment(text: str) -> str:
 
 
 def _reason(topic: str, citations: Sequence[tuple[DatasetCapability, str]]) -> str:
-    """One sentence (stream B, 2026-11-16; wording Claude-drafted, pending the project author's review):
+    """One sentence (stream B, 2026-11-16; wording Claude-drafted, approved by the project author):
     "<topic>: not answerable with the available data and tools, which don't cover <a>, <b> or <c>."
     The registry entries cited are in `Limitation.datasets_considered`, so sources aren't repeated here."""
     parts = list(dict.fromkeys(_fragment(text) for _, text in citations))

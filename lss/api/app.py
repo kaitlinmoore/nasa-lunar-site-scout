@@ -102,12 +102,9 @@ COMPARE_NOT_SERVED_REASON = (
     "scenarios, matched exactly on location, unit height, time window and time step."
 )
 NO_TERRAIN_REASON = "No terrain data in this version covers this location."
-# TERRAIN_NOT_SERVED_REASON (with the list) and SUMMARY_NO_TERRAIN_REASON (inside a site summary, no list):
-# Claude-drafted on the approved patterns (2026-11-16), pending the project author's review.
-TERRAIN_NOT_SERVED_REASON = (
-    "This version has precomputed slope statistics only for the locations and radii listed with this "
-    "message. A request must match one of them exactly: the same location and radius."
-)
+# TERRAIN_NOT_SERVED_REASON (with the list): Kaitlin's wording, 2026-11-16.
+# SUMMARY_NO_TERRAIN_REASON (inside a site summary, no list): Claude-drafted, approved by her 2026-11-16.
+TERRAIN_NOT_SERVED_REASON = "Slope statistics are available only for the locations and radii listed here."
 SUMMARY_NO_TERRAIN_REASON = "This version has no precomputed slope statistics for this location and radius."
 UNAVAILABLE_REASON = (
     "Results are temporarily unavailable: the server has no usable precomputed results installed."

@@ -503,10 +503,8 @@ def test_selected_site_is_checked_and_disclosed_by_code():
         validate_output(out, ctx)  # params use pgda-site01, the selection is pgda-site04
     ctx = default_context(selected_site_id="pgda-site01")
     resp = to_response(validate_output(out, ctx), ctx)
-    assert (
-        resp.assumptions[0].startswith("Site: Site01 Connecting ridge")
-        and "selected site" in resp.assumptions[0]
-    )
+    # No short name in the registry yet: the full name stands in.
+    assert resp.assumptions[0] == "Using the selected site, Site01 Connecting ridge (Barker 2021 RoI 4)."
 
 
 # ------------------------------------------------ short display names (Kaitlin, 2026-11-16)
@@ -541,7 +539,7 @@ def test_selected_site_disclosure_uses_the_short_name():
     ctx = _ctx_with_short_name()
     out = {**terrain_output(), "site_source": "selected_site"}
     resp = to_response(validate_output(out, ctx), ctx)
-    assert resp.assumptions[0] == "Site: Connecting ridge, the selected site (the question named no site)."
+    assert resp.assumptions[0] == "Using the selected site, Connecting ridge."
     loc = resp.structured_query.params["location"]
     assert loc["name"] == "Site01 Connecting ridge (Barker 2021 RoI 4)"  # results keep the full name
 
