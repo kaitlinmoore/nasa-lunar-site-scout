@@ -210,16 +210,9 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
   const metricsForSite = data !== null && sameLocation(data.scenario.location, site.location)
   const skyForSite = skyData != null && sameLocation(skyData.series.scenario.location, site.location)
 
+  // Horizon and sky: fixtures, or live /api/series + /api/horizon (Phase 2 step 3.2).
   const skySection =
-    source !== 'fixtures' ? (
-      <section className="card">
-        <h2>Horizon and sky</h2>
-        <p className="muted">
-          Fixture mode only for now: the live horizon endpoint isn't available yet. Open this page with{' '}
-          <span className="mono">?source=fixtures</span> to see it with placeholder data.
-        </p>
-      </section>
-    ) : sky.kind === 'loading' ? (
+    sky.kind === 'loading' ? (
       <p className="muted">Loading horizon and series…</p>
     ) : sky.kind === 'error' ? (
       <ApiProblemView what="the horizon and series" error={sky.error} />

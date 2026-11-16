@@ -3,7 +3,7 @@
 // Both paths return the same generated contract types, so the screen can't tell them apart.
 import { scenarioId } from '../scenario'
 import { type ComparisonResult, mapCompareResponse } from './compare'
-import { staticCompare, staticMetrics, staticSites, withStaticFallback } from './staticFallback'
+import { staticCompare, staticMetrics, staticSites, staticSky, withStaticFallback } from './staticFallback'
 import {
   ApiError,
   type CompareResponse,
@@ -11,7 +11,9 @@ import {
   type HorizonProfile,
   type MetricsResponse,
   postCompare,
+  postHorizon,
   postMetrics,
+  postSeries,
   type Scenario,
   type SeriesResponse,
   type SitesResponse,
@@ -60,8 +62,21 @@ export async function loadThinSliceMetrics(source: DataSource): Promise<MetricsR
  */
 export async function loadThinSliceSky(
   source: DataSource,
-): Promise<{ series: SeriesResponse; horizon: HorizonProfile } | null> {
-  if (source !== 'fixtures') return null
+): Promise<{ series: SeriesResponse; horizon: HorizonProfile }> {
+  if (source !== 'fixtures') {
+    // Live (Phase 2 step 3.2): the thin-slice series and the horizon for its location + height.
+    const { scenario } = await thinSliceFixture()
+    return withStaticFallback(
+      async () => {
+        const [series, horizon] = await Promise.all([
+          postSeries(scenario),
+          postHorizon(scenario.location, scenario.unit_height_m),
+        ])
+        return { series, horizon }
+      },
+      () => staticSky(scenario),
+    )
+  }
   const [series, horizon] = await Promise.all([
     import('../../../fixtures/series.json'),
     import('../../../fixtures/horizon.json'),

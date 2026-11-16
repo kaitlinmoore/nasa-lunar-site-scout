@@ -10,8 +10,10 @@ import { scenarioId } from '../scenario'
 import {
   ApiError,
   type CompareResponse,
+  type HorizonProfile,
   type MetricsResponse,
   type Scenario,
+  type SeriesResponse,
   type Schemas,
   type SitesResponse,
 } from './client'
@@ -60,6 +62,18 @@ export async function staticMetrics(scenario: Scenario): Promise<MetricsResponse
   const entry = entryFor(await staticIndex(), scenario)
   if (!entry) throw new Error(NOT_IN_COPY)
   return getStaticJson<MetricsResponse>(entry.metrics)
+}
+
+export async function staticSky(
+  scenario: Scenario,
+): Promise<{ series: SeriesResponse; horizon: HorizonProfile }> {
+  const entry = entryFor(await staticIndex(), scenario)
+  if (!entry || !entry.horizon) throw new Error(NOT_IN_COPY)
+  const [series, horizon] = await Promise.all([
+    getStaticJson<SeriesResponse>(entry.series),
+    getStaticJson<HorizonProfile>(entry.horizon),
+  ])
+  return { series, horizon }
 }
 
 export async function staticCompare(scenarios: Scenario[]): Promise<ComparisonResult> {

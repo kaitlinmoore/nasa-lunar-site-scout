@@ -62,4 +62,7 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
 export const getHealth = () => getJson<HealthResponse>('/api/health')
 export const getSites = () => getJson<SitesResponse>('/api/sites')
 export const postMetrics = (scenario: Scenario) => postJson<MetricsResponse>('/api/metrics', { scenario })
+export const postSeries = (scenario: Scenario) => postJson<SeriesResponse>('/api/series', { scenario })
+export const postHorizon = (location: SiteLocation, unit_height_m: number) =>
+  postJson<HorizonProfile>('/api/horizon', { location, unit_height_m })
 export const postCompare = (scenarios: Scenario[]) => postJson<CompareResponse>('/api/compare', { scenarios })
