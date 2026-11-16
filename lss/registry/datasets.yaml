@@ -319,8 +319,8 @@ datasets:
       Not integrated: neutron maps cannot resolve site-scale hydrogen. Listed so the limit can be cited.
       The labelled stand-in is m3_surface_ice (~280 m). Resolution figures: Eke, V. R., Teodoro, L. F. A.,
       & Elphic, R. C. (2009), Icarus 200(1), 12-18, doi:10.1016/j.icarus.2008.10.013 (LP NS footprint and
-      reconstruction); Teodoro, L. F. A., Eke, V. R., & Elphic, R. C. (2014), JGR Planets 119(3), 574-593,
-      doi:10.1002/2013JE004421 (the LEND resolution debate).
+      reconstruction); Teodoro, L. F. A., Eke, V. R., Elphic, R. C., Feldman, W. C., & Lawrence, D. J. (2014),
+      JGR Planets 119(3), 574-593, doi:10.1002/2013JE004421 (the LEND resolution debate).
     # Plan question 9. VERIFY the PDS product pages for both instruments before the references list cites them.
 
   - id: aussel_2025_boulders
