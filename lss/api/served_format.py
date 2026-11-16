@@ -1,8 +1,8 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-The "result format" of a contract version: the JSON Schemas of the bodies a served file holds
-(MetricsResponse, SeriesResponse, HorizonProfile) and every schema they reference, taken from that version's
-`fixtures/openapi.json`, normalized so that only the format is compared:
+The "result format" of a contract version: the JSON Schemas of the bodies served and terrain files hold
+(MetricsResponse, SeriesResponse, HorizonProfile, TerrainResponse) and every schema they reference, taken
+from that version's `fixtures/openapi.json`, normalized so that only the format is compared:
 - `description` and `title` are removed (wording);
 - `"default": null` is removed (an annotation; FastAPI's and pydantic's exports differ on writing it);
 - the default of `contract_version` is removed (it is the version itself).
@@ -23,7 +23,8 @@ import json
 import sys
 from pathlib import Path
 
-SERVED_MODELS = ("MetricsResponse", "SeriesResponse", "HorizonProfile")
+# The bodies of served files (cache/served/) and terrain files (cache/terrain/, contract 0.7.0 on).
+SERVED_MODELS = ("MetricsResponse", "SeriesResponse", "HorizonProfile", "TerrainResponse")
 REF_PREFIX = "#/components/schemas/"
 WORDING_KEYS = frozenset({"description", "title"})
 

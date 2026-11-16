@@ -1,11 +1,13 @@
 {
-  "contract_version": "0.8.0",
+  "contract_version": "0.9.0",
   "_placeholder": false,
   "_note": "Generated from lss/registry/sites.yaml (curated sites).",
   "sites": [
     {
       "id": "pgda-site01",
       "name": "Site01 Connecting ridge (Barker 2021 RoI 4)",
+      "short_name": null,
+      "subtitle": null,
       "category": "pgda",
       "location": {
         "lat": -89.452675,
@@ -24,6 +26,8 @@
     {
       "id": "pgda-site04",
       "name": "Site04 Shackleton rim (Barker 2021 RoI 1)",
+      "short_name": null,
+      "subtitle": null,
       "category": "pgda",
       "location": {
         "lat": -89.761966,
@@ -42,6 +46,8 @@
     {
       "id": "pgda-site07",
       "name": "Site07 Peak near Shackleton (Barker 2021 RoI 2)",
+      "short_name": null,
+      "subtitle": null,
       "category": "pgda",
       "location": {
         "lat": -88.807326,
@@ -60,6 +66,8 @@
     {
       "id": "pgda-site11",
       "name": "Site11 de Gerlache rim (Barker 2021 RoI 1)",
+      "short_name": null,
+      "subtitle": null,
       "category": "pgda",
       "location": {
         "lat": -88.668256,
@@ -74,6 +82,82 @@
       ],
       "has_dem_clones": true,
       "source": "Centroid of region of interest 1 (the largest, 533 pixels = 13,325 m2) in Barker et al. (2021)'s Site11_ROIs.tgz (PGDA product 78; Barker, M. K., et al. (2021), Planet. Space Sci. 203, 105119, doi:10.1016/j.pss.2020.105119): polar stereographic x = -37.5425 km, y = 14.8825 km: the centre of the 5 m pixel containing the mean of the region's pixel centres (the rule that reproduces Barker's Table 2 centroids at Site01). Site 11 of Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030."
+    },
+    {
+      "id": "pgda-site06",
+      "name": "Site06 Nobile rim 1 (Mazarico 2011 site 6)",
+      "short_name": null,
+      "subtitle": null,
+      "category": "pgda",
+      "location": {
+        "lat": -85.3,
+        "lon": 37.07,
+        "name": "Site06 Nobile rim 1 (Mazarico 2011 site 6)"
+      },
+      "description": "A point on the rim of Nobile crater, about 143 km from the Moon's south pole. Mazarico et al. (2011) listed the 50 most illuminated spots near the south pole on a 240 m map; this one ranks 6th, with 86% of the Sun's disc in view on average at surface level over 1970-2044. Barker et al. (2021) made the 5 m map of the site (PGDA product 78) that is used here. The point is Mazarico's published coordinate, given to 0.01 degrees (about 300 m in latitude).",
+      "dataset_ids": [
+        "pgda_78_site_dems",
+        "pgda_90_south_pole_dems"
+      ],
+      "has_dem_clones": true,
+      "source": "Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030, Table 3 (south pole, rank 6): 37.07 E, 85.30 S (polar stereographic x = 85.958 km, y = 113.780 km on the 1737.4 km sphere). Site name and 5 m map: PGDA product 78 (Barker, M. K., et al. (2021), Planet. Space Sci. 203, 105119, doi:10.1016/j.pss.2020.105119)."
+    },
+    {
+      "id": "pgda-site20",
+      "name": "Site20 Leibnitz beta plateau (Mazarico 2011 site 20)",
+      "short_name": null,
+      "subtitle": null,
+      "category": "pgda",
+      "location": {
+        "lat": -85.43,
+        "lon": 31.73,
+        "name": "Site20 Leibnitz beta plateau (Mazarico 2011 site 20)"
+      },
+      "description": "A point on the Leibnitz beta plateau, about 139 km from the Moon's south pole. Mazarico et al. (2011) listed the 50 most illuminated spots near the south pole on a 240 m map; this one ranks 20th, with 82% of the Sun's disc in view on average at surface level over 1970-2044. Barker et al. (2021) made the 5 m map of the site (PGDA product 78) that is used here. The point is Mazarico's published coordinate, given to 0.01 degrees (about 300 m in latitude).",
+      "dataset_ids": [
+        "pgda_78_site_dems",
+        "pgda_90_south_pole_dems"
+      ],
+      "has_dem_clones": true,
+      "source": "Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030, Table 3 (south pole, rank 20): 31.73 E, 85.43 S (polar stereographic x = 72.919 km, y = 117.928 km on the 1737.4 km sphere). Site name and 5 m map: PGDA product 78 (Barker, M. K., et al. (2021), Planet. Space Sci. 203, 105119, doi:10.1016/j.pss.2020.105119)."
+    },
+    {
+      "id": "pgda-site23",
+      "name": "Site23 Malapert massif (Mazarico 2011 site 23)",
+      "short_name": null,
+      "subtitle": null,
+      "category": "pgda",
+      "location": {
+        "lat": -85.97,
+        "lon": -2.3,
+        "name": "Site23 Malapert massif (Mazarico 2011 site 23)"
+      },
+      "description": "A point on the Malapert massif, about 122 km from the Moon's south pole. Mazarico et al. (2011) listed the 50 most illuminated spots near the south pole on a 240 m map; this one ranks 23rd, with 82% of the Sun's disc in view on average at surface level over 1970-2044. Mazarico et al. (2011) also note that high ground such as Mons Malapert has good visibility of the Earth. Barker et al. (2021) made the 5 m map of the site (PGDA product 78) that is used here. The point is Mazarico's published coordinate, given to 0.01 degrees (about 300 m in latitude).",
+      "dataset_ids": [
+        "pgda_78_site_dems",
+        "pgda_90_south_pole_dems"
+      ],
+      "has_dem_clones": true,
+      "source": "Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030, Table 3 (south pole, rank 23): 357.70 E, 85.97 S (polar stereographic x = -4.906 km, y = 122.155 km on the 1737.4 km sphere). Site name and 5 m map: PGDA product 78 (Barker, M. K., et al. (2021), Planet. Space Sci. 203, 105119, doi:10.1016/j.pss.2020.105119)."
+    },
+    {
+      "id": "pgda-site42",
+      "name": "Site42 de Gerlache-Kocher massif (Mazarico 2011 site 42)",
+      "short_name": null,
+      "subtitle": null,
+      "category": "pgda",
+      "location": {
+        "lat": -85.83,
+        "lon": -116.35,
+        "name": "Site42 de Gerlache-Kocher massif (Mazarico 2011 site 42)"
+      },
+      "description": "A point on the massif between de Gerlache and Kocher craters, about 127 km from the Moon's south pole. Mazarico et al. (2011) listed the 50 most illuminated spots near the south pole on a 240 m map; this one ranks 42nd, with 80% of the Sun's disc in view on average at surface level over 1970-2044. Barker et al. (2021) made the 5 m map of the site (PGDA product 78) that is used here. The point is Mazarico's published coordinate, given to 0.01 degrees (about 300 m in latitude).",
+      "dataset_ids": [
+        "pgda_78_site_dems",
+        "pgda_90_south_pole_dems"
+      ],
+      "has_dem_clones": true,
+      "source": "Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030, Table 3 (south pole, rank 42): 243.65 E, 85.83 S (polar stereographic x = -113.360 km, y = -56.149 km on the 1737.4 km sphere). Site name and 5 m map: PGDA product 78 (Barker, M. K., et al. (2021), Planet. Space Sci. 203, 105119, doi:10.1016/j.pss.2020.105119)."
     }
   ]
 }

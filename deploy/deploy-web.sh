@@ -20,7 +20,8 @@ if ! ls bundle/served/*.json >/dev/null 2>&1; then
   echo "No bundle/served/: run bash deploy/deploy-api.sh first (it stages the served results)." >&2
   exit 1
 fi
-uv run python -m lss.api.static_export web/dist/static-api --served-dir bundle/served --check-api "$API_URL"
+uv run python -m lss.api.static_export web/dist/static-api --served-dir bundle/served \
+  --terrain-dir bundle/terrain --check-api "$API_URL"
 
 # Firebase config is generated (gitignored) from deploy/firebase.json with the site ID from config.sh,
 # so the site ID lives in one place.

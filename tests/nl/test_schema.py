@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from typing import Any
 
@@ -129,7 +130,10 @@ def test_boulder_refusal_matches_fixture_datasets(ctx):
     assert isinstance(resp, NLUnsupported)
     expected = fixture("nl_unsupported.json")["unsupported"]["datasets_considered"]
     assert resp.unsupported.datasets_considered == expected
-    assert "Any boulder information at the poles" in resp.unsupported.reason
+    reason = resp.unsupported.reason
+    assert "any boulder information at the poles" in reason  # registry fragment, inside one sentence
+    assert reason.endswith(".") and not re.search(r"\.\s+[A-Z]", reason)  # one sentence (stream B)
+    assert "can't answer:" not in reason  # no stitched "<dataset> can't answer: ..." parts
 
 
 def test_partial_answer_carries_limitations(ctx):
@@ -476,3 +480,78 @@ def test_every_fill_schema_builds_and_its_refs_resolve(op):
 def test_sites_uses_the_contract_query_model():
     assert OPERATION_PARAMS[Operation.sites] is SitesQuery
     assert {Operation.terrain, Operation.site_summary} <= ALLOWED_OPERATIONS
+
+
+# ------------------------------------- nl-output-6: disclosures come only from code (stream B, 2026-11-16)
+
+
+def test_model_cannot_write_assumptions():
+    from lss.nl.schema import NLFill, NLOutput
+
+    assert "assumptions" not in NLFill.model_fields and "assumptions" not in NLOutput.model_fields
+    assert "assumptions" not in json.dumps(fill_json_schema(Operation.terrain)["properties"])
+    with pytest.raises(NLValidationError, match="schema"):
+        validate_output({**terrain_output(), "assumptions": ["a working note"]}, default_context())
+
+
+def test_selected_site_is_checked_and_disclosed_by_code():
+    out = {**terrain_output(), "site_source": "selected_site"}
+    with pytest.raises(NLValidationError, match="no site is selected"):
+        validate_output(out, default_context())
+    ctx = default_context(selected_site_id="pgda-site04")
+    with pytest.raises(NLValidationError, match="selected site's id"):
+        validate_output(out, ctx)  # params use pgda-site01, the selection is pgda-site04
+    ctx = default_context(selected_site_id="pgda-site01")
+    resp = to_response(validate_output(out, ctx), ctx)
+    assert (
+        resp.assumptions[0].startswith("Site: Site01 Connecting ridge")
+        and "selected site" in resp.assumptions[0]
+    )
+
+
+# ------------------------------------------------ short display names (Kaitlin, 2026-11-16)
+
+
+def _ctx_with_short_name(short="Connecting ridge"):
+    from dataclasses import replace
+
+    base = default_context(selected_site_id="pgda-site01")
+    sites = [
+        s.model_copy(update={"short_name": short, "subtitle": "PGDA Site01 · Barker 2021 RoI 4"})
+        if s.id == "pgda-site01"
+        else s
+        for s in base.sites
+    ]
+    return replace(base, sites=sites)
+
+
+def test_model_sees_short_names_and_subtitles():
+    from lss.nl.prompt import _context
+
+    ctx = _ctx_with_short_name()
+    entry = next(
+        s for s in _context(ctx, date(2026, 11, 16), registry=False)["sites"] if s["site_id"] == "pgda-site01"
+    )
+    assert entry["name"] == "Connecting ridge" and entry["subtitle"] == "PGDA Site01 · Barker 2021 RoI 4"
+    plain = next(s for s in _context(default_context(), date(2026, 11, 16), registry=False)["sites"])
+    assert plain["name"] == default_context().sites[0].name  # no short name yet: the full name
+
+
+def test_selected_site_disclosure_uses_the_short_name():
+    ctx = _ctx_with_short_name()
+    out = {**terrain_output(), "site_source": "selected_site"}
+    resp = to_response(validate_output(out, ctx), ctx)
+    assert resp.assumptions[0] == "Site: Connecting ridge, the selected site (the question named no site)."
+    loc = resp.structured_query.params["location"]
+    assert loc["name"] == "Site01 Connecting ridge (Barker 2021 RoI 4)"  # results keep the full name
+
+
+def test_site_model_fields_are_optional():
+    from lss.contract import Site, display_name
+
+    s = default_context().sites[0]
+    assert s.short_name is None and display_name(s) == s.name
+    assert (
+        display_name(Site.model_validate({**s.model_dump(), "short_name": "Connecting ridge"}))
+        == "Connecting ridge"
+    )

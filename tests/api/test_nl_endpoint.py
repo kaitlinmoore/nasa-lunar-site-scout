@@ -232,7 +232,10 @@ def test_spend_cap_pauses_live_questions_but_not_cached_ones(setup):
     assert ask(client, "boulders").status_code == 200  # $1.20: over the cap after this one
     r = ask(client, "boulders")
     assert r.status_code == 503
-    assert UnavailableError.model_validate(r.json()).detail.reason == nl.PAUSED_REASON
+    # Cached examples exist here, so the reason says they still work; without them it doesn't (below).
+    assert (
+        UnavailableError.model_validate(r.json()).detail.reason == nl.PAUSED_REASON + nl.EXAMPLES_STILL_WORK
+    )
     assert service.meter.spent == pytest.approx(1.2)
     r = ask(client, "  example QUESTION ")  # normalized text, same selection
     assert r.status_code == 200 and r.json()["unsupported"]["reason"] == "cached"
@@ -314,3 +317,12 @@ def test_debug_client_route_only_when_turned_on(monkeypatch):
     r = TestClient(app).get("/api/_debug/client", headers={"X-Forwarded-For": "203.0.113.9, 198.51.100.2"})
     assert r.json()["used_for_rate_limit"] == "198.51.100.2"
     assert "/api/_debug/client" not in app.openapi()["paths"]
+
+
+def test_unavailable_reasons_mention_examples_only_when_there_are_some(setup):
+    def broken():
+        raise ProviderError("down")
+
+    client, _ = setup[0](factory=broken)  # no cached examples
+    d = UnavailableError.model_validate(ask(client, "boulders").json()).detail
+    assert d.reason == nl.NL_UNAVAILABLE_REASON and "example" not in d.reason

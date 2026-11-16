@@ -24,3 +24,4 @@ NL_SECRET="${LSS_NL_SECRET:-lss-anthropic-demo-key}"
 # into the image at /data/cache/served (LSS_DATA_DIR=/data in the container).
 LSS_DATA_DIR_POSIX="$(cygpath -u "${LSS_DATA_DIR:-C:\\dev\\GitHub\\lss-data}" 2>/dev/null || echo "${LSS_DATA_DIR:-/c/dev/GitHub/lss-data}")"
 SERVED_SRC="${LSS_DATA_DIR_POSIX}/cache/served"
+TERRAIN_SRC="${LSS_DATA_DIR_POSIX}/cache/terrain"

@@ -15,6 +15,8 @@ COPY lss ./lss
 COPY fixtures ./fixtures
 # Precomputed served results, staged by deploy/deploy-api.sh (LSS_DATA_DIR=/data).
 COPY bundle/served /data/cache/served
+# Precomputed slope statistics (stream A's cache/terrain/), staged by deploy/deploy-api.sh.
+COPY bundle/terrain /data/cache/terrain
 RUN uv sync --frozen --no-dev
 # /api/nl calls the Anthropic API over TLS. httpx2 (the anthropic SDK's HTTP client) verifies against the
 # OS CA store on Linux, so the build fails here if the image has no CA certificates.

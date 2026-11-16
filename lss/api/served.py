@@ -29,17 +29,21 @@ from lss.contract import (
     Scenario,
     ScenarioField,
     SeriesResponse,
+    TerrainRequest,
+    TerrainResponse,
 )
 
-# Older contract versions whose served bodies (MetricsResponse, SeriesResponse) are unchanged in the current
-# contract. Files made with them are still served, stamped with the current version; any other version is
-# refused (503) until the file is regenerated. Maintained by the contract owner (Kaitlin, 2026-11-15):
+# Older contract versions whose served bodies (MetricsResponse, SeriesResponse, HorizonProfile,
+# TerrainResponse) are unchanged in the current contract. Files made with them are still served, stamped with
+# the current version; any other version is refused (503) until the file is regenerated. Maintained by
+# the contract owner (Kaitlin, 2026-11-15):
 # - list a version only if its result format equals the current one: tests/api/test_served_format.py checks
 #   each against a snapshot in tests/api/served_formats/ (how to make one: lss/api/served_format.py);
 # - drop a version, and its snapshot, once stream A has regenerated its served files at a newer version.
 #   0.5.0 and 0.6.0 dropped 2026-11-16: A regenerated every served file (format 2, with horizons) at 0.7.0.
-#   0.7.0: the installed files (Site01 C1 + A's C3 batch); drop once A writes them at 0.8.0 or later.
-COMPATIBLE_VERSIONS = frozenset({"0.7.0"})
+#   0.7.0: 32 installed served files; drop once A regenerates them (request RA5).
+#   0.8.0: the other served files and every terrain file (contract 0.9.0 only added error and index models).
+COMPATIBLE_VERSIONS = frozenset({"0.7.0", "0.8.0"})
 
 
 class ServedFileError(ValueError):
@@ -144,4 +148,52 @@ def differences(asked: Scenario | HorizonRequest, served: Scenario) -> list[Scen
         out.append(ScenarioField.window_end)
     if asked.step != served.step:
         out.append(ScenarioField.step)
+    return out
+
+
+# ----------------------------------------------------------- slope statistics (cache/terrain/)
+# Written by stream A (scripts/precompute_terrain.py): one file per site, `{"format": 1, "site_id",
+# "terrain": [TerrainResponse, ...], "provenance"}` (1 km on the 5 m site map, 10 km on the 10 m map).
+# Same rules as served files: current or compatible contract version, not placeholder, no duplicates.
+
+
+@dataclass(frozen=True)
+class ServedTerrain:
+    body: TerrainResponse
+    path: Path
+    made_with: str
+
+    @property
+    def key(self) -> str:
+        return terrain_key(self.body.location.lat, self.body.location.lon, self.body.radius_m)
+
+
+def terrain_key(lat: float, lon: float, radius_m: float) -> str:
+    return TerrainRequest(location={"lat": lat, "lon": lon}, radius_m=radius_m).key()
+
+
+def terrain_dir() -> Path:
+    return get_settings().cache_dir / "terrain"
+
+
+def load_terrain(directory: Path | None = None) -> dict[str, ServedTerrain]:
+    """Every precomputed slope statistic in the directory, by TerrainRequest.key() (empty if missing)."""
+    d = directory or terrain_dir()
+    out: dict[str, ServedTerrain] = {}
+    for p in sorted(d.glob("*.json")) if d.is_dir() else []:
+        data = json.loads(p.read_text(encoding="utf-8"))
+        for raw in data["terrain"]:
+            body = TerrainResponse.model_validate(raw)
+            if body.placeholder:
+                raise ServedFileError(f"{p.name}: placeholder data")
+            made_with = body.contract_version
+            if made_with != CONTRACT_VERSION and made_with not in COMPATIBLE_VERSIONS:
+                raise ServedFileError(
+                    f"{p.name}: made with contract {made_with}, the API is {CONTRACT_VERSION}; "
+                    "regenerate it with scripts/precompute_terrain.py"
+                )
+            st = ServedTerrain(body.model_copy(update={"contract_version": CONTRACT_VERSION}), p, made_with)
+            if st.key in out:
+                raise ServedFileError(f"{p.name} and {out[st.key].path.name}: the same location and radius")
+            out[st.key] = st
     return out

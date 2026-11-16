@@ -3,17 +3,19 @@
 Static JSON fallback (plan section 4.7; Kaitlin, 2026-11-15): the API's precomputed results as static files
 on the web host, so the demo still works when the API is down.
 
-    uv run python -m lss.api.static_export OUT_DIR [--served-dir DIR] [--check-api URL]
+    uv run python -m lss.api.static_export OUT_DIR [--served-dir DIR] [--terrain-dir DIR] [--check-api URL]
 
 Writes, under OUT_DIR (deploy/deploy-web.sh uses web/dist/static-api):
 - `index.json`: a StaticIndex, listing every served scenario and the paths of its files;
 - `sites.json`, `datasets.json`: what GET /api/sites and /api/datasets return;
 - `metrics/<scenario_key>.json`, `series/<scenario_key>.json`: what POST /api/metrics and /api/series return;
-- `horizon/<horizon_key>.json`: what POST /api/horizon returns, where a served file has a horizon.
+- `horizon/<horizon_key>.json`: what POST /api/horizon returns, where a served file has a horizon;
+- `terrain/<terrain_key>.json`: what POST /api/terrain returns (precomputed slope statistics).
 
 The files are built with the API's own loader (lss.api.served) and response code, so they are the API's
 bodies, and every one must carry the current CONTRACT_VERSION. `--check-api` also requires the deployed
-API to report the same contract version and to return the same metrics for every exported scenario.
+API to report the same contract version and to return the same metrics for every exported scenario and
+the same slope statistics for every exported location and radius.
 """
 
 from __future__ import annotations
@@ -28,8 +30,8 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from lss.api import app as api
-from lss.api.served import horizons, load_all, served_dir
-from lss.contract import CONTRACT_VERSION, StaticEntry, StaticIndex
+from lss.api.served import horizons, load_all, load_terrain, served_dir, terrain_dir
+from lss.contract import CONTRACT_VERSION, StaticEntry, StaticIndex, StaticTerrainEntry
 
 INDEX_NOTE = "Static copy of the API's precomputed results, for when the API is unavailable (plan 4.7)."
 
@@ -49,7 +51,7 @@ def _write(path: Path, body: BaseModel) -> dict:
     return data
 
 
-def export(out_dir: Path, served_from: Path | None = None) -> StaticIndex:
+def export(out_dir: Path, served_from: Path | None = None, terrain_from: Path | None = None) -> StaticIndex:
     """Write the static fallback to out_dir (replacing it); returns the index."""
     served = load_all(served_from or served_dir())
     if not served:
@@ -77,9 +79,22 @@ def export(out_dir: Path, served_from: Path | None = None) -> StaticIndex:
         _write(out_dir / entry.series, sv.series)
         entries.append(entry)
 
+    terrain = []
+    for tkey, st in load_terrain(terrain_from or terrain_dir()).items():
+        entry = StaticTerrainEntry(
+            location=st.body.location,
+            radius_m=st.body.radius_m,
+            terrain_key=tkey,
+            path=f"terrain/{tkey}.json",
+        )
+        _write(out_dir / entry.path, st.body)
+        terrain.append(entry)
+
     _write(out_dir / "sites.json", api._sites())
     _write(out_dir / "datasets.json", api._datasets())
-    index = StaticIndex(scenarios=entries, sites="sites.json", datasets="datasets.json", _note=INDEX_NOTE)
+    index = StaticIndex(
+        scenarios=entries, terrain=terrain, sites="sites.json", datasets="datasets.json", _note=INDEX_NOTE
+    )
     _write(out_dir / "index.json", index)
     return index
 
@@ -108,16 +123,25 @@ def check_api(index: StaticIndex, out_dir: Path, api_url: str) -> None:
         static = json.loads((out_dir / entry.metrics).read_text(encoding="utf-8"))
         if live != static:
             raise StaticExportError(f"the API's metrics for {entry.scenario_key} differ from the static copy")
+    for t in index.terrain:
+        live = _get_json(
+            f"{base}/api/terrain", {"location": t.location.model_dump(mode="json"), "radius_m": t.radius_m}
+        )
+        if live != json.loads((out_dir / t.path).read_text(encoding="utf-8")):
+            raise StaticExportError(
+                f"the API's slope statistics for {t.terrain_key} differ from the static copy"
+            )
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Export the static JSON fallback (plan 4.7).")
     parser.add_argument("out_dir", type=Path)
     parser.add_argument("--served-dir", type=Path, default=None, help="default: LSS_DATA_DIR/cache/served")
+    parser.add_argument("--terrain-dir", type=Path, default=None, help="default: LSS_DATA_DIR/cache/terrain")
     parser.add_argument("--check-api", metavar="URL", default=None, help="compare with the deployed API")
     args = parser.parse_args(argv)
     try:
-        index = export(args.out_dir, args.served_dir)
+        index = export(args.out_dir, args.served_dir, args.terrain_dir)
         if args.check_api:
             check_api(index, args.out_dir, args.check_api)
     except StaticExportError as e:
@@ -127,6 +151,7 @@ def main(argv: list[str] | None = None) -> int:
     checked = f"; matches {args.check_api}" if args.check_api else ""
     print(
         f"static fallback: {len(index.scenarios)} scenario(s), {n_h} with a horizon, "
+        f"{len(index.terrain)} slope statistic(s), "
         f"contract {CONTRACT_VERSION} -> {args.out_dir}{checked}"
     )
     return 0

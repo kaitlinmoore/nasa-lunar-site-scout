@@ -29,6 +29,7 @@
 #     window_source  see lss.nl.vocabulary.WindowSource
 #     slope_source   see lss.nl.vocabulary.SlopeSource ("safe" with no limit -> 5 degrees, D-safe)
 #     radius_source  see lss.nl.vocabulary.RadiusSource ("nearby" with no distance -> 10 km, D-radius)
+#     site_source    see lss.nl.vocabulary.SiteSource (no site named + a site selected -> selected_site)
 #     citations    registry citations that must be present
 #     citations_optional  registry citations that may also be present without penalty
 #     citations_one_of    groups: at least one citation of each group must be present
@@ -52,6 +53,7 @@ items:
       height_source: default
       window_source: default
       radius_source: nearby_default
+      site_source: selected_site
       query:
         operation: site_summary
         params:
@@ -83,6 +85,7 @@ items:
     expected:
       outcome: answer
       radius_source: around_default
+      site_source: selected_site
       query:
         operation: terrain
         params:
@@ -104,6 +107,7 @@ items:
     expected:
       outcome: partial
       radius_source: nearby_default
+      site_source: selected_site
       query:
         operation: site_summary
         params:

@@ -9,7 +9,7 @@ NL eval harness (step 4.5; plan section 4.5).
 Scores (plan section 4.5, the project author's two measures), over `ready` items only:
   (a) structured-query correctness, for items expecting a query (answer / partial):
       output is valid, outcome matches, operation matches, params match (exact, or the
-      label's keys for `subset`), and the height / window / slope / radius sources match when
+      label's keys for `subset`), and the height / window / slope / radius / site sources match when
       the label gives them.
   (b) refusal/partial-reason correctness, for items expecting limitations (partial / unsupported):
       output is valid, outcome matches, and the cited registry entries include every required
@@ -124,7 +124,7 @@ def _score_query(item: EvalItem, v: ValidatedOutput, ctx) -> tuple[bool, list[st
             notes.append("params differ from the label")
     elif not _is_subset(resolve_site_refs(exp.query.params, ctx), sq.params):
         notes.append("params don't contain the label's values")
-    for name in ("window_source", "height_source", "slope_source", "radius_source"):
+    for name in ("window_source", "height_source", "slope_source", "radius_source", "site_source"):
         want, got = getattr(exp, name), getattr(v.output, name)
         if want is not None and got != want:
             notes.append(f"{name} {got.value} != expected {want.value}")

@@ -10,6 +10,8 @@ nothing is computed live, so the API needs no DEMs, kernels or numba.
 - `POST /api/metrics`, `/api/series`: the precomputed result for a scenario, matched on `Scenario.key()`.
 - `POST /api/horizon`: the precomputed horizon profile for a location and unit height.
 - `POST /api/compare`: metrics for every served scenario of the request; the rest are listed as not served.
+- `POST /api/terrain`: precomputed slope statistics for a location and radius (stream A's cache/terrain/).
+- `POST /api/site_summary`: slope statistics, metrics for a served scenario, and (later, S3) nearby features.
 
 A valid request with no precomputed result gets a 422 with a plain-language reason and what is served; no
 usable results installed gets a 503 (contract error models in lss.contract).
@@ -29,11 +31,15 @@ from lss.api import nl as nl_service
 from lss.api.served import (
     Served,
     ServedFileError,
+    ServedTerrain,
     differences,
     horizon_key,
     horizons,
     load_all,
+    load_terrain,
     served_dir,
+    terrain_dir,
+    terrain_key,
 )
 from lss.config import get_settings
 from lss.contract import (
@@ -66,6 +72,13 @@ from lss.contract import (
     SiteCategory,
     SitesQuery,
     SitesResponse,
+    SiteSummaryRequest,
+    SiteSummaryResponse,
+    TerrainNotServedDetail,
+    TerrainOption,
+    TerrainRequest,
+    TerrainResponse,
+    TerrainUnprocessableError,
     UnavailableDetail,
     UnavailableError,
     UnprocessableError,
@@ -89,6 +102,13 @@ COMPARE_NOT_SERVED_REASON = (
     "scenarios, matched exactly on location, unit height, time window and time step."
 )
 NO_TERRAIN_REASON = "No terrain data in this version covers this location."
+# TERRAIN_NOT_SERVED_REASON (with the list) and SUMMARY_NO_TERRAIN_REASON (inside a site summary, no list):
+# Claude-drafted on the approved patterns (2026-11-16), pending the project author's review.
+TERRAIN_NOT_SERVED_REASON = (
+    "This version has precomputed slope statistics only for the locations and radii listed with this "
+    "message. A request must match one of them exactly: the same location and radius."
+)
+SUMMARY_NO_TERRAIN_REASON = "This version has no precomputed slope statistics for this location and radius."
 UNAVAILABLE_REASON = (
     "Results are temporarily unavailable: the server has no usable precomputed results installed."
 )
@@ -112,6 +132,63 @@ def _datasets() -> DatasetsResponse:
 @lru_cache(maxsize=1)
 def _served() -> dict[str, Served]:
     return load_all()
+
+
+@lru_cache(maxsize=1)
+def _terrain() -> dict[str, ServedTerrain]:
+    return load_terrain()
+
+
+def terrain_results() -> dict[str, ServedTerrain]:
+    """Every installed slope statistic, or a 503 saying why there are none."""
+    try:
+        found = _terrain()
+    except ServedFileError as e:
+        raise unavailable(f"precomputed slope statistics are unusable: {e}") from e
+    if not found:
+        raise unavailable(f"no precomputed slope statistics are installed ({terrain_dir()})")
+    return found
+
+
+def terrain_for(req: TerrainRequest) -> TerrainResponse:
+    """Precomputed slope statistics for exactly this location and radius, or an HTTP error saying why not."""
+    found = terrain_results()
+    key = terrain_key(req.location.lat, req.location.lon, req.radius_m)
+    if key in found:
+        return found[key].body
+    detail = TerrainNotServedDetail(
+        reason=TERRAIN_NOT_SERVED_REASON,
+        terrain_key=key,
+        served=[TerrainOption(location=t.body.location, radius_m=t.body.radius_m) for t in found.values()],
+    )
+    raise HTTPException(422, detail=detail.model_dump(mode="json"))
+
+
+def site_summary(req: SiteSummaryRequest) -> SiteSummaryResponse:
+    """What is known at and around one location. Each missing part is null, with a limitation saying why."""
+    limitations: list[str] = []
+    try:
+        found = _terrain()
+    except ServedFileError:
+        found = {}
+    hit = found.get(terrain_key(req.location.lat, req.location.lon, req.radius_m))
+    if hit is None:
+        limitations.append(SUMMARY_NO_TERRAIN_REASON)
+    metrics = None
+    if req.scenario is not None:
+        try:
+            metrics = served_for(req.scenario).metrics
+        except HTTPException as e:
+            limitations.append(COMPARE_NOT_SERVED_REASON if e.status_code == 422 else UNAVAILABLE_REASON)
+    limitations.append(nl_service.NOT_AVAILABLE_YET[Operation.proximity])  # features: S3
+    return SiteSummaryResponse(
+        location=req.location,
+        radius_m=req.radius_m,
+        metrics=metrics,
+        terrain=hit.body if hit else None,
+        features=None,
+        limitations=limitations,
+    )
 
 
 def unavailable(technical: str) -> HTTPException:
@@ -207,6 +284,10 @@ def _errors(unprocessable: type, what: str) -> dict:
 
 NOT_SERVED_ERRORS = _errors(UnprocessableError, "No precomputed result for this request (NotServedError)")
 COMPARE_ERRORS = _errors(CompareUnprocessableError, "None of the scenarios is served (CompareNotServedError)")
+TERRAIN_ERRORS = _errors(
+    TerrainUnprocessableError,
+    "No precomputed slope statistics for this location and radius (TerrainNotServedError)",
+)
 LOCATE_ERRORS = {
     422: {
         "model": LocateUnprocessableError,
@@ -231,6 +312,8 @@ NL_EXECUTORS = {
     Operation.horizon: horizon_for,
     Operation.sites: sites_for,
     Operation.locate: locate,
+    Operation.terrain: terrain_for,
+    Operation.site_summary: site_summary,
 }
 
 
@@ -319,6 +402,16 @@ def create_app() -> FastAPI:
     )
     def compare(req: CompareRequest) -> CompareResponse:
         return compare_served(req)
+
+    @app.post(
+        "/api/terrain", response_model=TerrainResponse, response_model_by_alias=True, responses=TERRAIN_ERRORS
+    )
+    def terrain(req: TerrainRequest) -> TerrainResponse:
+        return terrain_for(req)
+
+    @app.post("/api/site_summary", response_model=SiteSummaryResponse, response_model_by_alias=True)
+    def site_summary_endpoint(req: SiteSummaryRequest) -> SiteSummaryResponse:
+        return site_summary(req)
 
     @app.post(
         "/api/nl",

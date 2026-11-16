@@ -77,6 +77,6 @@ def interpret(
         "window_source": fill.window_source.value,
         "slope_source": fill.slope_source.value,
         "radius_source": fill.radius_source.value,
-        "assumptions": fill.assumptions,
+        "site_source": fill.site_source.value,
         "limitations": limitations,
     }

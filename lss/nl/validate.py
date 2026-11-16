@@ -34,6 +34,7 @@ from lss.contract import (
     Scenario,
     Site,
     StructuredQuery,
+    display_name,
 )
 from lss.nl.schema import NLOutput, NLQuery, Outcome, SiteRef
 from lss.nl.vocabulary import (
@@ -48,10 +49,12 @@ from lss.nl.vocabulary import (
     SLOPE_KEYS,
     UNIT_HEIGHT_PROXIES_M,
     HeightSource,
+    SiteSource,
     SlopeSource,
     WindowSource,
     default_window_text,
     safe_slope_text,
+    selected_site_text,
 )
 from lss.registry.loader import load_datasets
 
@@ -239,6 +242,27 @@ def _check_slope_radius(output: NLOutput, params: dict[str, Any], problems: list
     _check_default_value("radius", output.radius_source, radius_defaults, radii, problems)
 
 
+def _site_ids(value: Any) -> list[str]:
+    """Every `{"site_id": ...}` reference in the (unresolved) params."""
+    if isinstance(value, dict):
+        if set(value) == {"site_id"}:
+            return [str(value["site_id"])]
+        return [i for v in value.values() for i in _site_ids(v)]
+    if isinstance(value, list):
+        return [i for v in value for i in _site_ids(v)]
+    return []
+
+
+def _check_site(output: NLOutput, ctx: NLContext, problems: list[str]) -> None:
+    if output.site_source != SiteSource.selected_site or output.query is None:
+        return
+    ids = _site_ids(output.query.params)
+    if ctx.selected_site_id is None:
+        problems.append("site_source is 'selected_site' but no site is selected")
+    elif not ids or any(i != ctx.selected_site_id for i in ids):
+        problems.append("site_source 'selected_site' requires the params to use the selected site's id")
+
+
 def _check_citations(output: NLOutput, ctx: NLContext, problems: list[str]) -> None:
     registry = {d.id: d for d in ctx.datasets}
     for lim in output.limitations:
@@ -292,8 +316,9 @@ def validate_output(raw: str | Mapping[str, Any] | NLOutput, ctx: NLContext) -> 
             _check_heights(output, structured.params, ctx, problems)
             _check_windows(output, structured.params, ctx, problems)
             _check_slope_radius(output, structured.params, problems)
+            _check_site(output, ctx, problems)
     else:
-        for name in ("height_source", "window_source", "slope_source", "radius_source"):
+        for name in ("height_source", "window_source", "slope_source", "radius_source", "site_source"):
             if getattr(output, name).value != "not_applicable":
                 problems.append(f"{name} is set but there is no query")
 
@@ -301,10 +326,11 @@ def validate_output(raw: str | Mapping[str, Any] | NLOutput, ctx: NLContext) -> 
     if problems:
         raise NLValidationError(problems)
 
-    # Disclosures built here, not by the model: the default window, then proxy/default heights,
-    # then the "nearby" / "around" radius. The "safe" slope disclosure needs the terrain data the slope is
-    # measured on, which comes with the engine's result: `to_response` adds it.
-    assumptions = list(output.assumptions)
+    # Every disclosure is built here, never by the model (nl-output-6): the selected site, the default
+    # window, proxy/default heights, then the "nearby" / "around" radius. The "safe" slope disclosure
+    # needs the terrain data the slope is measured on, which comes with the engine's result: `to_response`
+    # adds it.
+    assumptions: list[str] = []
     if output.radius_source in RADIUS_DEFAULTS:
         assumptions.insert(0, RADIUS_DEFAULTS[output.radius_source][1])
     if output.height_source in PROXY_ASSUMPTION_TEXT:
@@ -312,15 +338,32 @@ def validate_output(raw: str | Mapping[str, Any] | NLOutput, ctx: NLContext) -> 
     if output.window_source == WindowSource.default and structured is not None:
         start = _windows(structured.params)[0][0]
         assumptions.insert(0, default_window_text(start.date().isoformat()))
+    if output.site_source == SiteSource.selected_site:
+        site = next(s for s in ctx.sites if s.id == ctx.selected_site_id)
+        assumptions.insert(0, selected_site_text(display_name(site)))
     return ValidatedOutput(output=output, structured_query=structured, assumptions=assumptions)
 
 
 # --------------------------------------------------------------- to the contract
 
 
+def _fragment(text: str) -> str:
+    """A registry `cannot_answer` entry as part of a sentence: no final period; first letter lower case
+    unless the word is an acronym or name (second letter upper case or not a letter)."""
+    text = text.strip().rstrip(".")
+    if len(text) > 1 and text[0].isupper() and text[1].islower():
+        text = text[0].lower() + text[1:]
+    return text
+
+
 def _reason(topic: str, citations: Sequence[tuple[DatasetCapability, str]]) -> str:
-    parts = "; ".join(f"{ds.name} can't answer: {text}" for ds, text in citations)
-    return f"{topic.rstrip('.')}. Not answerable with the available data, because {parts}."
+    """One sentence (stream B, 2026-11-16; wording Claude-drafted, pending the project author's review):
+    "<topic>: not answerable with the available data and tools, which don't cover <a>, <b> or <c>."
+    The registry entries cited are in `Limitation.datasets_considered`, so sources aren't repeated here."""
+    parts = list(dict.fromkeys(_fragment(text) for _, text in citations))
+    listed = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " or " + parts[-1]
+    lead = topic.strip().rstrip(".")
+    return f"{lead}: not answerable with the available data and tools, which don't cover {listed}."
 
 
 def to_limitations(output: NLOutput, ctx: NLContext) -> list[Limitation]:

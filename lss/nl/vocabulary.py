@@ -107,6 +107,20 @@ def default_window_text(start_iso_date: str) -> str:
     return f"Window: 30 days from {start_iso_date} 00:00 UTC (default; no dates were given)."
 
 
+class SiteSource(StrEnum):
+    """Where a structured query's site came from (nl-output-6, after stream B's NL box testing)."""
+
+    user = "user"  # the user named the site (or gave coordinates)
+    selected_site = "selected_site"  # the question named no site; the site selected in the UI was used
+    not_applicable = "not_applicable"  # the query has no site
+
+
+def selected_site_text(name: str) -> str:
+    """Disclosure when the selected site stood in for an unnamed one. Claude-drafted (2026-11-16), pending
+    the project author's review. Replaces the model's own note, so every disclosure comes from code."""
+    return f"Site: {name}, the selected site (the question named no site)."
+
+
 class SlopeSource(StrEnum):
     """Where a structured query's slope limit (`max_slope_deg`) came from."""
 

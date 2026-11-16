@@ -95,5 +95,5 @@ def project_stage(out: Any, stage: str | None) -> Any:
         "window_source": out.get("window_source", "not_applicable"),
         "slope_source": out.get("slope_source", "not_applicable"),
         "radius_source": out.get("radius_source", "not_applicable"),
-        "assumptions": out.get("assumptions", []),
+        "site_source": out.get("site_source", "not_applicable"),
     }

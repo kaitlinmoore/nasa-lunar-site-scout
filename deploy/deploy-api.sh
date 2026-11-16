@@ -11,8 +11,12 @@ source deploy/config.sh
 rm -rf bundle/served
 mkdir -p bundle/served
 cp "$SERVED_SRC"/*.json bundle/served/
-# Check them exactly as the API will load them (contract version, keys, not placeholder).
-uv run python -c "from pathlib import Path; from lss.api.served import load_all; s = load_all(Path('bundle/served')); assert s, 'no served results staged'; print('Staged served results:', ', '.join(sorted(s)))"
+# Precomputed slope statistics (stream A's cache/terrain/), staged the same way.
+rm -rf bundle/terrain
+mkdir -p bundle/terrain
+cp "$TERRAIN_SRC"/*.json bundle/terrain/
+# Check both exactly as the API will load them (contract version, keys, not placeholder).
+uv run python -c "from pathlib import Path; from lss.api.served import load_all, load_terrain; s = load_all(Path('bundle/served')); t = load_terrain(Path('bundle/terrain')); assert s, 'no served results staged'; assert t, 'no slope statistics staged'; print(f'Staged {len(s)} served results and {len(t)} slope statistics')"
 
 # The NL key comes from Secret Manager (never a plain env var or a file in the image).
 if ! gcloud secrets describe "$NL_SECRET" --project "$GCP_PROJECT" >/dev/null 2>&1; then

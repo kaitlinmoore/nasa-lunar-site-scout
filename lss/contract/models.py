@@ -33,7 +33,7 @@ from pydantic import (
     model_validator,
 )
 
-CONTRACT_VERSION = "0.8.0"
+CONTRACT_VERSION = "0.9.0"
 
 Latitude = Annotated[float, Field(ge=-90.0, le=90.0, description="Planetocentric latitude, deg")]
 Longitude = Annotated[
@@ -114,13 +114,26 @@ class SiteCategory(StrEnum):
 
 class Site(Model):
     id: str
-    name: str
+    name: str = Field(description="Full technical name, e.g. 'Site01 Connecting ridge (Barker 2021 RoI 4)'")
+    short_name: str | None = Field(
+        default=None,
+        description="Short display name, e.g. 'Connecting ridge' (contract 0.9.0; Kaitlin, 2026-11-16). "
+        "Null: show name",
+    )
+    subtitle: str | None = Field(
+        default=None, description="Small line under the display name, e.g. 'PGDA Site01 · Barker 2021 RoI 4'"
+    )
     category: SiteCategory
     location: Location
     description: str | None = None
     dataset_ids: list[str] = Field(default_factory=list, description="Registry ids of DEMs etc.")
     has_dem_clones: bool = False
     source: str | None = Field(default=None, description="Citation or URL for the coordinates")
+
+
+def display_name(site: Site) -> str:
+    """What to call a site in text meant for people: its short name, else its full name."""
+    return site.short_name or site.name
 
 
 class SitesResponse(Response):
@@ -577,6 +590,12 @@ class TerrainRequest(Model):
     location: Location
     radius_m: float = Field(gt=0.0, description="Radius of the circle the slope statistics cover, m")
 
+    def key(self) -> str:
+        """Stable hash of location (name excluded) and radius, for precomputed statistics."""
+        payload = self.model_dump(mode="json", exclude={"location": {"name"}})
+        canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode()).hexdigest()[:16]
+
 
 class TerrainResponse(Response):
     location: Location
@@ -928,6 +947,29 @@ class LocateUnprocessableError(RootModel[NoTerrainError | InvalidRequestError]):
     """422 from POST /api/locate: tell the two apart by `detail` (an object vs a list)."""
 
 
+class TerrainOption(Model):
+    """One location and radius with precomputed slope statistics (contract 0.9.0)."""
+
+    location: Location
+    radius_m: float
+
+
+class TerrainNotServedDetail(Model):
+    reason: str = Field(description="Plain-language explanation, suitable to show to visitors")
+    terrain_key: str = Field(description="TerrainRequest.key() of the request")
+    served: list[TerrainOption] = Field(description="Every location and radius with precomputed statistics")
+
+
+class TerrainNotServedError(Model):
+    """422 from POST /api/terrain: no precomputed slope statistics for this location and radius."""
+
+    detail: TerrainNotServedDetail
+
+
+class TerrainUnprocessableError(RootModel[TerrainNotServedError | InvalidRequestError]):
+    """422 from POST /api/terrain: tell the two apart by `detail` (an object vs a list)."""
+
+
 # ------------------------------------------------------------- static fallback
 # Plan section 4.7 (Kaitlin, 2026-11-15): the served results are also published as static files on the web
 # host, for when the API is down. Paths are relative to the directory holding index.json.
@@ -943,9 +985,19 @@ class StaticEntry(Model):
     )
 
 
+class StaticTerrainEntry(Model):
+    location: Location
+    radius_m: float
+    terrain_key: str = Field(description="TerrainRequest.key() of this location and radius")
+    path: str = Field(description="Path of the TerrainResponse file")
+
+
 class StaticIndex(Response):
     """index.json of the static fallback: every served scenario and where its files are."""
 
     scenarios: list[StaticEntry]
+    terrain: list[StaticTerrainEntry] = Field(
+        default_factory=list, description="Precomputed slope statistics (contract 0.9.0)"
+    )
     sites: str = Field(description="Path of the SitesResponse file")
     datasets: str = Field(description="Path of the DatasetsResponse file")

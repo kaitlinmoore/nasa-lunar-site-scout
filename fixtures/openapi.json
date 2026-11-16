@@ -3,8 +3,8 @@
   "info": {
     "title": "Lunar Site Scout API",
     "description": "Contract v0. Not affiliated with or endorsed by NASA.",
-    "version": "0.8.0",
-    "x-contract-version": "0.8.0"
+    "version": "0.9.0",
+    "x-contract-version": "0.9.0"
   },
   "paths": {
     "/api/health": {
@@ -312,6 +312,92 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UnavailableError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/terrain": {
+      "post": {
+        "summary": "Terrain",
+        "operationId": "terrain_api_terrain_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TerrainRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerrainResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "No precomputed slope statistics for this location and radius (TerrainNotServedError), or a malformed request (InvalidRequestError, FastAPI validation)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerrainUnprocessableError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No usable precomputed results are installed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnavailableError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/site_summary": {
+      "post": {
+        "summary": "Site Summary Endpoint",
+        "operationId": "site_summary_endpoint_api_site_summary_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteSummaryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -754,7 +840,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.8.0"
+            "default": "0.9.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1008,7 +1094,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.8.0"
+            "default": "0.9.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1089,11 +1175,10 @@
         "title": "EventKind"
       },
       "Feature": {
-        "additionalProperties": false,
         "properties": {
           "id": {
-            "title": "Id",
-            "type": "string"
+            "type": "string",
+            "title": "Id"
           },
           "type": {
             "$ref": "#/components/schemas/FeatureType"
@@ -1107,7 +1192,6 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Name"
           },
           "location": {
@@ -1122,48 +1206,49 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Diameter M"
           },
           "dataset_id": {
-            "title": "Dataset Id",
-            "type": "string"
+            "type": "string",
+            "title": "Dataset Id"
           },
           "properties": {
-            "type": "object",
             "additionalProperties": true,
+            "type": "object",
             "title": "Properties"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "id",
           "type",
           "location",
           "dataset_id"
         ],
-        "title": "Feature",
-        "type": "object"
+        "title": "Feature"
       },
       "FeatureDistance": {
-        "additionalProperties": false,
         "properties": {
           "feature": {
             "$ref": "#/components/schemas/Feature"
           },
           "distance_m": {
-            "description": "Straight-line surface distance, m (not a drive route)",
+            "type": "number",
             "title": "Distance M",
-            "type": "number"
+            "description": "Straight-line surface distance, m (not a drive route)"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "feature",
           "distance_m"
         ],
-        "title": "FeatureDistance",
-        "type": "object"
+        "title": "FeatureDistance"
       },
       "FeatureType": {
+        "type": "string",
         "enum": [
           "crater",
           "psr",
@@ -1172,8 +1257,7 @@
           "landing_site",
           "named_feature"
         ],
-        "title": "FeatureType",
-        "type": "string"
+        "title": "FeatureType"
       },
       "FeaturesQuery": {
         "additionalProperties": false,
@@ -1206,7 +1290,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.8.0",
+            "default": "0.9.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1310,7 +1394,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.8.0"
+            "default": "0.9.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1345,7 +1429,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.8.0"
+            "default": "0.9.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1467,7 +1551,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.8.0",
+            "default": "0.9.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1614,7 +1698,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.8.0"
+            "default": "0.9.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1753,7 +1837,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.8.0"
+            "default": "0.9.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1818,7 +1902,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.8.0"
+            "default": "0.9.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1888,7 +1972,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.8.0"
+            "default": "0.9.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1969,7 +2053,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.8.0"
+            "default": "0.9.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2283,18 +2367,17 @@
         "type": "object"
       },
       "ProximityResponse": {
-        "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.8.0",
+            "type": "string",
             "title": "Contract Version",
-            "type": "string"
+            "default": "0.9.0"
           },
           "_placeholder": {
-            "default": false,
-            "description": "True when the values are placeholders, not computed results.",
+            "type": "boolean",
             "title": "Placeholder",
-            "type": "boolean"
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
           },
           "_note": {
             "anyOf": [
@@ -2305,41 +2388,40 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Note"
           },
           "location": {
             "$ref": "#/components/schemas/Location"
           },
           "results": {
-            "description": "Closest first, at most 10 (PROXIMITY_MAX_RESULTS)",
             "items": {
               "$ref": "#/components/schemas/FeatureDistance"
             },
+            "type": "array",
             "title": "Results",
-            "type": "array"
+            "description": "Closest first, at most 10 (PROXIMITY_MAX_RESULTS)"
           },
           "total": {
             "anyOf": [
               {
-                "minimum": 0,
-                "type": "integer"
+                "type": "integer",
+                "minimum": 0.0
               },
               {
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "How many features of the requested types lie within radius_m (results: the closest)",
-            "title": "Total"
+            "title": "Total",
+            "description": "How many features of the requested types lie within radius_m (results: the closest)"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "location",
           "results"
         ],
-        "title": "ProximityResponse",
-        "type": "object"
+        "title": "ProximityResponse"
       },
       "RateLimitedDetail": {
         "properties": {
@@ -2409,6 +2491,17 @@
           }
         ],
         "title": "RootModel[Union[NotServedError, InvalidRequestError]]"
+      },
+      "RootModel_Union_TerrainNotServedError__InvalidRequestError__": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/TerrainNotServedError"
+          },
+          {
+            "$ref": "#/components/schemas/InvalidRequestError"
+          }
+        ],
+        "title": "RootModel[Union[TerrainNotServedError, InvalidRequestError]]"
       },
       "Scenario": {
         "properties": {
@@ -2689,7 +2782,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.8.0"
+            "default": "0.9.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2790,7 +2883,32 @@
           },
           "name": {
             "type": "string",
-            "title": "Name"
+            "title": "Name",
+            "description": "Full technical name, e.g. 'Site01 Connecting ridge (Barker 2021 RoI 4)'"
+          },
+          "short_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Name",
+            "description": "Short display name, e.g. 'Connecting ridge' (contract 0.9.0; Kaitlin, 2026-11-16). Null: show name"
+          },
+          "subtitle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitle",
+            "description": "Small line under the display name, e.g. 'PGDA Site01 · Barker 2021 RoI 4'"
           },
           "category": {
             "$ref": "#/components/schemas/SiteCategory"
@@ -2859,25 +2977,23 @@
         "title": "SiteCategory"
       },
       "SiteSummaryRequest": {
-        "additionalProperties": false,
-        "description": "Body of POST /api/site_summary: what is known at and around one location.",
         "properties": {
           "location": {
             "$ref": "#/components/schemas/Location"
           },
           "radius_m": {
-            "description": "Radius for the slope statistics and the nearby features, m",
+            "type": "number",
             "exclusiveMinimum": 0.0,
             "title": "Radius M",
-            "type": "number"
+            "description": "Radius for the slope statistics and the nearby features, m"
           },
           "feature_types": {
-            "description": "Feature types to list; empty = every type",
             "items": {
               "$ref": "#/components/schemas/FeatureType"
             },
+            "type": "array",
             "title": "Feature Types",
-            "type": "array"
+            "description": "Feature types to list; empty = every type"
           },
           "scenario": {
             "anyOf": [
@@ -2888,31 +3004,30 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "description": "For the metrics part; its location must be this request's location"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "location",
           "radius_m"
         ],
         "title": "SiteSummaryRequest",
-        "type": "object"
+        "description": "Body of POST /api/site_summary: what is known at and around one location."
       },
       "SiteSummaryResponse": {
-        "additionalProperties": false,
-        "description": "Each part is null when it was not requested or has no result; limitations say which and why.",
         "properties": {
           "contract_version": {
-            "default": "0.8.0",
+            "type": "string",
             "title": "Contract Version",
-            "type": "string"
+            "default": "0.9.0"
           },
           "_placeholder": {
-            "default": false,
-            "description": "True when the values are placeholders, not computed results.",
+            "type": "boolean",
             "title": "Placeholder",
-            "type": "boolean"
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
           },
           "_note": {
             "anyOf": [
@@ -2923,15 +3038,14 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Note"
           },
           "location": {
             "$ref": "#/components/schemas/Location"
           },
           "radius_m": {
-            "title": "Radius M",
-            "type": "number"
+            "type": "number",
+            "title": "Radius M"
           },
           "metrics": {
             "anyOf": [
@@ -2941,8 +3055,7 @@
               {
                 "type": "null"
               }
-            ],
-            "default": null
+            ]
           },
           "terrain": {
             "anyOf": [
@@ -2952,8 +3065,7 @@
               {
                 "type": "null"
               }
-            ],
-            "default": null
+            ]
           },
           "features": {
             "anyOf": [
@@ -2963,23 +3075,24 @@
               {
                 "type": "null"
               }
-            ],
-            "default": null
+            ]
           },
           "limitations": {
             "items": {
               "type": "string"
             },
-            "title": "Limitations",
-            "type": "array"
+            "type": "array",
+            "title": "Limitations"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "location",
           "radius_m"
         ],
         "title": "SiteSummaryResponse",
-        "type": "object"
+        "description": "Each part is null when it was not requested or has no result; limitations say which and why."
       },
       "SitesQuery": {
         "additionalProperties": false,
@@ -3005,7 +3118,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.8.0"
+            "default": "0.9.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3127,7 +3240,7 @@
         "description": "index.json of the static fallback: every served scenario and where its files are.",
         "properties": {
           "contract_version": {
-            "default": "0.8.0",
+            "default": "0.9.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -3156,6 +3269,14 @@
             "title": "Scenarios",
             "type": "array"
           },
+          "terrain": {
+            "description": "Precomputed slope statistics (contract 0.9.0)",
+            "items": {
+              "$ref": "#/components/schemas/StaticTerrainEntry"
+            },
+            "title": "Terrain",
+            "type": "array"
+          },
           "sites": {
             "description": "Path of the SitesResponse file",
             "title": "Sites",
@@ -3173,6 +3294,36 @@
           "datasets"
         ],
         "title": "StaticIndex",
+        "type": "object"
+      },
+      "StaticTerrainEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "radius_m": {
+            "title": "Radius M",
+            "type": "number"
+          },
+          "terrain_key": {
+            "description": "TerrainRequest.key() of this location and radius",
+            "title": "Terrain Key",
+            "type": "string"
+          },
+          "path": {
+            "description": "Path of the TerrainResponse file",
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "location",
+          "radius_m",
+          "terrain_key",
+          "path"
+        ],
+        "title": "StaticTerrainEntry",
         "type": "object"
       },
       "StructuredQuery": {
@@ -3233,40 +3384,102 @@
         ],
         "title": "TerrainLayer"
       },
-      "TerrainRequest": {
+      "TerrainNotServedDetail": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Plain-language explanation, suitable to show to visitors"
+          },
+          "terrain_key": {
+            "type": "string",
+            "title": "Terrain Key",
+            "description": "TerrainRequest.key() of the request"
+          },
+          "served": {
+            "items": {
+              "$ref": "#/components/schemas/TerrainOption"
+            },
+            "type": "array",
+            "title": "Served",
+            "description": "Every location and radius with precomputed statistics"
+          }
+        },
         "additionalProperties": false,
-        "description": "Body of POST /api/terrain: slope at a point and around it.",
+        "type": "object",
+        "required": [
+          "reason",
+          "terrain_key",
+          "served"
+        ],
+        "title": "TerrainNotServedDetail"
+      },
+      "TerrainNotServedError": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/TerrainNotServedDetail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "TerrainNotServedError",
+        "description": "422 from POST /api/terrain: no precomputed slope statistics for this location and radius."
+      },
+      "TerrainOption": {
         "properties": {
           "location": {
             "$ref": "#/components/schemas/Location"
           },
           "radius_m": {
-            "description": "Radius of the circle the slope statistics cover, m",
-            "exclusiveMinimum": 0.0,
-            "title": "Radius M",
-            "type": "number"
+            "type": "number",
+            "title": "Radius M"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "location",
+          "radius_m"
+        ],
+        "title": "TerrainOption",
+        "description": "One location and radius with precomputed slope statistics (contract 0.9.0)."
+      },
+      "TerrainRequest": {
+        "properties": {
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "radius_m": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Radius M",
+            "description": "Radius of the circle the slope statistics cover, m"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "location",
           "radius_m"
         ],
         "title": "TerrainRequest",
-        "type": "object"
+        "description": "Body of POST /api/terrain: slope at a point and around it."
       },
       "TerrainResponse": {
-        "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.8.0",
+            "type": "string",
             "title": "Contract Version",
-            "type": "string"
+            "default": "0.9.0"
           },
           "_placeholder": {
-            "default": false,
-            "description": "True when the values are placeholders, not computed results.",
+            "type": "boolean",
             "title": "Placeholder",
-            "type": "boolean"
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
           },
           "_note": {
             "anyOf": [
@@ -3277,15 +3490,14 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Note"
           },
           "location": {
             "$ref": "#/components/schemas/Location"
           },
           "radius_m": {
-            "title": "Radius M",
-            "type": "number"
+            "type": "number",
+            "title": "Radius M"
           },
           "slope_at_point_deg": {
             "anyOf": [
@@ -3296,9 +3508,8 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "Slope at the location, deg (definition: docs/methodology.md)",
-            "title": "Slope At Point Deg"
+            "title": "Slope At Point Deg",
+            "description": "Slope at the location, deg (definition: docs/methodology.md)"
           },
           "slope_deg": {
             "$ref": "#/components/schemas/Stat",
@@ -3313,23 +3524,35 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "description": "The DEM the slopes were measured on (its resolution sets what they can show)"
           },
           "limitations": {
             "items": {
               "type": "string"
             },
-            "title": "Limitations",
-            "type": "array"
+            "type": "array",
+            "title": "Limitations"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "location",
           "radius_m"
         ],
-        "title": "TerrainResponse",
-        "type": "object"
+        "title": "TerrainResponse"
+      },
+      "TerrainUnprocessableError": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/TerrainNotServedError"
+          },
+          {
+            "$ref": "#/components/schemas/InvalidRequestError"
+          }
+        ],
+        "title": "TerrainUnprocessableError",
+        "description": "422 from POST /api/terrain: tell the two apart by `detail` (an object vs a list)."
       },
       "UnavailableDetail": {
         "properties": {

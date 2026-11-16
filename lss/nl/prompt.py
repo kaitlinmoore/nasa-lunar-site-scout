@@ -14,7 +14,7 @@ import json
 from datetime import date
 from typing import Any
 
-from lss.contract import Operation
+from lss.contract import Operation, display_name
 from lss.nl.provider import NLPrompt
 from lss.nl.schema import fill_json_schema, route_json_schema
 from lss.nl.validate import NLContext
@@ -28,7 +28,7 @@ from lss.nl.vocabulary import (
     HeightSource,
 )
 
-PROMPT_VERSION = "p5-draft"
+PROMPT_VERSION = "p6-draft"
 
 ROUTE_SYSTEM = """\
 You are the first step of a natural-language interface to a terrain-aware lunar landing-site \
@@ -76,7 +76,9 @@ Rules:
 1. Never compute or estimate numbers. Copy the user's own values (dates, heights, distances, \
 thresholds) into the parameters; the engine computes every result.
 2. Refer to curated sites by id, as {{"site_id": "..."}}, never by coordinates. Use coordinates \
-only when the user gives them.
+only when the user gives them. site_source: the user named the site or gave coordinates -> "user"; \
+the question names no site (e.g. "this site", "here") and a site is selected -> that site, \
+"selected_site"; the operation has no site -> "not_applicable".
 3. Heights (unit_height_m) and height_source, first match wins:
    - the user gave a height -> that value, "user";
    - the user said rover -> {rover} m, "rover_proxy"; lander -> {lander} m, "lander_proxy";
@@ -114,11 +116,11 @@ site_summary, and gave no distance -> {nearby_m} m, "nearby_default";
 8. site_summary: include "scenario" (for the metrics part) with the height and window rules above; \
 list feature_types only when the user asks about specific kinds of features (e.g. hazards -> \
 crater, hazard), otherwise leave it empty.
-9. Put any other reading you chose (e.g. how you interpreted a vague term) in "assumptions". \
-Proxy heights, default windows, the "safe" slope limit and the "nearby" / "around" distances are \
-disclosed automatically; don't repeat them.
+9. If you read a vague term in a particular way, say so in "interpretation". The selected site, \
+proxy heights, default windows, the "safe" slope limit and the "nearby" / "around" distances are \
+disclosed automatically from the *_source fields; don't repeat them.
 10. "interpretation" restates the query exactly as you filled it (site, height, dates, \
-thresholds), in one or two plain sentences.
+thresholds), in one or two plain sentences. Call sites by their "name" from the context.
 
 Return only JSON matching the schema."""
 
@@ -146,7 +148,12 @@ def fill_system_prompt() -> str:
 def _context(ctx: NLContext, today: date, registry: bool) -> dict[str, Any]:
     out: dict[str, Any] = {
         "today": today.isoformat(),
-        "sites": [{"site_id": s.id, "name": s.name, "category": s.category.value} for s in ctx.sites],
+        # Short display names (Kaitlin, 2026-11-16), so echoes read naturally; the subtitle helps match
+        # references such as "Site01". Full technical names stay in the API's results.
+        "sites": [
+            {"site_id": s.id, "name": display_name(s), "subtitle": s.subtitle, "category": s.category.value}
+            for s in ctx.sites
+        ],
         "selected_site_id": ctx.selected_site_id,
         "selected_scenario": (
             ctx.selected_scenario.model_dump(mode="json") if ctx.selected_scenario else None

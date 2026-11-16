@@ -643,6 +643,68 @@
         "resolution_m"
       ],
       "type": "object"
+    },
+    "TerrainResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "_note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "_placeholder": {
+          "default": false,
+          "type": "boolean"
+        },
+        "contract_version": {
+          "type": "string"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "location": {
+          "$ref": "#/components/schemas/Location"
+        },
+        "radius_m": {
+          "type": "number"
+        },
+        "slope_at_point_deg": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "slope_deg": {
+          "$ref": "#/components/schemas/Stat"
+        },
+        "slope_layer": {
+          "anyOf": [
+            {
+              "$ref": "#/components/schemas/TerrainLayer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "location",
+        "radius_m"
+      ],
+      "type": "object"
     }
   }
 }

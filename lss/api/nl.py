@@ -67,11 +67,11 @@ EFFORT = os.environ.get("LSS_NL_EFFORT", "low")
 
 # Visitor-facing texts: Claude-drafted (2026-11-16), approved by the project author 2026-11-16.
 RATE_LIMITED_REASON = "Too many questions from this connection. Please wait a little and try again."
-PAUSED_REASON = (
-    "Live questions are paused until tomorrow (UTC): the demo's daily limit has been reached. The example "
-    "questions still work."
-)
-NL_UNAVAILABLE_REASON = "Live questions are temporarily unavailable. The example questions still work."
+PAUSED_REASON = "Live questions are paused until tomorrow (UTC): the demo's daily limit has been reached."
+NL_UNAVAILABLE_REASON = "Live questions are temporarily unavailable. Please try again later."
+# Appended only when cached example answers exist (C8), so the text never promises examples that aren't
+# there (stream B, 2026-11-16). The short forms above: Claude-drafted rewording, pending review.
+EXAMPLES_STILL_WORK = " The example questions still work."
 NOT_UNDERSTOOD_REASON = (
     "The question couldn't be turned into a query this tool supports. Try rephrasing it, or ask about one "
     "of the listed sites."
@@ -79,6 +79,7 @@ NOT_UNDERSTOOD_REASON = (
 NOT_AVAILABLE_YET = {
     Operation.proximity: "Distances to nearby features are not available in this version yet.",
     Operation.search: "Area search is not available in this version yet.",
+    # Served since contract 0.9.0 (stream A's RA4); kept for an API without terrain data installed.
     Operation.terrain: "Slope statistics are not available in this version yet.",
     Operation.site_summary: "Site summaries are not available in this version yet.",
 }
@@ -205,7 +206,9 @@ class NLService:
                 429, detail=detail.model_dump(mode="json"), headers={"Retry-After": str(wait)}
             )
         if self.meter.exhausted():
-            raise _unavailable(PAUSED_REASON, f"daily spend cap ${self.meter.cap_usd:g} reached")
+            raise _unavailable(
+                self._reason(PAUSED_REASON), f"daily spend cap ${self.meter.cap_usd:g} reached"
+            )
 
         today = self.today()
         ctx = default_context(req.selected_site_id, req.selected_scenario, today)
@@ -216,14 +219,14 @@ class NLService:
         except (ProviderError, ProviderFatalError) as e:
             self._charge(trace)
             log.warning("nl: provider failed: %s", type(e).__name__)
-            raise _unavailable(NL_UNAVAILABLE_REASON, f"{type(e).__name__}: {e}") from e
+            raise _unavailable(self._reason(NL_UNAVAILABLE_REASON), f"{type(e).__name__}: {e}") from e
         except NLValidationError:
             self._charge(trace)
             return _not_understood()
         except Exception as e:  # network errors and the like: the demo keeps working with cached answers
             self._charge(trace)
             log.warning("nl: provider call failed: %s", type(e).__name__)
-            raise _unavailable(NL_UNAVAILABLE_REASON, f"{type(e).__name__}") from e
+            raise _unavailable(self._reason(NL_UNAVAILABLE_REASON), f"{type(e).__name__}") from e
         cost = self._charge(trace)
 
         try:
@@ -253,6 +256,9 @@ class NLService:
             update["limitations"] = [*resp.limitations, limitation]
         log.info("nl: %s %s (cost $%.4f)", validated.output.outcome.value, sq.operation.value, cost)
         return resp.model_copy(update=update)
+
+    def _reason(self, base: str) -> str:
+        return base + EXAMPLES_STILL_WORK if self.cache else base
 
     def _charge(self, trace: list[dict[str, Any]]) -> float:
         cost = sum(estimate_cost_usd(c.get("meta")) or 0.0 for c in trace)
