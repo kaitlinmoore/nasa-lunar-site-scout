@@ -692,7 +692,7 @@ For the `terrain` and `site_summary` operations (C api's request RA4).
     6–9 km from the served points. One map per statistic keeps min, max and mean comparable within it.
   - The Artemis III regions (section 1.4.3) follow the same rule: 1 km on the 5 m site map where the region's
     point lies on one (Malapert Massif, Mons Mouton, Nobile Rim 1), otherwise on the 10 m map; 10 km on the
-    10 m map. The Apollo sites, off the polar maps, have no slope statistics.
+    10 m map. The Apollo sites, off the polar maps, use the 237 m global map at both radii (section 5.6.1).
   - Slopes on a 10 m map are gentler than on a 5 m map: features smaller than about 20 m are not resolved.
 - **Limits.**
   - About 90% of 5 m pixels are interpolated between LOLA tracks (Barker et al. 2021). Single-pixel slopes are
@@ -1051,7 +1051,8 @@ illumination and product 69 all agree with this.
   Every result carries the fidelity label "low".
   - At 237 m, relief smaller than a few hundred metres is not in the horizon. The values describe the regional
     setting, not a particular spot on the ground.
-  - No slope statistics are served for these sites.
+  - Their slope statistics are measured on the same 237 m map (section 5.6.1): regional slopes, not comparable
+    with the 5 m and 10 m values at the polar sites. At 1 km the mean is 0.7–1.8°; at 10 km 0.6–9.7°.
   - **Cost** (development PC): 30 days with a new horizon, median 5.9 s (1.8–7.3 s); one year, median 32.6 s;
     10 days, median 0.9 s.
 - **Final served values** at the 1 h step, alongside the 10-minute previews quoted when window B was chosen:

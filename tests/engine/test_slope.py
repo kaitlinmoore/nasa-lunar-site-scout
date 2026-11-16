@@ -106,3 +106,16 @@ def test_artemis_regions_use_the_5m_map_only_where_their_point_lies_on_one():
     assert on_tile[1_000.0][1:] == ("pgda_78_site_dems", 5.0)
     assert off_tile[1_000.0] == ("ldem_83s_10m_artemis3_haworth_clip", "pgda_90_south_pole_dems", 10.0)
     assert on_tile[10_000.0][2] == off_tile[10_000.0][2] == 10.0
+
+
+def test_apollo_sites_use_the_global_map_with_the_approved_limitation():
+    from lss.registry.sites import get_site
+
+    m = _terrain_script()
+    assert m.on_global_map(get_site("apollo-11")) and not m.on_global_map(get_site("artemis3-haworth"))
+    assert (m.GLOBAL_DATASET, m.GLOBAL_RES_M) == ("lola_ldem_128", 236.901)
+    assert m.LIMIT_GLOBAL == (  # E's draft, approved by Kaitlin (2026-11-16)
+        "Measured on the 237 m global map (LOLA LDEM_128): regional slopes over about 500 m; smaller "
+        "features are not resolved, and values are not comparable with the 5 m and 10 m maps at the polar "
+        "sites."
+    )

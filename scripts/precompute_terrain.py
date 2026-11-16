@@ -41,6 +41,14 @@ LIMIT_5M = (
     "About 90% of 5 m pixels are interpolated between LOLA tracks (Barker et al. 2021): single-pixel slopes "
     "are low confidence (median RMS slope error 1.9 deg)."
 )
+# Sites off the polar maps (the Apollo sites): the 237 m global map (E's lat/lon path, methodology 5.6.1).
+GLOBAL_DATASET = "lola_ldem_128"
+GLOBAL_RES_M = 236.901
+GLOBAL_FILE_ID = "ldem_128_img"
+LIMIT_GLOBAL = (
+    "Measured on the 237 m global map (LOLA LDEM_128): regional slopes over about 500 m; smaller features "
+    "are not resolved, and values are not comparable with the 5 m and 10 m maps at the polar sites."
+)  # E's draft, approved by Kaitlin (2026-11-16)
 LIMIT_10M = (
     "Measured on a 10 m map: slopes are gentler than on the 5 m site map, and features smaller than about "
     "20 m are not resolved."
@@ -75,6 +83,63 @@ def other_site_files(site) -> tuple[tuple[float, float], dict[float, tuple[str, 
     }
 
 
+def on_global_map(site) -> bool:
+    """True if the resolver gives the site the global layer (no polar map covers it)."""
+    from lss.registry.terrain import resolve
+
+    loc = site.location
+    return resolve(loc.lat, loc.lon).layers[0].spec.file_id == GLOBAL_FILE_ID
+
+
+def global_terrain(site) -> tuple[list[dict], dict]:
+    """1 km and 10 km slope statistics on LDEM_128 (lss.terrain.global_layer.global_slope_stats)."""
+    from lss.terrain.global_layer import global_slope_stats
+
+    loc = site.location
+    out = []
+    for radius in RADII_M:
+        s = global_slope_stats(loc.lat, loc.lon, radius)
+        assert s.resolution_m == GLOBAL_RES_M
+        out.append(
+            TerrainResponse(
+                location=loc,
+                radius_m=radius,
+                slope_at_point_deg=s.at_point_deg,
+                slope_deg=Stat(min=s.min_deg, max=s.max_deg, mean=s.mean_deg),
+                slope_layer=TerrainLayer(
+                    dataset_id=GLOBAL_DATASET,
+                    role="near_field",
+                    resolution_m=GLOBAL_RES_M,
+                    max_range_km=radius / 1000.0,
+                ),
+                limitations=[LIMIT_GLOBAL, LIMIT_MAX],
+            ).model_dump(mode="json", by_alias=True)
+        )
+        print(
+            f"  {site.id} {radius / 1000:g} km on 237 m: point {s.at_point_deg:.2f}, "
+            f"min {s.min_deg:.2f} max {s.max_deg:.2f} mean {s.mean_deg:.2f} deg ({s.pixels} px)"
+        )
+    return out, {"point_lat_lon": [loc.lat, loc.lon], "files": {GLOBAL_FILE_ID: BY_ID[GLOBAL_FILE_ID].url}}
+
+
+def write_terrain(sid: str, terrain: list[dict], provenance: dict) -> None:
+    body = {
+        "format": FORMAT,
+        "site_id": sid,
+        "terrain": terrain,
+        "provenance": {
+            "created_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "contract_version": CONTRACT_VERSION,
+            "slope_version": SLOPE_VERSION,
+        }
+        | provenance,
+    }
+    path = terrain_dir() / f"{sid}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(body, indent=1) + "\n", encoding="utf-8", newline="\n")
+    print(f"  written {path}")
+
+
 def terrain_dir():
     return get_settings().cache_dir / "terrain"
 
@@ -86,6 +151,9 @@ def main(argv: list[str] | None = None) -> int:
     sites = {s.id: s for s in load_sites()}
     points = site_points()
     for sid in a.sites or list(points):
+        if sid not in points and on_global_map(sites[sid]):
+            write_terrain(sid, *global_terrain(sites[sid]))
+            continue
         if sid in points:
             p = points[sid]
             ps, files = p.ps_m, layer_files(p.tile)
