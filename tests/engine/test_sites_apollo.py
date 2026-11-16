@@ -11,6 +11,7 @@ import pytest
 
 from lss.contract import SiteCategory, display_name
 from lss.registry.sites import load_sites, site_points
+from lss.registry.terrain import resolve
 
 # mission -> (Lunar Module name, lat, lon E, uncertainty m), as published
 WAGNER_2017_LM = {
@@ -47,6 +48,9 @@ def test_apollo_sites_are_served_but_not_polar_tile_sites():
     points = site_points()
     for sid, s in apollo_sites().items():
         assert sid not in points
-        assert s.dataset_ids == [] and not s.has_dem_clones and s.regions == []
+        assert s.dataset_ids == ["lola_ldem_128"] and not s.has_dem_clones and s.regions == []
+        # the dataset listed is the one the terrain resolver uses there (the global coarse layer, C7)
+        st = resolve(s.location.lat, s.location.lon)
+        assert [tl.dataset_id for tl in st.contract_layers()] == s.dataset_ids
     assert sorted(points) == sorted(s.id for s in load_sites() if s.category == SiteCategory.pgda)
     assert len(points) == 8
