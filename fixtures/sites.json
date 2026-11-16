@@ -7,7 +7,9 @@
       "id": "pgda-site01",
       "name": "Site01 Connecting ridge (Barker 2021 RoI 4)",
       "short_name": "Connecting Ridge",
-      "regions": [],
+      "regions": [
+        "shackleton"
+      ],
       "subtitle": "PGDA Site01 · Barker 2021 RoI 4",
       "category": "pgda",
       "location": {
@@ -28,7 +30,9 @@
       "id": "pgda-site04",
       "name": "Site04 Shackleton rim (Barker 2021 RoI 1)",
       "short_name": "Shackleton Rim",
-      "regions": [],
+      "regions": [
+        "shackleton"
+      ],
       "subtitle": "PGDA Site04 · Barker 2021 RoI 1",
       "category": "pgda",
       "location": {
@@ -49,7 +53,9 @@
       "id": "pgda-site07",
       "name": "Site07 Peak near Shackleton (Barker 2021 RoI 2)",
       "short_name": "Peak near Shackleton",
-      "regions": [],
+      "regions": [
+        "shackleton"
+      ],
       "subtitle": "PGDA Site07 · Barker 2021 RoI 2",
       "category": "pgda",
       "location": {
@@ -70,7 +76,9 @@
       "id": "pgda-site11",
       "name": "Site11 de Gerlache rim (Barker 2021 RoI 1)",
       "short_name": "de Gerlache Rim",
-      "regions": [],
+      "regions": [
+        "shackleton"
+      ],
       "subtitle": "PGDA Site11 · Barker 2021 RoI 1",
       "category": "pgda",
       "location": {

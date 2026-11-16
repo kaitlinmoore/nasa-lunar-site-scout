@@ -98,7 +98,8 @@ def test_all_failing_is_an_empty_answer_not_an_error():
 
 def test_expand_by_ids_region_or_all():
     sites = [
-        s.model_copy(update={"regions": ["shackleton"]}) if s.id == "pgda-site01" else s for s in load_sites()
+        s.model_copy(update={"regions": ["shackleton"] if s.id == "pgda-site01" else []})
+        for s in load_sites()
     ]
     base = {"unit_height_m": 5.0, "window_start": datetime(2028, 11, 15, tzinfo=UTC), "window_days": 10}
     one = compare.expand(CompareAcross(site_ids=["pgda-site01"], **base), sites)

@@ -4,6 +4,9 @@
 # /api/sites and fixtures/sites.json (stream C api generates those from here).
 #
 # Visitor-facing: name, short_name, subtitle, description and source. Keep internal notes in comments.
+# `regions`: region tags (contract Site.regions), used by /api/compare `across.region` and the NL layer. Each
+# tag's member list is Kaitlin's. shackleton (2026-11-16): Shackleton Rim, Connecting Ridge, Peak near
+# Shackleton, de Gerlache Rim.
 #
 # Served point rule (Kaitlin, 2026-11-15): the centroid of the largest Barker et al. (2021) region of interest
 # (RoI) where the PGDA product 78 tile has RoIs; otherwise the Mazarico et al. (2011) coordinate, checked for
@@ -20,6 +23,7 @@ sites:
     name: Site01 Connecting ridge (Barker 2021 RoI 4)
     short_name: Connecting Ridge
     subtitle: PGDA Site01 · Barker 2021 RoI 4
+    regions: [shackleton]
     category: pgda
     location: {lat: -89.452675, lon: -137.148653}
     point: {rule: largest_roi_centroid, tile: Site01, roi: 4, roi_area_m2: 13300, ps_m: [-11287.5, -12167.5], centroid_from: Barker et al. (2021) Table 2}
@@ -43,6 +47,7 @@ sites:
     name: Site04 Shackleton rim (Barker 2021 RoI 1)
     short_name: Shackleton Rim
     subtitle: PGDA Site04 · Barker 2021 RoI 1
+    regions: [shackleton]
     category: pgda
     location: {lat: -89.761966, lon: -157.067197}
     point: {rule: largest_roi_centroid, tile: Site04, roi: 1, roi_area_m2: 6975, ps_m: [-2812.5, -6647.5], centroid_from: Site04_ROIs.tgz (pixel containing the mean)}
@@ -66,6 +71,7 @@ sites:
     name: Site07 Peak near Shackleton (Barker 2021 RoI 2)
     short_name: Peak near Shackleton
     subtitle: PGDA Site07 · Barker 2021 RoI 2
+    regions: [shackleton]
     category: pgda
     location: {lat: -88.807326, lon: 123.776844}
     point: {rule: largest_roi_centroid, tile: Site07, roi: 2, roi_area_m2: 16550, ps_m: [30062.5, -20107.5], centroid_from: Site07_ROIs.tgz (pixel containing the mean)}
@@ -89,6 +95,7 @@ sites:
     name: Site11 de Gerlache rim (Barker 2021 RoI 1)
     short_name: de Gerlache Rim
     subtitle: PGDA Site11 · Barker 2021 RoI 1
+    regions: [shackleton]
     category: pgda
     location: {lat: -88.668256, lon: -68.375764}
     point: {rule: largest_roi_centroid, tile: Site11, roi: 1, roi_area_m2: 13325, ps_m: [-37542.5, 14882.5], centroid_from: Site11_ROIs.tgz (pixel containing the mean)}
