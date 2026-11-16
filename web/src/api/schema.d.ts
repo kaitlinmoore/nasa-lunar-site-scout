@@ -1733,8 +1733,9 @@ export interface components {
         };
         /**
          * SunElevationBand
-         * @description Fraction of the window with the Sun's disc-centre elevation in [min_deg, max_deg] (k7). Computed from
-         *     stream A's data (request RA7); until a served result carries it, its value is null (not computed).
+         * @description Fraction of the window with the Sun's disc-centre elevation in [min_deg, max_deg] (k7): from stream
+         *     A's Sun-elevation histogram in the served files (methodology 5.3); null (not computed) where a result has
+         *     none.
          */
         SunElevationBand: {
             /**
