@@ -696,6 +696,37 @@ For the `terrain` and `site_summary` operations (C api's request RA4).
     therefore low confidence, with a median RMS slope error of 1.9° (Barker et al. 2021, section 4).
   - The maximum within a radius picks out crater walls and the steepest single pixel, not a typical value.
 
+#### 5.6.1 Slope off the polar maps: the global coarse layer (C7)
+
+For sites with no polar map, the Apollo sites (Kaitlin, 2026-11-16), slope is measured on LOLA LDEM_128
+(section 3.5) by `lss.terrain.slope.slope_stats_lonlat`, through `lss.terrain.global_layer.global_slope_stats`.
+The polar path above is unchanged.
+- **Same definition:** central differences, tan(slope) = hypot(dz/dx, dz/dy), on the simple-cylindrical grid.
+- **Ground steps differ by direction.** North–south, a pixel is R Δφ = 236.90 m. East–west, it is R cos φ Δλ at
+  each row's own latitude: 236.9 m at the equator, 213 m at Apollo 15 (26.1°N). R is the 1737.4 km sphere the
+  heights refer to.
+- **Same outputs:** the slope of the pixel containing the point, and min, max and mean over the pixels whose
+  centres lie within 1 km and within 10 km (great-circle distance). Edge pixels of the window are not used.
+  A 1 km circle holds 56–63 pixels at the Apollo sites, and a 10 km circle 5,600–6,240.
+- **Not done near a pole:** a window that contains a pole is refused, because the east–west step vanishes there.
+- **How to read them: regional slopes, low fidelity.** With ~237 m pixels, each slope is the average gradient
+  over about 470 m (two pixels in each direction). Features smaller than about half a kilometre are not
+  resolved, and slopes come out gentler than on the 5 m and 10 m maps used at the polar sites, so the two are
+  not comparable. As section 3.5 notes, LDEM_128's label says gaps in LOLA coverage were filled by
+  interpolation (GMT "surface"); slopes there describe the interpolated surface.
+- **Checks** (`tests/engine/test_slope_lonlat.py`):
+  - Planes tilted north, east and in other directions at latitudes 0.5–70° give their slope. A plane tilted
+    east would come out wrong if the north–south step were used east–west (half the gradient at 60°).
+  - A cone's statistics count exactly the pixels within the circle, counted independently.
+  - The same cone at 0.05°E, where the window is read in two slices across the 0/360 meridian, and at 90.05°E
+    gives identical statistics. So does a point given as −0.02°E or 359.98°E.
+  - Where LDEM_128 and the 240 m polar map overlap, the two paths' 10 km mean slopes agree to 0.2–0.6° (2–14%)
+    at eight points between 65°S and 75°S (2026-11-16), LDEM_128 being slightly higher. The maxima are much
+    higher on LDEM_128 there, because its east–west step shrinks with latitude (100 m at 65°S, 61 m at 75°S),
+    so the steepest single pixels are measured over shorter baselines. At the Apollo sites (|latitude| ≤ 26.1°)
+    the east–west step is 0.90–1.00 of the north–south step.
+- `SLOPE_VERSION` is unchanged: the polar definition and statistics have not changed.
+
 ### 5.7 Terrain images for the 2D site view (`lss.terrain.views`)
 
 Georeferenced PNGs on the DEM's own south polar stereographic grid (`scripts/terrain_views.py`). "Map up" is the

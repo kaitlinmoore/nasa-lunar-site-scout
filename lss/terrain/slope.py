@@ -13,16 +13,24 @@ Surface slope on a polar stereographic DEM (docs/methodology.md, "Slope").
   (map distance / k at the point; < 1e-5 relative error within 10 km). Edge pixels of the window, which have
   no neighbour on every side, are not used.
 - **Slope at the point**: the slope of the pixel containing it.
+- **Latitude/longitude grids** (the global coarse layer, C7; stream E, one-off exception: insertions only, the
+  polar path above unchanged): the same central differences on a simple-cylindrical grid, with the ground step
+  of each direction on the 1737.4 km sphere: R dphi north-south, R cos(lat) dlambda east-west at each row's
+  latitude; statistics over pixel centres within that great-circle distance (`slope_stats_lonlat`).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from lss.ephem import MOON_RADIUS_M
+
+if TYPE_CHECKING:
+    from lss.terrain.core import LonLatGrid
 
 SLOPE_VERSION = 1  # bump when the definition or the statistics change
 
@@ -87,4 +95,66 @@ def slope_stats(path: Path, x_m: float, y_m: float, radius_m: float) -> SlopeSta
     c = int(np.floor((x_m - t.c) / step)) - (col0 + 1)
     return SlopeStats(
         float(s[r, c]), float(vals.min()), float(vals.max()), float(vals.mean()), int(vals.size), step
+    )
+
+
+# ----------------------------------------------------------------------------------------------------
+# Latitude/longitude grids (C7, stream E; docs/methodology.md section 5.6.1). Same definition as `slope_deg`;
+# only the ground steps differ: they are not equal in the two directions on a simple-cylindrical grid.
+
+
+def slope_deg_lonlat(
+    z: np.ndarray, res_deg: float, row_lats_deg: np.ndarray, radius_m: float = MOON_RADIUS_M
+) -> np.ndarray:
+    """Slope (deg) of the interior pixels of z on a latitude/longitude grid by central differences; shape
+    (rows - 2, cols - 2). `row_lats_deg`: the latitude of each row's pixel centres. Ground steps on the
+    sphere: R * res north-south, R * cos(latitude) * res east-west at each row's own latitude."""
+    step = np.radians(res_deg) * radius_m
+    dx = step * np.cos(np.radians(np.asarray(row_lats_deg, dtype=float)[1:-1]))[:, None]
+    dzdx = (z[1:-1, 2:] - z[1:-1, :-2]) / (2.0 * dx)
+    dzdy = (z[2:, 1:-1] - z[:-2, 1:-1]) / (2.0 * step)
+    return np.degrees(np.arctan(np.hypot(dzdx, dzdy)))
+
+
+def arc_m(lat1_deg, lon1_deg, lat2_deg, lon2_deg, radius_m: float = MOON_RADIUS_M) -> np.ndarray:
+    """Great-circle distance (m) on the sphere (haversine)."""
+    p1, p2 = np.radians(lat1_deg), np.radians(lat2_deg)
+    a = (
+        np.sin((p2 - p1) / 2.0) ** 2
+        + np.cos(p1) * np.cos(p2) * np.sin(np.radians(lon2_deg - lon1_deg) / 2.0) ** 2
+    )
+    return 2.0 * radius_m * np.arcsin(np.sqrt(np.minimum(a, 1.0)))
+
+
+def slope_stats_lonlat(grid: LonLatGrid, lat: float, lon: float, radius_m: float) -> SlopeStats:
+    """Slope at (lat, lon) and over the pixels whose centres lie within radius_m (great-circle) of it, on a
+    LonLatGrid window (lss.terrain.global_layer.window). Edge pixels of the window are not used. Raises if the
+    circle leaves the window, has no data, or the window contains a pole (east-west steps vanish there)."""
+    if grid.wrap:
+        raise ValueError(
+            "windows that contain a pole are not supported (east-west ground steps vanish there)"
+        )
+    z = np.asarray(grid.array, dtype=np.float64)
+    n_rows, n_cols = z.shape
+    lats = grid.lat0 - (np.arange(n_rows) + 0.5) * grid.res_deg
+    lons = grid.lon0 + (np.arange(n_cols) + 0.5) * grid.res_deg
+    s = slope_deg_lonlat(z, grid.res_deg, lats)
+    lon_c, lat_c = np.meshgrid(lons, lats)
+    within_all = arc_m(lat, lon, lat_c, lon_c) <= radius_m
+    if within_all[[0, -1], :].any() or within_all[:, [0, -1]].any():
+        raise ValueError(f"a {radius_m:g} m circle around the point leaves the grid")
+    vals = s[within_all[1:-1, 1:-1]]
+    if vals.size == 0 or np.isnan(vals).any():
+        raise ValueError(f"no data (or gaps) within {radius_m:g} m of the point")
+    r = int(np.floor((grid.lat0 - lat) / grid.res_deg)) - 1
+    c = int(np.floor(np.mod(lon - grid.lon0, 360.0) / grid.res_deg)) - 1
+    if not (0 <= r < s.shape[0] and 0 <= c < s.shape[1]):
+        raise ValueError("the point is not inside the grid's interior")
+    return SlopeStats(
+        float(s[r, c]),
+        float(vals.min()),
+        float(vals.max()),
+        float(vals.mean()),
+        int(vals.size),
+        float(grid.res),
     )

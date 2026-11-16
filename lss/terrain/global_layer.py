@@ -179,3 +179,17 @@ class GlobalWindow:
 def cached_window(img: Path, label: Path, lat: float, lon: float, radius_m: float) -> GlobalWindow:
     """`window` of the LDEM_128 image at `img` (label at `label`), kept for a few points per process."""
     return GlobalWindow(window(open_image(img, label), lat, lon, radius_m))
+
+
+def global_slope_stats(
+    lat: float, lon: float, radius_m: float, img: Path | None = None, label: Path | None = None
+):
+    """Slope at (lat, lon) and min / max / mean within radius_m on LDEM_128 (docs/methodology.md section
+    5.6.1): lss.terrain.slope.slope_stats_lonlat on a window covering the circle. For points off the polar
+    maps; at ~237 m pixels these are regional slopes (low fidelity). Memory-maps the 2.1 GB image."""
+    from lss.datafiles import BY_ID
+    from lss.terrain.slope import slope_stats_lonlat
+
+    img = img or BY_ID["ldem_128_img"].path
+    label = label or BY_ID["ldem_128_lbl"].path
+    return slope_stats_lonlat(window(open_image(img, label), lat, lon, radius_m), lat, lon, radius_m)
