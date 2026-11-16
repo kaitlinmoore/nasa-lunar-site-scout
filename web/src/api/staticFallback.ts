@@ -16,6 +16,7 @@ import {
   type ScenariosResponse,
   type SeriesResponse,
   type Schemas,
+  type StaticNLEntry,
   type SitesResponse,
 } from './client'
 import type { ComparisonResult } from './compare'
@@ -85,6 +86,16 @@ export async function staticMetrics(scenario: Scenario): Promise<MetricsResponse
   const entry = entryFor(await staticIndex(), scenario)
   if (!entry) throw new Error(NOT_IN_COPY)
   return getStaticJson<MetricsResponse>(entry.metrics)
+}
+
+/** The cached showcase questions (C8; contract 0.12.0), each with the request it answers. */
+export async function staticNlExamples(): Promise<StaticNLEntry[]> {
+  return (await staticIndex()).nl_answers ?? []
+}
+
+/** One cached answer file: what POST /api/nl returns for that example's request. */
+export function staticNlAnswer(path: string): Promise<unknown> {
+  return getStaticJson<unknown>(path)
 }
 
 /** One scenario's series alone (for a location and height without a horizon profile). */

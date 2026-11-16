@@ -469,3 +469,9 @@ textarea {
   color: var(--color-text-muted);
 }
 .scenario-picker select { color: var(--control-text); }
+
+/* Cached example questions under the NL box (C8): plain, polish waits for the layout pass. */
+.nl-examples { margin-top: var(--space-3); font-size: var(--text-sm); }
+.nl-examples ul { margin: var(--space-1) 0 0; padding-left: var(--space-5); }
+.nl-examples li + li { margin-top: var(--space-1); }
+.nl-examples .link-button { font-size: var(--text-md); text-align: left; }

@@ -6,9 +6,16 @@
 // are the API's own results, shown with the site screen's views. Every answer echoes how the question
 // was understood, the values that were assumed, and what couldn't be answered and why.
 import { type FormEvent, useEffect, useRef, useState } from 'react'
-import { ApiError, type Scenario, type Site, WEB_CONTRACT_VERSION } from '../api/client'
+import {
+  ApiError,
+  type NLRequest,
+  type Scenario,
+  type Site,
+  type StaticNLEntry,
+  WEB_CONTRACT_VERSION,
+} from '../api/client'
 import { mapCompareResponse } from '../api/compare'
-import { askNl, type DataSource, type NlExample } from '../api/source'
+import { askNl, askNlExample, type DataSource, loadNlExamples, type NlExample } from '../api/source'
 import ApiProblemView from '../ApiProblemView'
 import { formatExactRange, formatHeight, formatLatLon, formatScenarioSummary } from '../format'
 import { displayName, placeLabel, useSiteNames } from '../siteNames'
@@ -38,9 +45,9 @@ const EXAMPLES: { value: NlExample; label: string }[] = [
 
 type State =
   | { kind: 'idle' }
-  | { kind: 'asking'; question: string }
-  | { kind: 'done'; question: string; outcome: NlOutcome }
-  | { kind: 'error'; question: string; error: unknown }
+  | { kind: 'asking'; question: string; about: string | null }
+  | { kind: 'done'; question: string; about: string | null; outcome: NlOutcome }
+  | { kind: 'error'; question: string; about: string | null; error: unknown }
 
 function PlaceholderNote({ note }: { note?: string | null }) {
   return (
@@ -354,29 +361,57 @@ export default function NlBox({
     return () => window.clearTimeout(t)
   }, [waitUntil])
 
+  // The cached example questions (C8), from the static copy; none in fixture mode.
+  const [examples, setExamples] = useState<StaticNLEntry[]>([])
+  useEffect(() => {
+    let cancelled = false
+    loadNlExamples(source).then((list) => !cancelled && setExamples(list))
+    return () => {
+      cancelled = true
+    }
+  }, [source])
+  const names = useSiteNames()
+
   const question = text.trim()
   const asking = state.kind === 'asking'
 
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
-    if (!question || asking || waitUntil !== null) return
+  /** Send one request; `about` names the site an example's recorded request is about, if any. */
+  const run = (asked: string, about: string | null, send: () => Promise<unknown>) => {
     const id = ++latest.current
-    setState({ kind: 'asking', question })
-    askNl(
-      source,
-      { text: question, selected_site_id: site.id, selected_scenario: scenario ?? undefined },
-      example,
-    )
+    setState({ kind: 'asking', question: asked, about })
+    send()
       .then((body) => {
-        if (id === latest.current) setState({ kind: 'done', question, outcome: classifyNl(body) })
+        if (id === latest.current)
+          setState({ kind: 'done', question: asked, about, outcome: classifyNl(body) })
       })
       .catch((error: unknown) => {
         if (id !== latest.current) return
         if (error instanceof ApiError && error.problem.kind === 'rate-limited') {
           setWaitUntil(Date.now() + error.problem.detail.retry_after_s * 1000)
         }
-        setState({ kind: 'error', question, error })
+        setState({ kind: 'error', question: asked, about, error })
       })
+  }
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    if (!question || asking || waitUntil !== null) return
+    const request: NLRequest = {
+      text: question,
+      selected_site_id: site.id,
+      selected_scenario: scenario ?? undefined,
+    }
+    run(question, null, () => askNl(source, request, example))
+  }
+
+  // An example sends its exact recorded request (its question, and its site and scenario if it has
+  // them), which is what the API's cache matches. Cached answers aren't rate limited, so examples
+  // stay available while Ask waits after a 429.
+  const askExample = (entry: StaticNLEntry) => {
+    if (asking) return
+    setText(entry.request.text)
+    const siteId = entry.request.selected_site_id
+    run(entry.request.text, siteId ? (names.byId(siteId) ?? siteId) : null, () => askNlExample(entry))
   }
 
   return (
@@ -424,10 +459,34 @@ export default function NlBox({
           </button>
         </div>
       </form>
+      {examples.length > 0 && (
+        <div className="nl-examples">
+          <span className="muted">Example questions (answers recorded in advance):</span>
+          <ul>
+            {examples.map((x) => {
+              const siteId = x.request.selected_site_id
+              return (
+                <li key={x.path}>
+                  <button
+                    type="button"
+                    className="link-button"
+                    disabled={asking}
+                    onClick={() => askExample(x)}
+                  >
+                    {x.request.text}
+                  </button>
+                  {siteId && <span className="muted"> (about {names.byId(siteId) ?? siteId})</span>}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
       {state.kind !== 'idle' && (
         <div className="nl-answer" aria-live="polite">
           <p className="nl-question">
             <span className="muted">You asked:</span> “{state.question}”
+            {state.about && <span className="muted"> (about {state.about})</span>}
           </p>
           {state.kind === 'asking' && <p className="muted">Working on it…</p>}
           {state.kind === 'done' && <OutcomeView outcome={state.outcome} />}

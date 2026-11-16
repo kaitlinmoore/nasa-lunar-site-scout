@@ -6,6 +6,8 @@ import { type ComparisonResult, mapCompareResponse } from './compare'
 import {
   staticCompare,
   staticMetrics,
+  staticNlAnswer,
+  staticNlExamples,
   staticScenarios,
   staticSeries,
   staticSites,
@@ -30,6 +32,7 @@ import {
   type ScenariosResponse,
   type SeriesResponse,
   type SitesResponse,
+  type StaticNLEntry,
 } from './client'
 
 export type DataSource = 'live' | 'fixtures'
@@ -227,4 +230,28 @@ export async function askNl(source: DataSource, request: NLRequest, example: NlE
         ? await import('../../../fixtures/nl_unsupported.json')
         : await import('../../../fixtures/nl_clarification.json')
   return mod.default
+}
+
+/**
+ * The cached example questions (C8): the static copy's `nl_answers` (contract 0.12.0), so the list
+ * follows C api's recordings and nothing is hard-coded. The live API has no endpoint for the list
+ * yet (requested from C api); until then a page without the static copy (e.g. the dev server) shows
+ * no examples. Fixture mode has its own example selector instead. Fetched once per page load.
+ */
+let nlExamples: Promise<StaticNLEntry[]> | null = null
+export function loadNlExamples(source: DataSource): Promise<StaticNLEntry[]> {
+  if (source === 'fixtures') return Promise.resolve([])
+  nlExamples ??= staticNlExamples().catch(() => [])
+  return nlExamples
+}
+
+/**
+ * Ask a cached example: its exact recorded request (question and selection) to POST /api/nl, which
+ * answers it from the cache. If the API isn't answering, the static copy's file for it (same body).
+ */
+export function askNlExample(entry: StaticNLEntry): Promise<unknown> {
+  return withStaticFallback(
+    () => postNl(entry.request),
+    () => staticNlAnswer(entry.path),
+  )
 }

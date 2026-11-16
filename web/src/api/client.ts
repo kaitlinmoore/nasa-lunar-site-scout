@@ -26,6 +26,7 @@ export type LocateResponse = Schemas['LocateResponse']
 export type NLRequest = Schemas['NLRequest']
 export type ScenariosResponse = Schemas['ScenariosResponse']
 export type ScenarioEntry = Schemas['ScenarioEntry']
+export type StaticNLEntry = Schemas['StaticNLEntry']
 
 export const API_BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/$/, '')
 
