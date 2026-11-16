@@ -81,7 +81,9 @@ landing date.
 
 **Apollo landing sites:** each point is the Lunar Module's descent stage, "which is still on the surface, as
 located in Lunar Reconnaissance Orbiter camera images (Wagner et al. 2017)", in the mean Earth / DE421 frame the
-engine uses. This version has no precomputed results for them.
+engine uses. Their terrain is the [global coarse layer](#global-coarse-layer-low-fidelity) (methodology §1.4.2),
+and they have no slope statistics, which are measured only on the polar maps (§5.6). This version has no
+precomputed results for them.
 
 | Short name | Subtitle | Lat, lon (°) |
 |---|---|---|
@@ -217,7 +219,8 @@ range were set by a convergence test. The UI shows the near-field and far-field 
 A short tag telling you how detailed the terrain behind a result is: high, medium or low.
 *Detail:* `FidelityLabel` = a tier and a summary such as "5 m polar DEM near field". The tier is high when the
 near field is 5 m or finer and a far field is present, medium when the near field is 80 m or finer, low
-otherwise (`lss/registry/terrain.py`).
+otherwise (`lss/registry/terrain.py`). Locations on the [global coarse layer](#global-coarse-layer-low-fidelity)
+are "low" (methodology §3.5).
 
 ### GeoTIFF
 
@@ -225,6 +228,21 @@ A common image file format for maps that also stores where on the body the map l
 *Detail:* all PGDA terrain grids used here are GeoTIFFs (see also [COG](#cog-cloud-optimized-geotiff)); the
 projection and no-data value were checked from their headers.
 [Methodology §1.2](methodology.md#12-terrain-nasa-gsfc-pgda-lola).
+
+### Global coarse layer (low fidelity)
+
+A coarser height map that covers the whole Moon, used for places outside the detailed south-pole maps, such as
+the Apollo sites. Results that use it carry the fidelity label "low".
+*Detail:* LOLA `LDEM_128` (registry `lola_ldem_128`): "simple cylindrical, 128 pixels per degree (236.901 m
+along a meridian)", in the polar maps' frame and on their reference sphere, "so no alignment is applied". It is
+used "only where no polar layer covers the location, as the single layer of the stack, from the observer to the
+400 km maximum range. Every location the polar maps cover keeps exactly the stack it had before (tested at all
+eight polar sites), so their results are unchanged. The fidelity tier is "low": the resolver gives "low" when the
+near field is coarser than 80 m." Checks of frame and datum: against Wagner et al. (2017)'s radii of the six
+Apollo descent stages, "LDEM_128 minus Wagner is −8.6, −2.1, +0.1, +6.1, +2.0 and −2.5 m"; against the PGDA
+240 m polar map at 12 points from 61° S to 86° S, "mean difference 0.9 m, mean |difference| 2.8 m, maximum
+7.0 m". See [simple cylindrical](#simple-cylindrical).
+[Methodology §3.5](methodology.md#35-global-coarse-layer-c7-horizons-off-the-polar-maps).
 
 ### Illumination fraction
 
@@ -249,10 +267,11 @@ The file-name prefix of LOLA height maps; the terrain maps this tool reads are L
 *Detail:* LOLA-based digital elevation model. From PGDA product 90: the far-field maps `LDEM_80S_80MPP_ADJ`
 (80 m) and `LDEM_60S_240MPP_ADJ` (240 m), and `LDEM_83S_10MPP_ADJ` (10 m) for the 10 km slope statistics. The
 product 69 maps were made from `LDEM_85S_060M`, which is not public; the internal rerun of product 69 uses the
-PDS LOLA map `LDEM_75S_60M` instead. "MPP" is metres per pixel; the `_ADJ` maps are the newer, orbit-adjusted
-product 90 maps.
-[Methodology §1.2](methodology.md#12-terrain-nasa-gsfc-pgda-lola), [§5.6](methodology.md#56-slope-lssterrainslope),
-[§6.3](methodology.md#63-pgda-product-69-internal-pass-never-served).
+PDS LOLA map `LDEM_75S_60M` instead. `LDEM_128` (PDS LOLA, 128 pixels per degree) is the
+[global coarse layer](#global-coarse-layer-low-fidelity) for locations off the polar maps. "MPP" is metres per
+pixel; the `_ADJ` maps are the newer, orbit-adjusted product 90 maps.
+[Methodology §1.2](methodology.md#12-terrain-nasa-gsfc-pgda-lola), [§3.5](methodology.md#35-global-coarse-layer-c7-horizons-off-the-polar-maps),
+[§5.6](methodology.md#56-slope-lssterrainslope), [§6.3](methodology.md#63-pgda-product-69-internal-pass-never-served).
 
 ### Leap second
 
@@ -544,6 +563,16 @@ The term the NASA Space Apps Challenge uses for AI tools ("Super Intelligence").
 *Detail:* files written with SI assistance carry a header saying so; the README's "AI usage" section
 describes how SI was used.
 
+### Simple cylindrical
+
+A map drawn as a plain grid of latitude and longitude, unlike the [polar stereographic](#polar-stereographic)
+maps used near the pole.
+*Detail:* the projection of the [global coarse layer](#global-coarse-layer-low-fidelity). Rays are still great
+circles: "For a lat/lon grid, each sample's latitude is asin(p_z) and its east longitude atan2(p_y, p_x). The
+height is bilinear in (longitude, latitude) between the four surrounding pixel centres." Pixels shrink east-west
+away from the equator: "an east-west pixel is 236.9 m × cos(latitude)".
+[Methodology §3.5](methodology.md#35-global-coarse-layer-c7-horizons-off-the-polar-maps).
+
 ### Site summary
 
 One answer that gathers what the tool has for a place: its slope, its Sun and Earth metrics, and nearby
@@ -583,7 +612,8 @@ scale). `slope_layer` (UI: "Measured on") is "the DEM the slopes were measured o
 they can show)". 1 km statistics are measured on the 5 m site tile and 10 km statistics on the 10 m polar map
 (`LDEM_83S_10MPP_ADJ`), because the 5 m tiles reach only 6–9 km from the served points. Slopes on the 10 m map
 are gentler: features smaller than about 20 m are not resolved. The maximum picks out crater walls and the
-steepest single pixel, not a typical value. The statistics are precomputed; the API serves them only for the
+steepest single pixel, not a typical value. Both maps are polar, so the Apollo sites, on the global coarse
+layer, have no slope statistics. The statistics are precomputed; the API serves them only for the
 locations and radii it lists.
 [Methodology §5.6](methodology.md#56-slope-lssterrainslope).
 

@@ -80,6 +80,24 @@ Every external dataset, paper, book, software package and service this project u
   https://doi.org/10.17189/tnyt-7007
 - **Terms:** NASA PDS data (U.S. Government work).
 
+#### LOLA global gridded DEM, LDEM_128 (`lola_ldem_128`) — NASA
+
+- **Provider:** NASA LRO LOLA / PDS Geosciences Node.
+- **URL:** https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/
+  (`LDEM_128.IMG` and its PDS3 label; product version 3.0, 2017).
+- **Used for:** the global coarse terrain layer: horizons at locations off the south polar maps (north of about
+  60 S), as the single layer of the terrain stack out to 400 km, with fidelity "low" (methodology section 3.5).
+  The Apollo sites use it (section 1.4.2).
+- **Cite:** Neumann, G. A. (2010). Lunar Orbiter Laser Altimeter Raw Data Set, LRO-L-LOLA-4-GDR-V1.0. NASA
+  Planetary Data System (product LDEM_128, version 3.0). Smith, D. E., et al. (2010). Initial observations from
+  the Lunar Orbiter Laser Altimeter (LOLA). *Geophysical Research Letters* 37(18).
+  https://doi.org/10.1029/2010GL043751
+  - Article id: Crossref gives 2010GL043751. The AGU citation number L18204 is confirmed by a published
+    reference list: Mazarico et al. (2011, *Icarus* 211) cite "Smith, D.E. et al., 2010b. Initial observations
+    from the Lunar Orbiter Laser Altimeter. Geophys. Res. Lett 37, L18204. doi:10.1029/2010GL043751." (The
+    publisher's page refused automated access.) Full form: *Geophysical Research Letters* 37(18), L18204.
+- **Terms:** NASA PDS data (U.S. Government work).
+
 #### NAIF SPICE generic kernels, DE421 era (`spice_de421`) — NASA
 
 - **Provider:** NASA JPL Navigation and Ancillary Information Facility (NAIF).
@@ -109,7 +127,6 @@ The registry's non-dataset entry `lss_tool_capabilities` (the tool's own limits)
 |---|---|---|---|
 | `pgda_81_mosaic_5m` | South Pole LOLA 5 m/pix DEM mosaic, 87–90 S (PGDA product 81) | NASA | Barker et al. (2021), above. The product page asks for this citation. |
 | `pgda_98_polar_roughness` | Large-Scale Roughness Properties of the Lunar Poles (PGDA product 98) | NASA | Barker, M. K., Mazarico, E., Neumann, G. A., Smith, D. E., Zuber, M. T., Head, J. W., & Sun, X. (2025). Large-scale Roughness Properties of the Lunar North and South Polar Regions as Measured by the Lunar Orbiter Laser Altimeter (LOLA). *The Planetary Science Journal* 6(4), 83. https://doi.org/10.3847/PSJ/adbc9d. Data: https://doi.org/10.60903/gsfcpgda-lola-poles |
-| `lola_ldem_128` | LOLA global gridded DEM, LDEM_128 (PDS Geosciences Node) | NASA | Smith, D. E., et al. (2010). Initial observations from the Lunar Orbiter Laser Altimeter (LOLA). *Geophysical Research Letters* 37(18). https://doi.org/10.1029/2010GL043751. `VERIFY:` the article id (Crossref gives 2010GL043751; L18204 is not confirmed) and the preferred citation for LDEM_128. |
 | `sldem2015` | SLDEM2015, LOLA + SELENE Terrain Camera merged DEM (PGDA product 54) | NASA (with JAXA SELENE data) | Barker, M. K., Mazarico, E., Neumann, G. A., Zuber, M. T., Haruyama, J., & Smith, D. E. (2016). A new lunar digital elevation model from the Lunar Orbiter Laser Altimeter and SELENE Terrain Camera. *Icarus* 273, 346–355. https://doi.org/10.1016/j.icarus.2015.07.039. The product page asks for this citation. |
 | `diviner_polar_temperature` | LRO Diviner polar temperature products (PDS Geosciences Node) | NASA | Williams, J.-P., Greenhagen, B. T., Paige, D. A., Schorghofer, N., Sefton-Nash, E., Hayne, P. O., Lucey, P. G., Siegler, M. A., & Aye, K. M. (2019). Seasonal polar temperatures on the Moon. *JGR Planets* 124(10), 2505–2521. https://doi.org/10.1029/2019JE006028. `VERIFY:` product names. |
 | `robbins_craters` | Robbins global lunar crater database (USGS Astrogeology) | No (USGS) | Robbins, S. J. (2019). A new global database of lunar impact craters >1–2 km: 1. Crater locations and sizes, comparisons with published databases, and global analysis. *JGR Planets* 124(4), 871–892. https://doi.org/10.1029/2018JE005592. `VERIFY:` USGS distribution terms (the USGS page refused automated access). |
@@ -219,6 +236,8 @@ not repeated.
   Landing Site Coordinates" page, https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html (planetocentric
   mean Earth / polar axis, DE421). Place names and landing dates: the NSSDCA mission pages
   (https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo11info.html and the same pattern for 12, 14, 15, 16, 17).
+  Also an independent check of LDEM_128's frame and datum: its heights at the six descent stages, against
+  Wagner et al.'s NAC-DTM radii (methodology section 3.5).
 - Giorgini, J. D., et al. (1996): see section 1.4, JPL Horizons (section 6.1).
 
 ## 4. Software
