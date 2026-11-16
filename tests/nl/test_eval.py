@@ -10,7 +10,7 @@ import pytest
 
 from lss.contract import Operation
 from lss.nl import eval as nl_eval
-from lss.nl.evalset import EvalSet, load_eval_set
+from lss.nl.evalset import EvalSet, Split, load_eval_set
 from lss.nl.prompt import PROMPT_VERSION, build_fill_prompt, build_route_prompt
 from lss.nl.provider import FakeProvider
 from lss.nl.validate import default_context
@@ -342,3 +342,40 @@ def test_split_dev_never_sends_holdout_items_to_the_provider():
     assert report["scores_by_split"]["holdout"]["valid_output"]["total"] == 0
     dev_ready = [i for i in eval_set.items if i.split == Split.dev and i.status.value == "ready"]
     assert report["scores_by_split"]["dev"]["valid_output"]["total"] == len(dev_ready)
+
+
+def test_route_rules_are_general_not_item_specific():
+    """The routing rules (p8: prefer a partial answer, time conditions and rankings over curated sites via
+    compare; p9: a question about data no source provides stays a refusal) are written generally: no eval
+    item's own words or site names in the system prompts."""
+    from lss.nl.prompt import PROMPT_VERSION, fill_system_prompt, route_system_prompt
+
+    route = route_system_prompt()
+    assert PROMPT_VERSION == "p9-draft"
+    assert "Prefer answering part of a question to refusing it" in route
+    assert "never substitute a different quantity" in route  # p9: no data at all stays a refusal
+    assert "use compare across" in route and "time-dependent area search" in route
+    words = (
+        "Shackleton",
+        "Connecting",
+        "descent",
+        "hazard-detection",
+        "boulder",
+        "battery",
+        "Apollo",
+        "Mars",
+        "water ice",  # s13's own words ("ice detections" in rule 1 is a feature type, not item wording)
+    )
+    for text in (route, fill_system_prompt()):
+        assert not [w for w in words if w.lower() in text.lower()], "item-specific wording in the prompt"
+
+
+def test_route_rule_7_answer_flows_through_compare_with_a_fake():
+    """A route that follows rule 7 (an area-sounding question answered for curated sites by compare, partial,
+    citing the tool limit) validates and scores as the k6 label expects; fake provider, no network."""
+    eval_set = load_eval_set()
+    k6 = next(i for i in eval_set.items if i.id == "k6")
+    report = nl_eval.run_eval(nl_eval.oracle_provider(eval_set), eval_set, split=Split.dev)
+    item = next(r for r in report["items"] if r["id"] == "k6")
+    assert k6.expected.query.operation.value == "compare"
+    assert item["query_correct"] is True and item["reason_correct"] is True
