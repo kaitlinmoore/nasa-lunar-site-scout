@@ -690,6 +690,9 @@ For the `terrain` and `site_summary` operations (C api's request RA4).
   - 1 km statistics are measured on the 5 m site tile.
   - 10 km statistics are measured on the 10 m polar map over the whole circle, because the 5 m tiles reach only
     6–9 km from the served points. One map per statistic keeps min, max and mean comparable within it.
+  - The Artemis III regions (section 1.4.3) follow the same rule: 1 km on the 5 m site map where the region's
+    point lies on one (Malapert Massif, Mons Mouton, Nobile Rim 1), otherwise on the 10 m map; 10 km on the
+    10 m map. The Apollo sites, off the polar maps, have no slope statistics.
   - Slopes on a 10 m map are gentler than on a 5 m map: features smaller than about 20 m are not resolved.
 - **Limits.**
   - About 90% of 5 m pixels are interpolated between LOLA tracks (Barker et al. 2021). Single-pixel slopes are
@@ -729,18 +732,22 @@ The polar path above is unchanged.
 
 ### 5.7 Terrain images for the 2D site view (`lss.terrain.views`)
 
-Georeferenced PNGs on the DEM's own south polar stereographic grid (`scripts/terrain_views.py`). "Map up" is the
-grid's +y axis, not geographic north. The views are square and centred on each site's served point: 2 km from
-the 5 m site map and 10 km from the 10 m polar map, the same maps as the 1 km and 10 km slope statistics
-(section 5.6).
+Georeferenced PNGs on the DEM's own south polar stereographic grid (`scripts/terrain_views.py`; layout and views
+decided by Kaitlin, 2026-11-16). "Map up" is the grid's +y axis, not geographic north. For each PGDA site, two
+square views centred on the served point:
+- **2 km:** from the 5 m site map, 400 × 400 px at 5 m.
+- **20 km:** from the 10 m polar map averaged over 2 × 2 pixels, 1000 × 1000 px at 20 m.
+
+Two layers per view; `view.json` gives the bounds, projection, pixel size, source and encodings:
 - **Hillshade:** cartographic shading for reading the relief, not the real Sun. Light from map azimuth 315° at
   45° elevation, with the gradient by central differences.
-- **Slope:** the definition of section 5.6, in five classes: under 5°, 5–10°, 10–15°, 15–20°, 20° or more. The
-  image stores the class number; the client chooses the colours. The suggested colours are one-hue blue ramps
-  for light and dark surfaces, flattest lightest on light surfaces. Both pass the ordinal checks of the dataviz
-  validator (monotone lightness, visible steps, end step at least 2:1 against the surface).
-- **Elevation:** height above the 1737.4 km sphere in 0.1 m steps (16-bit, with an offset).
-- A pixel without data, or with a neighbour without data, is marked as no data.
+- **Slope:** the definition of section 5.6 at the view's own pixel size, in five classes: under 5°, 5–10°,
+  10–15°, 15–20°, 20° or more. The image stores the class number; the client chooses the colours. The suggested
+  colours are one-hue blue ramps for light and dark surfaces, flattest lightest on light surfaces. Both pass the
+  ordinal checks of the dataviz validator (monotone lightness, visible steps, end step at least 2:1 against the
+  surface). Slopes at 20 m are gentler than at 5 m, so the two views' classes are not interchangeable.
+- A pixel without data, or with a neighbour without data, is marked as no data. In the 20 km view a pixel is
+  without data if any of its four 10 m pixels is.
 
 ## 6. Validation results (step 4.7)
 
@@ -1028,12 +1035,16 @@ illumination and product 69 all agree with this.
   result over the same window. Each is written by `scripts/regression_c3.py` from the served file, so it is
   exactly what the API serves. `tests/engine/test_regression_c3.py` recomputes each with the same tolerances.
   Each fixture keeps the metrics, every 24th hourly sample and every 10th horizon azimuth.
-- **Served scenarios (C3).** Every curated site with a PGDA tile (8) and every Apollo site (6), each at 1, 2, 5
-  and 10 m over three windows: 2028-05-15 + 30 d at PT1H (the C1 window), the year 2028 at PT6H, and
-  2028-11-15 + 10 d at PT1H. That is 168 files in `LSS_DATA_DIR/cache/served/` (file format 3, with the horizon
-  and the Sun-elevation histogram), written by `scripts/precompute_c1.py` and `scripts/precompute_c3.py`, which
-  also keeps `cache/served_c3_index.json`. Metrics always come from the 60 s internal grid; the window's step sets
+- **Served scenarios (C3).** Every curated site with a PGDA tile (8), every Apollo site (6) and every Artemis III
+  region (9), each at 1, 2, 5 and 10 m over three windows: 2028-05-15 + 30 d at PT1H (the C1 window), the year
+  2028 at PT6H, and 2028-11-15 + 10 d at PT1H. That is 276 files in `LSS_DATA_DIR/cache/served/` (file format
+  3, with the horizon and the Sun-elevation histogram), written by `scripts/precompute_c1.py` and
+  `scripts/precompute_c3.py`, which also keeps `cache/served_c3_index.json`. Metrics always come from the 60 s internal grid; the window's step sets
   only the series.
+- **Artemis III regions.** The point is the centre of the region's 1 km navigation grid (section 1.4.3), a
+  geometric point, not a landing site. Malapert Massif, Mons Mouton and Nobile Rim 1 lie on 5 m site maps (fidelity
+  high); the other six use the 80 m and 240 m polar maps (medium). Cost as for the PGDA sites: medians 6.5 s
+  (30 days with a new horizon), 33.0 s (one year), 0.9 s (10 days).
 - **Apollo sites: low fidelity.** The six Apollo landing sites are served at 1, 2, 5 and 10 m over the three
   standard windows (72 scenarios, `scripts/precompute_c3.py --sites apollo-11 …`). Their results use the
   low-fidelity global layer: the 237 m LOLA map `LDEM_128` is their only terrain, near and far (section 3.5).

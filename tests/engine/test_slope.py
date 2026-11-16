@@ -93,3 +93,16 @@ def test_site01_slope_at_the_served_point():
     assert s.at_point_deg == pytest.approx(1.17, abs=0.01)
     assert s.pixels == pytest.approx(np.pi * (1_000.0 / 5.0) ** 2, rel=0.01)
     assert s.max_deg > 30.0 and 5.0 < s.mean_deg < 15.0
+
+
+def test_artemis_regions_use_the_5m_map_only_where_their_point_lies_on_one():
+    """Sites without a PGDA site point (precompute_terrain.other_site_files): 1 km on the 5 m site map if the
+    point lies on one, else on the 10 m map; 10 km always on the 10 m map."""
+    from lss.registry.sites import get_site
+
+    m = _terrain_script()
+    _, on_tile = m.other_site_files(get_site("artemis3-malapert-massif"))
+    _, off_tile = m.other_site_files(get_site("artemis3-haworth"))
+    assert on_tile[1_000.0][1:] == ("pgda_78_site_dems", 5.0)
+    assert off_tile[1_000.0] == ("ldem_83s_10m_artemis3_haworth_clip", "pgda_90_south_pole_dems", 10.0)
+    assert on_tile[10_000.0][2] == off_tile[10_000.0][2] == 10.0

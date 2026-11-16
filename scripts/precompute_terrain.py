@@ -12,11 +12,16 @@ For each site in lss/registry/sites.yaml, one file LSS_DATA_DIR/cache/terrain/<s
 90, LDEM_83S_10MPP_ADJ), over the whole circle (Kaitlin, 2026-11-15). Sites whose files are missing are
 skipped with a message.
 
-    uv run python scripts/precompute_terrain.py
+    uv run python scripts/precompute_terrain.py [--sites artemis3-haworth ...]
+
+Sites without a PGDA site point (the Artemis III regions) are done only when named with --sites: 1 km on
+the 5 m site map if their point lies on one, else on the 10 m map; 10 km on the 10 m map. None for sites off
+the polar maps (the Apollo sites).
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from datetime import UTC, datetime
@@ -52,14 +57,40 @@ def layer_files(tile: str) -> dict[float, tuple[str, str, float]]:
     }
 
 
+def other_site_files(site) -> tuple[tuple[float, float], dict[float, tuple[str, str, float]]]:
+    """A site without a PGDA site point (e.g. the Artemis III regions): its point from its coordinates;
+    1 km on the 5 m site map if the point lies on one (as the resolver chooses), else on the 10 m map; 10 km
+    on the 10 m map. The 10 m clip is `ldem_83s_10m_<site id with underscores>_clip` (lss/datafiles.py)."""
+    from lss.registry.terrain import resolve
+    from lss.terrain.core import ps_from_latlon
+
+    loc = site.location
+    ps = tuple(float(v) for v in ps_from_latlon(loc.lat, loc.lon, "south"))
+    clip = f"ldem_83s_10m_{site.id.replace('-', '_')}_clip"
+    near = resolve(loc.lat, loc.lon).layers[0].spec
+    one_km = (near.file_id, near.dataset_id, near.resolution_m) if near.site_tile else None
+    return ps, {
+        1_000.0: one_km or (clip, "pgda_90_south_pole_dems", 10.0),
+        10_000.0: (clip, "pgda_90_south_pole_dems", 10.0),
+    }
+
+
 def terrain_dir():
     return get_settings().cache_dir / "terrain"
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[1])
+    ap.add_argument("--sites", nargs="*", help="site ids (default: every site with a PGDA site point)")
+    a = ap.parse_args(argv)
     sites = {s.id: s for s in load_sites()}
-    for sid, p in site_points().items():
-        files = layer_files(p.tile)
+    points = site_points()
+    for sid in a.sites or list(points):
+        if sid in points:
+            p = points[sid]
+            ps, files = p.ps_m, layer_files(p.tile)
+        else:
+            ps, files = other_site_files(sites[sid])
         missing = [fid for fid, _, _ in files.values() if not BY_ID[fid].path.is_file()]
         if missing:
             print(f"  skip {sid}: missing {missing} (scripts/fetch_data.py)")
@@ -67,7 +98,7 @@ def main() -> int:
         out = []
         for radius in RADII_M:
             fid, dataset_id, res = files[radius]
-            s = slope_stats(BY_ID[fid].path, *p.ps_m, radius)
+            s = slope_stats(BY_ID[fid].path, *ps, radius)
             assert s.resolution_m == res
             out.append(
                 TerrainResponse(
@@ -96,7 +127,7 @@ def main() -> int:
                 "created_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "contract_version": CONTRACT_VERSION,
                 "slope_version": SLOPE_VERSION,
-                "point_ps_m": list(p.ps_m),
+                "point_ps_m": list(ps),
                 "files": {files[r][0]: BY_ID[files[r][0]].url for r in RADII_M},
             },
         }

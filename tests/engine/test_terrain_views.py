@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""lss.terrain.views: hillshade, slope classes and elevation encoding for the 2D site view."""
+"""lss.terrain.views: hillshade and slope classes for the 2D site view."""
 
 import numpy as np
 import pytest
@@ -32,7 +32,7 @@ def test_slope_classes(deg, cls):
     assert np.all(tv.slope_classes(z, 5.0) == cls)
 
 
-def test_nodata_and_elevation_round_trip():
+def test_nodata_is_marked():
     z = np.full((5, 5), 1956.37)
     z[2, 2] = np.nan
     assert tv.slope_classes(z, 5.0)[1, 1] == tv.NODATA_CLASS  # the no-data pixel itself
@@ -41,9 +41,6 @@ def test_nodata_and_elevation_round_trip():
     )  # and its four edge neighbours (central differences)
     assert np.array_equal(tv.slope_classes(z, 5.0) == tv.NODATA_CLASS, cross)
     assert tv.hillshade(z, 5.0)[1, 1] == 0
-    v, off = tv.elevation_u16(z)
-    assert v[2, 2] == 0 and v[0, 0] > 0
-    assert off + tv.ELEVATION_SCALE_M * v[0, 0] == pytest.approx(1956.37, abs=0.05)
 
 
 def test_palettes_have_one_colour_per_class():

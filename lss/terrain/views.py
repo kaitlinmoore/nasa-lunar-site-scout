@@ -1,7 +1,7 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Terrain images for the 2D site view (plan F6): hillshade, slope classes and elevation, as georeferenced PNGs
-on the DEM's own polar stereographic grid.
+Terrain images for the 2D site view (plan F6): hillshade and slope classes, as georeferenced PNGs on the
+DEM's own polar stereographic grid.
 
 - **Hillshade:** cartographic shading for reading the relief, not the real Sun. Light from map azimuth 315°
   (upper left of the north-up polar stereographic grid) at 45° elevation; the gradient by central differences,
@@ -9,7 +9,6 @@ on the DEM's own polar stereographic grid.
 - **Slope classes:** the slope of docs/methodology.md section 5.6 (central differences, map scale factor), in
   five classes; the PNG stores the class number, so the client chooses the colours (a validated suggestion is
   in SLOPE_PALETTE). 255 = no data.
-- **Elevation:** height above the 1737.4 km sphere as 16-bit integers, height = offset + scale * value.
 """
 
 from __future__ import annotations
@@ -30,7 +29,6 @@ SLOPE_PALETTE = {
     "light": ("#86b6ef", "#5598e7", "#2a78d6", "#1c5cab", "#104281"),
     "dark": ("#184f95", "#256abf", "#3987e5", "#6da7ec", "#9ec5f4"),
 }
-ELEVATION_SCALE_M = 0.1
 
 
 def _gradient(z: np.ndarray, step_m: float, k: np.ndarray | float):
@@ -59,17 +57,6 @@ def slope_classes(z: np.ndarray, step_m: float, k: np.ndarray | float = 1.0) -> 
     cls = np.digitize(s, SLOPE_CLASS_EDGES_DEG).astype(np.uint8)
     ok = np.isfinite(s) & np.isfinite(z[1:-1, 1:-1])  # the pixel itself and its neighbours have data
     return np.where(ok, cls, NODATA_CLASS).astype(np.uint8)
-
-
-def elevation_u16(z: np.ndarray) -> tuple[np.ndarray, float]:
-    """Heights as uint16 with an offset (m) chosen from the data: height = offset + ELEVATION_SCALE_M * value.
-    0 is reserved for no data."""
-    finite = np.isfinite(z)
-    lo = float(np.floor(np.nanmin(z))) - ELEVATION_SCALE_M
-    v = np.round((z - lo) / ELEVATION_SCALE_M)
-    if np.nanmax(v) > 65535:
-        raise ValueError("height range too large for 0.1 m steps in 16 bits")
-    return np.where(finite, v, 0).astype(np.uint16), lo
 
 
 def interior_scale_factor(x0: float, y0: float, step_m: float, rows: int, cols: int) -> np.ndarray:
