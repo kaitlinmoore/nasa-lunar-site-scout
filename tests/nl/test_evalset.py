@@ -79,3 +79,45 @@ def test_holdout_set_covers_answers_and_refusals():
     assert {"answer", "unsupported"} <= outcomes
     assert all(i.status == ItemStatus.ready for i in holdout)  # s11 unblocked by the registry batch
     assert "s13" not in {i.id for i in holdout}  # label changed after its output was seen
+
+
+@pytest.mark.parametrize(
+    "alternative, ok",
+    [
+        (
+            {
+                "dataset_id": "diviner_polar_temperature",
+                "cannot_answer": "Temperatures equatorward of 80° (the tool has not integrated a Diviner "
+                "product for that range)",
+            },
+            True,
+        ),
+        (
+            {
+                "dataset_id": "lss_tool_capabilities",
+                "cannot_answer": "Temperature queries (not available yet)",
+            },
+            True,
+        ),
+        (None, False),
+    ],
+)
+def test_k8_accepts_either_temperature_citation(alternative, ok):
+    from lss.nl.eval import run_item
+    from lss.nl.provider import FakeProvider
+
+    item = next(i for i in EVAL.items if i.id == "k8")
+    thermal = {
+        "dataset_id": "diviner_polar_temperature",
+        "cannot_answer": (
+            "Spacecraft thermal or battery-heating requirements (needs a spacecraft thermal model)"
+        ),
+    }
+    cites = [thermal] + ([alternative] if alternative else [])
+    out = {
+        "outcome": "unsupported",
+        "interpretation": "i",
+        "limitations": [{"topic": "t", "citations": cites}],
+    }
+    res = run_item(item, FakeProvider({item.text: out}), EVAL)
+    assert res.reason_correct is ok

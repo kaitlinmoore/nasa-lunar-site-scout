@@ -14,7 +14,25 @@ cp "$SERVED_SRC"/*.json bundle/served/
 # Check them exactly as the API will load them (contract version, keys, not placeholder).
 uv run python -c "from pathlib import Path; from lss.api.served import load_all; s = load_all(Path('bundle/served')); assert s, 'no served results staged'; print('Staged served results:', ', '.join(sorted(s)))"
 
-gcloud run deploy "$API_SERVICE"   --project "$GCP_PROJECT"   --region "$GCP_REGION"   --source .   --allow-unauthenticated   --min-instances 0   --max-instances 2   --memory 1Gi   --set-env-vars "^@^LSS_CORS_ORIGINS=${WEB_ORIGINS},http://localhost:5173"   --quiet
+# The NL key comes from Secret Manager (never a plain env var or a file in the image).
+if ! gcloud secrets describe "$NL_SECRET" --project "$GCP_PROJECT" >/dev/null 2>&1; then
+  echo "Secret $NL_SECRET not found: run bash deploy/setup-nl-secret.sh once first." >&2
+  exit 1
+fi
+
+# LSS_DEBUG_CLIENT_IP=1 bash deploy/deploy-api.sh turns on GET /api/_debug/client, for checking the
+# client-IP header once (deploy/README.md); deploy again without it afterwards.
+gcloud run deploy "$API_SERVICE" \
+  --project "$GCP_PROJECT" \
+  --region "$GCP_REGION" \
+  --source . \
+  --allow-unauthenticated \
+  --min-instances 0 \
+  --max-instances 2 \
+  --memory 1Gi \
+  --set-env-vars "^@^LSS_CORS_ORIGINS=${WEB_ORIGINS},http://localhost:5173@LSS_DEBUG_CLIENT_IP=${LSS_DEBUG_CLIENT_IP:-0}" \
+  --set-secrets "ANTHROPIC_API_KEY=${NL_SECRET}:latest" \
+  --quiet
 
 URL=$(gcloud run services describe "$API_SERVICE" --project "$GCP_PROJECT"   --region "$GCP_REGION" --format 'value(status.url)')
 echo "API URL: $URL"

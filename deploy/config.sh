@@ -15,6 +15,10 @@ WEB_SITE="${LSS_WEB_SITE:-penumbra-luna}"
 WEB_URL="https://${WEB_SITE}.web.app"
 WEB_ORIGINS="${WEB_URL},https://${WEB_SITE}.firebaseapp.com"
 
+# Secret Manager secret holding the demo's Anthropic API key (a separate key from the eval key, with a
+# monthly limit set in the Anthropic Console). Created once with deploy/setup-nl-secret.sh.
+NL_SECRET="${LSS_NL_SECRET:-lss-anthropic-demo-key}"
+
 # Precomputed served results (plan 4.6) live in the shared data folder, outside the repo.
 # deploy-api.sh stages them into bundle/served/ (gitignored) so Cloud Build can copy them
 # into the image at /data/cache/served (LSS_DATA_DIR=/data in the container).

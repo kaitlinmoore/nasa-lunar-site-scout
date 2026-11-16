@@ -295,6 +295,32 @@ def client_address(forwarded_for: str | None, peer: str | None) -> str:
     return peer or "unknown"
 
 
+def ca_certificates_available() -> bool:
+    """Whether httpx2 (the anthropic SDK's HTTP client) will find CA certificates on Linux: the same
+    lookup as `httpcore2.default_ssl_context` (SSL_CERT_FILE / SSL_CERT_DIR, OpenSSL's compiled-in file or
+    hashed directory, then httpcore2's candidate files). Run at image build time (Dockerfile)."""
+    import platform
+    import ssl
+
+    from httpcore2._ssl import CA_FILE_CANDIDATES
+
+    if platform.system() in ("Windows", "Darwin"):
+        return True  # httpx2 uses the OS certificate store there (truststore), not files
+    if os.environ.get("SSL_CERT_FILE") or os.environ.get("SSL_CERT_DIR"):
+        return True
+    paths = ssl.get_default_verify_paths()
+    if paths.openssl_cafile and os.path.isfile(paths.openssl_cafile):
+        return True
+    capath = paths.openssl_capath
+    if (
+        capath
+        and os.path.isdir(capath)
+        and any(re.fullmatch(r"[0-9a-fA-F]{8}\.\d", f) for f in os.listdir(capath))
+    ):
+        return True
+    return any(os.path.isfile(f) for f in CA_FILE_CANDIDATES)
+
+
 def default_provider() -> Provider:
     if not get_settings().anthropic_api_key:
         raise ProviderError("ANTHROPIC_API_KEY is not set")

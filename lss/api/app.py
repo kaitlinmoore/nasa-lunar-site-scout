@@ -20,6 +20,7 @@ Run locally:  uv run uvicorn lss.api.app:app --reload
 from __future__ import annotations
 
 import json
+import os
 from functools import lru_cache
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -331,6 +332,19 @@ def create_app() -> FastAPI:
             request.headers.get("x-forwarded-for"), request.client.host if request.client else None
         )
         return service.answer(req, client)
+
+    if os.environ.get("LSS_DEBUG_CLIENT_IP") == "1":
+        # Off by default; on for one deploy to check which X-Forwarded-For entry Cloud Run's front end adds
+        # (deploy/README.md). Shows callers only their own request's header and address.
+        @app.get("/api/_debug/client", include_in_schema=False)
+        def debug_client(request: Request) -> dict:
+            forwarded = request.headers.get("x-forwarded-for")
+            peer = request.client.host if request.client else None
+            return {
+                "x_forwarded_for": forwarded,
+                "peer": peer,
+                "used_for_rate_limit": nl_service.client_address(forwarded, peer),
+            }
 
     return app
 

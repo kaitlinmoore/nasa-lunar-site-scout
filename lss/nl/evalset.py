@@ -58,6 +58,9 @@ class Expected(Model):
     radius_source: RadiusSource | None = None
     citations: list[RegistryCitation] = Field(default_factory=list)
     citations_optional: list[RegistryCitation] = Field(default_factory=list)
+    # Each group: at least one of its citations must be present; any of them may be (project author,
+    # 2026-11-16, for k8: the Diviner range limit or the tool's temperature limit).
+    citations_one_of: list[list[RegistryCitation]] = Field(default_factory=list)
 
 
 class EvalItem(Model):
@@ -91,7 +94,8 @@ class EvalItem(Model):
             outcome = self.expected.outcome
             if outcome in (Outcome.answer, Outcome.partial) and self.expected.query is None:
                 raise ValueError(f"{self.id}: a ready answer/partial item needs expected.query")
-            if outcome in (Outcome.partial, Outcome.unsupported) and not self.expected.citations:
+            cites = self.expected.citations or self.expected.citations_one_of
+            if outcome in (Outcome.partial, Outcome.unsupported) and not cites:
                 raise ValueError(f"{self.id}: a ready partial/unsupported item needs citations")
             if outcome == Outcome.clarify and (self.expected.query or self.expected.citations):
                 raise ValueError(f"{self.id}: a clarify item has no query and no citations")
@@ -138,6 +142,6 @@ def label_output(item: EvalItem) -> dict | None:
         out["question"] = "Which site?"
         return out
     if exp.outcome != Outcome.answer:
-        cites = [c.model_dump() for c in exp.citations]
+        cites = [c.model_dump() for c in exp.citations] + [g[0].model_dump() for g in exp.citations_one_of]
         out["limitations"] = [{"topic": item.text, "citations": cites}]
     return out

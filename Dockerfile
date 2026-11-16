@@ -16,6 +16,9 @@ COPY fixtures ./fixtures
 # Precomputed served results, staged by deploy/deploy-api.sh (LSS_DATA_DIR=/data).
 COPY bundle/served /data/cache/served
 RUN uv sync --frozen --no-dev
+# /api/nl calls the Anthropic API over TLS. httpx2 (the anthropic SDK's HTTP client) verifies against the
+# OS CA store on Linux, so the build fails here if the image has no CA certificates.
+RUN /app/.venv/bin/python -c "from lss.api.nl import ca_certificates_available as ok; assert ok(), 'no CA certificates in the image'"
 
 ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8080

@@ -13,7 +13,8 @@ Scores (plan section 4.5, the project author's two measures), over `ready` items
       the label gives them.
   (b) refusal/partial-reason correctness, for items expecting limitations (partial / unsupported):
       output is valid, outcome matches, and the cited registry entries include every required
-      citation and nothing outside required + optional.
+      citation, at least one of each `citations_one_of` group, and nothing outside required + optional
+      + those groups.
   Items expecting a clarification (outcome "clarify": the question names no site and none is
   selected) count in (a): correct when the output is valid and asks instead of answering. (Claude's
   placement, pending the project author's okay; the clarification is a query-routing decision.)
@@ -134,8 +135,11 @@ def _score_reason(item: EvalItem, v: ValidatedOutput) -> tuple[bool, list[str]]:
     exp = item.expected
     cited = {(c.dataset_id, c.cannot_answer) for lim in v.output.limitations for c in lim.citations}
     required = {(c.dataset_id, c.cannot_answer) for c in exp.citations}
+    groups = [{(c.dataset_id, c.cannot_answer) for c in g} for g in exp.citations_one_of]
     allowed = required | {(c.dataset_id, c.cannot_answer) for c in exp.citations_optional}
+    allowed = allowed.union(*groups)
     notes = [f"missing citation {c}" for c in sorted(required - cited)]
+    notes += [f"missing one of {sorted(g)}" for g in groups if not g & cited]
     notes += [f"unexpected citation {c}" for c in sorted(cited - allowed)]
     return not notes, notes
 

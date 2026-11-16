@@ -31,6 +31,7 @@
 #     radius_source  see lss.nl.vocabulary.RadiusSource ("nearby" with no distance -> 10 km, D-radius)
 #     citations    registry citations that must be present
 #     citations_optional  registry citations that may also be present without penalty
+#     citations_one_of    groups: at least one citation of each group must be present
 
 version: 1
 reference_date: "2026-11-15"  # "today" for relative dates, so runs are reproducible
@@ -209,15 +210,18 @@ items:
     status: ready
     notes: >-
       Unsupported (not partial) until a thermal operation exists (C7, with S5): the Core vocabulary has no
-      temperature query. The first citation uses the registry wording Kaitlin approved (G-R1).
+      temperature query. The Diviner range citation uses the registry wording Kaitlin approved (G-R1).
+      Either it or the tool's temperature limit (G-R4) is accepted (Kaitlin, 2026-11-16, after live run 4).
     expected:
       outcome: unsupported
       citations:
         - dataset_id: diviner_polar_temperature
-          cannot_answer: >-
-            Temperatures equatorward of 80° (the tool has not integrated a Diviner product for that range)
-        - dataset_id: diviner_polar_temperature
           cannot_answer: Spacecraft thermal or battery-heating requirements (needs a spacecraft thermal model)
+      citations_one_of:
+        - - dataset_id: diviner_polar_temperature
+            cannot_answer: >-
+              Temperatures equatorward of 80° (the tool has not integrated a Diviner product for that range)
+          - {dataset_id: lss_tool_capabilities, cannot_answer: Temperature queries (not available yet)}
 
   - id: k9
     source: kaitlin

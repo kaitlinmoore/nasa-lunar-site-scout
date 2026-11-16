@@ -44,6 +44,52 @@ metrics. So **deploy the API first**. `/static-api/**` is sent with `Cache-Contr
 Firebase's catch-all rewrite answers a missing file with `index.html` (status 200), so clients must check
 the content type or parse the JSON.
 
+## Natural-language questions (`POST /api/nl`)
+
+**The API key** is the demo's own Anthropic key, kept in **Secret Manager** (secret `lss-anthropic-demo-key`,
+`NL_SECRET` in `config.sh`) and given to Cloud Run with `--set-secrets ANTHROPIC_API_KEY=…:latest`. It is
+never a plain env var, never in the image, never in `.env` on the server. One-time setup, and again to rotate
+the key (the script reads it from a hidden prompt and grants the service account read access):
+
+```bash
+bash deploy/setup-nl-secret.sh
+bash deploy/deploy-api.sh      # stops if the secret doesn't exist
+```
+
+The eval harness uses a separate key (`.env`, local only), so demo traffic can't use up the eval budget.
+
+**Limits are soft.** The rate limit (5 questions a minute and 30 a UTC day per client IP) and the spend cap
+($2 a UTC day, estimated from token counts at list prices) are counted **in memory, per instance**:
+
+- they **do not survive restarts**: Cloud Run stops idle instances (`--min-instances 0`), and a new instance
+  starts from zero;
+- they **are not shared across instances**: with `--max-instances 2`, one client can get up to twice the
+  limits while two instances run.
+
+So they bound ordinary use, not a determined client. **The hard limit is the monthly spend limit on the demo
+key in the Anthropic Console** (set by the project owner). Values can be changed per deployment with
+`LSS_NL_RATE_PER_MINUTE`, `LSS_NL_RATE_PER_DAY`, `LSS_NL_DAILY_SPEND_USD`. Cached showcase answers
+(`/data/cache/nl/*.json`) cost nothing and are not limited.
+
+**Client IP.** The rate limit keys on the **last** `X-Forwarded-For` entry, on the assumption that Cloud
+Run's front end appends the real client address to whatever the client sent. Check this once before relying
+on it:
+
+```bash
+LSS_DEBUG_CLIENT_IP=1 bash deploy/deploy-api.sh       # turns on GET /api/_debug/client
+URL=https://lss-api-vdrbt264rq-ue.a.run.app
+curl -s "$URL/api/_debug/client"; echo
+curl -s -H "X-Forwarded-For: 203.0.113.9" "$URL/api/_debug/client"; echo
+bash deploy/deploy-api.sh                             # deploy again without it
+```
+
+Expected: both calls show the same `used_for_rate_limit` (your own address), and in the second the made-up
+`203.0.113.9` appears first in `x_forwarded_for`, not as the value used. If not, `client_address` in
+`lss/api/nl.py` must change before the limits mean anything.
+
+**TLS.** The anthropic SDK's HTTP client (httpx2) verifies against the OS CA store on Linux; the `Dockerfile`
+fails the build if the image has no CA certificates (`lss.api.nl.ca_certificates_available`).
+
 ## How the scripts stay off other accounts
 
 Every gcloud call runs with `CLOUDSDK_ACTIVE_CONFIG_NAME=lss`. That is a dedicated gcloud

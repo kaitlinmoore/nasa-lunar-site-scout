@@ -284,3 +284,33 @@ def test_openapi_documents_nl_errors():
     responses = build_openapi()["paths"]["/api/nl"]["post"]["responses"]
     assert {"200", "422", "429", "503"} <= set(responses)
     assert responses["429"]["content"]["application/json"]["schema"]["$ref"].endswith("RateLimitedError")
+
+
+def test_ca_check_follows_httpcore2_lookup(tmp_path, monkeypatch):
+    import platform
+    import ssl
+
+    import httpcore2._ssl
+
+    monkeypatch.setattr(platform, "system", lambda: "Linux")
+    for var in ("SSL_CERT_FILE", "SSL_CERT_DIR"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setattr(httpcore2._ssl, "CA_FILE_CANDIDATES", [str(tmp_path / "none.pem")])
+    empty = ssl.DefaultVerifyPaths(None, None, "", str(tmp_path / "nofile.pem"), "", str(tmp_path / "nodir"))
+    monkeypatch.setattr(ssl, "get_default_verify_paths", lambda: empty)
+    assert nl.ca_certificates_available() is False  # an image with no CA certificates fails the build
+    (tmp_path / "certs").mkdir()
+    (tmp_path / "certs" / "0123abcd.0").write_text("x")
+    hashed = ssl.DefaultVerifyPaths(None, None, "", str(tmp_path / "nofile.pem"), "", str(tmp_path / "certs"))
+    monkeypatch.setattr(ssl, "get_default_verify_paths", lambda: hashed)
+    assert nl.ca_certificates_available() is True
+
+
+def test_debug_client_route_only_when_turned_on(monkeypatch):
+    monkeypatch.delenv("LSS_DEBUG_CLIENT_IP", raising=False)
+    assert TestClient(app_module.create_app()).get("/api/_debug/client").status_code == 404
+    monkeypatch.setenv("LSS_DEBUG_CLIENT_IP", "1")
+    app = app_module.create_app()
+    r = TestClient(app).get("/api/_debug/client", headers={"X-Forwarded-For": "203.0.113.9, 198.51.100.2"})
+    assert r.json()["used_for_rate_limit"] == "198.51.100.2"
+    assert "/api/_debug/client" not in app.openapi()["paths"]

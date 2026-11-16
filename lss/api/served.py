@@ -37,10 +37,9 @@ from lss.contract import (
 # - list a version only if its result format equals the current one: tests/api/test_served_format.py checks
 #   each against a snapshot in tests/api/served_formats/ (how to make one: lss/api/served_format.py);
 # - drop a version, and its snapshot, once stream A has regenerated its served files at a newer version.
-#   0.5.0: Site01 file from C1; drop when A regenerates it with horizons (request RA1).
-#   0.6.0: listed for files A writes before contract 0.7.0 reaches its worktree.
-#   0.7.0: listed for the same reason, when contract 0.8.0 (NL endpoint errors) landed.
-COMPATIBLE_VERSIONS = frozenset({"0.5.0", "0.6.0", "0.7.0"})
+#   0.5.0 and 0.6.0 dropped 2026-11-16: A regenerated every served file (format 2, with horizons) at 0.7.0.
+#   0.7.0: the installed files (Site01 C1 + A's C3 batch); drop once A writes them at 0.8.0 or later.
+COMPATIBLE_VERSIONS = frozenset({"0.7.0"})
 
 
 class ServedFileError(ValueError):
