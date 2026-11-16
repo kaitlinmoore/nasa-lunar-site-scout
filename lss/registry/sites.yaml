@@ -3,6 +3,8 @@
 # Curated sites (plan F5), owned by stream A. lss.registry.sites loads these as contract Site objects for
 # /api/sites and fixtures/sites.json (stream C api generates those from here).
 #
+# Visitor-facing: name, short_name, subtitle, description and source. Keep internal notes in comments.
+#
 # Served point rule (Kaitlin, 2026-11-15): the centroid of the largest Barker et al. (2021) region of interest
 # (RoI) where the PGDA product 78 tile has RoIs; otherwise the Mazarico et al. (2011) coordinate, checked for
 # slope on the 5 m map. Barker's RoIs: connected 5 m pixels with average illumination > 70% at 1 m over
@@ -16,6 +18,8 @@
 sites:
   - id: pgda-site01
     name: Site01 Connecting ridge (Barker 2021 RoI 4)
+    short_name: Connecting Ridge
+    subtitle: PGDA Site01 · Barker 2021 RoI 4
     category: pgda
     location: {lat: -89.452675, lon: -137.148653}
     point: {rule: largest_roi_centroid, tile: Site01, roi: 4, roi_area_m2: 13300, ps_m: [-11287.5, -12167.5], centroid_from: Barker et al. (2021) Table 2}
@@ -37,6 +41,8 @@ sites:
 
   - id: pgda-site04
     name: Site04 Shackleton rim (Barker 2021 RoI 1)
+    short_name: Shackleton Rim
+    subtitle: PGDA Site04 · Barker 2021 RoI 1
     category: pgda
     location: {lat: -89.761966, lon: -157.067197}
     point: {rule: largest_roi_centroid, tile: Site04, roi: 1, roi_area_m2: 6975, ps_m: [-2812.5, -6647.5], centroid_from: Site04_ROIs.tgz (pixel containing the mean)}
@@ -58,6 +64,8 @@ sites:
 
   - id: pgda-site07
     name: Site07 Peak near Shackleton (Barker 2021 RoI 2)
+    short_name: Peak near Shackleton
+    subtitle: PGDA Site07 · Barker 2021 RoI 2
     category: pgda
     location: {lat: -88.807326, lon: 123.776844}
     point: {rule: largest_roi_centroid, tile: Site07, roi: 2, roi_area_m2: 16550, ps_m: [30062.5, -20107.5], centroid_from: Site07_ROIs.tgz (pixel containing the mean)}
@@ -79,6 +87,8 @@ sites:
 
   - id: pgda-site11
     name: Site11 de Gerlache rim (Barker 2021 RoI 1)
+    short_name: de Gerlache Rim
+    subtitle: PGDA Site11 · Barker 2021 RoI 1
     category: pgda
     location: {lat: -88.668256, lon: -68.375764}
     point: {rule: largest_roi_centroid, tile: Site11, roi: 1, roi_area_m2: 13325, ps_m: [-37542.5, 14882.5], centroid_from: Site11_ROIs.tgz (pixel containing the mean)}
@@ -100,6 +110,8 @@ sites:
 
   - id: pgda-site06
     name: Site06 Nobile rim 1 (Mazarico 2011 site 6)
+    short_name: Nobile Rim
+    subtitle: PGDA Site06 · Mazarico 2011 rank 6
     category: pgda
     location: {lat: -85.30, lon: 37.07}
     point: {rule: mazarico_2011, tile: Site06, ps_m: [85957.726, 113780.267], centroid_from: "Mazarico et al. (2011) Table 3, rank 6"}
@@ -119,6 +131,8 @@ sites:
 
   - id: pgda-site20
     name: Site20 Leibnitz beta plateau (Mazarico 2011 site 20)
+    short_name: Leibnitz Beta Plateau
+    subtitle: PGDA Site20 · Mazarico 2011 rank 20
     category: pgda
     location: {lat: -85.43, lon: 31.73}
     point: {rule: mazarico_2011, tile: Site20, ps_m: [72919.046, 117927.84], centroid_from: "Mazarico et al. (2011) Table 3, rank 20"}
@@ -138,6 +152,8 @@ sites:
 
   - id: pgda-site23
     name: Site23 Malapert massif (Mazarico 2011 site 23)
+    short_name: Malapert Massif
+    subtitle: PGDA Site23 · Mazarico 2011 rank 23
     category: pgda
     location: {lat: -85.97, lon: -2.30}
     point: {rule: mazarico_2011, tile: Site23, ps_m: [-4906.252, 122155.02], centroid_from: "Mazarico et al. (2011) Table 3, rank 23"}
@@ -158,6 +174,8 @@ sites:
 
   - id: pgda-site42
     name: Site42 de Gerlache-Kocher massif (Mazarico 2011 site 42)
+    short_name: de Gerlache–Kocher Massif
+    subtitle: PGDA Site42 · Mazarico 2011 rank 42
     category: pgda
     location: {lat: -85.83, lon: -116.35}
     point: {rule: mazarico_2011, tile: Site42, ps_m: [-113360.357, -56149.321], centroid_from: "Mazarico et al. (2011) Table 3, rank 42"}

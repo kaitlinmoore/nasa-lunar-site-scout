@@ -503,8 +503,8 @@ def test_selected_site_is_checked_and_disclosed_by_code():
         validate_output(out, ctx)  # params use pgda-site01, the selection is pgda-site04
     ctx = default_context(selected_site_id="pgda-site01")
     resp = to_response(validate_output(out, ctx), ctx)
-    # No short name in the registry yet: the full name stands in.
-    assert resp.assumptions[0] == "Using the selected site, Site01 Connecting ridge (Barker 2021 RoI 4)."
+    # The registry's short name (lss/registry/sites.yaml, approved by Kaitlin 2026-11-16).
+    assert resp.assumptions[0] == "Using the selected site, Connecting Ridge."
 
 
 # ------------------------------------------------ short display names (Kaitlin, 2026-11-16)
@@ -531,8 +531,10 @@ def test_model_sees_short_names_and_subtitles():
         s for s in _context(ctx, date(2026, 11, 16), registry=False)["sites"] if s["site_id"] == "pgda-site01"
     )
     assert entry["name"] == "Connecting Ridge" and entry["subtitle"] == "PGDA Site01 · Barker 2021 RoI 4"
+    from lss.contract import display_name
+
     plain = next(s for s in _context(default_context(), date(2026, 11, 16), registry=False)["sites"])
-    assert plain["name"] == default_context().sites[0].name  # no short name yet: the full name
+    assert plain["name"] == display_name(default_context().sites[0]) == "Connecting Ridge"  # the registry's
 
 
 def test_selected_site_disclosure_uses_the_short_name():
@@ -547,8 +549,8 @@ def test_selected_site_disclosure_uses_the_short_name():
 def test_site_model_fields_are_optional():
     from lss.contract import Site, display_name
 
-    s = default_context().sites[0]
-    assert s.short_name is None and display_name(s) == s.name
+    s = default_context().sites[0].model_copy(update={"short_name": None, "subtitle": None})
+    assert s.short_name is None and display_name(s) == s.name  # null short name: the full name
     assert (
         display_name(Site.model_validate({**s.model_dump(), "short_name": "Connecting Ridge"}))
         == "Connecting Ridge"

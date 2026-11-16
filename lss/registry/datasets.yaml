@@ -5,7 +5,11 @@
 # and the submission's References / NASA Data fields. Mirrored in reference/challenge-resources.md Part 2.
 #
 # Schema: lss.contract.DatasetCapability. Coordinates: planetocentric deg, east-positive lon.
-# status: planned | used | dropped.  "VERIFY:" marks facts not yet checked against the source.
+# status: planned | used | dropped.
+#
+# Every field below can reach visitors (/api/datasets, the Data page, NL refusals quote cannot_answer strings
+# verbatim). Keep internal notes (stage codes, plan references, VERIFY items) in YAML comments, never in the
+# values. Where a fact is unchecked, the value says "not yet checked"; the comment says what to check.
 
 datasets:
   - id: pgda_78_site_dems
@@ -30,10 +34,11 @@ datasets:
       105119. doi:10.1016/j.pss.2020.105119
     license: NASA-produced data (U.S. Government work). No license stated; the PGDA Data Usage Policy asks users to cite the paper (Barker et al. 2021) (checked 2026-11-15).
     status: used
+    # VERIFY which sites beyond the 8 listed in can_answer have clones (Site42's list was seen in part).
     notes: >-
-      South polar stereographic X/Y m, MOON_ME / DE421. VERIFY which sites beyond the 8 listed have clones.
-      Used (C1): Site01_final_adj_5mpp_surf.tif, 3200 x 3200 px float32 (NaN nodata), PS x -19..-3 km,
-      y -20..-4 km on the 1737.4 km sphere (checked 2026-11-14). Fetched by scripts/fetch_data.py.
+      South polar stereographic X/Y m, MOON_ME / DE421. Used: the 5 m maps of Site01, 04, 06, 07, 11, 20, 23
+      and 42 (for example Site01_final_adj_5mpp_surf.tif, 3200 x 3200 px float32, NaN no-data, PS x -19..-3
+      km, y -20..-4 km on the 1737.4 km sphere; checked 2026-11-14). Fetched by scripts/fetch_data.py.
 
   - id: pgda_81_mosaic_5m
     name: South Pole LOLA 5 m/pix DEM mosaic, 87-90 S
@@ -88,9 +93,10 @@ datasets:
     notes: >-
       Cloud-optimized GeoTIFFs (windowed remote reads), south polar stereographic, MOON_ME / DE421.
       Checked 2026-11-14: float32, NaN nodata, deflate, tiled; CRS is polar stereographic true at the pole
-      on a 1737.4 km sphere. Used (C1): LDEM_80S_80MPP_ADJ (80 m, +-304 km) and LDEM_60S_240MPP_ADJ
-      (240 m, +-931 km) as far field; a +-150 km window of LDEM_60S_60MPP_ADJ (60 m) for the internal
-      product 69 comparison only. Fetched by scripts/fetch_data.py.
+      on a 1737.4 km sphere. Used: LDEM_80S_80MPP_ADJ (80 m, +-304 km) and LDEM_60S_240MPP_ADJ
+      (240 m, +-931 km) as far field; LDEM_83S_10MPP_ADJ (10 m) for slope statistics within 10 km of the
+      curated sites; a +-150 km window of LDEM_60S_60MPP_ADJ (60 m) for the internal product 69 comparison
+      only. Fetched by scripts/fetch_data.py.
 
   - id: pgda_69_polar_illumination
     name: Lunar Polar Illumination (18.6-year averaged solar illumination, Earth and sky visibility)
@@ -128,10 +134,11 @@ datasets:
     kind: terrain
     provider: NASA GSFC PGDA (M. K. Barker)
     url: https://pgda.gsfc.nasa.gov/products/98
+    # VERIFY south-pole coverage (product 98 vs 90) and the grid spacing.
     coverage:
-      description: Lunar polar regions; roughness at baselines ~50-1000 m. VERIFY south-pole coverage (98 vs 90)
+      description: Lunar polar regions; roughness at baselines ~50-1000 m
     resolution_m: 50
-    resolution_note: Multiple roughness baselines (~50-1000 m). VERIFY grid spacing.
+    resolution_note: Multiple roughness baselines (~50-1000 m); grid spacing not yet checked
     can_answer:
       - Hazard context from LOLA roughness at tens-of-meters to km baselines
     cannot_answer:
@@ -160,11 +167,12 @@ datasets:
       - Fine-scale horizon or slope at sub-kilometer scale
     citation: >-
       Smith, D. E., et al. (2010). Initial observations from the Lunar Orbiter Laser Altimeter
-      (LOLA). Geophysical Research Letters 37(18). doi:10.1029/2010GL043751. VERIFY the article id
-      (Crossref gives 2010GL043751; L18204 not confirmed) and the preferred citation for LDEM_128.
+      (LOLA). Geophysical Research Letters 37(18). doi:10.1029/2010GL043751
+    # VERIFY the article id (Crossref gives 2010GL043751; L18204 not confirmed) and the preferred citation for
+    # LDEM_128. Candidate only (plan section 4.2); confirm product choice and frame in C7.
     license: NASA PDS data (U.S. Government work).
     status: planned
-    notes: Candidate only (plan section 4.2); confirm product choice and frame in C7.
+    notes: Candidate coarse global layer; product choice and frame alignment not yet checked.
 
   - id: sldem2015
     name: SLDEM2015 (LOLA + SELENE Terrain Camera merged DEM)
@@ -178,7 +186,7 @@ datasets:
     resolution_m: 59
     resolution_note: 512 pixels/degree (~59 m at the equator)
     can_answer:
-      - Mid-latitude horizon and slope at ~60 m (Strong tier, S2a)
+      - Mid-latitude horizon and slope at ~60 m  # Strong tier (S2a)
     cannot_answer:
       - Polar terrain poleward of 60
     citation: >-
@@ -186,7 +194,8 @@ datasets:
       Altimeter and SELENE Terrain Camera. Icarus 273, 346-355. doi:10.1016/j.icarus.2015.07.039
     license: NASA-produced data (U.S. Government work). No license stated; the PGDA Data Usage Policy asks users to cite the paper (Barker et al. 2016) (checked 2026-11-15). URL checked (page title "High-resolution Lunar Topography (SLDEM2015)").
     status: planned
-    notes: VERIFY SLDEM2015 frame vs MOON_ME (plan section 9).
+    # VERIFY SLDEM2015 frame vs MOON_ME (plan section 9).
+    notes: Frame alignment with MOON_ME not yet checked.
 
   - id: diviner_polar_temperature
     name: LRO Diviner polar temperature products (PCP / PRP)
@@ -198,15 +207,16 @@ datasets:
       lat_min: -90
       lat_max: -80
     resolution_m: 240
-    resolution_note: VERIFY grid spacing and seasonal/local-time binning
+    # VERIFY grid spacing and seasonal/local-time binning; product names and citation. Thermal work is S5.
+    resolution_note: Grid spacing and seasonal/local-time binning not yet checked
     can_answer:
-      - Typical surface temperature range by season and time of day poleward of 80 (S5)
+      - Typical surface temperature range by season and time of day poleward of 80
     cannot_answer:
       - Temperatures equatorward of 80° (the tool has not integrated a Diviner product for that range)
       - Spacecraft thermal or battery-heating requirements (needs a spacecraft thermal model)
     citation: >-
       Williams, J.-P., et al. (2019). Seasonal polar temperatures on the Moon. JGR Planets 124,
-      2505-2521. doi:10.1029/2019JE006028. VERIFY product names and citation.
+      2505-2521. doi:10.1029/2019JE006028
     license: NASA PDS data (U.S. Government work).
     status: planned
 
@@ -229,7 +239,8 @@ datasets:
       Robbins, S. J. (2019). A new global database of lunar impact craters >1-2 km: 1. Crater
       locations and sizes, comparisons with published databases, and global analysis. JGR Planets
       124, 871-892. doi:10.1029/2018JE005592
-    license: VERIFY (USGS Astrogeology distribution terms; the page refuses automated requests, check by hand).
+    # VERIFY the USGS Astrogeology distribution terms (the page refuses automated requests; check by hand).
+    license: Not yet checked (USGS Astrogeology distribution terms)
     status: planned
 
   - id: m3_surface_ice
@@ -250,7 +261,8 @@ datasets:
     citation: >-
       Li, S., et al. (2018). Direct evidence of surface exposed water ice in the lunar polar
       regions. PNAS 115(36), 8907-8912. doi:10.1073/pnas.1802345115
-    license: VERIFY (paper supplementary data terms).
+    # VERIFY the paper's supplementary data terms.
+    license: Not yet checked (paper supplementary data terms)
     status: planned
 
   - id: orbital_neutron_hydrogen
@@ -277,10 +289,10 @@ datasets:
     license: NASA PDS data (U.S. Government work).
     status: dropped
     notes: >-
-      Not integrated: neutron maps cannot resolve site-scale hydrogen (plan question 9). Listed so the
-      limit can be cited. The labelled stand-in is m3_surface_ice (~280 m). Resolution figures:
-      arXiv:0810.2478 (LP NS footprint and reconstruction) and arXiv:1304.8123 (the LEND resolution debate).
-      VERIFY the PDS product pages for both instruments before the references list cites them.
+      Not integrated: neutron maps cannot resolve site-scale hydrogen. Listed so the limit can be cited.
+      The labelled stand-in is m3_surface_ice (~280 m). Resolution figures: arXiv:0810.2478 (LP NS
+      footprint and reconstruction) and arXiv:1304.8123 (the LEND resolution debate).
+    # Plan question 9. VERIFY the PDS product pages for both instruments before the references list cites them.
 
   - id: aussel_2025_boulders
     name: Global lunar boulder map from LRO NAC images (Aussel et al. 2025)
@@ -292,7 +304,8 @@ datasets:
       lat_min: -60
       lat_max: 60
     resolution_m: null
-    resolution_note: Boulder density maps by size bin; detection limited by NAC resolution (VERIFY minimum size)
+    # VERIFY the minimum boulder size.
+    resolution_note: Boulder density maps by size bin; detection limited by NAC resolution
     can_answer:
       - Boulder density and mean boulder size between 60 S and 60 N
     cannot_answer:
@@ -319,7 +332,8 @@ datasets:
     can_answer:
       - Sun and Earth direction at any site and time 1900-2050 (UTC), in the DEMs' MOON_ME frame
     cannot_answer:
-      - Dates after 2050-12-31 23:58:50 UTC (orientation kernel end); needs newer kernels + frame alignment (X5)
+      # Extending past 2050 is plan item X5.
+      - Dates after 2050-12-31 23:58:50 UTC (orientation kernel end); needs newer kernels + frame alignment
     citation: >-
       Folkner, W. M., Williams, J. G., & Boggs, D. H. (2008). The Planetary and Lunar Ephemeris DE 421.
       JPL IOM 343R-08-003. Acton, C. H. (1996). Ancillary data services of NASA's Navigation and

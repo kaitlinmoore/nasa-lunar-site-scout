@@ -465,7 +465,7 @@ items:
         - dataset_id: spice_de421
           cannot_answer: >-
             Dates after 2050-12-31 23:58:50 UTC (orientation kernel end); needs newer kernels + frame
-            alignment (X5)
+            alignment
 
   - id: s13
     source: si_supplied
