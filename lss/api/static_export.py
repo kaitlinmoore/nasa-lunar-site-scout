@@ -77,7 +77,7 @@ def export(out_dir: Path, served_from: Path | None = None) -> StaticIndex:
         _write(out_dir / entry.series, sv.series)
         entries.append(entry)
 
-    _write(out_dir / "sites.json", api._fixture_sites())
+    _write(out_dir / "sites.json", api._sites())
     _write(out_dir / "datasets.json", api._datasets())
     index = StaticIndex(scenarios=entries, sites="sites.json", datasets="datasets.json", _note=INDEX_NOTE)
     _write(out_dir / "index.json", index)

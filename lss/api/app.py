@@ -3,8 +3,8 @@
 FastAPI app, API v0 (plan section 4.3). Results are precomputed only (plan section 4.6; lss.api.served):
 nothing is computed live, so the API needs no DEMs, kernels or numba.
 
-- `GET /api/health`; `GET /api/sites` (the curated list in fixtures/sites.json); `GET /api/datasets` (the
-  capability registry).
+- `GET /api/health`; `GET /api/sites` (the curated site registry, lss/registry/sites.yaml);
+  `GET /api/datasets` (the capability registry).
 - `POST /api/locate`: the terrain stack and fidelity label from the registry's resolver, which uses static
   layer extents only (no DEM reads).
 - `POST /api/metrics`, `/api/series`: the precomputed result for a scenario, matched on `Scenario.key()`.
@@ -19,7 +19,6 @@ Run locally:  uv run uvicorn lss.api.app:app --reload
 
 from __future__ import annotations
 
-import json
 import os
 from functools import lru_cache
 
@@ -36,7 +35,7 @@ from lss.api.served import (
     load_all,
     served_dir,
 )
-from lss.config import FIXTURES_DIR, get_settings
+from lss.config import get_settings
 from lss.contract import (
     CONTRACT_VERSION,
     CompareNotServed,
@@ -96,9 +95,11 @@ UNAVAILABLE_REASON = (
 
 
 @lru_cache(maxsize=1)
-def _fixture_sites() -> SitesResponse:
-    data = json.loads((FIXTURES_DIR / "sites.json").read_text(encoding="utf-8"))
-    return SitesResponse.model_validate(data)
+def _sites() -> SitesResponse:
+    """The curated site registry (stream A); fixtures/sites.json is generated from the same function."""
+    from lss.contract.examples import sites
+
+    return sites()
 
 
 @lru_cache(maxsize=1)
@@ -215,7 +216,7 @@ LOCATE_ERRORS = {
 
 
 def sites_for(query: SitesQuery) -> SitesResponse:
-    resp = _fixture_sites()
+    resp = _sites()
     if query.category is None:
         return resp
     return resp.model_copy(update={"sites": [s for s in resp.sites if s.category == query.category]})

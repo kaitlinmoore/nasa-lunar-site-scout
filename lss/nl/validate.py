@@ -25,7 +25,6 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from lss.config import FIXTURES_DIR
 from lss.contract import (
     DatasetCapability,
     Limitation,
@@ -34,7 +33,6 @@ from lss.contract import (
     NLUnsupported,
     Scenario,
     Site,
-    SitesResponse,
     StructuredQuery,
 )
 from lss.nl.schema import NLOutput, NLQuery, Outcome, SiteRef
@@ -80,13 +78,11 @@ def default_context(
     selected_scenario: Scenario | None = None,
     today: date | None = None,
 ) -> NLContext:
-    """Context from the committed site list (`fixtures/sites.json`) and the registry.
+    """Context from the curated site registry (what /api/sites serves) and the dataset registry."""
+    from lss.registry.sites import load_sites
 
-    Phase 1 only: from C7b the site list comes from the API's site catalog instead.
-    """
-    data = json.loads((FIXTURES_DIR / "sites.json").read_text(encoding="utf-8"))
     return NLContext(
-        sites=SitesResponse.model_validate(data).sites,
+        sites=list(load_sites()),
         datasets=load_datasets(),
         selected_site_id=selected_site_id,
         selected_scenario=selected_scenario,

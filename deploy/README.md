@@ -72,8 +72,10 @@ key in the Anthropic Console** (set by the project owner). Values can be changed
 (`/data/cache/nl/*.json`) cost nothing and are not limited.
 
 **Client IP.** The rate limit keys on the **last** `X-Forwarded-For` entry, on the assumption that Cloud
-Run's front end appends the real client address to whatever the client sent. Check this once before relying
-on it:
+Run's front end appends the real client address to whatever the client sent. **Verified on the deployed API,
+2026-11-16:** `used_for_rate_limit` was the same with and without a made-up header, and the made-up
+`203.0.113.9` came first in `x_forwarded_for` without being used. To repeat the check (e.g. after putting a
+load balancer or custom domain in front):
 
 ```bash
 LSS_DEBUG_CLIENT_IP=1 bash deploy/deploy-api.sh       # turns on GET /api/_debug/client

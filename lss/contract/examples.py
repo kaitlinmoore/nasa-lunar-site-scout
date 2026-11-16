@@ -55,8 +55,6 @@ from lss.contract.models import (
     SearchCandidate,
     SearchResult,
     SeriesResponse,
-    Site,
-    SiteCategory,
     SitesResponse,
     SiteSummaryResponse,
     Stat,
@@ -115,25 +113,12 @@ def health() -> HealthResponse:
 
 
 def sites() -> SitesResponse:
-    site = Site(
-        id="pgda-site01",
-        name=SITE01_NAME,
-        category=SiteCategory.pgda,
-        location=SITE01,
-        description=(
-            "A ridge at the Moon's south pole, about 17 km from the pole, connecting the rims of Shackleton "
-            "crater and de Gerlache crater (Barker et al. 2021). Because it is high and close to the pole, "
-            "where the Sun always stays near the horizon, parts of it see the Sun most of the time: Mazarico "
-            "et al. (2011) ranked it first of the south polar sites for average illumination (their site 1), "
-            "and Barker et al. (2021) studied it as a potential landing site. They found seven regions on it "
-            "where, at 1 m above the ground in 2024-2025, more than 70% of the Sun's disc is in view on "
-            "average. The point used here is the centre of the largest, region 4."
-        ),
-        dataset_ids=["pgda_78_site_dems", "pgda_81_mosaic_5m", "pgda_90_south_pole_dems"],
-        has_dem_clones=True,
-        source=SITE01_SOURCE,
+    """The curated sites from stream A's registry (lss/registry/sites.yaml): real content, not placeholder."""
+    from lss.registry.sites import load_sites
+
+    return SitesResponse(
+        sites=list(load_sites()), _note="Generated from lss/registry/sites.yaml (curated sites)."
     )
-    return SitesResponse(sites=[site], _note="Curated site list (C1: Site01 only).")
 
 
 def datasets() -> DatasetsResponse:

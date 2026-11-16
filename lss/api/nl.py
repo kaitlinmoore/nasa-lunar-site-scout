@@ -287,7 +287,8 @@ def _not_understood() -> NLUnsupported:
 
 def client_address(forwarded_for: str | None, peer: str | None) -> str:
     """The client's address for rate limiting: the last X-Forwarded-For entry (the one Cloud Run's front
-    end appends; earlier entries are client-supplied), else the socket peer. VERIFY on the deployed API."""
+    end appends; earlier entries are client-supplied), else the socket peer. Verified on the deployed API
+    2026-11-16 (deploy/README.md): a made-up X-Forwarded-For value came first and was not used."""
     if forwarded_for:
         last = forwarded_for.split(",")[-1].strip()
         if last:
