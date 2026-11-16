@@ -1,16 +1,17 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// How a failed API request is shown (4.4). Each kind says what happened in plain words; no values
-// are shown for a failed request. "Not served" lists the scenarios this version does serve.
-import { ApiError } from './api/client'
+// How a failed API request is shown (4.4; typed errors from contract 0.6.0). Each kind says what
+// happened in plain words; no values are shown for a failed request. "Not served" lists the
+// scenarios this version does serve. The 503's technical cause shows in dev builds only.
+import { ApiError, type ServedOption } from './api/client'
 import { formatExactRange, formatScenarioSummary, SCENARIO_FIELD_LABELS } from './format'
 
-function NotServedList({ served }: { served: ApiError['problem'] & { kind: 'not-served' } }) {
-  if (served.served.length === 0) return null
+function ServedList({ served }: { served: ServedOption[] }) {
+  if (served.length === 0) return null
   return (
     <>
       <div>This version serves:</div>
       <ul>
-        {served.served.map((s) => (
+        {served.map((s) => (
           <li key={s.scenario_key}>
             <span className="value">{formatScenarioSummary(s.scenario)}</span>
             <div className="definition value">
@@ -44,15 +45,21 @@ export default function ApiProblemView({ what, error }: { what: string; error: u
     case 'not-served':
       return (
         <div className="banner notice" role="status">
-          <strong>No result for this scenario yet.</strong> {p.reason}
-          <NotServedList served={p} />
+          <strong>No result for this scenario yet.</strong> {p.detail.reason}
+          <ServedList served={p.detail.served} />
+        </div>
+      )
+    case 'compare-not-served':
+      return (
+        <div className="banner notice" role="status">
+          <strong>None of these scenarios has a result yet.</strong> {p.detail.reason}
         </div>
       )
     case 'unavailable':
       return (
         <div className="banner error" role="alert">
-          <strong>Results aren't available right now.</strong> No values are shown.
-          <div className="mono">{p.reason}</div>
+          <strong>Results aren't available right now.</strong> {p.detail.reason} No values are shown.
+          {import.meta.env.DEV && p.detail.technical && <div className="mono">{p.detail.technical}</div>}
         </div>
       )
     case 'invalid-request':
@@ -63,7 +70,7 @@ export default function ApiProblemView({ what, error }: { what: string; error: u
           <ul className="mono">
             {p.issues.map((i, k) => (
               <li key={k}>
-                {i.where}: {i.message}
+                {i.loc.join('.')}: {i.msg}
               </li>
             ))}
           </ul>

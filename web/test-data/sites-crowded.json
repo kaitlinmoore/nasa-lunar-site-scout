@@ -1,0 +1,445 @@
+{
+  "contract_version": "0.5.0",
+  "_placeholder": true,
+  "_note": "TEST ONLY: made-up sites for checking crowded layouts (web/test-data). Only Site01 is real; no other site has results.",
+  "sites": [
+    {
+      "id": "pgda-site01",
+      "name": "Site01 Connecting ridge (Barker 2021 RoI 4)",
+      "category": "pgda",
+      "location": {
+        "lat": -89.452675,
+        "lon": -137.148653,
+        "name": "Site01 Connecting ridge (Barker 2021 RoI 4)"
+      },
+      "description": "A ridge at the Moon's south pole, about 17 km from the pole, connecting the rims of Shackleton crater and de Gerlache crater (Barker et al. 2021). Because it is high and close to the pole, where the Sun always stays near the horizon, parts of it see the Sun most of the time: Mazarico et al. (2011) ranked it first of the south polar sites for average illumination (their site 1), and Barker et al. (2021) studied it as a potential landing site. They found seven regions on it where, at 1 m above the ground in 2024-2025, more than 70% of the Sun's disc is in view on average. The point used here is the centre of the largest, region 4.",
+      "dataset_ids": [
+        "pgda_78_site_dems",
+        "pgda_81_mosaic_5m",
+        "pgda_90_south_pole_dems"
+      ],
+      "has_dem_clones": true,
+      "source": "Barker, M. K., et al. (2021), Planet. Space Sci. 203, 105119, doi:10.1016/j.pss.2020.105119, Table 2: centroid of Site01 region of interest 4, polar stereographic x = -11.2875 km, y = -12.1675 km (89.452675 S, 222.851347 E), in the PGDA product 78 Site01 DEM tile. Site01 (Connecting ridge) is site 1 of Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030."
+    },
+    {
+      "id": "test-02",
+      "name": "TEST Site 02 cluster",
+      "category": "custom",
+      "location": {
+        "lat": -89.2,
+        "lon": 120,
+        "name": "TEST Site 02 cluster"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. One of five sites within a few kilometres of each.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-03",
+      "name": "TEST Site 03 cluster",
+      "category": "custom",
+      "location": {
+        "lat": -89.22,
+        "lon": 123,
+        "name": "TEST Site 03 cluster"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. One of five sites within a few kilometres of each.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-04",
+      "name": "TEST Site 04 cluster",
+      "category": "custom",
+      "location": {
+        "lat": -89.24,
+        "lon": 126,
+        "name": "TEST Site 04 cluster"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. One of five sites within a few kilometres of each.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-05",
+      "name": "TEST Site 05 cluster",
+      "category": "custom",
+      "location": {
+        "lat": -89.26,
+        "lon": 129,
+        "name": "TEST Site 05 cluster"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. One of five sites within a few kilometres of each.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-06",
+      "name": "TEST Site 06 cluster",
+      "category": "custom",
+      "location": {
+        "lat": -89.28,
+        "lon": 132,
+        "name": "TEST Site 06 cluster"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. One of five sites within a few kilometres of each.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-07",
+      "name": "TEST Site 07 beside Site01",
+      "category": "custom",
+      "location": {
+        "lat": -89.47,
+        "lon": -136.9,
+        "name": "TEST Site 07 beside Site01"
+      },
+      "description": null,
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-08",
+      "name": "TEST Site 08 also beside Site01",
+      "category": "custom",
+      "location": {
+        "lat": -89.44,
+        "lon": -137.5,
+        "name": "TEST Site 08 also beside Site01"
+      },
+      "description": "",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-09",
+      "name": "TEST Site 09 at the pole",
+      "category": "custom",
+      "location": {
+        "lat": -89.95,
+        "lon": 45.0,
+        "name": "TEST Site 09 at the pole"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. ",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-10",
+      "name": "TEST Site 10",
+      "category": "custom",
+      "location": {
+        "lat": -85.957247,
+        "lon": -125.694297,
+        "name": "TEST Site 10"
+      },
+      "description": "",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-11",
+      "name": "TEST Site 11",
+      "category": "custom",
+      "location": {
+        "lat": -87.429205,
+        "lon": -153.922937,
+        "name": "TEST Site 11"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. Long description.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-12",
+      "name": "TEST Site 12 with a deliberately very long name to check label and card wrapping",
+      "category": "custom",
+      "location": {
+        "lat": -86.911469,
+        "lon": -48.35199,
+        "name": "TEST Site 12 with a deliberately very long name to check label and card wrapping"
+      },
+      "description": null,
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-13",
+      "name": "TEST Site 13",
+      "category": "custom",
+      "location": {
+        "lat": -84.760995,
+        "lon": 2.676864,
+        "name": "TEST Site 13"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. Long description.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-14",
+      "name": "TEST Site 14",
+      "category": "custom",
+      "location": {
+        "lat": -84.66873,
+        "lon": -23.887554,
+        "name": "TEST Site 14"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. Long description.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-15",
+      "name": "TEST Site 15",
+      "category": "custom",
+      "location": {
+        "lat": -84.814349,
+        "lon": -147.343315,
+        "name": "TEST Site 15"
+      },
+      "description": "",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-16",
+      "name": "TEST Site 16",
+      "category": "custom",
+      "location": {
+        "lat": -86.410336,
+        "lon": 117.666765,
+        "name": "TEST Site 16"
+      },
+      "description": null,
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-17",
+      "name": "TEST Site 17",
+      "category": "custom",
+      "location": {
+        "lat": -85.057109,
+        "lon": -99.633973,
+        "name": "TEST Site 17"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. Long description.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-18",
+      "name": "TEST Site 18 with a deliberately very long name to check label and card wrapping",
+      "category": "custom",
+      "location": {
+        "lat": -87.32345,
+        "lon": 161.175219,
+        "name": "TEST Site 18 with a deliberately very long name to check label and card wrapping"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-19",
+      "name": "TEST Site 19",
+      "category": "custom",
+      "location": {
+        "lat": -87.096963,
+        "lon": -37.195029,
+        "name": "TEST Site 19"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. Long description.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-20",
+      "name": "TEST Site 20",
+      "category": "custom",
+      "location": {
+        "lat": -88.893148,
+        "lon": -163.230235,
+        "name": "TEST Site 20"
+      },
+      "description": null,
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-21",
+      "name": "TEST Site 21",
+      "category": "custom",
+      "location": {
+        "lat": -88.363108,
+        "lon": -75.740657,
+        "name": "TEST Site 21"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-22",
+      "name": "TEST Site 22",
+      "category": "custom",
+      "location": {
+        "lat": -85.149148,
+        "lon": -137.594794,
+        "name": "TEST Site 22"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. Long description.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-23",
+      "name": "TEST Site 23",
+      "category": "custom",
+      "location": {
+        "lat": -85.888168,
+        "lon": 113.805489,
+        "name": "TEST Site 23"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. Long description.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-24",
+      "name": "TEST Site 24 with a deliberately very long name to check label and card wrapping",
+      "category": "custom",
+      "location": {
+        "lat": -85.313269,
+        "lon": 29.376059,
+        "name": "TEST Site 24 with a deliberately very long name to check label and card wrapping"
+      },
+      "description": null,
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-25",
+      "name": "TEST Site 25",
+      "category": "custom",
+      "location": {
+        "lat": -87.375111,
+        "lon": -45.936885,
+        "name": "TEST Site 25"
+      },
+      "description": "",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-26",
+      "name": "TEST Site 26",
+      "category": "custom",
+      "location": {
+        "lat": -86.96485,
+        "lon": -157.395969,
+        "name": "TEST Site 26"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. Long description.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-27",
+      "name": "TEST Site 27",
+      "category": "custom",
+      "location": {
+        "lat": -84.768205,
+        "lon": -105.854863,
+        "name": "TEST Site 27"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description. Long description.",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-28",
+      "name": "TEST Site 28 near the equator (near side)",
+      "category": "custom",
+      "location": {
+        "lat": 0.6,
+        "lon": 23.5,
+        "name": "TEST Site 28 near the equator (near side)"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. ",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-29",
+      "name": "TEST Site 29 far side",
+      "category": "custom",
+      "location": {
+        "lat": 10.0,
+        "lon": 170.0,
+        "name": "TEST Site 29 far side"
+      },
+      "description": null,
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-30",
+      "name": "TEST Site 30 north polar",
+      "category": "custom",
+      "location": {
+        "lat": 85.0,
+        "lon": -30.0,
+        "name": "TEST Site 30 north polar"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. ",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    },
+    {
+      "id": "test-31",
+      "name": "TEST Site 31 on the 180\u00b0 line",
+      "category": "custom",
+      "location": {
+        "lat": -45.0,
+        "lon": 179.99,
+        "name": "TEST Site 31 on the 180\u00b0 line"
+      },
+      "description": "Made-up test site for layout checks; not a real location or analysis. ",
+      "dataset_ids": [],
+      "has_dem_clones": false,
+      "source": null
+    }
+  ]
+}

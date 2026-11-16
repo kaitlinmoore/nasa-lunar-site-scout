@@ -2,11 +2,15 @@
 // Data source switch: live API or the committed fixtures/*.json (see web/README.md).
 // Both paths return the same generated contract types, so the screen can't tell them apart.
 import { scenarioId } from '../scenario'
+import { type ComparisonResult, mapCompareResponse } from './compare'
+import { staticCompare, staticMetrics, staticSites, withStaticFallback } from './staticFallback'
 import {
+  ApiError,
   type CompareResponse,
   getSites,
   type HorizonProfile,
   type MetricsResponse,
+  postCompare,
   postMetrics,
   type Scenario,
   type SeriesResponse,
@@ -43,7 +47,11 @@ export async function thinSliceScenario(): Promise<Scenario> {
  */
 export async function loadThinSliceMetrics(source: DataSource): Promise<MetricsResponse> {
   const fixture = await thinSliceFixture()
-  return source === 'fixtures' ? fixture : postMetrics(fixture.scenario)
+  if (source === 'fixtures') return fixture
+  return withStaticFallback(
+    () => postMetrics(fixture.scenario),
+    () => staticMetrics(fixture.scenario),
+  )
 }
 
 /**
@@ -66,24 +74,69 @@ export async function loadThinSliceSky(
 
 /** Curated sites for the globe (C7a): fixtures/sites.json, or GET /api/sites in live mode. */
 export async function loadSites(source: DataSource): Promise<SitesResponse> {
+  // Dev-only readiness test (Phase 2 step 3.5): `?source=fixtures&testSites=crowded` loads a
+  // made-up list of 31 sites (27 crowded near the south pole) from web/test-data. Production
+  // builds drop this branch (import.meta.env.DEV is false there).
+  if (
+    import.meta.env.DEV &&
+    source === 'fixtures' &&
+    new URLSearchParams(window.location.search).get('testSites') === 'crowded'
+  ) {
+    return (await import('../../test-data/sites-crowded.json')).default as SitesResponse
+  }
   if (source === 'fixtures') {
     return (await import('../../../fixtures/sites.json')).default as SitesResponse
   }
-  return getSites()
+  return withStaticFallback(getSites, staticSites)
 }
 
+export type { ComparisonResult } from './compare'
+
+const FIXTURE_NO_RESULT = 'No result in fixture mode: only the scenarios in fixtures/compare.json have one.'
+
 /**
- * Compare (C6): metrics for each requested scenario, in request order. Fixture mode only for
- * now: fixtures/compare.json answers a scenario only if it is exactly one of its items (same
- * location, height, UTC window and step); any other scenario gets null ("no result"), never a
- * nearby result. Live mode returns null until POST /api/compare is available.
+ * Live calls fall back to the static copy (/static-api/) when the API gives no usable answer
+ * (staticFallback.ts); the page then shows a notice.
+ *
+ * Compare (C6; live in Phase 2 step 3.3): metrics for each requested scenario, in request order.
+ * - Fixtures: fixtures/compare.json answers a scenario only if it is exactly one of its items.
+ * - Live: POST /api/compare. `items` holds the served scenarios in request order and `not_served`
+ *   the others by request index (contract 0.6.0). Each item is checked to be exactly the scenario
+ *   of its column; any mismatch is an error, never a result under the wrong column. A 422
+ *   "none served" becomes a result with every column's reason.
  */
-export async function loadCompare(
-  source: DataSource,
-  scenarios: Scenario[],
-): Promise<{ response: CompareResponse; items: (MetricsResponse | null)[] } | null> {
-  if (source !== 'fixtures') return null
-  const response = (await import('../../../fixtures/compare.json')).default as CompareResponse
-  const byId = new Map(response.items.map((item) => [scenarioId(item.scenario), item]))
-  return { response, items: scenarios.map((s) => byId.get(scenarioId(s)) ?? null) }
+export async function loadCompare(source: DataSource, scenarios: Scenario[]): Promise<ComparisonResult> {
+  if (source === 'fixtures') {
+    const response = (await import('../../../fixtures/compare.json')).default as CompareResponse
+    const byId = new Map(response.items.map((item) => [scenarioId(item.scenario), item]))
+    const items = scenarios.map((s) => byId.get(scenarioId(s)) ?? null)
+    return {
+      meta: response,
+      items,
+      reasons: items.map((item) => (item ? null : FIXTURE_NO_RESULT)),
+      noneReason: null,
+    }
+  }
+
+  return withStaticFallback(
+    () => liveCompare(scenarios),
+    () => staticCompare(scenarios),
+  )
+}
+
+async function liveCompare(scenarios: Scenario[]): Promise<ComparisonResult> {
+  let response: CompareResponse
+  try {
+    response = await postCompare(scenarios)
+  } catch (e) {
+    if (e instanceof ApiError && e.problem.kind === 'compare-not-served') {
+      const { detail } = e.problem
+      const reasons = scenarios.map(
+        (_, i) => detail.not_served.find((n) => n.index === i)?.reason ?? detail.reason,
+      )
+      return { meta: null, items: scenarios.map(() => null), reasons, noneReason: detail.reason }
+    }
+    throw e
+  }
+  return mapCompareResponse(scenarios, response)
 }

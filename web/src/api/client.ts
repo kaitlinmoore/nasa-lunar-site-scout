@@ -42,7 +42,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       // body unreadable; classified on the status alone
     }
-    throw new ApiError(path, classifyError(res.status, text))
+    throw new ApiError(path, classifyError(path, res.status, text))
   }
   return (await res.json()) as T
 }
@@ -62,3 +62,4 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
 export const getHealth = () => getJson<HealthResponse>('/api/health')
 export const getSites = () => getJson<SitesResponse>('/api/sites')
 export const postMetrics = (scenario: Scenario) => postJson<MetricsResponse>('/api/metrics', { scenario })
+export const postCompare = (scenarios: Scenario[]) => postJson<CompareResponse>('/api/compare', { scenarios })

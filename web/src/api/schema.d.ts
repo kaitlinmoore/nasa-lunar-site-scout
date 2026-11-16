@@ -38,6 +38,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/datasets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Datasets */
+        get: operations["datasets_api_datasets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/locate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Locate Endpoint */
+        post: operations["locate_endpoint_api_locate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/horizon": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Horizon */
+        post: operations["horizon_api_horizon_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/metrics": {
         parameters: {
             query?: never;
@@ -66,6 +117,23 @@ export interface paths {
         put?: never;
         /** Series */
         post: operations["series_api_series_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Compare */
+        post: operations["compare_api_compare_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -150,16 +218,60 @@ export interface components {
              */
             earthset_in_window?: boolean | null;
         };
+        /**
+         * CompareNotServed
+         * @description A compared scenario this API version has no precomputed result for.
+         */
+        CompareNotServed: {
+            /**
+             * Index
+             * @description Position of the scenario in the request's `scenarios`
+             */
+            index: number;
+            /**
+             * Scenario Key
+             * @description Scenario.key() of that scenario
+             */
+            scenario_key: string;
+            /**
+             * Reason
+             * @description Plain-language explanation, suitable to show to visitors
+             */
+            reason: string;
+        };
+        /** CompareNotServedDetail */
+        CompareNotServedDetail: {
+            /**
+             * Reason
+             * @description Plain-language explanation, suitable to show to visitors
+             */
+            reason: string;
+            /**
+             * Not Served
+             * @description Every scenario of the request
+             */
+            not_served: components["schemas"]["CompareNotServed"][];
+        };
+        /**
+         * CompareNotServedError
+         * @description 422 from POST /api/compare: none of the compared scenarios has a precomputed result.
+         */
+        CompareNotServedError: {
+            detail: components["schemas"]["CompareNotServedDetail"];
+        };
         /** CompareRequest */
         CompareRequest: {
             /** Scenarios */
             scenarios: components["schemas"]["Scenario"][];
         };
-        /** CompareResponse */
+        /**
+         * CompareResponse
+         * @description At least one compared scenario is served (otherwise 422 CompareNotServedError).
+         */
         CompareResponse: {
             /**
              * Contract Version
-             * @default 0.5.0
+             * @default 0.6.0
              */
             contract_version: string;
             /**
@@ -168,41 +280,36 @@ export interface components {
              * @default false
              */
             _placeholder: boolean;
-            /**
-             * Note
-             * @default null
-             */
-            _note: string | null;
+            /** Note */
+            _note?: string | null;
             /**
              * Items
-             * @description Same order as the request's scenarios
+             * @description Metrics for every served scenario, in the request's order (match them to the request by scenario_key). Scenarios without a result are in not_served instead
              */
             items: components["schemas"]["MetricsResponse"][];
+            /**
+             * Not Served
+             * @description The request's scenarios with no precomputed result, in order
+             */
+            not_served?: components["schemas"]["CompareNotServed"][];
         };
+        /**
+         * CompareUnprocessableError
+         * @description 422 from POST /api/compare: tell the two apart by `detail` (an object vs a list).
+         */
+        CompareUnprocessableError: components["schemas"]["CompareNotServedError"] | components["schemas"]["InvalidRequestError"];
         /** Coverage */
         Coverage: {
             /** Description */
             description: string;
-            /**
-             * Lat Min
-             * @default null
-             */
-            lat_min: number | null;
-            /**
-             * Lat Max
-             * @default null
-             */
-            lat_max: number | null;
-            /**
-             * Lon Min
-             * @default null
-             */
-            lon_min: number | null;
-            /**
-             * Lon Max
-             * @default null
-             */
-            lon_max: number | null;
+            /** Lat Min */
+            lat_min?: number | null;
+            /** Lat Max */
+            lat_max?: number | null;
+            /** Lon Min */
+            lon_min?: number | null;
+            /** Lon Max */
+            lon_max?: number | null;
             /**
              * Sites Only
              * @description Covers listed sites only, not an area
@@ -229,14 +336,10 @@ export interface components {
             /**
              * Resolution M
              * @description Nominal ground resolution, m
-             * @default null
              */
-            resolution_m: number | null;
-            /**
-             * Resolution Note
-             * @default null
-             */
-            resolution_note: string | null;
+            resolution_m?: number | null;
+            /** Resolution Note */
+            resolution_note?: string | null;
             /** Can Answer */
             can_answer?: string[];
             /** Cannot Answer */
@@ -247,11 +350,8 @@ export interface components {
             license: string;
             /** @default planned */
             status: components["schemas"]["DatasetStatus"];
-            /**
-             * Notes
-             * @default null
-             */
-            notes: string | null;
+            /** Notes */
+            notes?: string | null;
         };
         /**
          * DatasetStatus
@@ -262,7 +362,7 @@ export interface components {
         DatasetsResponse: {
             /**
              * Contract Version
-             * @default 0.5.0
+             * @default 0.6.0
              */
             contract_version: string;
             /**
@@ -271,11 +371,8 @@ export interface components {
              * @default false
              */
             _placeholder: boolean;
-            /**
-             * Note
-             * @default null
-             */
-            _note: string | null;
+            /** Note */
+            _note?: string | null;
             /** Datasets */
             datasets: components["schemas"]["DatasetCapability"][];
         };
@@ -342,7 +439,7 @@ export interface components {
         FeaturesResponse: {
             /**
              * Contract Version
-             * @default 0.5.0
+             * @default 0.6.0
              */
             contract_version: string;
             /**
@@ -386,7 +483,7 @@ export interface components {
         HealthResponse: {
             /**
              * Contract Version
-             * @default 0.5.0
+             * @default 0.6.0
              */
             contract_version: string;
             /**
@@ -408,7 +505,7 @@ export interface components {
         HorizonProfile: {
             /**
              * Contract Version
-             * @default 0.5.0
+             * @default 0.6.0
              */
             contract_version: string;
             /**
@@ -417,11 +514,8 @@ export interface components {
              * @default false
              */
             _placeholder: boolean;
-            /**
-             * Note
-             * @default null
-             */
-            _note: string | null;
+            /** Note */
+            _note?: string | null;
             location: components["schemas"]["Location"];
             /** Unit Height M */
             unit_height_m: number;
@@ -435,15 +529,11 @@ export interface components {
              * @description Terrain horizon elevation at each azimuth, deg, measured from the local horizontal plane: the plane through the observer (DEM surface + unit height) normal to the reference sphere's radius at the site; the same plane as the Sun/Earth tracks (BodyTrack.elevation_deg)
              */
             elevation_deg: number[];
-            /**
-             * Max Range Km
-             * @default null
-             */
-            max_range_km: number | null;
+            /** Max Range Km */
+            max_range_km?: number | null;
             /** Terrain Stack */
             terrain_stack?: components["schemas"]["TerrainLayer"][];
-            /** @default null */
-            fidelity: components["schemas"]["FidelityLabel"] | null;
+            fidelity?: components["schemas"]["FidelityLabel"] | null;
         };
         /** HorizonRequest */
         HorizonRequest: {
@@ -451,11 +541,19 @@ export interface components {
             /** Unit Height M */
             unit_height_m: number;
         };
+        /**
+         * InvalidRequestError
+         * @description 422: FastAPI rejected a malformed request (a client bug, not a scenario without results).
+         */
+        InvalidRequestError: {
+            /** Detail */
+            detail: components["schemas"]["ValidationIssue"][];
+        };
         /** Job */
         Job: {
             /**
              * Contract Version
-             * @default 0.5.0
+             * @default 0.6.0
              */
             contract_version: string;
             /**
@@ -524,7 +622,7 @@ export interface components {
         LocateResponse: {
             /**
              * Contract Version
-             * @default 0.5.0
+             * @default 0.6.0
              */
             contract_version: string;
             /**
@@ -533,16 +631,18 @@ export interface components {
              * @default false
              */
             _placeholder: boolean;
-            /**
-             * Note
-             * @default null
-             */
-            _note: string | null;
+            /** Note */
+            _note?: string | null;
             location: components["schemas"]["Location"];
             /** Terrain Stack */
             terrain_stack: components["schemas"]["TerrainLayer"][];
             fidelity: components["schemas"]["FidelityLabel"];
         };
+        /**
+         * LocateUnprocessableError
+         * @description 422 from POST /api/locate: tell the two apart by `detail` (an object vs a list).
+         */
+        LocateUnprocessableError: components["schemas"]["NoTerrainError"] | components["schemas"]["InvalidRequestError"];
         /** Location */
         Location: {
             /**
@@ -583,7 +683,7 @@ export interface components {
         MetricsResponse: {
             /**
              * Contract Version
-             * @default 0.5.0
+             * @default 0.6.0
              */
             contract_version: string;
             /**
@@ -607,7 +707,7 @@ export interface components {
         NLAnswer: {
             /**
              * Contract Version
-             * @default 0.5.0
+             * @default 0.6.0
              */
             contract_version: string;
             /**
@@ -657,7 +757,7 @@ export interface components {
         NLUnsupported: {
             /**
              * Contract Version
-             * @default 0.5.0
+             * @default 0.6.0
              */
             contract_version: string;
             /**
@@ -672,6 +772,46 @@ export interface components {
              */
             _note: string | null;
             unsupported: components["schemas"]["Limitation"];
+        };
+        /** NoTerrainDetail */
+        NoTerrainDetail: {
+            /**
+             * Reason
+             * @description Plain-language explanation, suitable to show to visitors
+             */
+            reason: string;
+        };
+        /**
+         * NoTerrainError
+         * @description 422 from POST /api/locate: no terrain data in this version covers the location.
+         */
+        NoTerrainError: {
+            detail: components["schemas"]["NoTerrainDetail"];
+        };
+        /** NotServedDetail */
+        NotServedDetail: {
+            /**
+             * Reason
+             * @description Plain-language explanation, suitable to show to visitors
+             */
+            reason: string;
+            /**
+             * Scenario Key
+             * @description Scenario.key() of the requested scenario (HorizonRequest.key() for /api/horizon)
+             */
+            scenario_key: string;
+            /**
+             * Served
+             * @description Every scenario this API version serves (for /api/horizon: one per served location and unit height, and differs_in names only location and unit_height_m)
+             */
+            served: components["schemas"]["ServedScenario"][];
+        };
+        /**
+         * NotServedError
+         * @description 422: a valid request for a scenario (or location and height) with no precomputed result.
+         */
+        NotServedError: {
+            detail: components["schemas"]["NotServedDetail"];
         };
         /**
          * Operation
@@ -760,7 +900,7 @@ export interface components {
         ProximityResponse: {
             /**
              * Contract Version
-             * @default 0.5.0
+             * @default 0.6.0
              */
             contract_version: string;
             /**
@@ -778,6 +918,12 @@ export interface components {
             /** Results */
             results: components["schemas"]["FeatureDistance"][];
         };
+        /** RootModel[Union[CompareNotServedError, InvalidRequestError]] */
+        RootModel_Union_CompareNotServedError__InvalidRequestError__: components["schemas"]["CompareNotServedError"] | components["schemas"]["InvalidRequestError"];
+        /** RootModel[Union[NoTerrainError, InvalidRequestError]] */
+        RootModel_Union_NoTerrainError__InvalidRequestError__: components["schemas"]["NoTerrainError"] | components["schemas"]["InvalidRequestError"];
+        /** RootModel[Union[NotServedError, InvalidRequestError]] */
+        RootModel_Union_NotServedError__InvalidRequestError__: components["schemas"]["NotServedError"] | components["schemas"]["InvalidRequestError"];
         /**
          * Scenario
          * @description The unit of everything (plan section 3.1): results are keyed by `Scenario.key()`.
@@ -807,6 +953,12 @@ export interface components {
              */
             step: string;
         };
+        /**
+         * ScenarioField
+         * @description The parts of a scenario that `Scenario.key()` covers (the location name is not one of them).
+         * @enum {string}
+         */
+        ScenarioField: "location" | "unit_height_m" | "window_start" | "window_end" | "step";
         /**
          * ScenarioRequest
          * @description Body of POST /api/series and POST /api/metrics.
@@ -875,7 +1027,7 @@ export interface components {
         SeriesResponse: {
             /**
              * Contract Version
-             * @default 0.5.0
+             * @default 0.6.0
              */
             contract_version: string;
             /**
@@ -901,6 +1053,20 @@ export interface components {
              * @default false
              */
             downsampled: boolean;
+        };
+        /**
+         * ServedScenario
+         * @description One scenario this API version has a precomputed result for.
+         */
+        ServedScenario: {
+            scenario: components["schemas"]["Scenario"];
+            /** Scenario Key */
+            scenario_key: string;
+            /**
+             * Differs In
+             * @description The parts of the requested scenario that differ from this one
+             */
+            differs_in: components["schemas"]["ScenarioField"][];
         };
         /** Site */
         Site: {
@@ -937,7 +1103,7 @@ export interface components {
         SitesResponse: {
             /**
              * Contract Version
-             * @default 0.5.0
+             * @default 0.6.0
              */
             contract_version: string;
             /**
@@ -959,6 +1125,62 @@ export interface components {
             max?: number | null;
             /** Mean */
             mean?: number | null;
+        };
+        /** StaticEntry */
+        StaticEntry: {
+            scenario: components["schemas"]["Scenario"];
+            /** Scenario Key */
+            scenario_key: string;
+            /**
+             * Metrics
+             * @description Path of this scenario's MetricsResponse file
+             */
+            metrics: string;
+            /**
+             * Series
+             * @description Path of this scenario's SeriesResponse file
+             */
+            series: string;
+            /**
+             * Horizon
+             * @description Path of the HorizonProfile for its location and unit height, if served
+             * @default null
+             */
+            horizon: string | null;
+        };
+        /**
+         * StaticIndex
+         * @description index.json of the static fallback: every served scenario and where its files are.
+         */
+        StaticIndex: {
+            /**
+             * Contract Version
+             * @default 0.6.0
+             */
+            contract_version: string;
+            /**
+             * Placeholder
+             * @description True when the values are placeholders, not computed results.
+             * @default false
+             */
+            _placeholder: boolean;
+            /**
+             * Note
+             * @default null
+             */
+            _note: string | null;
+            /** Scenarios */
+            scenarios: components["schemas"]["StaticEntry"][];
+            /**
+             * Sites
+             * @description Path of the SitesResponse file
+             */
+            sites: string;
+            /**
+             * Datasets
+             * @description Path of the DatasetsResponse file
+             */
+            datasets: string;
         };
         /** StructuredQuery */
         StructuredQuery: {
@@ -982,12 +1204,34 @@ export interface components {
             role: "near_field" | "far_field";
             /** Resolution M */
             resolution_m: number;
-            /**
-             * Max Range Km
-             * @default null
-             */
-            max_range_km: number | null;
+            /** Max Range Km */
+            max_range_km?: number | null;
         };
+        /** UnavailableDetail */
+        UnavailableDetail: {
+            /**
+             * Reason
+             * @description Plain-language explanation, suitable to show to visitors
+             */
+            reason: string;
+            /**
+             * Technical
+             * @description The technical cause, for developers (not meant for visitors)
+             */
+            technical?: string | null;
+        };
+        /**
+         * UnavailableError
+         * @description 503: no usable precomputed results are installed on the server.
+         */
+        UnavailableError: {
+            detail: components["schemas"]["UnavailableDetail"];
+        };
+        /**
+         * UnprocessableError
+         * @description 422 from /api/metrics, /api/series, /api/horizon: tell the two apart by `detail` (object vs list).
+         */
+        UnprocessableError: components["schemas"]["NotServedError"] | components["schemas"]["InvalidRequestError"];
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -1000,6 +1244,23 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * ValidationIssue
+         * @description One item of FastAPI's request-validation error list (extra keys such as `input`, `ctx` may appear).
+         */
+        ValidationIssue: {
+            /**
+             * Loc
+             * @description Where in the request the problem is
+             */
+            loc: (string | number)[];
+            /** Msg */
+            msg: string;
+            /** Type */
+            type: string;
+        } & {
+            [key: string]: unknown;
         };
     };
     responses: never;
@@ -1061,6 +1322,101 @@ export interface operations {
             };
         };
     };
+    datasets_api_datasets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatasetsResponse"];
+                };
+            };
+        };
+    };
+    locate_endpoint_api_locate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LocateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocateResponse"];
+                };
+            };
+            /** @description No terrain data covers the location (NoTerrainError), or a malformed request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocateUnprocessableError"];
+                };
+            };
+        };
+    };
+    horizon_api_horizon_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HorizonRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HorizonProfile"];
+                };
+            };
+            /** @description No precomputed result for this request (NotServedError), or a malformed request (InvalidRequestError, FastAPI validation) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnprocessableError"];
+                };
+            };
+            /** @description No usable precomputed results are installed */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnavailableError"];
+                };
+            };
+        };
+    };
     metrics_api_metrics_post: {
         parameters: {
             query?: never;
@@ -1083,19 +1439,23 @@ export interface operations {
                     "application/json": components["schemas"]["MetricsResponse"];
                 };
             };
-            /** @description No precomputed result for this scenario (detail.reason, detail.served) */
+            /** @description No precomputed result for this request (NotServedError), or a malformed request (InvalidRequestError, FastAPI validation) */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["UnprocessableError"];
+                };
             };
-            /** @description No usable precomputed results are installed (detail.reason) */
+            /** @description No usable precomputed results are installed */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["UnavailableError"];
+                };
             };
         };
     };
@@ -1121,19 +1481,65 @@ export interface operations {
                     "application/json": components["schemas"]["SeriesResponse"];
                 };
             };
-            /** @description No precomputed result for this scenario (detail.reason, detail.served) */
+            /** @description No precomputed result for this request (NotServedError), or a malformed request (InvalidRequestError, FastAPI validation) */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["UnprocessableError"];
+                };
             };
-            /** @description No usable precomputed results are installed (detail.reason) */
+            /** @description No usable precomputed results are installed */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["UnavailableError"];
+                };
+            };
+        };
+    };
+    compare_api_compare_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompareRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompareResponse"];
+                };
+            };
+            /** @description None of the scenarios is served (CompareNotServedError), or a malformed request (InvalidRequestError, FastAPI validation) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompareUnprocessableError"];
+                };
+            };
+            /** @description No usable precomputed results are installed */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnavailableError"];
+                };
             };
         };
     };

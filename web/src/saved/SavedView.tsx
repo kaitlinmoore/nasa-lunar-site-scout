@@ -6,20 +6,10 @@
 // - A small form makes scenarios for several sites × several dates.
 // - The comparison is the saved scenarios ticked for it, side by side.
 import { type FormEvent, type ReactNode, useEffect, useRef, useState } from 'react'
-import {
-  type CompareResponse,
-  type MetricsResponse,
-  type Scenario,
-  type Site,
-  WEB_CONTRACT_VERSION,
-} from '../api/client'
-import { type DataSource, loadCompare } from '../api/source'
-import {
-  formatExactRange,
-  formatScenarioSummary,
-  formatUtcInput,
-  parseUtcInput,
-} from '../format'
+import { type Scenario, type Site, WEB_CONTRACT_VERSION } from '../api/client'
+import { type ComparisonResult, type DataSource, loadCompare } from '../api/source'
+import ApiProblemView from '../ApiProblemView'
+import { formatExactRange, formatScenarioSummary, formatUtcInput, parseUtcInput } from '../format'
 import { navigate, routeHref } from '../route'
 import { validateScenario } from '../scenario'
 import CompareTable from './CompareTable'
@@ -223,9 +213,8 @@ function ImportExport() {
  * shows another selection's numbers, even for a moment. */
 type CompareState =
   | { kind: 'idle' }
-  | { kind: 'ok'; forKey: string; response: CompareResponse; items: (MetricsResponse | null)[] }
-  | { kind: 'unavailable'; forKey: string }
-  | { kind: 'error'; forKey: string; message: string }
+  | { kind: 'ok'; forKey: string; result: ComparisonResult }
+  | { kind: 'error'; forKey: string; error: unknown }
 
 function Comparison({ source }: { source: DataSource }) {
   const saved = useSaved()
@@ -240,13 +229,11 @@ function Comparison({ source }: { source: DataSource }) {
     if (key === '[]') return
     let cancelled = false
     loadCompare(source, JSON.parse(key) as Scenario[])
-      .then((r) => {
-        if (!cancelled) setState(r ? { kind: 'ok', forKey: key, ...r } : { kind: 'unavailable', forKey: key })
+      .then((result) => {
+        if (!cancelled) setState({ kind: 'ok', forKey: key, result })
       })
       .catch((e: unknown) => {
-        if (!cancelled) {
-          setState({ kind: 'error', forKey: key, message: e instanceof Error ? e.message : String(e) })
-        }
+        if (!cancelled) setState({ kind: 'error', forKey: key, error: e })
       })
     return () => {
       cancelled = true
@@ -256,27 +243,15 @@ function Comparison({ source }: { source: DataSource }) {
   if (selected.length === 0)
     return <p className="muted">Tick saved scenarios above to compare them side by side.</p>
   if (state.kind === 'idle' || state.forKey !== key) return <p className="muted">Loading comparison…</p>
-  if (state.kind === 'unavailable') {
-    return (
-      <p className="muted">
-        Fixture mode only for now: the live compare endpoint isn't available yet. Open this page with{' '}
-        <span className="mono">?source=fixtures</span>.
-      </p>
-    )
-  }
-  if (state.kind === 'error') {
-    return (
-      <div className="banner error" role="alert">
-        <strong>Could not load the comparison.</strong> No values are shown.
-        <div className="mono">{state.message}</div>
-      </div>
-    )
-  }
+  if (state.kind === 'error') return <ApiProblemView what="the comparison" error={state.error} />
 
-  const { response } = state
-  const anyPlaceholder = response._placeholder || state.items.some((i) => i?._placeholder)
+  const { meta, items, reasons, noneReason } = state.result
+  const anyPlaceholder = !!meta?._placeholder || items.some((i) => i?._placeholder)
   const versions = [
-    ...new Set([response.contract_version, ...state.items.flatMap((i) => (i ? [i.contract_version] : []))]),
+    ...new Set([
+      ...(meta ? [meta.contract_version] : []),
+      ...items.flatMap((i) => (i ? [i.contract_version] : [])),
+    ]),
   ]
   const mismatched = versions.filter((v) => v !== WEB_CONTRACT_VERSION)
   return (
@@ -290,17 +265,15 @@ function Comparison({ source }: { source: DataSource }) {
       {anyPlaceholder && (
         <div className="banner placeholder" role="note">
           <strong>Placeholder data, not a computed result.</strong>
-          {response._note && <div className="muted">{response._note}</div>}
+          {meta?._note && <div className="muted">{meta._note}</div>}
         </div>
       )}
-      <CompareTable
-        entries={selected.map((s, i) => ({ saved: s, result: state.items[i] }))}
-        noResultText={
-          source === 'fixtures'
-            ? 'No result in fixture mode: only scenarios in fixtures/compare.json have one.'
-            : 'No result for this scenario.'
-        }
-      />
+      {noneReason && (
+        <div className="banner notice" role="status">
+          <strong>None of these scenarios has a result yet.</strong> {noneReason}
+        </div>
+      )}
+      <CompareTable entries={selected.map((s, i) => ({ saved: s, result: items[i], reason: reasons[i] }))} />
     </>
   )
 }

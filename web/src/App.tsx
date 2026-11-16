@@ -24,6 +24,7 @@ import ApiProblemView from './ApiProblemView'
 import { formatLatLon, formatSavedLabel } from './format'
 import GlobeView from './globe/GlobeView'
 import { navigate, type Route, routeHref, useRoute } from './route'
+import { useUsingStaticCopy } from './api/staticFallback'
 import SavedView from './saved/SavedView'
 import { useSaved } from './saved/store'
 import SiteScreen from './SiteScreen'
@@ -61,6 +62,20 @@ function useLoad<T>(load: (source: DataSource) => Promise<T>, source: DataSource
  * public visitors (Kaitlin, 2026-11-15). The contract-mismatch warning is shown in every build.
  */
 const SHOW_DEV_INFO = import.meta.env.DEV
+
+/**
+ * Shown while any part of the page comes from the static copy because the live API isn't
+ * answering (Kaitlin, 2026-11-15: switch-over with a visible notice). Wording: SI draft.
+ */
+function StaticCopyNotice() {
+  if (!useUsingStaticCopy()) return null
+  return (
+    <div className="banner notice" role="status">
+      <strong>The live server isn't answering right now,</strong> so you're seeing the saved copy of our
+      precomputed results that's published with this site.
+    </div>
+  )
+}
 
 /** Contract versions of the responses on screen; flags any that differ from the web build's. */
 function ContractCheck({ responses }: { responses: ({ contract_version: string } | null | undefined)[] }) {
@@ -328,6 +343,7 @@ export default function App() {
         {route.view === 'globe' && <ContractCheck responses={[siteList]} />}
         <Nav route={route} />
       </header>
+      <StaticCopyNotice />
 
       {body}
 

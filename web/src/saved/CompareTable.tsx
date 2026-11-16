@@ -8,7 +8,7 @@ import { COMMS_SPEC, fieldDoc, type MetricSpec, metricFields, POWER_SPEC } from 
 import { NotComputed } from '../Value'
 import type { SavedScenario } from './store'
 
-export type CompareEntry = { saved: SavedScenario; result: MetricsResponse | null }
+export type CompareEntry = { saved: SavedScenario; result: MetricsResponse | null; reason: string | null }
 
 function GroupRows<T extends object>({
   title,
@@ -53,13 +53,7 @@ function GroupRows<T extends object>({
   )
 }
 
-export default function CompareTable({
-  entries,
-  noResultText,
-}: {
-  entries: CompareEntry[]
-  noResultText: string
-}) {
+export default function CompareTable({ entries }: { entries: CompareEntry[] }) {
   return (
     <div className="compare-scroll">
       <table className="metrics compare">
@@ -81,12 +75,12 @@ export default function CompareTable({
         <tbody>
           <tr>
             <th scope="row">Result</th>
-            {entries.map(({ saved, result }) => (
+            {entries.map(({ saved, result, reason }) => (
               <td key={saved.id}>
                 {result ? (
                   <span className="muted value">scenario key {result.scenario_key}</span>
                 ) : (
-                  <span className="not-computed">{noResultText}</span>
+                  <span className="not-computed">{reason ?? 'No result for this scenario.'}</span>
                 )}
               </td>
             ))}
