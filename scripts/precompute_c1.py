@@ -65,6 +65,8 @@ def provenance(res) -> dict:
 
 def main() -> int:
     res = compute_series(SCENARIO)
+    if res.horizon.missing_samples:  # methodology section 3.1: never serve a horizon with uncovered samples
+        raise SystemExit(f"horizon has {res.horizon.missing_samples} ray samples no terrain layer covers")
     m = metrics_response(res).model_dump(mode="json", by_alias=True)
     s = series_response(res).model_dump(mode="json", by_alias=True)
     key = SCENARIO.key()

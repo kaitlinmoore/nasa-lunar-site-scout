@@ -4,11 +4,15 @@ Step 4.7 validation of the served C1 result (docs/methodology.md section 6). Sta
 
   barker   Barker et al. (2021) RoI 4 bound: every 5 m pixel in the RoI 4 outline, 1 m, Sun,
            2024-01-01 to 2026-01-01, averaged over the RoI as in Barker's Table 2 A rows (and C rows).
+  barkerring  The same for every pixel outside RoI 4 that touches it: with the inside pixels, a two-sided
+           check that the engine puts Barker's 70% contour (the RoI definition) in the same place.
   p69      PGDA product 69 internal pass: observer at 0 m on 60 m terrain, 18.6 years hourly, from two
            start dates, Sun and Earth, at the 5 x 5 product 69 pixels around RoI 4. Never served.
   ridge    Ridge-top check of the served window: the terrain horizon along the Sun's azimuths while it is
            visible, an independent ray scan of the DEMs at those azimuths, and how much of the visibility a
            horizon at the local horizontal would allow.
+  accuracy How a horizon error carries into the served metrics: the served scenario rerun with the
+           horizon shifted (whole horizon, or only where it is set by terrain under 1 km away).
   summary  Collect the results into tests/engine/fixtures/validation_c1.json (committed; checked against
            the stated tolerances by tests/engine/test_validation_c1.py).
 
@@ -27,6 +31,7 @@ import struct
 import sys
 import tarfile
 import time
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -37,7 +42,7 @@ from lss.contract.examples import SCENARIO
 from lss.datafiles import get as datafile
 from lss.ephem import MOON_RADIUS_M, enu_basis
 from lss.horizon import HORIZON_VERSION, cached_horizon
-from lss.metrics import power_metrics, time_mean
+from lss.metrics import comms_metrics, power_metrics, time_mean
 from lss.registry.terrain import LAYERS, LayerSpec
 from lss.series import SERIES_VERSION, SeriesParams, body_visibility, compute_series, ephemeris_sampler
 from lss.terrain.core import latlon_from_ps
@@ -54,12 +59,20 @@ BARKER_A = {"avg_ill_pct_p1": 69.61, "lcip_d_p1": 136.49, "lcsp_d_p99": 13.27}
 BARKER_C = {"avg_ill_pct_p1": 86.81, "lcip_d_p1": 232.50, "lcsp_d_p99": 4.58}
 # Tolerances, fixed before the run (docs/methodology.md section 6.2).
 TOL = {"avg_ill_pct": 1.0, "lcip_d": 2.0, "lcsp_d": 1.0}
+# Barker drew each RoI as the connected pixels with average illumination > 70% (1 m, 2024-2025): the two-sided
+# contour check (inside >= 70% - t, outside edge neighbours <= 70% + t). t fixed before the full ring run.
+CONTOUR_PCT = 70.0
+CONTOUR_TOL_PP = 0.5
 
 P69_YEARS = 18.6
 P69_STARTS = (datetime(2000, 1, 1, tzinfo=UTC), datetime(2024, 1, 1, tzinfo=UTC))
 P69_STEP_S = 3600.0  # product 69: "percentage of [hourly] timesteps"
 P69_HALF = 2  # 5 x 5 pixels around the one containing the RoI 4 centroid
 P69_TOL_PP = 5.0  # mean |difference| over the 5 x 5 pixels, percentage points (fixed before the run)
+# For the C3 rerun on product 69's own terrain (LDEM_85S_060M), at 0 m and 2 m: derived BEFORE that run from
+# the half-pixel diagnostic (mean |change|, 9 central pixels x 4 directions = 9.55 pp; methodology 6.3).
+P69_C3_TOL_PP = 9.6
+P69_C3_HEIGHTS_M = (0.0, 2.0)
 P69_CLIP = LayerSpec(
     "ldem_60m_site01_clip",
     "pgda_90_south_pole_dems",
@@ -79,6 +92,13 @@ FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "engine" / "fixtures" 
 FIG15_ROI4 = {
     0.0: -1.9, 22.5: -1.6, 45.0: -0.85, 67.5: -1.5, 90.0: -2.0, 112.5: -2.2, 135.0: -0.9, 157.5: -1.6,
     180.0: -1.7, 202.5: -0.9, 225.0: 0.1, 247.5: 0.15, 270.0: -0.3, 292.5: -1.2, 315.0: -1.9, 337.5: -1.5,
+}  # fmt: skip
+# Fig. 15, RoI 4 panel, re-read around the two angles where the eye reading above differed from ours by
+# 0.77 deg (G1 review, finding m3): the far-field (black) line digitised column by column from a 1200 dpi
+# render (pixel medians; axes from the panel's gridlines). Far field sets the horizon at all these angles.
+FIG15_ROI4_DIGITISED = {
+    85.0: -0.96, 87.5: -0.95, 90.0: -1.13, 92.5: -1.70, 95.0: -2.00,
+    335.0: -2.46, 337.5: -2.32, 342.5: -1.53, 345.0: -1.42,
 }  # fmt: skip
 # Fig. 19, RoI 4, new (nominal) LDEM, open circles: average illumination, LCIP, LCSP, LCIP start/end months.
 FIG19_ROI4 = {
@@ -244,6 +264,81 @@ def stage_barker(fresh: bool) -> None:
         )
 
 
+def roi_ring(roi: int = ROI) -> tuple[np.ndarray, np.ndarray]:
+    """Pixels outside the RoI that touch it: centres (PS x, y) and whether each shares an edge with it (True)
+    or only a corner (False). Barker drew the RoI as the connected pixels above 70%, so an edge neighbour must
+    be at most 70% under either connectivity; a corner-only neighbour must be too under 8-connectivity."""
+    inside = {(float(x), float(y)) for x, y in roi_pixels(roi)}
+    ring: dict[tuple[float, float], bool] = {}
+    for x, y in inside:
+        for dx in (-5.0, 0.0, 5.0):
+            for dy in (-5.0, 0.0, 5.0):
+                q = (x + dx, y + dy)
+                if q not in inside:
+                    ring[q] = ring.get(q, False) or (dx == 0.0 or dy == 0.0)
+    keys = sorted(ring)
+    return np.array(keys), np.array([ring[k] for k in keys])
+
+
+def stage_barkerring(fresh: bool) -> None:
+    out = vdir() / f"roi{ROI}_ring"
+    hz_dir = vdir() / f"roi{ROI}_horizons"
+    pix, edge = roi_ring()
+    print(f"RoI {ROI}: {len(pix)} outside pixels touch it ({int(edge.sum())} share an edge)", flush=True)
+    t_start = time.monotonic()
+    for i, (x, y) in enumerate(pix):
+        path = out / f"px_{i:03d}.npz"
+        if path.is_file() and not fresh:
+            continue
+        lat, lon = (float(v) for v in latlon_from_ps(x, y, "south"))
+        t0 = time.monotonic()
+        hz, v = sun_visibility(lat, lon, 1.0, *BARKER, BARKER_STEP_S, directory=hz_dir)
+        s, hourly = pixel_stats(v, BARKER[0], BARKER_STEP_S)
+        s.update(i=i, x=float(x), y=float(y), edge=bool(edge[i]), lat=lat, lon=lon)
+        s["seconds"] = round(time.monotonic() - t0, 1)
+        out.mkdir(parents=True, exist_ok=True)
+        part = path.with_name(path.name + ".part.npz")
+        np.savez_compressed(part, hourly=hourly, stats=json.dumps(s))
+        part.replace(path)
+        print(
+            f"  ring {i:3d}/{len(pix)}  avg {s['avg_ill_pct_hourly']:6.2f}%  edge {bool(edge[i])}  "
+            f"({s['seconds']} s; {time.monotonic() - t_start:.0f} s)",
+            flush=True,
+        )
+
+
+def contour_summary(inside_pct: list[float]) -> dict:
+    """Two-sided check of Barker's 70% contour (methodology section 6.2)."""
+    out = vdir() / f"roi{ROI}_ring"
+    pix, edge = roi_ring()
+    stats = []
+    for i in range(len(pix)):
+        with np.load(out / f"px_{i:03d}.npz") as z:
+            stats.append(json.loads(str(z["stats"])))
+    e = [s["avg_ill_pct_hourly"] for s in stats if s["edge"]]
+    c = [s["avg_ill_pct_hourly"] for s in stats if not s["edge"]]
+    lo, hi = CONTOUR_PCT - CONTOUR_TOL_PP, CONTOUR_PCT + CONTOUR_TOL_PP
+    return {
+        "contour_pct": CONTOUR_PCT,
+        "tolerance_pp": CONTOUR_TOL_PP,
+        "inside": {"pixels": len(inside_pct), "min": min(inside_pct), "max": max(inside_pct)},
+        "outside_edge": {
+            "pixels": len(e),
+            "min": min(e),
+            "max": max(e),
+            "median": float(np.median(e)),
+            "above_contour": int(sum(v > CONTOUR_PCT for v in e)),
+        },
+        "outside_corner_only": {
+            "pixels": len(c),
+            "min": min(c),
+            "max": max(c),
+            "above_contour": int(sum(v > CONTOUR_PCT for v in c)),
+        },
+        "pass": {"inside": min(inside_pct) >= lo, "outside_edge": max(e) <= hi},
+    }
+
+
 def barker_summary() -> dict:
     out = vdir() / f"roi{ROI}"
     pix = roi_pixels()
@@ -307,6 +402,7 @@ def barker_summary() -> dict:
         "lcip_end_median": ends[len(ends) // 2],
         "pixel_range": {k: [min(v), max(v)] for k, v in per_pixel.items()},
         "pixels_below_70pct": int(sum(v < 70.0 for v in per_pixel["avg_ill_pct_hourly"])),
+        "contour_70pct": contour_summary(per_pixel["avg_ill_pct_hourly"]),
         "grid_check_60s_minus_600s": grid,
         "horizon_version": HORIZON_VERSION,
         "series_version": SERIES_VERSION,
@@ -434,10 +530,21 @@ def p69shift_summary() -> dict | None:
                 "product69_within_shift_range": bool(lo <= ref <= hi),
             }
         )
+    # Every (pixel, direction) change: the basis of the C3 rerun's tolerance (methodology section 6.3).
+    changes = np.array(
+        [
+            100.0 * v["time_steps_visible"] - r["ours_pct"]
+            for r in rows
+            for k, v in data.items()
+            if k.startswith(f"px{r['pixel']:02d}_")
+        ]
+    )
     return {
         "shift_m": P69_SHIFT_M,
         "rows": rows,
         "median_max_change_pp": float(np.median([r["max_change_pp"] for r in rows])),
+        "mean_abs_change_pp": float(np.abs(changes).mean()),
+        "mean_change_pp": float(changes.mean()),
         "pixels_with_product69_within_shift_range": sum(r["product69_within_shift_range"] for r in rows),
     }
 
@@ -563,6 +670,89 @@ def independent_horizon(lat, lon, observer_radius_m, azimuths, dems):
     return out
 
 
+# ------------------------------------------------------------------ stage: accuracy
+
+
+ACC_WHOLE_DEG = (-0.2, -0.1, -0.05, -0.01, 0.01, 0.05, 0.1, 0.2)  # whole-horizon shifts
+ACC_NEAR_M, ACC_NEAR_DEG = 1000.0, (-0.2, 0.2)  # only azimuths whose horizon is set by terrain this close
+# Barker et al. (2021) section 4: median RMS height error of the 5 m site map over 100 clones (MADb 0.15 m).
+BARKER_RMS_Z_M = 0.37
+
+
+def _metrics_with(base, hz):
+    """The served scenario's metrics with another horizon (same ephemeris, grid and observer)."""
+    dur = base.duration_s
+    bodies = {}
+    for name, limb in (("SUN", True), ("EARTH", False)):
+        sample = ephemeris_sampler(name, base.lat, base.lon, base.observer_height_m, base.window_start)
+        bodies[name] = body_visibility(sample, hz.elevation_at, dur, limb, base.params)
+    res = replace(base, horizon=hz, sun=bodies["SUN"], earth=bodies["EARTH"])
+    p, c = power_metrics(res), comms_metrics(res)
+    return {
+        "illumination_fraction": p.illumination_fraction,
+        "mean_visible_disk_fraction": p.mean_visible_disk_fraction,
+        "shadow_count": p.shadow_count,
+        "longest_shadow_h": p.longest_shadow_h,
+        "longest_sunlit_period_h": p.longest_sunlit_period_h,
+        "time_to_sunset_h": p.time_to_sunset_h,
+        "shadow_periods_h": sorted((q.duration_s / H for q in res.sun.hidden), reverse=True),
+        "earth_visibility_fraction": c.earth_visibility_fraction,
+        "earth_full_disc_fraction": c.earth_full_disc_fraction,
+        "longest_earth_gap_h": c.longest_earth_gap_h,
+        "sun_earth_overlap_fraction": c.sun_earth_overlap_fraction,
+    }
+
+
+def stage_accuracy(fresh: bool) -> None:
+    """How a horizon error carries into the served metrics (methodology sections 3.2 and 6.6)."""
+    path = vdir() / "accuracy.json"
+    if path.is_file() and not fresh:
+        return
+    base = compute_series(SCENARIO)
+    hz = base.horizon
+    near = hz.distance_m < ACC_NEAR_M
+    cases = [{"case": "served", "shift_deg": 0.0, "azimuths": "none"}]
+    cases += [{"case": f"whole {d:+.2f}", "shift_deg": d, "azimuths": "all"} for d in ACC_WHOLE_DEG]
+    cases += [
+        {"case": f"near {d:+.2f}", "shift_deg": d, "azimuths": f"horizon set < {ACC_NEAR_M:.0f} m away"}
+        for d in ACC_NEAR_DEG
+    ]
+    for c in cases:
+        mask = near if c["azimuths"].startswith("horizon") else np.ones_like(near)
+        hz2 = replace(hz, elevation_deg=hz.elevation_deg + c["shift_deg"] * mask)
+        c.update(_metrics_with(base, hz2))
+        print(
+            f"  {c['case']:12s} illum {100 * c['illumination_fraction']:6.2f}%  "
+            f"disc {100 * c['mean_visible_disk_fraction']:6.2f}%  shadows {c['shadow_count']}  "
+            f"longest {c['longest_shadow_h']:7.2f} h  earth {100 * c['earth_visibility_fraction']:6.2f}%  "
+            f"gap {c['longest_earth_gap_h']:7.2f} h",
+            flush=True,
+        )
+    # What sets the horizon, and how much of the time the result depends on it.
+    d = hz.distance_m
+    res_m = hz.params.azimuth_step_deg
+    out = {"cases": cases, "near_m": ACC_NEAR_M, "barker_rms_z_m": BARKER_RMS_Z_M}
+    out["horizon_distance_share"] = {
+        "lt_100m": float((d < 100.0).mean()),
+        "lt_1km": float((d < 1000.0).mean()),
+        "gt_5km": float((d > 5000.0).mean()),
+    }
+    for name, body in (("SUN", base.sun), ("EARTH", base.earth)):
+        g = body.grid
+        part = (g.fraction > 0) & (g.fraction < 1)
+        idx = np.round(g.azimuth_deg / res_m).astype(int) % d.size
+        out[name] = {
+            "time_partly_visible": float(part.mean()),
+            "partly_visible_horizon_lt_100m": float((d[idx][part] < 100.0).mean()) if part.any() else 0.0,
+            "partly_visible_horizon_lt_1km": float((d[idx][part] < 1000.0).mean()) if part.any() else 0.0,
+        }
+    # Horizon change from a height error of Barker's median RMS at the terrain's distance.
+    out["horizon_change_deg_for_rms_z"] = {
+        f"{r:.0f}m": float(np.degrees(np.arctan(BARKER_RMS_Z_M / r))) for r in (50.0, 100.0, 1000.0, 50_000.0)
+    }
+    write_json(path, out)
+
+
 def stage_ridge(fresh: bool) -> None:
     path = vdir() / "ridge.json"
     if path.is_file() and not fresh:
@@ -666,25 +856,29 @@ def fig15_table() -> dict:
     """
     loc = SCENARIO.location
     hz = cached_horizon(loc.lat, loc.lon, SCENARIO.unit_height_m)
-    rows = []
-    for a, read in FIG15_ROI4.items():
-        az = (90.0 - loc.lon - a) % 360.0
-        i = round(az / hz.params.azimuth_step_deg) % hz.azimuth_deg.size
-        rows.append(
-            {
-                "figure_angle_deg": a,
-                "our_azimuth_deg": az,
-                "figure_read_el_deg": read,
-                "ours_el_deg": float(hz.elevation_at(az)),
-                "ours_distance_km": float(hz.distance_m[i] / 1000.0),
-            }
-        )
-    d = np.array([r["ours_el_deg"] - r["figure_read_el_deg"] for r in rows])
-    return {
-        "rows": rows,
-        "median_abs_diff_deg": float(np.median(np.abs(d))),
-        "max_abs_diff_deg": float(np.abs(d).max()),
-    }
+
+    def table(values):
+        rows = []
+        for a, read in values.items():
+            az = (90.0 - loc.lon - a) % 360.0
+            i = round(az / hz.params.azimuth_step_deg) % hz.azimuth_deg.size
+            rows.append(
+                {
+                    "figure_angle_deg": a,
+                    "our_azimuth_deg": az,
+                    "figure_read_el_deg": read,
+                    "ours_el_deg": float(hz.elevation_at(az)),
+                    "ours_distance_km": float(hz.distance_m[i] / 1000.0),
+                }
+            )
+        d = np.array([r["ours_el_deg"] - r["figure_read_el_deg"] for r in rows])
+        return {
+            "rows": rows,
+            "median_abs_diff_deg": float(np.median(np.abs(d))),
+            "max_abs_diff_deg": float(np.abs(d).max()),
+        }
+
+    return table(FIG15_ROI4) | {"digitised_near_outliers": table(FIG15_ROI4_DIGITISED)}
 
 
 def stage_summary(_fresh: bool) -> None:
@@ -697,6 +891,7 @@ def stage_summary(_fresh: bool) -> None:
         "barker_roi4": barker_summary() | {"fig19_read_nominal": FIG19_ROI4},
         "product69": p69_summary() | {"diagnostic_half_pixel_shift": p69shift_summary()},
         "ridge_top": ridge,
+        "served_accuracy": json.loads((vdir() / "accuracy.json").read_text(encoding="utf-8")),
     }
     write_json(FIXTURE, s)
     write_json(vdir() / "validation_c1.json", s)
@@ -714,9 +909,11 @@ def stage_summary(_fresh: bool) -> None:
 
 STAGES = {
     "barker": stage_barker,
+    "barkerring": stage_barkerring,
     "p69": stage_p69,
     "p69shift": stage_p69shift,
     "ridge": stage_ridge,
+    "accuracy": stage_accuracy,
     "summary": stage_summary,
 }
 

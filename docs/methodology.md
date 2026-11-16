@@ -3,8 +3,9 @@
 
 _Owned by stream A (engine and science). Other streams link to this page but do not edit it._
 
-Status: **draft, C1 thin slice in progress.** Sections marked _(to do)_ are filled in as each engine step lands.
-Every convention here is also stated in the code that implements it and covered by a test.
+Status: **C1 thin slice complete** (signed off at G1, 2026-11-15; served result validated in section 6). Later
+slices (C2 onward) add to it. Every convention here is also stated in the code that implements it and covered
+by a test.
 
 ## 1. Data
 
@@ -150,8 +151,11 @@ Implemented in `lss/horizon/core.py` (numba ray caster) and `lss/horizon/cache.p
   azimuths it is interpolated linearly.
 - **Heights along a ray.** Bilinear between pixel centres (section 1.2). Each ray distance has a designated
   layer (5 m site map, then the 80 m map, then the 240 m map; section 1.2). If that layer has no data at a
-  sample, the next coarser layer is used. Samples that no layer covers are counted and reported, never
-  silently dropped. At Site01 there are none.
+  sample, the next coarser layer is used. Samples that no layer covers are counted, never silently dropped.
+  The count is stored with each cached horizon. A location where a whole azimuth has no data is rejected.
+  `scripts/precompute_c1.py` refuses to write a served result whose horizon has any uncovered sample. At Site01
+  there are none. Before C3 adds sites, a non-zero count will either fail the request or be carried into the
+  fidelity label (to be decided).
 
 ### 3.2 Numerical settings and convergence
 
@@ -196,8 +200,10 @@ reference):
 Coarser settings cost accuracy. A 0.25° azimuth step gives up to 0.025°, and spacing at 0.01 × d gives up
 to 0.034°. Barker et al. (2021) used 0.5°.
 
-**Accepted:** horizon errors of at most about 0.01°, about 2% of the Sun's apparent diameter (0.53°). How such an
-error carries into illumination metrics is measured with the series in step 4.7.
+**Accepted:** horizon errors of at most about 0.01°, about 2% of the Sun's apparent diameter (0.53°). In the
+served scenario, an error of that size moves the illumination fraction by about 0.25 percentage points and the
+longest shadow by about 0.5 h, and leaves the shadow count unchanged (section 6.6). The terrain data limit the
+served numbers far more than these numerical settings do (section 6.6).
 
 **Limits of this study:**
 - It covers Site01 only (two points, two heights).
@@ -255,7 +261,7 @@ file also records the DEMs' SHA-256 hashes from `MANIFEST.json`, for provenance.
   centroids (PS km) and the **1st/99th percentiles over 100 DEM clones**, not the nominal-DEM values. Barker
   notes that the nominal DEM tends to give *better* illumination than the clone median, so the 1st percentile
   is a lower bound for the nominal value, not a target. The RoI outlines are in `Site01_ROIs.tgz` (product 78).
-- **The check is a bound, not a match.**
+- **The Table 2 check is a bound, not a match** (a two-sided check of Barker's 70% contour is added in section 6.2).
   - We compute the RoI 4 area average on the nominal DEM: the same quantities, averaged over every 5 m pixel in
     the RoI 4 outline, at 1 m, over Barker's period of 2024-01-01 to 2026-01-01.
   - We require it to be at least Barker's 1st percentile (Table 2, RoI 4, A rows), within a tolerance stated
@@ -263,7 +269,7 @@ file also records the DEMs' SHA-256 hashes from `MANIFEST.json`, for provenance.
   - For RoI 4 at z = 1 m, those values are: average illumination 69.61%, LCIP 136.49 days, and LCSP 13.27 days,
     where LCSP is a 99th percentile, so the expected direction is reversed (our value at most 13.27 days).
 - **No nominal-DEM values are tabulated.**
-  - Barker's Fig. 19 plots them (open circles). He notes they "tend to be better than the mean/median of the
+  - Barker's Fig. 19 plots them (open circles). Barker notes they "tend to be better than the mean/median of the
     clones", because clone height errors are "more likely to raise than lower the horizon elevation".
   - Values read off a figure are too imprecise for a tolerance, so Fig. 19 is used only as a qualitative
     cross-check. Table 2 stays the formal bound.
@@ -353,7 +359,9 @@ disc centre is above the terrain where its elevation exceeds the horizon elevati
   This is product 69's convention for illumination and Barker's for LCIP/LCSP. Sunlit and shadow periods
   tile the window: every instant is in exactly one of them.
 - **Partial loss of the disc is not a shadow.** It shows up only in `mean_visible_disk_fraction`.
-- **No minimum duration.** Every shadow period counts, however short. At the served point over 2024–2025,
+- **No minimum duration.** Every shadow period found counts, however short. Periods are found on the 60 s
+  internal grid (below), so a period shorter than 60 s can be missed if it starts and ends between two grid
+  points; one that contains a grid point is found and refined. At the served point over 2024–2025,
   2 of 50 shadow periods are shorter than 1 h (the shortest 19.5 min) and none is shorter than 10 min, so
   horizon flickers do not inflate the count there. (The preliminary 10 min estimate was 1 of 49: it missed
   one short period.)
@@ -378,7 +386,7 @@ Window W = [`window_start`, `window_end`], duration T.
 | `longest_sunlit_period_h` | Longest continuous sunlit period, clipped to W, h. |
 | `longest_shadow_h` | Longest continuous shadow period, clipped to W, h. 0 if there is none. |
 | `longest_shadow_clipped` | True if that period starts before W or runs past it; false if it lies inside W or there is none. |
-| `shadow_count` | Number of shadow periods in W, including clipped ones; no minimum duration. |
+| `shadow_count` | Number of shadow periods in W, including clipped ones; no minimum duration (periods shorter than the 60 s internal grid can be missed; section 5.2). |
 | `sun_elevation_deg` | Apparent elevation of the disc centre above the local horizontal plane (section 2; not the terrain horizon): min, max and time mean over all of W, whether or not the Sun is visible. |
 | `sun_azimuth_deg` | Apparent azimuth of the disc centre, clockwise from north, over all of W, whether or not the Sun is visible. `min` and `max` are the ends of the smallest arc containing the track, read clockwise from `min` to `max`; when the arc crosses north, `min` > `max` (e.g. 300 → 40). A track covering the full circle reports `min` 0, `max` 360. `mean` is always null: a linear mean of azimuths depends on where 0° is put, and a circular mean is undefined for a full circle, which is what the Sun does at Site01. The series carries the full track. |
 | `time_to_sunset_h` | From `window_start` to the first sunset (the last visible part of the solar disc going below the terrain horizon), h. Null if there is no sunset in the window. |
@@ -389,6 +397,11 @@ unwrapped azimuth spans 360° or more; otherwise its ends are the unwrapped mini
 If other bodies get azimuth statistics, the same rule applies.
 
 ### 5.4 Communications (F4): `CommsMetrics`
+
+These metrics describe the Earth as seen from the site: whether a direct line of sight to the Earth's disc
+exists. They do not check whether a ground station on Earth can see the Moon at that time, nor link budgets
+or relay satellites. Earth-side ground-station visibility is out of scope. No minimum Earth clearance is
+applied by default.
 
 | Field | Definition |
 |---|---|
@@ -433,6 +446,11 @@ If other bodies get azimuth statistics, the same rule applies.
   synthetic tracks known in closed form (within 1 s), periods tiling the window, clipped edges, a 36 s
   flicker counted; every metric on synthetic series with known answers; on real data, the served scenario's
   responses, fractions against brute force on the real horizon, and grid-step independence.
+- **Limits (polar geometry).** Two approximations hold for bodies near the horizon, as at the poles. A disc
+  point's azimuth az + x / cos(el) degrades as a body nears the zenith. The azimuth arc assumes the azimuth
+  moves less than 180° between 60 s samples, which also fails near the zenith. Neither matters at the served
+  site, where the Sun and Earth stay within a few degrees of the horizontal. Both get a synthetic
+  high-elevation test before mid-latitude sites (C7).
 - **Cost.** The served scenario (30 days, both bodies) takes about 2 s with the horizon cached; two years of
   Sun-only visibility take about 35 s (development PC).
 
@@ -448,7 +466,21 @@ All numbers below come from committed scripts. Their outputs are committed too a
   `tests/engine/fixtures/site01_roi4_c1.json`, tested by `tests/engine/test_regression_c1.py`.
 
 Every tolerance was fixed before the run it applies to. One comparison misses its tolerance (section 6.3); it
-is reported as a miss, with the diagnosis, and the tolerance was not changed afterwards.
+is reported as a miss, with the diagnosis, and the tolerance was not changed afterwards. The repository cannot
+show that order: commit `6c26af2` added the tolerances and the results together. The order is recorded, with
+dates, in the engine stream's progress log, which is kept outside the repository.
+
+Why each tolerance has its size:
+
+- **JPL Horizons, 1″:** far below anything the results depend on (section 6.1).
+- **Barker bound, −1.0 pp, −2 d, +1 d:** small allowances for the method differences that remain, each measured
+  as much smaller (the disc cut and the limb-darkening law, at most 0.02 pp, section 5.1; whole-hour sampling of
+  LCIP and LCSP). They are not derived from an error model. The margins are 3 to 28 times larger than the
+  tolerances, so the choice does not decide the result.
+- **Barker 70% contour, 0.5 pp:** suggested by the G1 reviewer, whose sample of the outside pixels came within
+  0.08 pp of the contour (section 6.2).
+- **Product 69, 5 pp:** had no stated basis. With the measured half-pixel sensitivity (section 6.3) it could
+  not tell a correct engine from a wrong one. The C3 rerun gets a tolerance derived from that sensitivity.
 
 | Check | Tolerance | Result | Verdict |
 |---|---|---|---|
@@ -456,10 +488,14 @@ is reported as a miss, with the diagnosis, and the tolerance was not changed aft
 | Barker RoI 4 average illumination (≥ 1st percentile) | −1.0 pp | 77.46% vs 69.61% | pass |
 | Barker RoI 4 LCIP (≥ 1st percentile) | −2 d | 192.2 d vs 136.49 d | pass |
 | Barker RoI 4 LCSP (≤ 99th percentile) | +1 d | 10.05 d vs 13.27 d | pass |
+| Barker 70% contour, two-sided: inside ≥ 70%, edge neighbours outside ≤ 70% | 0.5 pp | inside min 70.03%, outside max 70.19% | pass |
 | Barker Fig. 19 nominal-DEM values (qualitative) | none | read 77.5% / 192 d / 10.1 d; ours 77.46% / 192.2 d / 10.05 d | agrees |
 | Product 69, Earth, 5 × 5 pixels: mean \|difference\| | 5 pp | 3.3 pp | pass |
-| Product 69, Sun, 5 × 5 pixels: mean \|difference\| | 5 pp | 8.7 pp (no bias: mean −1.7 pp); 7.56 pp without the zero pixel (diagnostic) | **miss**, accepted for G1 as a stated difference (section 6.3) |
+| Product 69, Sun, 5 × 5 pixels: mean \|difference\| | 5 pp | 8.7 pp (no bias: mean −1.7 pp); 7.56 pp without the zero pixel (diagnostic) | **miss**; inconclusive at this resolution; accepted for G1 as a stated difference (section 6.3) |
 | Ridge-top: the Sun is seen only below the local horizontal | (stated) | confirmed four ways (section 6.4) | confirmed |
+
+How well the served numbers themselves are known (the terrain map limits them, not the numerics) is in
+section 6.6.
 
 ### 6.1 Ephemeris vs JPL Horizons
 
@@ -476,6 +512,9 @@ is reported as a miss, with the diagnosis, and the tolerance was not changed aft
   difference is 0.02″ and the largest elevation difference 0.05″. Distances agree to 14 m (Sun) and 4 m (Earth).
   The DE421 vs DE441 and frame-realisation differences are invisible at this level. Light bending, which
   Horizons includes and we don't, is far smaller still for these geometries.
+- **Limit.** This covers one site, close to the pole. Other sites are checked only against SPICE's own
+  `azlcpo` with the same kernels, which tests the ENU algebra but not the frame or the ephemeris. When C3 adds
+  sites, the Horizons fixture gets one far from the pole at an eastern longitude.
 
 ### 6.2 Barker et al. (2021): RoI 4 bound
 
@@ -486,7 +525,7 @@ is reported as a miss, with the diagnosis, and the tolerance was not changed aft
 - **Like with like.** Table 2's A rows are, for each DEM clone, the RoI average of the per-pixel values; the
   percentiles are then taken over the 100 clones. (The C rows use the most illuminated pixel at each hour; A
   must be per-pixel averages, because its LCIP differs from C's.) Barker samples hourly, so a shadow shorter
-  than about an hour is invisible to his LCIP and LCSP. We therefore compare values computed from **hourly
+  than about an hour is invisible to Barker's LCIP and LCSP. We therefore compare values computed from **hourly
   samples**: the time-mean visible fraction, and the longest runs of hours with any / no part of the Sun
   visible. Our own definitions (section 5, refined periods) give 77.46%, 191.8 d and 10.04 d, almost the same.
 - **Internal grid.** The area run uses a 600 s internal grid instead of 60 s. On 11 of the pixels both grids were
@@ -500,8 +539,22 @@ is reported as a miss, with the diagnosis, and the tolerance was not changed aft
   | LCIP | **192.2 d** | ≥ 136.49 d (1st pct) | −2 d | +55.7 d |
   | LCSP | **10.05 d** | ≤ 13.27 d (99th pct) | +1 d | 3.22 d |
 
-  All three pass. All 532 pixels have average illumination of at least 70.0% (range 70.0–85.1%), as they should,
-  since Barker drew the RoI as the connected region above 70%.
+  All three pass. **This bound is one-sided:** it rules out a result that is too dark, but an engine that
+  overestimated sunlight would pass it too. The two-sided check is the contour test below.
+- **Barker's 70% contour, two-sided** (G1 review, finding M1). Barker drew each RoI as the connected pixels with
+  average illumination above 70% (1 m, 2024–2025, nominal DEM). So the engine should put the 70% line where
+  Barker's outline is: pixels inside above it, and the pixels just outside at or below it.
+  - **Set-up.** Stage `barkerring` computes every 5 m pixel outside RoI 4 that touches it: 172 pixels, 114
+    sharing an edge with the RoI and 58 touching only a corner. Same quantity, period and grid as the inside
+    pixels.
+  - **Test, fixed before the run:** inside minimum ≥ 70% − 0.5 pp, and the edge neighbours' maximum
+    ≤ 70% + 0.5 pp. Edge neighbours must be at or below 70% whether Barker joined pixels by edges or by corners.
+    Corner-only neighbours must be too if corners count, so they are reported but not tested.
+  - **Result: pass.** Inside: 70.03–85.12% (532 pixels). Edge neighbours: 55.8–70.19%, median 68.5%; 6 of the
+    114 lie between 70.0% and 70.19%. Corner-only neighbours: 49.5–68.7%, none above 70%.
+  - The engine places Barker's contour to within 0.2 pp on both sides. That is a much sharper check than the
+    bound above, and it is a Sun check on the same ridge as the served point. The G1 reviewer's sample of every
+    3rd ring pixel (57 of 58 at or below 70%, the other 70.08%) had been seen before the tolerance was set.
 - **Fig. 19, qualitative.** Barker's nominal-DEM values for RoI 4, read from the figure (open circles), are about
   77.5%, 192 d and 10.1 d, with the LCIP running from late September 2024 to late March or early April 2025.
   Ours: 77.46%, 192.2 d and 10.05 d, with the median pixel's LCIP running from 2024-09-07 to 2025-03-27. The
@@ -540,7 +593,26 @@ is reported as a miss, with the diagnosis, and the tolerance was not changed aft
   - Conclusion: at 60 m on this ridge, a pixel-by-pixel comparison cannot be tighter than about 10 pp without
     product 69's own terrain. The Earth map, which depends far less on the near horizon, passes.
   - **Status:** accepted for G1 as a stated remaining difference (Kaitlin, 2026-11-15). Queued for C3: a
-    like-for-like rerun on product 69's own terrain, `LDEM_85S_060M`.
+    like-for-like rerun on product 69's terrain. The map its label names, `LDEM_85S_060M`, is not public. The
+    nearest public map is the PDS `LDEM_75S_60M` (version 2.0, 2017), on the same 60 m pixel grid as product
+    69. Which map to use is still open.
+- **What the Sun comparison shows: it is inconclusive at this resolution, not evidence against the engine.**
+  A half-pixel move changes our values by more than the miss, so a mean difference of 8.7 pp can come from a
+  correct engine as easily as from a wrong one. The 5 pp tolerance had no stated basis. Three things are still
+  not like for like: the terrain map, the observer height (not stated by PGDA) and the averaging dates. The
+  sharper Sun checks on this ridge are Barker's 70% contour (section 6.2) and the ridge-top check (section 6.4).
+- **Tolerance for the C3 rerun, derived before it runs.** It is set from the half-pixel diagnostic above: the
+  mean |change| over the 9 central pixels and the 4 directions is **9.55 pp**, so the tolerance is a mean
+  |difference| of **9.6 pp** over the 25 pixels. That is the disagreement a correct engine would show if product
+  69's pixel values sit up to half a pixel from where we place them. That uncertainty remains in the rerun,
+  because product 69's own map is not public (below) and a stand-in map can place features tens of metres
+  apart. The shifts mostly lower our
+  values (mean change −7.3 pp), because the central pixels lie on the ridge crest.
+  - The unknown observer height is bracketed: the rerun is made at 0 m and at 2 m, and both are reported.
+  - The test passes at either height if mean |difference| ≤ 9.6 pp.
+  - A tolerance this wide still cannot discriminate well. A sharper version would fit one map offset (two
+    parameters) to all 25 pixels and judge the remaining scatter. That costs about 25 runs per trial offset, and
+    the choice is Kaitlin's.
 - **Terrain resolution** (section 4.3), at the RoI 4 centroid over 18.6 years from 2024. The same quantity on
   the served 5 m stack is 54.8% at 0 m and **87.0% at 1 m**; on the 60 m map at 0 m it is 71.0%. At 0 m on 5 m
   terrain, metre-scale relief blocks the Sun, and 1 m clears it. This is why product 69 (0 m, 60 m) and the served
@@ -586,23 +658,34 @@ disc centre's azimuth; "distance" is how far away the terrain that sets the hori
 
 1. **Independent ray scan.** At every 5° of azimuth the Sun visits while visible (53 azimuths), the horizon was
    recomputed by separate code. It reads the DEMs with rasterio, interpolates bilinearly, steps along great
-   circles and takes the elevation angle from 3-D vectors; it shares nothing with `lss.horizon` except the layer
-   split. It agrees with the engine to **0.037°** at worst. Only three azimuths differ by more than 0.01°, all
+   circles and takes the elevation angle from 3-D vectors. It shares the DEM files, the layer split and the ENU
+   basis (`lss.ephem.enu_basis`) with the engine. So it tests the ray caster, not the data or the frame. The G1
+   reviewer's separate horizon (PROJ for the map projection, its own ENU and 3-D geometry) agrees with the
+   engine to 0.0034° at 360 azimuths, which also checks the projection and the map's orientation. It agrees with the engine to **0.037°** at worst. Only three azimuths differ by more than 0.01°, all
    where the horizon is set by terrain within 50 m, where the two codes sample the 5 m map differently. The
    low horizon is in the terrain data, not an artefact of the horizon code.
 2. **Barker et al. (2021) Fig. 15**, Barker's own horizon at the RoI 4 centroid at 1 m, independent code.
    - Barker's horizon panels measure azimuth counter-clockwise from the map's +x axis. In our convention that
      angle a is az = (90° − longitude) − a. We found this mapping by matching the profile's shape, then derived
      it from the projection.
-   - Under it, our horizon matches values read from the figure at 16 angles with a median difference of 0.06°.
-     Two angles differ by about 0.8°, both where the horizon is set by fine far-field structure 39–136 km away,
-     which is hard to read off the figure.
+   - Under it, our horizon matches values read from the figure by eye at 16 angles with a median difference
+     of 0.06°.
+   - Two of those angles differed by about 0.8°. Both are where the horizon changes steeply with azimuth. At
+     our azimuth 137° it rises from −2.00° (az 132°) to −0.94° (az 140°), set by terrain about 135 km away, in
+     the Earth's direction. At 250° it falls from −1.48° (az 245°) to −2.52° (az 252°). So a reading error of a
+     few degrees in angle explains both.
+   - **Re-read** (G1 review, finding m3). The far-field line was digitised from a 1200 dpi render, column by
+     column within 10° of each of the two angles. At 9 angles around them it agrees with ours to 0.10° at most
+     (median 0.03°). Over every digitised column where the line is found, the median difference is 0.02° and
+     the maximum 0.12°. The two 0.8° differences were errors in the eye reading.
+   - This matters for communications: azimuths 134–142° are where the Earth is partly hidden in the served
+     window (section 6.6).
    - Like ours, Barker's horizon at RoI 4 is below −1° over most azimuths.
 3. **Barker's Table 2 needs it.** Over Barker's period, a horizon at the local horizontal would allow a
    time-mean visible fraction of at most **51.4%** at RoI 4 (Sun only, from the ephemeris). Barker's *1st
-   percentile* for RoI 4 is 69.61%, and his nominal-DEM value (Fig. 19) is about 77.5%. Both are impossible
+   percentile* for RoI 4 is 69.61%, and the nominal-DEM value (Fig. 19) is about 77.5%. Both are impossible
    unless the Sun is seen below the local horizontal for a large share of the time. Our 77.46% (section 6.2)
-   agrees with his value.
+   agrees with that value.
 4. **Product 69 needs it too.** Over 18.6 years from 2024, a horizon at the local horizontal would show some
    of the Sun 55.6% of the time. Product 69's RoI 4 pixel reads **68.5%**, and five of its neighbours exceed
    70%. Product 69 was computed by other people, with other code, on an older 60 m map, at surface level. It
@@ -634,6 +717,67 @@ illumination and product 69 all agree with this.
   | Earth visibility fraction | 63.56% | 63.5% |
   | Longest Earth gap | 262.40 h (not clipped) | 262.7 h |
   | Sun and Earth both visible | 45.10% | 45.1% |
+
+  How well these values are known is in section 6.6.
+
+### 6.6 Accuracy of the served numbers
+
+The served values are exact for the nominal 5 m map, up to the numerical errors measured in sections 3.2 and
+5.5. How far they can be trusted beyond that depends on the terrain map, mostly within a few hundred metres of
+the site.
+
+**Sensitivity to the horizon** (`scripts/validation_c1.py`, stage `accuracy`). This is the served scenario
+recomputed by the engine with its horizon shifted, either everywhere, or only at the azimuths where the horizon
+is set by terrain less than 1 km away. The ephemeris, grids and observer are unchanged.
+
+| Horizon change | Illumination | Mean disc fraction | Shadow periods | Longest shadow | Longest sunlit period | Earth visible | Longest Earth gap |
+|---|---|---|---|---|---|---|---|
+| none (served) | 69.77% | 60.17% | 4 | 132.9 h | 153.3 h | 63.56% | 262.4 h |
+| whole horizon −0.01° / +0.01° | 70.01% / 69.51% | 60.52% / 59.82% | 4 / 4 | 132.3 / 133.4 h | 153.5 / 153.2 h | 63.60% / 63.51% | 262.1 / 262.7 h |
+| whole horizon −0.05° / +0.05° | 71.05% / 68.35% | 61.94% / 58.42% | 3 / 5 | 130.2 / 135.6 h | 224.7 / 152.9 h | 63.76% / 63.35% | 260.9 / 263.9 h |
+| whole horizon −0.10° / +0.10° | 72.40% / 66.54% | 63.72% / 56.68% | 5 / 5 | 127.5 / 138.4 h | 228.9 / 152.5 h | 63.97% / 63.13% | 259.4 / 265.4 h |
+| whole horizon −0.20° / +0.20° | 76.58% / 62.22% | 67.23% / 53.08% | 5 / 4 | 118.5 / 164.6 h | 238.8 / 151.7 h | 64.39% / 62.71% | 256.4 / 268.5 h |
+| only where set < 1 km away, −0.20° / +0.20° | 74.06% / 64.77% | 64.11% / 56.59% | 6 / 4 | 118.5 / 164.6 h | 153.3 / 153.3 h | unchanged | unchanged |
+
+An independent brute-force calculation by the G1 reviewer (`reference/logs/review-g1.md`, finding M2) gives the
+same table to within 0.02 percentage points and 0.1 h.
+
+**What limits it: terrain errors near the site.**
+
+- **Numerical error is small.** The horizon is computed to about 0.01° (section 3.2). That is worth about
+  0.25 percentage points of illumination, about 0.5 h on the longest shadow and Earth gap, and no change in the
+  shadow count.
+- **The map's height error is not small, close to the site.** Barker et al. (2021, section 4) give a median RMS
+  height error of **0.37 m** for the 5 m site map, from its 100 clones. A height error of 0.37 m changes the
+  horizon by 0.42° for terrain 50 m away, 0.21° at 100 m, 0.02° at 1 km and nothing measurable at 50 km.
+- **At the served point, near terrain sets much of the horizon.** It is set by terrain closer than 100 m at 36%
+  of azimuths, and closer than 1 km at 53%. For 18% of the window part of the Sun's disc is hidden. During that
+  time the horizon at the Sun's azimuth is set by terrain closer than 100 m 41% of the time.
+- **So the Sun metrics are DEM-limited.** A ±0.2° near-field error, about Barker's median at 100 m, gives an
+  illumination fraction of 64.8–74.1% (served 69.8%), 4–6 shadow periods (served 4) and a longest shadow of
+  118.5–164.6 h (served 132.9 h).
+- **Not a confidence interval.** The shifts above are uniform. Real errors vary with azimuth and partly average
+  out, so the table gives the scale of the effect, not a probability.
+- **The likely direction is darker.** Barker notes that the clones' height errors are "more likely to raise
+  than lower the horizon elevation", and the nominal-DEM values tend to be better than the clone median. For
+  the RoI 4 average over 2024–2025 the nominal value is about 77.5%, against a 1st percentile of 69.61%
+  (sections 4.1 and 6.2).
+- **The Earth metrics are far less affected.** While the Earth is partly hidden, its horizon is always set by
+  terrain 134–140 km away (azimuths 134–142°). A near-field error leaves the Earth metrics unchanged, and even
+  a 0.2° whole-horizon shift moves Earth visibility by less than 1 percentage point and the longest gap by
+  about 6 h.
+
+**The fragile metrics.**
+
+- `shadow_count` changes with a 0.05° horizon shift. Of the four served shadows, the shortest lasts 1.67 h. A
+  lower horizon removes it or splits others, and a higher one adds short shadows.
+- `longest_sunlit_period_h` is 153.3 h, but a horizon only 0.05° lower merges two sunlit periods into 224.7 h.
+  It is reliable only as "at least about 150 h".
+- `longest_shadow_h` (132.9 h): a 0.05° horizon error (a 9 cm height error 100 m away) moves it by about
+  3 h, and a 0.2° error (Barker's median height error at 100 m) by −14 to +32 h.
+
+**Not yet done.** Bands from Barker's 100 clones of the 5 m map, which PGDA product 78 provides at Site01, are
+planned (S6). They would replace the uniform shifts above with the real error distribution.
 
 
 ## References

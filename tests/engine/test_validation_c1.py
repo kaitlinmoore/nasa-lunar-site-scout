@@ -146,3 +146,54 @@ def test_product69_supports_the_ridge_top_result():
     s = V["product69"]["SUN"]
     assert s["centre_pixel"]["product69_pct"] > flat + 10.0
     assert s["centre_pixel"]["ours_pct"] > flat + 10.0
+
+
+# ------------------------------------------------------------------ G1 review follow-ups
+
+
+def test_barker_70pct_contour_is_reproduced_on_both_sides():
+    """Barker drew RoI 4 as the connected pixels above 70% (1 m, 2024-2025): pixels inside must be above it
+    and edge neighbours outside must be at or below it. Two-sided, unlike the Table 2 bound (methodology
+    6.2)."""
+    c = V["barker_roi4"]["contour_70pct"]
+    assert c["contour_pct"] == 70.0 and c["tolerance_pp"] == 0.5  # fixed before the ring run
+    assert c["inside"]["pixels"] == 532
+    assert c["outside_edge"]["pixels"] + c["outside_corner_only"]["pixels"] == 172
+    assert c["inside"]["min"] >= c["contour_pct"] - c["tolerance_pp"]
+    assert c["outside_edge"]["max"] <= c["contour_pct"] + c["tolerance_pp"]
+    assert all(c["pass"].values())
+
+
+def test_served_accuracy_cases():
+    """Methodology 6.6: the served scenario with its horizon shifted (figures quoted there)."""
+    a = V["served_accuracy"]
+    cases = {c["case"]: c for c in a["cases"]}
+    served, m = cases["served"], REG["metrics"]["power"]
+    assert served["illumination_fraction"] == pytest.approx(m["illumination_fraction"], abs=1e-9)
+    assert served["shadow_count"] == m["shadow_count"]
+    assert served["longest_shadow_h"] == pytest.approx(m["longest_shadow_h"], abs=1e-6)
+    for k in ("whole -0.01", "whole +0.01"):  # the numerical horizon error (section 3.2)
+        c = cases[k]
+        assert abs(c["illumination_fraction"] - served["illumination_fraction"]) < 0.004
+        assert abs(c["longest_shadow_h"] - served["longest_shadow_h"]) < 0.6
+        assert c["shadow_count"] == served["shadow_count"]
+    lo, hi = cases["near -0.20"], cases["near +0.20"]
+    assert 0.64 < hi["illumination_fraction"] < 0.65 and 0.74 < lo["illumination_fraction"] < 0.75
+    assert (lo["shadow_count"], hi["shadow_count"]) == (6, 4)
+    for c in (lo, hi):  # the Earth's horizon is set far away: a near-field error leaves it alone
+        assert c["earth_visibility_fraction"] == served["earth_visibility_fraction"]
+    assert cases["whole -0.05"]["longest_sunlit_period_h"] > 220.0  # two sunlit periods merge
+    assert a["horizon_distance_share"]["lt_100m"] == pytest.approx(0.36, abs=0.01)
+    assert a["EARTH"]["partly_visible_horizon_lt_1km"] == 0.0
+
+
+def test_barker_fig15_reread_near_the_outliers():
+    d = V["ridge_top"]["barker_fig15_roi4"]["digitised_near_outliers"]
+    assert len(d["rows"]) == 9 and d["max_abs_diff_deg"] < 0.1
+
+
+def test_product69_c3_tolerance_is_derived_from_the_half_pixel_shift():
+    s = script()
+    d = V["product69"]["diagnostic_half_pixel_shift"]
+    assert round(d["mean_abs_change_pp"], 1) == s.P69_C3_TOL_PP == 9.6
+    assert s.P69_C3_HEIGHTS_M == (0.0, 2.0)

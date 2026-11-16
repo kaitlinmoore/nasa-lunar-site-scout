@@ -64,6 +64,32 @@
       ]
     },
     "pixels_below_70pct": 0,
+    "contour_70pct": {
+      "contour_pct": 70.0,
+      "tolerance_pp": 0.5,
+      "inside": {
+        "pixels": 532,
+        "min": 70.03377125989529,
+        "max": 85.12260963986795
+      },
+      "outside_edge": {
+        "pixels": 114,
+        "min": 55.807122599437974,
+        "max": 70.18881567890615,
+        "median": 68.51230746482133,
+        "above_contour": 6
+      },
+      "outside_corner_only": {
+        "pixels": 58,
+        "min": 49.505286596894294,
+        "max": 68.72883021023831,
+        "above_contour": 0
+      },
+      "pass": {
+        "inside": true,
+        "outside_edge": true
+      }
+    },
     "grid_check_60s_minus_600s": [
       {
         "i": 0,
@@ -660,6 +686,8 @@
         }
       ],
       "median_max_change_pp": 14.211765860360146,
+      "mean_abs_change_pp": 9.550118847074344,
+      "mean_change_pp": -7.311207606212757,
       "pixels_with_product69_within_shift_range": 4
     }
   },
@@ -1376,7 +1404,339 @@
         }
       ],
       "median_abs_diff_deg": 0.06335608605563448,
-      "max_abs_diff_deg": 0.7733691641206231
+      "max_abs_diff_deg": 0.7733691641206231,
+      "digitised_near_outliers": {
+        "rows": [
+          {
+            "figure_angle_deg": 85.0,
+            "our_azimuth_deg": 142.148653,
+            "figure_read_el_deg": -0.96,
+            "ours_el_deg": -0.9825451665200933,
+            "ours_distance_km": 134.2
+          },
+          {
+            "figure_angle_deg": 87.5,
+            "our_azimuth_deg": 139.648653,
+            "figure_read_el_deg": -0.95,
+            "ours_el_deg": -0.9394748832209487,
+            "ours_distance_km": 134.32
+          },
+          {
+            "figure_angle_deg": 90.0,
+            "our_azimuth_deg": 137.148653,
+            "figure_read_el_deg": -1.13,
+            "ours_el_deg": -1.226630835879377,
+            "ours_distance_km": 135.64
+          },
+          {
+            "figure_angle_deg": 92.5,
+            "our_azimuth_deg": 134.648653,
+            "figure_read_el_deg": -1.7,
+            "ours_el_deg": -1.734018091422099,
+            "ours_distance_km": 139.96
+          },
+          {
+            "figure_angle_deg": 95.0,
+            "our_azimuth_deg": 132.148653,
+            "figure_read_el_deg": -2.0,
+            "ours_el_deg": -2.0002844970055844,
+            "ours_distance_km": 140.68
+          },
+          {
+            "figure_angle_deg": 335.0,
+            "our_azimuth_deg": 252.148653,
+            "figure_read_el_deg": -2.46,
+            "ours_el_deg": -2.5184139778170493,
+            "ours_distance_km": 37.56
+          },
+          {
+            "figure_angle_deg": 337.5,
+            "our_azimuth_deg": 249.648653,
+            "figure_read_el_deg": -2.32,
+            "ours_el_deg": -2.2682935976792566,
+            "ours_distance_km": 38.72
+          },
+          {
+            "figure_angle_deg": 342.5,
+            "our_azimuth_deg": 244.648653,
+            "figure_read_el_deg": -1.53,
+            "ours_el_deg": -1.4768212126513833,
+            "ours_distance_km": 38.4
+          },
+          {
+            "figure_angle_deg": 345.0,
+            "our_azimuth_deg": 242.148653,
+            "figure_read_el_deg": -1.42,
+            "ours_el_deg": -1.4185460245108032,
+            "ours_distance_km": 39.8
+          }
+        ],
+        "median_abs_diff_deg": 0.034018091422099106,
+        "max_abs_diff_deg": 0.09663083587937704
+      }
+    }
+  },
+  "served_accuracy": {
+    "cases": [
+      {
+        "case": "served",
+        "shift_deg": 0.0,
+        "azimuths": "none",
+        "illumination_fraction": 0.6976810257523148,
+        "mean_visible_disk_fraction": 0.6016760754206736,
+        "shadow_count": 4,
+        "longest_shadow_h": 132.88255208333334,
+        "longest_sunlit_period_h": 153.33639322916667,
+        "time_to_sunset_h": 92.90423177083333,
+        "shadow_periods_h": [
+          132.88255208333334,
+          65.77552083333333,
+          17.341927083333335,
+          1.6696614583333333
+        ],
+        "earth_visibility_fraction": 0.6355598958333334,
+        "earth_full_disc_fraction": 0.5548556857638889,
+        "longest_earth_gap_h": 262.396875,
+        "sun_earth_overlap_fraction": 0.4510007957175926
+      },
+      {
+        "case": "whole -0.20",
+        "shift_deg": -0.2,
+        "azimuths": "all",
+        "illumination_fraction": 0.765760814525463,
+        "mean_visible_disk_fraction": 0.6722716286753089,
+        "shadow_count": 5,
+        "longest_shadow_h": 118.48229166666667,
+        "longest_sunlit_period_h": 238.76302083333334,
+        "time_to_sunset_h": 99.9447265625,
+        "shadow_periods_h": [
+          118.48229166666667,
+          30.64140625,
+          9.130989583333333,
+          5.346223958333334,
+          5.051302083333334
+        ],
+        "earth_visibility_fraction": 0.6438680917245371,
+        "earth_full_disc_fraction": 0.5632725694444445,
+        "longest_earth_gap_h": 256.41497395833335,
+        "sun_earth_overlap_fraction": 0.47930935329861113
+      },
+      {
+        "case": "whole -0.10",
+        "shift_deg": -0.1,
+        "azimuths": "all",
+        "illumination_fraction": 0.7240424262152778,
+        "mean_visible_disk_fraction": 0.6372359611963058,
+        "shadow_count": 5,
+        "longest_shadow_h": 127.53802083333333,
+        "longest_sunlit_period_h": 228.84830729166666,
+        "time_to_sunset_h": 96.53522135416667,
+        "shadow_periods_h": [
+          127.53802083333333,
+          36.98098958333333,
+          19.003776041666665,
+          9.32109375,
+          5.845572916666667
+        ],
+        "earth_visibility_fraction": 0.6397298177083334,
+        "earth_full_disc_fraction": 0.5590720847800926,
+        "longest_earth_gap_h": 259.39453125,
+        "sun_earth_overlap_fraction": 0.462593677662037
+      },
+      {
+        "case": "whole -0.05",
+        "shift_deg": -0.05,
+        "azimuths": "all",
+        "illumination_fraction": 0.7104966001157408,
+        "mean_visible_disk_fraction": 0.6194314768124194,
+        "shadow_count": 3,
+        "longest_shadow_h": 130.19231770833332,
+        "longest_sunlit_period_h": 224.66979166666667,
+        "time_to_sunset_h": 94.75006510416667,
+        "shadow_periods_h": [
+          130.19231770833332,
+          61.85494791666667,
+          16.395182291666668
+        ],
+        "earth_visibility_fraction": 0.6376470269097222,
+        "earth_full_disc_fraction": 0.5569659649884259,
+        "longest_earth_gap_h": 260.894140625,
+        "sun_earth_overlap_fraction": 0.4568243634259259
+      },
+      {
+        "case": "whole -0.01",
+        "shift_deg": -0.01,
+        "azimuths": "all",
+        "illumination_fraction": 0.7001303891782408,
+        "mean_visible_disk_fraction": 0.605209536951657,
+        "shadow_count": 4,
+        "longest_shadow_h": 132.34153645833334,
+        "longest_sunlit_period_h": 153.44967447916667,
+        "time_to_sunset_h": 93.2759765625,
+        "shadow_periods_h": [
+          132.34153645833334,
+          65.202734375,
+          17.154947916666668,
+          1.2069010416666666
+        ],
+        "earth_visibility_fraction": 0.6359819878472223,
+        "earth_full_disc_fraction": 0.5552785011574074,
+        "longest_earth_gap_h": 262.09296875,
+        "sun_earth_overlap_fraction": 0.45217429832175926
+      },
+      {
+        "case": "whole +0.01",
+        "shift_deg": 0.01,
+        "azimuths": "all",
+        "illumination_fraction": 0.6950764973958333,
+        "mean_visible_disk_fraction": 0.5981556530585809,
+        "shadow_count": 4,
+        "longest_shadow_h": 133.42473958333332,
+        "longest_sunlit_period_h": 153.24264322916667,
+        "time_to_sunset_h": 92.53157552083333,
+        "shadow_periods_h": [
+          133.42473958333332,
+          66.49479166666667,
+          17.509505208333334,
+          2.1158854166666665
+        ],
+        "earth_visibility_fraction": 0.6351378038194444,
+        "earth_full_disc_fraction": 0.5544330512152778,
+        "longest_earth_gap_h": 262.70078125,
+        "sun_earth_overlap_fraction": 0.44982566550925923
+      },
+      {
+        "case": "whole +0.05",
+        "shift_deg": 0.05,
+        "azimuths": "all",
+        "illumination_fraction": 0.6835006148726852,
+        "mean_visible_disk_fraction": 0.5841637505311932,
+        "shadow_count": 5,
+        "longest_shadow_h": 135.60169270833333,
+        "longest_sunlit_period_h": 152.88938802083334,
+        "time_to_sunset_h": 91.03522135416667,
+        "shadow_periods_h": [
+          135.60169270833333,
+          69.55182291666667,
+          18.147786458333332,
+          4.437369791666667,
+          0.14088541666666668
+        ],
+        "earth_visibility_fraction": 0.6334550419560185,
+        "earth_full_disc_fraction": 0.552738353587963,
+        "longest_earth_gap_h": 263.91236979166666,
+        "sun_earth_overlap_fraction": 0.44492368344907407
+      },
+      {
+        "case": "whole +0.10",
+        "shift_deg": 0.1,
+        "azimuths": "all",
+        "illumination_fraction": 0.6653618706597222,
+        "mean_visible_disk_fraction": 0.5667714526995591,
+        "shadow_count": 5,
+        "longest_shadow_h": 138.384375,
+        "longest_sunlit_period_h": 152.45944010416667,
+        "time_to_sunset_h": 89.1337890625,
+        "shadow_periods_h": [
+          138.384375,
+          71.53958333333334,
+          18.89453125,
+          6.82421875,
+          5.296744791666667
+        ],
+        "earth_visibility_fraction": 0.6313491030092593,
+        "earth_full_disc_fraction": 0.550614330150463,
+        "longest_earth_gap_h": 265.42864583333335,
+        "sun_earth_overlap_fraction": 0.4317919921875
+      },
+      {
+        "case": "whole +0.20",
+        "shift_deg": 0.2,
+        "azimuths": "all",
+        "illumination_fraction": 0.622178638599537,
+        "mean_visible_disk_fraction": 0.530779935164778,
+        "shadow_count": 4,
+        "longest_shadow_h": 164.56145833333332,
+        "longest_sunlit_period_h": 151.66373697916666,
+        "time_to_sunset_h": 85.1748046875,
+        "shadow_periods_h": [
+          164.56145833333332,
+          77.61419270833333,
+          20.311328125,
+          9.544401041666667
+        ],
+        "earth_visibility_fraction": 0.6271392144097222,
+        "earth_full_disc_fraction": 0.5463465711805555,
+        "longest_earth_gap_h": 268.459765625,
+        "sun_earth_overlap_fraction": 0.3985816333912037
+      },
+      {
+        "case": "near -0.20",
+        "shift_deg": -0.2,
+        "azimuths": "horizon set < 1000 m away",
+        "illumination_fraction": 0.7405700231481481,
+        "mean_visible_disk_fraction": 0.6410783797526359,
+        "shadow_count": 6,
+        "longest_shadow_h": 118.48229166666667,
+        "longest_sunlit_period_h": 153.33639322916667,
+        "time_to_sunset_h": 99.9447265625,
+        "shadow_periods_h": [
+          118.48229166666667,
+          30.64140625,
+          17.341927083333335,
+          12.754557291666666,
+          5.899739583333333,
+          1.6696614583333333
+        ],
+        "earth_visibility_fraction": 0.6355598958333334,
+        "earth_full_disc_fraction": 0.5548556857638889,
+        "longest_earth_gap_h": 262.396875,
+        "sun_earth_overlap_fraction": 0.4710011574074074
+      },
+      {
+        "case": "near +0.20",
+        "shift_deg": 0.2,
+        "azimuths": "horizon set < 1000 m away",
+        "illumination_fraction": 0.6476774088541667,
+        "mean_visible_disk_fraction": 0.5659482446000857,
+        "shadow_count": 4,
+        "longest_shadow_h": 164.56145833333332,
+        "longest_sunlit_period_h": 153.33639322916667,
+        "time_to_sunset_h": 85.1748046875,
+        "shadow_periods_h": [
+          164.56145833333332,
+          70.09921875,
+          17.341927083333335,
+          1.6696614583333333
+        ],
+        "earth_visibility_fraction": 0.6355598958333334,
+        "earth_full_disc_fraction": 0.5548556857638889,
+        "longest_earth_gap_h": 262.396875,
+        "sun_earth_overlap_fraction": 0.4070023148148148
+      }
+    ],
+    "near_m": 1000.0,
+    "barker_rms_z_m": 0.37,
+    "horizon_distance_share": {
+      "lt_100m": 0.35777777777777775,
+      "lt_1km": 0.5308333333333334,
+      "gt_5km": 0.44555555555555554
+    },
+    "SUN": {
+      "time_partly_visible": 0.18200967570195134,
+      "partly_visible_horizon_lt_100m": 0.4076052397303828,
+      "partly_visible_horizon_lt_1km": 0.5374538980033067
+    },
+    "EARTH": {
+      "time_partly_visible": 0.08069257656072776,
+      "partly_visible_horizon_lt_100m": 0.0,
+      "partly_visible_horizon_lt_1km": 0.0
+    },
+    "horizon_change_deg_for_rms_z": {
+      "50m": 0.42398102944275956,
+      "100m": 0.2119934168053109,
+      "1000m": 0.0211994374524395,
+      "50000m": 0.00042398876838907
     }
   }
 }
