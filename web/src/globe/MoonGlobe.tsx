@@ -99,8 +99,11 @@ const SOUTH_POLE_ID = 'south-pole-label'
 /** "See details" view: the site from 55° above its horizon, 900 km away, so the region around it stays in view. */
 const FOCUS_VIEW = { pitchDeg: -55, rangeM: 900_000, durationS: 1.2 }
 
-/** Card placement next to its marker, in CSS pixels: gap from the marker, margin from the canvas edge. */
-const CARD = { gap: 16, margin: 8, raise: 24 }
+/**
+ * Card placement next to its marker, in CSS pixels: gap from the marker (wide enough to clear the
+ * "South pole" label beside Site01), margin from the canvas edge.
+ */
+const CARD = { gap: 36, margin: 8, raise: 24 }
 
 type Controls = {
   zoomIn: () => void
@@ -110,7 +113,7 @@ type Controls = {
   focusSite: (siteId: string, instant?: boolean) => void
   /** Turn the globe so a site's marker is on screen (a list click on a hidden site). */
   showSite: (siteId: string) => void
-  /** Re-place the card (after the selection or its content changed). */
+  /** Re-place the card and hide the selected site's label (after the selection or card changed). */
   refresh: () => void
   /** Restyle markers so pinned sites stand out. */
   setPinned: (siteIds: string[]) => void
@@ -262,6 +265,7 @@ export default function MoonGlobe({
         })
       },
       refresh: () => {
+        syncLabels()
         placeCard()
         scene.requestRender()
       },
@@ -406,6 +410,15 @@ export default function MoonGlobe({
       el.style.visibility = 'visible'
     }
     scene.postRender.addEventListener(placeCard)
+
+    // While a site's card is open, hide that site's own marker label: the card shows the name,
+    // and the label would sit under the card (Kaitlin's follow-up, Phase 2 step 3.1).
+    const syncLabels = () => {
+      for (const site of sites) {
+        const label = v.entities.getById(site.id)?.label
+        if (label) label.show = new ConstantProperty(site.id !== selectedRef.current)
+      }
+    }
 
     // Click a site marker -> its card; click elsewhere -> no card. Pointer cursor over site markers.
     const siteIds = new Set(sites.map((s) => s.id))
