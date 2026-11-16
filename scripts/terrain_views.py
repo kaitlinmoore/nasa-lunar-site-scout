@@ -25,7 +25,7 @@ import numpy as np
 
 from lss.config import get_settings
 from lss.datafiles import BY_ID
-from lss.registry.sites import site_points
+from lss.registry.sites import load_sites, site_points
 from lss.terrain import views as tv
 
 FORMAT = 1
@@ -39,6 +39,20 @@ def source_file(tile: str, kind: str) -> str:
     if kind == "tile":
         return f"site{n}_dem"
     return "ldem_83s_10m_site01_clip" if n == "01" else f"ldem_83s_10m_site{n}_clip"
+
+
+def other_site_sources(site) -> tuple[tuple[float, float], dict[str, tuple[str, int]]]:
+    """A site without a PGDA site point (the Artemis III regions): its point from its coordinates; the 2 km
+    view from the 5 m site map if the point lies on one, else from the 10 m map at 10 m/pixel; the 20 km view
+    from the 10 m map (2 x 2 block means). Returns (point, {view: (file id, block)})."""
+    from lss.registry.terrain import resolve
+    from lss.terrain.core import ps_from_latlon
+
+    loc = site.location
+    ps = tuple(float(v) for v in ps_from_latlon(loc.lat, loc.lon, "south"))
+    clip = f"ldem_83s_10m_{site.id.replace('-', '_')}_clip"
+    near = resolve(loc.lat, loc.lon).layers[0].spec
+    return ps, {"2km": (near.file_id if near.site_tile else clip, 1), "20km": (clip, 2)}
 
 
 def read_window(path, x: float, y: float, half: float, block: int = 1):
@@ -89,11 +103,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--sites", nargs="*")
     a = ap.parse_args(argv)
     points = site_points()
+    sites = {s.id: s for s in load_sites()}
     for sid in a.sites or sorted(points):
-        p = points[sid]
-        for view, (half, kind, block) in VIEWS.items():
-            fid = source_file(p.tile, kind)
-            z, left, top, step = read_window(BY_ID[fid].path, *p.ps_m, half, block)
+        if sid in points:
+            ps = points[sid].ps_m
+            sources = {
+                v: (source_file(points[sid].tile, kind), block) for v, (_, kind, block) in VIEWS.items()
+            }
+        else:
+            ps, sources = other_site_sources(sites[sid])
+        for view, (half, _kind, _block) in VIEWS.items():
+            fid, block = sources[view]
+            z, left, top, step = read_window(BY_ID[fid].path, *ps, half, block)
             rows, cols = z.shape
             k = tv.interior_scale_factor(left - step, top + step, step, rows, cols)
             out = get_settings().cache_dir / "terrain_view" / sid / view
@@ -107,7 +128,7 @@ def main(argv: list[str] | None = None) -> int:
                 "format": FORMAT,
                 "site_id": sid,
                 "view": view,
-                "center_ps_m": list(p.ps_m),
+                "center_ps_m": list(ps),
                 "bounds_ps_m": [left, top - n * step, left + n * step, top],  # left, bottom, right, top
                 "proj4": PS_SOUTH_PROJ4,
                 "map_up": "+y of the south polar stereographic grid (not geographic north)",

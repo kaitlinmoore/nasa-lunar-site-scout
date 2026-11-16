@@ -46,3 +46,25 @@ def test_nodata_is_marked():
 def test_palettes_have_one_colour_per_class():
     assert len(tv.SLOPE_CLASS_LABELS) == len(tv.SLOPE_CLASS_EDGES_DEG) + 1
     assert all(len(p) == len(tv.SLOPE_CLASS_LABELS) for p in tv.SLOPE_PALETTE.values())
+
+
+def _views_script():
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[2] / "scripts" / "terrain_views.py"
+    spec = importlib.util.spec_from_file_location("terrain_views", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_artemis_views_use_the_5m_map_only_where_their_point_lies_on_one():
+    from lss.registry.sites import get_site
+
+    m = _views_script()
+    _, on_tile = m.other_site_sources(get_site("artemis3-malapert-massif"))
+    _, off_tile = m.other_site_sources(get_site("artemis3-haworth"))
+    assert on_tile["2km"] == ("site23_dem", 1)
+    assert off_tile["2km"] == ("ldem_83s_10m_artemis3_haworth_clip", 1)
+    assert on_tile["20km"][1] == off_tile["20km"][1] == 2

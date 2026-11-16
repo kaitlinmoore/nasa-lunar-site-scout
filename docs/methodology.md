@@ -735,10 +735,12 @@ The polar path above is unchanged.
 ### 5.7 Terrain images for the 2D site view (`lss.terrain.views`)
 
 Georeferenced PNGs on the DEM's own south polar stereographic grid (`scripts/terrain_views.py`; layout and views
-decided by Kaitlin, 2026-11-16). "Map up" is the grid's +y axis, not geographic north. For each PGDA site, two
-square views centred on the served point:
-- **2 km:** from the 5 m site map, 400 × 400 px at 5 m.
+decided by Kaitlin, 2026-11-16). "Map up" is the grid's +y axis, not geographic north. For each PGDA site and
+each Artemis III region, two square views centred on the served point:
+- **2 km:** from the 5 m site map, 400 × 400 px at 5 m. The six Artemis III regions whose point lies on no 5 m
+  map get it from the 10 m polar map instead, 200 × 200 px at 10 m.
 - **20 km:** from the 10 m polar map averaged over 2 × 2 pixels, 1000 × 1000 px at 20 m.
+- None for the Apollo sites, which are off the polar maps.
 
 Two layers per view; `view.json` gives the bounds, projection, pixel size, source and encodings:
 - **Hillshade:** cartographic shading for reading the relief, not the real Sun. Light from map azimuth 315° at
