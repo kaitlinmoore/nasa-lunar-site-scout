@@ -116,6 +116,9 @@ sites:
       centroids at Site01). Site 11 of Mazarico, E., et al. (2011), Icarus 211, 1066-1081,
       doi:10.1016/j.icarus.2010.10.030.
 
+  # Site06, Site20, Site23, Site42: the sentences on the 5 m map in 2028 answer the G2 review (M3; M2 for
+  # Site20). Every number in them is pinned to the served files, the 5 m maps and A's validation fixture by
+  # tests/engine/test_sites_mazarico_text.py. Wording approved by Kaitlin 2026-11-16.
   - id: pgda-site06
     name: Site06 Nobile rim 1 (Mazarico 2011 site 6)
     short_name: Nobile Rim
@@ -124,11 +127,15 @@ sites:
     location: {lat: -85.30, lon: 37.07}
     point: {rule: mazarico_2011, tile: Site06, ps_m: [85957.726, 113780.267], centroid_from: "Mazarico et al. (2011) Table 3, rank 6"}
     description: >-
-      A point on the rim of Nobile crater, about 143 km from the Moon's south pole. Mazarico et al. (2011) listed
-      the 50 most illuminated spots near the south pole on a 240 m map; this one ranks 6th, with
-      86% of the Sun's disc in view on average at surface level over 1970-2044. Barker et al.
-      (2021) made the 5 m map of the site (PGDA product 78) that is used here. The point is Mazarico's
-      published coordinate, given to 0.01 degrees (about 300 m in latitude).
+      A point on the rim of Nobile crater, about 143 km from the Moon's south pole. Mazarico et al. (2011)
+      listed the 50 most illuminated spots near the south pole on a 240 m map; this one ranks 6th, with 86% of
+      the Sun's disc in view on average at surface level over 1970-2044. Barker et al. (2021) made the 5 m map
+      of the site (PGDA product 78) that is used here. The point is Mazarico's published coordinate, given to
+      0.01 degrees (about 300 m in latitude). On the 5 m map used here, the point is on an 8° slope. The Sun
+      never rises more than about 6° above the horizon here, and close to the ground the slope beside the
+      point hides it: in 2028, at 1 m above the ground, 41% of the Sun's disc is in view on average (some of
+      the Sun is in view 47% of the time), rising to 83% at 5 m and 87% at 10 m. Mazarico's 240 m map is too
+      coarse to show this slope; repeating their method on a 240 m map gives 87% at 10 m, close to their 87%.
     dataset_ids: [pgda_78_site_dems, pgda_90_south_pole_dems]
     has_dem_clones: true
     source: >-
@@ -147,15 +154,16 @@ sites:
     location: {lat: -85.43, lon: 31.73}
     point: {rule: mazarico_2011, tile: Site20, ps_m: [72919.046, 117927.84], centroid_from: "Mazarico et al. (2011) Table 3, rank 20"}
     description: >-
-      A point on the Leibnitz beta plateau, about 139 km from the Moon's south pole. Mazarico et al. (2011) listed
-      the 50 most illuminated spots near the south pole on a 240 m map; this one ranks 20th, with
-      82% of the Sun's disc in view on average at surface level over 1970-2044. Barker et al.
-      (2021) made the 5 m map of the site (PGDA product 78) that is used here. The point is Mazarico's
-      published coordinate, given to 0.01 degrees (about 300 m in latitude). On the maps used here, this
-      coordinate lies on the side of the plateau rather than its best-lit ground. Repeating Mazarico's method
-      there gives about 25% of the Sun's disc in view at surface level (46% at 10 m), against their 82% (83%).
-      Nearby grid points do no better than 58% at 10 m, so the published coordinate is kept. Results for this
-      site describe that point.
+      A point on the Leibnitz beta plateau, about 139 km from the Moon's south pole. Mazarico et al. (2011)
+      listed the 50 most illuminated spots near the south pole on a 240 m map; this one ranks 20th, with 82%
+      of the Sun's disc in view on average at surface level over 1970-2044. Barker et al. (2021) made the 5 m
+      map of the site (PGDA product 78) that is used here. The point is Mazarico's published coordinate, given
+      to 0.01 degrees (about 300 m in latitude). On the maps used here, this coordinate lies on the side of
+      the plateau rather than its best-lit ground. Repeating Mazarico's method there gives about 25% of the
+      Sun's disc in view at surface level (46% at 10 m), against their 82% (83%). The two nearest points of a
+      240 m grid, 85 and 158 m away, do no better than 58% at 10 m, so the published coordinate is kept. On
+      the 5 m map in 2028, 14% of the Sun's disc is in view on average at 1 m above the ground (some of the
+      Sun is in view 17% of the time) and 30% at 10 m. Results for this site describe that point.
     dataset_ids: [pgda_78_site_dems, pgda_90_south_pole_dems]
     has_dem_clones: true
     source: >-
@@ -173,11 +181,17 @@ sites:
     point: {rule: mazarico_2011, tile: Site23, ps_m: [-4906.252, 122155.02], centroid_from: "Mazarico et al. (2011) Table 3, rank 23"}
     description: >-
       A point on the Malapert massif, about 122 km from the Moon's south pole. Mazarico et al. (2011) listed
-      the 50 most illuminated spots near the south pole on a 240 m map; this one ranks 23rd, with
-      82% of the Sun's disc in view on average at surface level over 1970-2044. Mazarico et al. (2011) also note that high ground such as Mons Malapert has good
-      visibility of the Earth. Barker et al.
-      (2021) made the 5 m map of the site (PGDA product 78) that is used here. The point is Mazarico's
-      published coordinate, given to 0.01 degrees (about 300 m in latitude).
+      the 50 most illuminated spots near the south pole on a 240 m map; this one ranks 23rd, with 82% of the
+      Sun's disc in view on average at surface level over 1970-2044. Mazarico et al. (2011) also note that
+      high ground such as Mons Malapert has good visibility of the Earth. Barker et al. (2021) made the 5 m
+      map of the site (PGDA product 78) that is used here. The point is Mazarico's published coordinate, given
+      to 0.01 degrees (about 300 m in latitude). On the 5 m map used here, the point is on a 7° slope. The Sun
+      never rises more than about 6° above the horizon here, and close to the ground the slope beside the
+      point hides it: in 2028, at 1 m above the ground, 45% of the Sun's disc is in view on average (some of
+      the Sun is in view 52% of the time), rising to 67% at 2 m and 82% at 5 m and 10 m. Mazarico's 240 m map
+      is too coarse to show this slope; repeating their method on a 240 m map gives 82% at 10 m, close to
+      their 83%. The Earth is in view 51% of 2028 at 1 m and 82% at 10 m, the most of the eight PGDA sites at
+      that height.
     dataset_ids: [pgda_78_site_dems, pgda_90_south_pole_dems]
     has_dem_clones: true
     source: >-
@@ -194,11 +208,16 @@ sites:
     location: {lat: -85.83, lon: -116.35}
     point: {rule: mazarico_2011, tile: Site42, ps_m: [-113360.357, -56149.321], centroid_from: "Mazarico et al. (2011) Table 3, rank 42"}
     description: >-
-      A point on the massif between de Gerlache and Kocher craters, about 127 km from the Moon's south pole. Mazarico et al. (2011) listed
-      the 50 most illuminated spots near the south pole on a 240 m map; this one ranks 42nd, with
-      80% of the Sun's disc in view on average at surface level over 1970-2044. Barker et al.
+      A point on the massif between de Gerlache and Kocher craters, about 127 km from the Moon's south pole.
+      Mazarico et al. (2011) listed the 50 most illuminated spots near the south pole on a 240 m map; this one
+      ranks 42nd, with 80% of the Sun's disc in view on average at surface level over 1970-2044. Barker et al.
       (2021) made the 5 m map of the site (PGDA product 78) that is used here. The point is Mazarico's
-      published coordinate, given to 0.01 degrees (about 300 m in latitude).
+      published coordinate, given to 0.01 degrees (about 300 m in latitude). On the 5 m map used here, the
+      point is on a 7° slope. The Sun never rises more than about 6° above the horizon here, and close to the
+      ground the slope beside the point hides it: in 2028, at 1 m above the ground, 44% of the Sun's disc is
+      in view on average (some of the Sun is in view 48% of the time), rising to 67% at 5 m and 78% at 10 m.
+      Mazarico's 240 m map is too coarse to show this slope; repeating their method on a 240 m map gives 78%
+      at 10 m, against their 80%.
     dataset_ids: [pgda_78_site_dems, pgda_90_south_pole_dems]
     has_dem_clones: true
     source: >-
