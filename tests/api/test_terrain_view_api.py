@@ -3,6 +3,7 @@
 and CompareResponse.compared_keys. Small synthetic PNGs; no real data needed."""
 
 import json
+import os
 import struct
 import zlib
 
@@ -22,18 +23,20 @@ SITES = load_sites()
 SITE01 = next(s for s in SITES if s.id == "pgda-site01")
 
 
-def png(width, height, depth=8, extra_chunk=None):
-    """A greyscale PNG (colour type 0) of zeros."""
+def png(width, height, depth=8, extra_chunk=None, noise=False):
+    """A greyscale PNG (colour type 0) of zeros, or of random bytes (`noise`, so it doesn't compress)."""
 
     def chunk(kind, data):
         body = kind + data
         return struct.pack(">I", len(data)) + body + struct.pack(">I", zlib.crc32(body) & 0xFFFFFFFF)
 
-    row = b"\x00" + bytes(width * depth // 8)
+    def row():
+        return b"\x00" + (os.urandom(width * depth // 8) if noise else bytes(width * depth // 8))
+
     out = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, depth, 0, 0, 0, 0))
     if extra_chunk:
         out += chunk(extra_chunk, b"\x00\x00\x00\x01")
-    return out + chunk(b"IDAT", zlib.compress(row * height)) + chunk(b"IEND", b"")
+    return out + chunk(b"IDAT", zlib.compress(b"".join(row() for _ in range(height)))) + chunk(b"IEND", b"")
 
 
 def write_view(
@@ -143,6 +146,18 @@ def test_image_route_serves_the_png_and_404s_the_rest(data_dir):
         r = c.get(f"/api/terrain/view/{path}")
         assert r.status_code == 404
         assert NotFoundError.model_validate(r.json()).detail.reason == app_module.NO_TERRAIN_IMAGE_REASON
+
+
+def test_images_are_not_recompressed_but_json_is(data_dir):
+    folder = write_view(data_dir / "cache" / "terrain_view", size=64)
+    (folder / "slope.png").write_bytes(png(64, 64, noise=True))  # over the 1 KB gzip threshold
+    app_module._terrain_views.cache_clear()
+    c = TestClient(app_module.create_app())
+    r = c.get("/api/terrain/view/pgda-site01/2km/slope.png", headers={"Accept-Encoding": "gzip"})
+    assert r.status_code == 200 and len(r.content) > 1000
+    assert "content-encoding" not in r.headers and r.content == (folder / "slope.png").read_bytes()
+    r = c.post("/api/series", json={"scenario": WEB_SCENARIO}, headers={"Accept-Encoding": "gzip"})
+    assert len(r.content) > 1000 and r.headers.get("content-encoding") == "gzip"
 
 
 def test_unusable_views_are_a_503(data_dir):

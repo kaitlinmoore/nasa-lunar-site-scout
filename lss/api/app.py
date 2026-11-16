@@ -227,6 +227,21 @@ def terrain_image(site_id: str, view: str, layer: str) -> Path:
     return path
 
 
+# Already-compressed media types the gzip middleware passes through as they are (the terrain PNGs above all).
+# Stated here rather than left to Starlette's default list, which could change between versions.
+GZIP_EXCLUDED_TYPES = (
+    "image/*",
+    "audio/*",
+    "video/*",
+    "font/woff",
+    "font/woff2",
+    "application/gzip",
+    "application/x-gzip",
+    "application/zip",
+    "text/event-stream",
+)
+
+
 @lru_cache(maxsize=1)
 def _labels() -> Labels | None:
     return load_labels()
@@ -534,8 +549,8 @@ def create_app() -> FastAPI:
         description="Contract v0. Not affiliated with or endorsed by NASA.",
         separate_input_output_schemas=False,
     )
-    # Compress JSON over 1 KB (the label list, series, scenario lists); PNGs are already compressed.
-    app.add_middleware(GZipMiddleware, minimum_size=1000)
+    # Compress JSON over 1 KB (the label list, series, scenario lists); never recompress what already is.
+    app.add_middleware(GZipMiddleware, minimum_size=1000, exclude_content_types=GZIP_EXCLUDED_TYPES)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.cors_origins),
