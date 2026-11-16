@@ -137,6 +137,8 @@ sites:
       y = 113.780 km on the 1737.4 km sphere). Site name and 5 m map: PGDA product 78 (Barker, M. K.,
       et al. (2021), Planet. Space Sci. 203, 105119, doi:10.1016/j.pss.2020.105119).
 
+  # Site20 description: the published-coordinate check (Kaitlin's rule, 2026-11-16; scripts/mazarico_node.py,
+  # docs/methodology.md section 1.4.1). Wording approved by Kaitlin 2026-11-16.
   - id: pgda-site20
     name: Site20 Leibnitz beta plateau (Mazarico 2011 site 20)
     short_name: Leibnitz Beta Plateau
@@ -149,7 +151,11 @@ sites:
       the 50 most illuminated spots near the south pole on a 240 m map; this one ranks 20th, with
       82% of the Sun's disc in view on average at surface level over 1970-2044. Barker et al.
       (2021) made the 5 m map of the site (PGDA product 78) that is used here. The point is Mazarico's
-      published coordinate, given to 0.01 degrees (about 300 m in latitude).
+      published coordinate, given to 0.01 degrees (about 300 m in latitude). On the maps used here, this
+      coordinate lies on the side of the plateau rather than its best-lit ground. Repeating Mazarico's method
+      there gives about 25% of the Sun's disc in view at surface level (46% at 10 m), against their 82% (83%).
+      Nearby grid points do no better than 58% at 10 m, so the published coordinate is kept. Results for this
+      site describe that point.
     dataset_ids: [pgda_78_site_dems, pgda_90_south_pole_dems]
     has_dem_clones: true
     source: >-

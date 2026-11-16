@@ -127,7 +127,7 @@
         "lon": 31.73,
         "name": "Site20 Leibnitz beta plateau (Mazarico 2011 site 20)"
       },
-      "description": "A point on the Leibnitz beta plateau, about 139 km from the Moon's south pole. Mazarico et al. (2011) listed the 50 most illuminated spots near the south pole on a 240 m map; this one ranks 20th, with 82% of the Sun's disc in view on average at surface level over 1970-2044. Barker et al. (2021) made the 5 m map of the site (PGDA product 78) that is used here. The point is Mazarico's published coordinate, given to 0.01 degrees (about 300 m in latitude).",
+      "description": "A point on the Leibnitz beta plateau, about 139 km from the Moon's south pole. Mazarico et al. (2011) listed the 50 most illuminated spots near the south pole on a 240 m map; this one ranks 20th, with 82% of the Sun's disc in view on average at surface level over 1970-2044. Barker et al. (2021) made the 5 m map of the site (PGDA product 78) that is used here. The point is Mazarico's published coordinate, given to 0.01 degrees (about 300 m in latitude). On the maps used here, this coordinate lies on the side of the plateau rather than its best-lit ground. Repeating Mazarico's method there gives about 25% of the Sun's disc in view at surface level (46% at 10 m), against their 82% (83%). Nearby grid points do no better than 58% at 10 m, so the published coordinate is kept. Results for this site describe that point.",
       "dataset_ids": [
         "pgda_78_site_dems",
         "pgda_90_south_pole_dems"
