@@ -541,15 +541,17 @@ section 6.6.
 
   All three pass. **This bound is one-sided:** it rules out a result that is too dark, but an engine that
   overestimated sunlight would pass it too. The two-sided check is the contour test below.
-- **Barker's 70% contour, two-sided** (G1 review, finding M1). Barker drew each RoI as the connected pixels with
-  average illumination above 70% (1 m, 2024–2025, nominal DEM). So the engine should put the 70% line where
+- **Barker's 70% contour, two-sided** (G1 review, finding M1). Barker drew each RoI as the connected pixels
+  ("corners or sides touching") with average illumination above 70% at 1 m over 2024–2025 on the nominal DEM,
+  and a total area above 2500 m² (section 5). So the engine should put the 70% line where
   Barker's outline is: pixels inside above it, and the pixels just outside at or below it.
   - **Set-up.** Stage `barkerring` computes every 5 m pixel outside RoI 4 that touches it: 172 pixels, 114
     sharing an edge with the RoI and 58 touching only a corner. Same quantity, period and grid as the inside
     pixels.
   - **Test, fixed before the run:** inside minimum ≥ 70% − 0.5 pp, and the edge neighbours' maximum
     ≤ 70% + 0.5 pp. Edge neighbours must be at or below 70% whether Barker joined pixels by edges or by corners.
-    Corner-only neighbours must be too if corners count, so they are reported but not tested.
+    Corner-only neighbours must be too if corners count. Barker's text says they do ("corners or sides
+    touching"; found after the run), so the test now also covers the corner-only neighbours.
   - **Result: pass.** Inside: 70.03–85.12% (532 pixels). Edge neighbours: 55.8–70.19%, median 68.5%; 6 of the
     114 lie between 70.0% and 70.19%. Corner-only neighbours: 49.5–68.7%, none above 70%.
   - The engine places Barker's contour to within 0.2 pp on both sides. That is a much sharper check than the
@@ -700,10 +702,11 @@ illumination and product 69 all agree with this.
 ### 6.5 Served result and regression fixture
 
 - **The served scenario** (key `00010cfa5fef681c`) was computed with the validated code and stored in two places:
-  - the served result: `LSS_DATA_DIR/cache/served/c1_00010cfa5fef681c.json`, the metrics and series responses
-    with their provenance, written by `scripts/precompute_c1.py`;
-  - the regression fixture: `tests/engine/fixtures/site01_roi4_c1.json`, the same metrics and every 6th hourly
-    sample.
+  - the served result: `LSS_DATA_DIR/cache/served/c1_00010cfa5fef681c.json`, the metrics, series and horizon
+    responses with their provenance, written by `scripts/precompute_c1.py` (file format 2; the horizon is the
+    one the metrics were computed with, at every 0.1° azimuth);
+  - the regression fixture: `tests/engine/fixtures/site01_roi4_c1.json`, the same metrics, every 6th hourly
+    sample and every 10th horizon azimuth.
 - `tests/engine/test_regression_c1.py` recomputes the scenario and requires fractions to agree to 10⁻⁶, durations
   to 10⁻³ h, angles to 10⁻⁶° and event times to 1 s.
 - **Final served values** at the 1 h step, alongside the 10-minute previews quoted when window B was chosen:

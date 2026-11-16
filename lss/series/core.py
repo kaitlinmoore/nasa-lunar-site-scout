@@ -21,10 +21,10 @@ from datetime import datetime, timedelta
 
 import numpy as np
 
-from lss.contract import BodyTrack, Event, EventKind, Scenario, SeriesResponse
+from lss.contract import BodyTrack, Event, EventKind, HorizonProfile, Scenario, SeriesResponse
 from lss.ephem import MOON_RADIUS_M, topocentric, utc_to_et
 from lss.horizon import Horizon, HorizonParams, cached_horizon
-from lss.registry.terrain import LAYERS, LayerSpec
+from lss.registry.terrain import LAYERS, LayerSpec, resolve
 from lss.series.disc import margins, visible_fraction
 
 SERIES_VERSION = 1
@@ -304,4 +304,23 @@ def series_response(result: SeriesResult) -> SeriesResponse:
         sun=tracks["SUN"],
         earth=tracks["EARTH"],
         events=events(result),
+    )
+
+
+def horizon_response(result: SeriesResult) -> HorizonProfile:
+    """The horizon the result was computed with, at full resolution (every computed azimuth), for the
+    scenario's own location and unit height; terrain stack and fidelity from the resolver."""
+    sc = result.scenario
+    if sc is None:
+        raise ValueError("horizon_response needs a contract Scenario (use compute_series)")
+    hz = result.horizon
+    stack = resolve(result.lat, result.lon, hz.params.max_range_m, result.layers)
+    return HorizonProfile(
+        location=sc.location,
+        unit_height_m=sc.unit_height_m,
+        azimuth_deg=hz.azimuth_deg.tolist(),
+        elevation_deg=hz.elevation_deg.tolist(),
+        max_range_km=hz.params.max_range_m / 1000.0,
+        terrain_stack=stack.contract_layers(),
+        fidelity=stack.fidelity(),
     )

@@ -15,6 +15,7 @@ from lss.series.core import (
     compute_visibility,
     ephemeris_sampler,
     events,
+    horizon_response,
     series_response,
 )
 from lss.series.disc import (
@@ -42,6 +43,7 @@ __all__ = [
     "compute_visibility",
     "ephemeris_sampler",
     "events",
+    "horizon_response",
     "limb_darkened_disc_mean",
     "limb_darkening",
     "margins",

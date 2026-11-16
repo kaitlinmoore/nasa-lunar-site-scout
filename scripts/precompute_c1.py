@@ -2,10 +2,12 @@
 
 Compute the served C1 scenario (lss.contract.examples.SCENARIO) once and write:
 
-1. the served result, LSS_DATA_DIR/cache/served/c1_<scenario key>.json: the metrics and series responses with
-   their provenance, which the thin endpoint loads (it needs no DEMs or kernels);
-2. the regression fixture, tests/engine/fixtures/site01_roi4_c1.json: the same metrics response and the
-   series every 6 h, checked against a fresh computation by tests/engine/test_regression_c1.py.
+1. the served result, LSS_DATA_DIR/cache/served/c1_<scenario key>.json (format 2): the metrics, series and
+   horizon responses with their provenance, which the API loads (it needs no DEMs or kernels; file format in
+   lss/api/served.py);
+2. the regression fixture, tests/engine/fixtures/site01_roi4_c1.json: the same metrics response, the series
+   every 6 h and the horizon every 1 deg, checked against a fresh computation by
+   tests/engine/test_regression_c1.py.
 
     uv run python scripts/precompute_c1.py
 """
@@ -27,11 +29,12 @@ from lss.horizon import HORIZON_VERSION
 from lss.horizon.cache import cache_key, key_spec
 from lss.metrics import metrics_response
 from lss.registry.terrain import resolve
-from lss.series import SERIES_VERSION, compute_series, series_response
+from lss.series import SERIES_VERSION, compute_series, horizon_response, series_response
 
-FORMAT = 1
+FORMAT = 2  # lss/api/served.py: format 2 adds the horizon
 REGRESSION = Path(__file__).resolve().parents[1] / "tests" / "engine" / "fixtures" / "site01_roi4_c1.json"
 SERIES_EVERY = 6  # regression fixture keeps every 6th hourly sample
+HORIZON_EVERY = 10  # and every 10th horizon azimuth (1 deg)
 
 
 def served_path(key: str | None = None) -> Path:
@@ -69,12 +72,14 @@ def main() -> int:
         raise SystemExit(f"horizon has {res.horizon.missing_samples} ray samples no terrain layer covers")
     m = metrics_response(res).model_dump(mode="json", by_alias=True)
     s = series_response(res).model_dump(mode="json", by_alias=True)
+    h = horizon_response(res).model_dump(mode="json", by_alias=True)
     key = SCENARIO.key()
     served = {
         "format": FORMAT,
         "scenario_key": key,
         "metrics": m,
         "series": s,
+        "horizon": h,
         "provenance": provenance(res),
     }
     out = served_path(key)
@@ -95,6 +100,12 @@ def main() -> int:
         "series_every": SERIES_EVERY,
         "metrics": {k: v for k, v in m.items() if k not in unversioned},
         "series": {k: v for k, v in thin.items() if k not in unversioned},
+        "horizon_every": HORIZON_EVERY,
+        "horizon": {
+            k: v[::HORIZON_EVERY] if k in ("azimuth_deg", "elevation_deg") else v
+            for k, v in h.items()
+            if k not in unversioned
+        },
         "provenance": {k: v for k, v in served["provenance"].items() if k not in unversioned},
     }
     REGRESSION.write_text(json.dumps(regression, indent=1) + "\n", encoding="utf-8", newline="\n")
