@@ -10,7 +10,11 @@ File format (JSON object; owned here, written by stream A):
 - `format`: 1 or 2; `scenario_key`; `provenance` (free-form, not served);
 - `metrics`: a MetricsResponse body; `series`: a SeriesResponse body;
 - format 2 adds `horizon`: the HorizonProfile body for the scenario's location and unit height (optional;
-  without it, /api/horizon has no profile for that location and height).
+  without it, /api/horizon has no profile for that location and height);
+- format 3 adds `sun_elevation_histogram` (stream A's RA7; methodology 5.3): `{quantity, bin_deg,
+  first_edge_deg, seconds: [...], total_seconds}`, the seconds the Sun's disc-centre apparent elevation spends
+  in each bin over the window (they sum to the window). Optional: without it, a compare on a Sun elevation
+  band has no value (not computed) for that scenario. Read with `band_fraction` below.
 All bodies must be made with the same contract version.
 """
 
@@ -18,6 +22,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 from lss.config import get_settings
@@ -42,11 +47,9 @@ from lss.contract import (
 # - drop a version, and its snapshot, once stream A has regenerated its served files at a newer version.
 #   0.5.0 and 0.6.0 dropped 2026-11-16: A regenerated every served file (format 2, with horizons) at 0.7.0.
 #   0.7.0 and 0.8.0 dropped 2026-11-16: A regenerated every served and terrain file at 0.9.0 (RA5).
-#   0.9.0: every installed served and terrain file (contract 0.10.0 only added compare filter / rank and
-#   Site.regions); drop once A regenerates them at 0.10.0 or later.
-#   0.10.0: listed for files A writes (e.g. RA8) before contract 0.11.0 (GET /api/scenarios) reaches it.
-#   0.11.0: likewise, before contract 0.12.0 (cached NL answers in the static copy) reaches it.
-COMPATIBLE_VERSIONS = frozenset({"0.9.0", "0.10.0", "0.11.0"})
+#   0.10.0 and 0.11.0 dropped 2026-11-16: A regenerated every served file at 0.12.0 (format 3).
+#   0.9.0: the 16 terrain statistics (cache/terrain/) are still 0.9.0; drop once A regenerates them (RA11).
+COMPATIBLE_VERSIONS = frozenset({"0.9.0"})
 
 
 class ServedFileError(ValueError):
@@ -61,6 +64,7 @@ class Served:
     path: Path
     made_with: str  # the contract version the file was written with
     horizon: HorizonProfile | None = None
+    sun_elevation_histogram: dict | None = None  # format 3
 
     @property
     def horizon_key(self) -> str:
@@ -103,6 +107,9 @@ def load_file(path: Path) -> Served:
             f"{path.name}: made with contract {made_with}, the API is {CONTRACT_VERSION}; "
             "regenerate it with scripts/precompute_c1.py"
         )
+    hist = data.get("sun_elevation_histogram")
+    if hist is not None:
+        _check_histogram(path, hist, s)
     stamp = {"contract_version": CONTRACT_VERSION}
     return Served(
         m.scenario,
@@ -111,7 +118,55 @@ def load_file(path: Path) -> Served:
         path,
         made_with,
         h.model_copy(update=stamp) if h is not None else None,
+        hist,
     )
+
+
+def _check_histogram(path: Path, hist: dict, series: SeriesResponse) -> None:
+    """Shape checks for a format-3 histogram: positive bin, non-negative seconds that sum to the window."""
+    try:
+        seconds = [float(x) for x in hist["seconds"]]
+        bin_deg, total = float(hist["bin_deg"]), float(hist["total_seconds"])
+        float(hist["first_edge_deg"])
+    except (KeyError, TypeError, ValueError) as e:
+        raise ServedFileError(f"{path.name}: malformed sun_elevation_histogram ({e})") from e
+    window = (series.scenario.window_end - series.scenario.window_start).total_seconds()
+    if (
+        bin_deg <= 0
+        or any(x < 0 for x in seconds)
+        or abs(total - window) > 1.0
+        or abs(sum(seconds) - total) > 1.0
+    ):
+        raise ServedFileError(f"{path.name}: sun_elevation_histogram doesn't cover the window")
+
+
+@lru_cache(maxsize=1)
+def _elevation_band():
+    """Stream A's lss/metrics/elevation_band.py (numpy only), loaded on its own: importing the `lss.metrics`
+    package would run its __init__, which imports the engine (spiceypy, numba), and the API stays free of
+    those. Interim, until A offers a light import path (request RA10)."""
+    import importlib.util
+    import sys
+
+    import lss
+
+    name = "lss_api_elevation_band"
+    if name not in sys.modules:
+        spec = importlib.util.spec_from_file_location(
+            name, Path(lss.__file__).parent / "metrics" / "elevation_band.py"
+        )
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module  # dataclasses look the module up while the class is created
+        spec.loader.exec_module(module)
+    return sys.modules[name]
+
+
+def band_fraction(sv: Served, min_deg: float, max_deg: float) -> float | None:
+    """Fraction of the window with the Sun's elevation in [min_deg, max_deg] (A's `band_fraction`), or None
+    when the served file has no histogram (format < 3)."""
+    if sv.sun_elevation_histogram is None:
+        return None
+    return float(_elevation_band().band_fraction(sv.sun_elevation_histogram, min_deg, max_deg))
 
 
 def load_all(directory: Path | None = None) -> dict[str, Served]:

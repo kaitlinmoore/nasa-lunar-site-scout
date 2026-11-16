@@ -3,7 +3,7 @@
 Filter and rank on POST /api/compare (contract 0.10.0, NL gap C3; Kaitlin's decisions 2026-11-16, recorded
 in reference/logs/c3-design.md). Pure functions over served results: nothing here computes a new physical
 quantity. Values come from the served MetricsResponse, the precomputed slope statistics, or (for
-SunElevationBand) stream A's data once it exists (request RA7); until then that value is null.
+SunElevationBand) stream A's Sun-elevation histogram in format-3 served files (RA7); null without one.
 
 Rules:
 - `across` expands into one scenario per curated site, in registry order, after the request's `scenarios`;
@@ -80,12 +80,19 @@ def expand(across: CompareAcross, sites: Sequence[Site]) -> list[Scenario]:
 
 
 SlopeAt = Callable[[float, float], tuple[float, str] | None]  # (slope deg, the map it was measured on)
+BandAt = Callable[[str, float, float], float | None]  # (scenario key, min deg, max deg) -> fraction
 
 
-def value_of(metric: CompareMetric, m: MetricsResponse, slope_at: SlopeAt) -> float | None:
+def no_band(key: str, a: float, b: float) -> None:
+    return None
+
+
+def value_of(
+    metric: CompareMetric, m: MetricsResponse, slope_at: SlopeAt, band_at: BandAt = no_band
+) -> float | None:
     """The metric's value for one served result, or None (not computed / not available)."""
     if isinstance(metric, SunElevationBand):
-        return None  # stream A's band data (RA7) isn't in the served files yet
+        return band_at(m.scenario_key, metric.min_deg, metric.max_deg)
     if metric == MetricName.slope_at_point_deg:
         hit = slope_at(m.scenario.location.lat, m.scenario.location.lon)
         return hit[0] if hit else None
@@ -111,13 +118,14 @@ def apply(
     filters: Sequence[MetricFilter],
     rank: CompareRank | None,
     slope_at: SlopeAt,
+    band_at: BandAt = no_band,
 ) -> Outcome:
     """Filter, then rank, the served results (`served`: (compared index, metrics), in compared order)."""
     metrics: dict[str, CompareMetric] = {label(f.metric): f.metric for f in filters}
     if rank is not None:
         metrics.setdefault(label(rank.metric), rank.metric)
     values: dict[int, Mapping[str, float | None]] = {
-        i: {lab: value_of(metric, m, slope_at) for lab, metric in metrics.items()} for i, m in served
+        i: {lab: value_of(metric, m, slope_at, band_at) for lab, metric in metrics.items()} for i, m in served
     }
     out = Outcome(items=[])
     for i, m in served:

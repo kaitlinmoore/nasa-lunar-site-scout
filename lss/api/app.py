@@ -34,6 +34,7 @@ from lss.api.served import (
     Served,
     ServedFileError,
     ServedTerrain,
+    band_fraction,
     differences,
     horizon_key,
     horizons,
@@ -295,7 +296,11 @@ def compare_served(req: CompareRequest) -> CompareResponse:
     if not hits:
         detail = CompareNotServedDetail(reason=COMPARE_NOT_SERVED_REASON, not_served=missing)
         raise HTTPException(422, detail=detail.model_dump(mode="json"))
-    out = compare_rules.apply(hits, req.filters, req.rank, slope_at_point)
+
+    def band_at(key: str, min_deg: float, max_deg: float) -> float | None:
+        return band_fraction(served[key], min_deg, max_deg) if key in served else None
+
+    out = compare_rules.apply(hits, req.filters, req.rank, slope_at_point, band_at)
     return CompareResponse(
         items=out.items,
         not_served=missing,
