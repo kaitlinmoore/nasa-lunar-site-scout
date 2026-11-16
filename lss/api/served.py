@@ -14,7 +14,7 @@ File format (JSON object; owned here, written by stream A):
 - format 3 adds `sun_elevation_histogram` (stream A's RA7; methodology 5.3): `{quantity, bin_deg,
   first_edge_deg, seconds: [...], total_seconds}`, the seconds the Sun's disc-centre apparent elevation spends
   in each bin over the window (they sum to the window). Optional: without it, a compare on a Sun elevation
-  band has no value (not computed) for that scenario. Read with `band_fraction` below.
+  band has no value (not computed) for that scenario. Read with `band_fraction` below (A's function).
 All bodies must be made with the same contract version.
 """
 
@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from functools import lru_cache
 from pathlib import Path
 
 from lss.config import get_settings
@@ -37,6 +36,9 @@ from lss.contract import (
     TerrainRequest,
     TerrainResponse,
 )
+
+# Stream A's band arithmetic; this module imports only numpy (lazy lss.metrics exports, A's RA10).
+from lss.metrics.elevation_band import band_fraction as elevation_band_fraction
 
 # Older contract versions whose served bodies (MetricsResponse, SeriesResponse, HorizonProfile,
 # TerrainResponse) are unchanged in the current contract. Files made with them are still served, stamped with
@@ -141,33 +143,12 @@ def _check_histogram(path: Path, hist: dict, series: SeriesResponse) -> None:
         raise ServedFileError(f"{path.name}: sun_elevation_histogram doesn't cover the window")
 
 
-@lru_cache(maxsize=1)
-def _elevation_band():
-    """Stream A's lss/metrics/elevation_band.py (numpy only), loaded on its own: importing the `lss.metrics`
-    package would run its __init__, which imports the engine (spiceypy, numba), and the API stays free of
-    those. Interim, until A offers a light import path (request RA10)."""
-    import importlib.util
-    import sys
-
-    import lss
-
-    name = "lss_api_elevation_band"
-    if name not in sys.modules:
-        spec = importlib.util.spec_from_file_location(
-            name, Path(lss.__file__).parent / "metrics" / "elevation_band.py"
-        )
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[name] = module  # dataclasses look the module up while the class is created
-        spec.loader.exec_module(module)
-    return sys.modules[name]
-
-
 def band_fraction(sv: Served, min_deg: float, max_deg: float) -> float | None:
     """Fraction of the window with the Sun's elevation in [min_deg, max_deg] (A's `band_fraction`), or None
     when the served file has no histogram (format < 3)."""
     if sv.sun_elevation_histogram is None:
         return None
-    return float(_elevation_band().band_fraction(sv.sun_elevation_histogram, min_deg, max_deg))
+    return float(elevation_band_fraction(sv.sun_elevation_histogram, min_deg, max_deg))
 
 
 def load_all(directory: Path | None = None) -> dict[str, Served]:
