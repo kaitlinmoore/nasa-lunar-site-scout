@@ -16,6 +16,9 @@ scenarios and the measured cost per scenario go to LSS_DATA_DIR/cache/served_c3_
 which the API reads whole).
 
     uv run python scripts/precompute_c3.py [--sites pgda-site04 ...] [--force]
+
+Without --sites: every curated site with a downloaded PGDA 5 m tile. Sites without one (e.g. the Apollo sites,
+which the resolver gives the global layer, fidelity low) are computed only when named with --sites.
 """
 
 from __future__ import annotations

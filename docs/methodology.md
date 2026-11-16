@@ -960,6 +960,15 @@ illumination and product 69 all agree with this.
   result over the same window. Each is written by `scripts/regression_c3.py` from the served file, so it is
   exactly what the API serves. `tests/engine/test_regression_c3.py` recomputes each with the same tolerances.
   Each fixture keeps the metrics, every 24th hourly sample and every 10th horizon azimuth.
+- **Apollo sites: low fidelity.** The six Apollo landing sites are served at 1, 2, 5 and 10 m over the three
+  standard windows (72 scenarios, `scripts/precompute_c3.py --sites apollo-11 …`). Their results use the
+  low-fidelity global layer: the 237 m LOLA map `LDEM_128` is their only terrain, near and far (section 3.5).
+  Every result carries the fidelity label "low".
+  - At 237 m, relief smaller than a few hundred metres is not in the horizon. The values describe the regional
+    setting, not a particular spot on the ground.
+  - No slope statistics are served for these sites.
+  - **Cost** (development PC): 30 days with a new horizon, median 5.9 s (1.8–7.3 s); one year, median 32.6 s;
+    10 days, median 0.9 s.
 - **Final served values** at the 1 h step, alongside the 10-minute previews quoted when window B was chosen:
 
   | Metric | Served (1 h step; metrics from the 60 s grid, refined) | Preview (10 min) |
