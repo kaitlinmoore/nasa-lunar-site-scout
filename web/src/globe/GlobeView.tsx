@@ -11,6 +11,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import type { Site, SitesResponse } from '../api/client'
 import { formatLatLon, truncateText } from '../format'
+import { displayName, subtitleOf } from '../siteNames'
 import { navigate, routeHref } from '../route'
 import { type PinnedSite, useSaved } from '../saved/store'
 
@@ -30,13 +31,15 @@ function SiteCard({ site, onClose }: { site: Site; onClose: () => void }) {
   const saved = useSaved()
   const pinned = saved.isPinned(site.id)
   const description = site.description?.trim()
+  const subtitle = subtitleOf(site)
   const route = detailsRoute(site.id)
   return (
     <div className="site-card" role="dialog" aria-labelledby={`site-card-${site.id}`}>
       <button type="button" className="site-card-close" aria-label="Close" title="Close" onClick={onClose}>
         ✕
       </button>
-      <h3 id={`site-card-${site.id}`}>{site.name}</h3>
+      <h3 id={`site-card-${site.id}`}>{displayName(site)}</h3>
+      {subtitle && <div className="site-subtitle">{subtitle}</div>}
       {description && <p>{truncateText(description, CARD_DESCRIPTION_CHARS)}</p>}
       <a
         className="button"
@@ -84,7 +87,7 @@ function SiteList({
               onSelect(site.id)
             }}
           >
-            {site.name}
+            {displayName(site)}
           </a>{' '}
           <span className="muted value">{formatLatLon(site.location.lat, site.location.lon)}</span>
         </li>

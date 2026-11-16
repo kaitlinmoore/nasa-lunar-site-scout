@@ -5,6 +5,7 @@
 // are shown with it.
 import type { Schemas } from '../api/client'
 import { formatLatLon } from '../format'
+import { placeLabel, useSiteNames } from '../siteNames'
 import { StatValue, Value } from '../metrics'
 import { fieldDoc } from '../metricSpec'
 import SiteScreen from '../SiteScreen'
@@ -12,9 +13,6 @@ import SiteScreen from '../SiteScreen'
 type TerrainResponse = Schemas['TerrainResponse']
 type ProximityResponse = Schemas['ProximityResponse']
 type SiteSummaryResponse = Schemas['SiteSummaryResponse']
-type SiteLocation = Schemas['Location']
-
-const placeName = (l: SiteLocation) => l.name ?? formatLatLon(l.lat, l.lon)
 
 const FEATURE_TYPE_LABELS: Record<string, string> = {
   crater: 'crater',
@@ -41,6 +39,7 @@ function ResultLimits({ limitations, title }: { limitations: string[] | undefine
 
 /** Slope statistics around a location (POST /api/terrain). */
 export function TerrainView({ terrain }: { terrain: TerrainResponse }) {
+  const names = useSiteNames()
   const doc = (field: string) => fieldDoc('TerrainResponse', field)
   const layer = terrain.slope_layer
   return (
@@ -49,7 +48,7 @@ export function TerrainView({ terrain }: { terrain: TerrainResponse }) {
       <dl>
         <dt>Area</dt>
         <dd className="value">
-          {placeName(terrain.location)} · within <Value value={terrain.radius_m} field="radius_m" />
+          {placeLabel(names, terrain.location)} · within <Value value={terrain.radius_m} field="radius_m" />
           <div className="definition">{formatLatLon(terrain.location.lat, terrain.location.lon)}</div>
         </dd>
         <dt>At the point</dt>
@@ -131,11 +130,12 @@ function FeaturesView({ features }: { features: ProximityResponse }) {
 
 /** A site summary (POST /api/site_summary): what the API has for a location, part by part. */
 export function SiteSummaryView({ summary }: { summary: SiteSummaryResponse }) {
+  const names = useSiteNames()
   const { terrain, features, metrics } = summary
   return (
     <>
       <p>
-        <span className="muted">Summary for</span> {placeName(summary.location)} · within{' '}
+        <span className="muted">Summary for</span> {placeLabel(names, summary.location)} · within{' '}
         <Value value={summary.radius_m} field="radius_m" />
       </p>
       <ResultLimits limitations={summary.limitations} title="Not in this summary:" />

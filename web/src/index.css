@@ -445,3 +445,10 @@ textarea {
 .nl-assumptions ul, .nl-answer .banner ul { margin: var(--space-1) 0 0; padding-left: var(--space-5); }
 .nl-result { margin-top: var(--space-3); }
 .nl-params { margin: 0; font-size: var(--text-sm); white-space: pre-wrap; }
+
+/* The small line under a site's short name on the card and panel (contract 0.9.0 subtitle). */
+.site-subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin: calc(-1 * var(--space-1)) 0 var(--space-2);
+}

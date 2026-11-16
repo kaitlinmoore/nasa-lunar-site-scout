@@ -83,6 +83,10 @@ Below the dashboard on the site screen (Kaitlin, 2026-11-16), one box per site. 
 - **Fixture mode** doesn't send the question: a selector picks one of C api's example answers (`fixtures/nl_*.json`), shown as placeholder data.
 - Live questions work on the deployed site once C api deploys `/api/nl`.
 
+## Site names
+
+A site is shown by its `short_name` (contract 0.9.0), with `subtitle` under it on the globe's site card and the site panel; an empty or missing short name falls back to the full `name` (`src/siteNames.ts`). Names come from the site list (`/api/sites`), never from results: `App` provides lookups by site id and by exact location (`SiteNamesContext`), used by the globe markers, chooser, card and list, the panel heading, the scenario card, the saved list, the comparison headers, the scenario form and the NL answers and example text. A result's own `location.name` is used only for a location that isn't a curated site. Saved scenarios keep the full name as their stored label, shown only when the site is no longer in the list.
+
 ## Display rules
 
 - Values are shown exactly as sent (rounded for display; hover a value to see the API's number). Nothing is derived or defaulted, except the terrain horizon at a body's azimuth, which the contract defines as a linear interpolation of the profile (see Sky view).

@@ -2,7 +2,7 @@
 // App shell: header (data source, contract versions), the current view, footer.
 // Views (src/route.ts): the globe (default, C7a), a site's screen (`?site=<id>`) and the saved
 // items + comparison (`?view=saved`, C6).
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   API_BASE,
   type MetricsResponse,
@@ -27,6 +27,7 @@ import { navigate, type Route, routeHref, useRoute } from './route'
 import { useUsingStaticCopy } from './api/staticFallback'
 import SavedView from './saved/SavedView'
 import NlBox from './nl/NlBox'
+import { displayName, SiteNamesContext, siteNames, subtitleOf } from './siteNames'
 import { useSaved } from './saved/store'
 import SiteScreen from './SiteScreen'
 import SkyView from './sky/SkyView'
@@ -145,9 +146,11 @@ function Nav({ route }: { route: Route }) {
  */
 function SiteIntro({ site }: { site: Site }) {
   const description = site.description?.trim()
+  const subtitle = subtitleOf(site)
   return (
     <section className="site-intro">
-      <h2>{site.name}</h2>
+      <h2>{displayName(site)}</h2>
+      {subtitle && <div className="site-subtitle">{subtitle}</div>}
       {description && <p>{description}</p>}
     </section>
   )
@@ -269,6 +272,8 @@ export default function App() {
   const route = useRoute()
   const sites = useLoad<SitesResponse>(loadSites, source)
   const siteList = sites.kind === 'ok' ? sites.data : null
+  // Every site name on screen comes from this list (siteNames.ts).
+  const names = useMemo(() => siteNames(sites.kind === 'ok' ? sites.data.sites : []), [sites])
   const defaults = useLoad<Scenario>(loadDefaults, source)
 
   let body
@@ -345,7 +350,7 @@ export default function App() {
       </header>
       <StaticCopyNotice />
 
-      {body}
+      <SiteNamesContext.Provider value={names}>{body}</SiteNamesContext.Provider>
 
       <footer className="muted">Not affiliated with or endorsed by NASA.</footer>
     </main>

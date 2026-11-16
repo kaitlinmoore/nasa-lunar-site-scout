@@ -10,6 +10,7 @@ import { type Scenario, type Site, WEB_CONTRACT_VERSION } from '../api/client'
 import { type ComparisonResult, type DataSource, loadCompare } from '../api/source'
 import ApiProblemView from '../ApiProblemView'
 import { formatExactRange, formatScenarioSummary, formatUtcInput, parseUtcInput } from '../format'
+import { displayName, useSiteNames } from '../siteNames'
 import { navigate, routeHref } from '../route'
 import { validateScenario } from '../scenario'
 import CompareTable from './CompareTable'
@@ -83,7 +84,7 @@ function ScenarioForm({ sites, defaults }: { sites: Site[]; defaults: Scenario |
         <select value={siteId} onChange={(e) => setSiteId(e.target.value)}>
           {sites.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.name}
+              {displayName(s)}
             </option>
           ))}
         </select>
@@ -291,6 +292,7 @@ export default function SavedView({
   defaults: Scenario | null
 }) {
   const saved = useSaved()
+  const names = useSiteNames()
   const { doc } = saved
   const toggleCompare = (id: string, on: boolean) => {
     const ids = doc.compare_ids.filter((x) => x !== id)
@@ -347,7 +349,11 @@ export default function SavedView({
                     />{' '}
                     Compare
                   </label>{' '}
-                  {s.site_id ? <SiteLink siteId={s.site_id}>{s.label}</SiteLink> : <span>{s.label}</span>}{' '}
+                  {s.site_id ? (
+                    <SiteLink siteId={s.site_id}>{names.byId(s.site_id) ?? s.label}</SiteLink>
+                  ) : (
+                    <span>{s.label}</span>
+                  )}{' '}
                   <span className="muted value" title={formatExactRange(sc.window_start, sc.window_end)}>
                     {formatScenarioSummary(sc)}
                   </span>{' '}

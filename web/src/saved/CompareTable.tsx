@@ -5,6 +5,7 @@ import type { MetricsResponse } from '../api/client'
 import { formatExactRange, formatScenarioSummary } from '../format'
 import { MetricValue } from '../metrics'
 import { COMMS_SPEC, fieldDoc, type MetricSpec, metricFields, POWER_SPEC } from '../metricSpec'
+import { useSiteNames } from '../siteNames'
 import { NotComputed } from '../Value'
 import type { SavedScenario } from './store'
 
@@ -54,6 +55,7 @@ function GroupRows<T extends object>({
 }
 
 export default function CompareTable({ entries }: { entries: CompareEntry[] }) {
+  const names = useSiteNames()
   return (
     <div className="compare-scroll">
       <table className="metrics compare">
@@ -64,7 +66,7 @@ export default function CompareTable({ entries }: { entries: CompareEntry[] }) {
               const s = saved.scenario
               return (
                 <th scope="col" key={saved.id}>
-                  <div>{saved.label}</div>
+                  <div>{(saved.site_id && names.byId(saved.site_id)) || saved.label}</div>
                   <div className="definition value">{formatScenarioSummary(s)}</div>
                   <div className="definition value">{formatExactRange(s.window_start, s.window_end)}</div>
                 </th>

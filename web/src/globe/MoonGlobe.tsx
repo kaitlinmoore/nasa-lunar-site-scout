@@ -39,6 +39,7 @@ import {
 } from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { displayName } from '../siteNames'
 import type { Site } from '../api/client'
 
 /** Cesium ion asset: "Cesium Moon" (imagery + LOLA terrain in one 3D tileset). */
@@ -297,7 +298,7 @@ export default function MoonGlobe({
           entity.point.outlineColor = new ConstantProperty(isPinned ? pinColor : outlineColor)
           entity.point.outlineWidth = new ConstantProperty(isPinned ? pinOutlineWidth : outlineWidth)
           entity.point.pixelSize = new ConstantProperty(isPinned ? pinSize : markerSize)
-          entity.label.text = new ConstantProperty(isPinned ? `★ ${site.name}` : site.name)
+          entity.label.text = new ConstantProperty(isPinned ? `★ ${displayName(site)}` : displayName(site))
         }
         scene.requestRender()
       },
@@ -322,7 +323,7 @@ export default function MoonGlobe({
       const entity = v.entities.add(
         new Entity({
           id: site.id,
-          name: site.name,
+          name: displayName(site),
           position,
           point: {
             pixelSize: markerSize,
@@ -333,7 +334,7 @@ export default function MoonGlobe({
             disableDepthTestDistance: Number.POSITIVE_INFINITY,
           },
           label: {
-            text: site.name,
+            text: displayName(site),
             font: labelFont,
             fillColor: markerColor,
             outlineColor,
@@ -564,7 +565,10 @@ export default function MoonGlobe({
                     onSelectRef.current(id)
                   }}
                 >
-                  {sites.find((s) => s.id === id)?.name ?? id}
+                  {(() => {
+                    const s = sites.find((x) => x.id === id)
+                    return s ? displayName(s) : id
+                  })()}
                 </button>
               </li>
             ))}

@@ -11,6 +11,7 @@ import { mapCompareResponse } from '../api/compare'
 import { askNl, type DataSource, type NlExample } from '../api/source'
 import ApiProblemView from '../ApiProblemView'
 import { formatExactRange, formatHeight, formatLatLon, formatScenarioSummary } from '../format'
+import { displayName, placeLabel, useSiteNames } from '../siteNames'
 import { routeHref } from '../route'
 import CompareTable from '../saved/CompareTable'
 import { Value } from '../metrics'
@@ -61,6 +62,7 @@ function Unreadable({ why }: { why: string }) {
 
 /** The answer's result, in the same views as the rest of the site. */
 function ResultView({ result }: { result: NlResult }) {
+  const names = useSiteNames()
   switch (result.op) {
     case 'none':
       return null
@@ -82,7 +84,7 @@ function ResultView({ result }: { result: NlResult }) {
       const entries = result.scenarios.map((s, i) => ({
         saved: {
           id: scenarioId(s),
-          label: s.location.name ?? formatLatLon(s.location.lat, s.location.lon),
+          label: placeLabel(names, s.location),
           site_id: null,
           saved_at: '',
           scenario: s,
@@ -121,8 +123,7 @@ function ResultView({ result }: { result: NlResult }) {
             <dt>Terrain horizon</dt>
             <dd>
               <span className="value">
-                {r.location.name ?? formatLatLon(r.location.lat, r.location.lon)} ·{' '}
-                {formatHeight(r.unit_height_m)}
+                {placeLabel(names, r.location)} · {formatHeight(r.unit_height_m)}
               </span>
               <div className="definition value">{r.azimuth_deg.length} azimuth samples</div>
             </dd>
@@ -146,7 +147,7 @@ function ResultView({ result }: { result: NlResult }) {
             <ul>
               {result.result.sites.map((s) => (
                 <li key={s.id}>
-                  <a href={routeHref({ view: 'site', siteId: s.id })}>{s.name}</a>{' '}
+                  <a href={routeHref({ view: 'site', siteId: s.id })}>{names.byId(s.id) ?? displayName(s)}</a>{' '}
                   <span className="muted value">{formatLatLon(s.location.lat, s.location.lon)}</span>
                 </li>
               ))}
@@ -408,7 +409,7 @@ export default function NlBox({
           rows={3}
           maxLength={MAX_CHARS}
           value={text}
-          placeholder={`For example: how long is the longest shadow at ${site.name}?`}
+          placeholder={`For example: how long is the longest shadow at ${displayName(site)}?`}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) submit(e)

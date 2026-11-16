@@ -16,6 +16,7 @@ import {
   midSentence,
 } from './format'
 import { MetricValue, Value } from './metrics'
+import { useSiteNames } from './siteNames'
 import {
   COMMS_SPEC,
   DOCS,
@@ -136,6 +137,7 @@ function Fidelity({ fidelity }: { fidelity: FidelityLabel }) {
 
 /** The site screen; `children` (the sky view) renders between the scenario and the metrics. */
 export default function SiteScreen({ data, children }: { data: MetricsResponse; children?: ReactNode }) {
+  const names = useSiteNames()
   const { scenario } = data
   const { location } = scenario
   const heightDoc = DOCS.Scenario?.unit_height_m
@@ -146,7 +148,7 @@ export default function SiteScreen({ data, children }: { data: MetricsResponse; 
         <h2>Scenario</h2>
         <dl>
           <dt>Site</dt>
-          <dd>{location.name ?? <span className="muted">unnamed location</span>}</dd>
+          <dd>{names.at(location) ?? location.name ?? <span className="muted">unnamed location</span>}</dd>
           <dt>Time window</dt>
           <dd>
             <span className="value">
