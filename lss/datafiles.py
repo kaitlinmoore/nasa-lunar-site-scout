@@ -25,6 +25,7 @@ from lss.config import get_settings
 class Group(StrEnum):
     kernels = "kernels"
     site01 = "site01"
+    sites = "sites"  # C3: the other PGDA product 78 site tiles
     farfield = "farfield"
     validation = "validation"
 
@@ -52,12 +53,18 @@ class Clip:
 
     `max_nodata_fraction`: the clip fails if more of it is no-data. 0 for the fully interpolated
     LOLA polar maps, where any no-data near the pole means a failed read.
+
+    `label_url`: set when the source is a PDS3 image with a detached label (raw integers, no magic
+    bytes); the label is downloaded beside it and opened instead. `scale`: metres per stored count,
+    applied when the clip is written as float32 (PDS LOLA heights are counts x 0.5 m).
     """
 
     x_m: float
     y_m: float
     half_width_m: float
     max_nodata_fraction: float = 0.0
+    label_url: str | None = None
+    scale: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -78,6 +85,9 @@ class DataFile:
 
 NAIF = "https://naif.jpl.nasa.gov/pub/naif/generic_kernels"
 PGDA = "https://pgda.gsfc.nasa.gov/data"
+PDS_LOLA_POLAR = (
+    "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img"
+)
 
 # Centre of the Site01 validation clip, PS metres, rounded: within 1.2 m of Site01 (Connecting ridge,
 # exact PS -11308.19, -12258.86; see lss/contract/examples.py). Kept fixed because it is part of the
@@ -159,6 +169,61 @@ FILES: tuple[DataFile, ...] = (
         "pgda_78_site_dems",
         "Barker et al. 2021 RoI shapefiles, for the validation comparison.",
     ),
+    # --- Other PGDA product 78 sites (C3); Site06's RoI archive link is dead (2026-11-15)
+    DataFile(
+        "site04_dem",
+        Group.sites,
+        Kind.tiff,
+        f"{PGDA}/LOLA_5mpp/Site04/Site04_final_adj_5mpp_surf.tif",
+        "data/pgda78/Site04/Site04_final_adj_5mpp_surf.tif",
+        "pgda_78_site_dems",
+        "5 m/pix LDEM, Site04 (Shackleton rim).",
+    ),
+    DataFile(
+        "site04_rois",
+        Group.sites,
+        Kind.gzip,
+        f"{PGDA}/LOLA_5mpp/Site04/Site04_ROIs.tgz",
+        "data/pgda78/Site04/Site04_ROIs.tgz",
+        "pgda_78_site_dems",
+        "Barker et al. 2021 RoI shapefiles: the served point is the largest RoI's centroid.",
+    ),
+    DataFile(
+        "site07_dem",
+        Group.sites,
+        Kind.tiff,
+        f"{PGDA}/LOLA_5mpp/Site07/Site07_final_adj_5mpp_surf.tif",
+        "data/pgda78/Site07/Site07_final_adj_5mpp_surf.tif",
+        "pgda_78_site_dems",
+        "5 m/pix LDEM, Site07 (Peak near Shackleton).",
+    ),
+    DataFile(
+        "site07_rois",
+        Group.sites,
+        Kind.gzip,
+        f"{PGDA}/LOLA_5mpp/Site07/Site07_ROIs.tgz",
+        "data/pgda78/Site07/Site07_ROIs.tgz",
+        "pgda_78_site_dems",
+        "Barker et al. 2021 RoI shapefiles: the served point is the largest RoI's centroid.",
+    ),
+    DataFile(
+        "site11_dem",
+        Group.sites,
+        Kind.tiff,
+        f"{PGDA}/LOLA_5mpp/Site11/Site11_final_adj_5mpp_surf.tif",
+        "data/pgda78/Site11/Site11_final_adj_5mpp_surf.tif",
+        "pgda_78_site_dems",
+        "5 m/pix LDEM, Site11 (de Gerlache rim).",
+    ),
+    DataFile(
+        "site11_rois",
+        Group.sites,
+        Kind.gzip,
+        f"{PGDA}/LOLA_5mpp/Site11/Site11_ROIs.tgz",
+        "data/pgda78/Site11/Site11_ROIs.tgz",
+        "pgda_78_site_dems",
+        "Barker et al. 2021 RoI shapefiles: the served point is the largest RoI's centroid.",
+    ),
     # --- Far field (PGDA product 90), mirroring Barker et al. 2021's nested grids
     DataFile(
         "ldem_80s_80m",
@@ -206,6 +271,73 @@ FILES: tuple[DataFile, ...] = (
         "pgda_90_south_pole_dems",
         "60 m/pix terrain for the internal product 69 reproduction; +-150 km window of a 2.9 GB COG.",
         clip=Clip(*SITE01_PS, half_width_m=150_000.0),
+    ),
+    DataFile(
+        "site01_slope",
+        Group.validation,
+        Kind.tiff,
+        f"{PGDA}/LOLA_5mpp/Site01/Site01_final_adj_5mpp_slp.tif",
+        "data/pgda78/Site01/Site01_final_adj_5mpp_slp.tif",
+        "pgda_78_site_dems",
+        "Barker et al. 2021 slope map (deg), 5 m: checks lss.terrain.slope (method not stated by Barker).",
+    ),
+    DataFile(
+        "ldem_83s_10m_site01_clip",
+        Group.validation,
+        Kind.tiff,
+        f"{PGDA}/LOLA_20mpp/LDEM_83S_10MPP_ADJ.TIF",
+        "data/pgda90/clips/LDEM_83S_10MPP_ADJ_site01_20km.tif",
+        "pgda_90_south_pole_dems",
+        "10 m/pix near field (83-90 S), +-20 km window of a 5.1 GB COG: measures what a 10 m near field "
+        "costs and loses against the 5 m site map at Site01 (C3 cost step; Kaitlin 2026-11-15).",
+        clip=Clip(*SITE01_PS, half_width_m=20_000.0),
+    ),
+    DataFile(
+        "ldem_83s_10m_site04_clip",
+        Group.sites,
+        Kind.tiff,
+        f"{PGDA}/LOLA_20mpp/LDEM_83S_10MPP_ADJ.TIF",
+        "data/pgda90/clips/LDEM_83S_10MPP_ADJ_site04_12km.tif",
+        "pgda_90_south_pole_dems",
+        "10 m/pix, +-12 km around the Site04 served point: 10 km slope statistics (RA4; Kaitlin 2026-11-15).",
+        clip=Clip(-2811.156, -6649.704, half_width_m=12_000.0),
+    ),
+    DataFile(
+        "ldem_83s_10m_site07_clip",
+        Group.sites,
+        Kind.tiff,
+        f"{PGDA}/LOLA_20mpp/LDEM_83S_10MPP_ADJ.TIF",
+        "data/pgda90/clips/LDEM_83S_10MPP_ADJ_site07_12km.tif",
+        "pgda_90_south_pole_dems",
+        "10 m/pix, +-12 km around the Site07 served point: 10 km slope statistics (RA4; Kaitlin 2026-11-15).",
+        clip=Clip(30063.429, -20107.659, half_width_m=12_000.0),
+    ),
+    DataFile(
+        "ldem_83s_10m_site11_clip",
+        Group.sites,
+        Kind.tiff,
+        f"{PGDA}/LOLA_20mpp/LDEM_83S_10MPP_ADJ.TIF",
+        "data/pgda90/clips/LDEM_83S_10MPP_ADJ_site11_12km.tif",
+        "pgda_90_south_pole_dems",
+        "10 m/pix, +-12 km around the Site11 served point: 10 km slope statistics (RA4; Kaitlin 2026-11-15).",
+        clip=Clip(-37541.121, 14881.646, half_width_m=12_000.0),
+    ),
+    DataFile(
+        "ldem_75s_60m_site01_clip",
+        Group.validation,
+        Kind.tiff,
+        f"{PDS_LOLA_POLAR}/ldem_75s_60m.img",
+        "data/pds_lola/clips/LDEM_75S_60M_site01_150km.tif",
+        "pgda_69_polar_illumination",
+        "PDS LOLA GDR 60 m polar map (V2.0, 2017), stand-in for product 69's own terrain (LDEM_85S_060M, "
+        "not public; Kaitlin 2026-11-15). Same 60 m pixel grid as product 69. +-150 km window, heights in m "
+        "above 1737.4 km (counts x 0.5).",
+        clip=Clip(
+            *SITE01_PS,
+            half_width_m=150_000.0,
+            label_url=f"{PDS_LOLA_POLAR}/ldem_75s_60m.lbl",
+            scale=0.5,
+        ),
     ),
 )
 

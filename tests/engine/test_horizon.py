@@ -23,12 +23,12 @@ from lss.horizon import (
 )
 from lss.horizon import cache as hcache
 from lss.horizon.core import ray_samples
-from lss.registry.terrain import LAYERS, resolve
+from lss.registry.terrain import C1_LAYERS, resolve
 from lss.terrain import MOON_RADIUS_M, Grid, latlon_from_ps, ps_from_latlon
 
 R = MOON_RADIUS_M
 SITE01 = (-89.45, -137.31)
-HAVE_DEMS = all(spec.dem().path.is_file() for spec in LAYERS)
+HAVE_DEMS = all(spec.dem().path.is_file() for spec in C1_LAYERS)
 needs_dems = pytest.mark.skipif(not HAVE_DEMS, reason="DEMs not downloaded (scripts/fetch_data.py)")
 
 

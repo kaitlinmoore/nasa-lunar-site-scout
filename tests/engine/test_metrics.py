@@ -18,7 +18,7 @@ from lss.metrics import (
     power_metrics,
     time_mean,
 )
-from lss.registry.terrain import LAYERS
+from lss.registry.terrain import C1_LAYERS
 from lss.series import Period, SeriesParams, SeriesResult, body_visibility, compute_series, series_response
 
 START = datetime(2028, 5, 15, tzinfo=UTC)
@@ -120,7 +120,7 @@ try:
     HAVE_KERNELS = True
 except Exception:  # noqa: BLE001 - any missing-kernel error means: skip
     HAVE_KERNELS = False
-HAVE_DATA = HAVE_KERNELS and all(spec.dem().path.is_file() for spec in LAYERS)
+HAVE_DATA = HAVE_KERNELS and all(spec.dem().path.is_file() for spec in C1_LAYERS)
 needs_data = pytest.mark.skipif(not HAVE_DATA, reason="kernels/DEMs not downloaded (scripts/fetch_data.py)")
 
 

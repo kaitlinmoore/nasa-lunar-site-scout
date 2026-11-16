@@ -158,10 +158,10 @@ def test_layer_metadata_matches_files(spec):
 
 
 def test_site01_height_agrees_across_layers():
-    paths = [datafile(s.file_id).path for s in reg.LAYERS]
+    paths = [datafile(s.file_id).path for s in reg.C1_LAYERS]
     if not all(p.is_file() for p in paths):
         pytest.skip("terrain files not downloaded")
-    heights = [float(s.dem().height_at(*SITE01)[0]) for s in reg.LAYERS]
+    heights = [float(s.dem().height_at(*SITE01)[0]) for s in reg.C1_LAYERS]
     assert heights[0] == pytest.approx(1954.60, abs=0.01)  # bilinear on the 5 m map
     assert abs(heights[1] - heights[0]) < 1.0  # 80 m map
     assert abs(heights[2] - heights[0]) < 5.0  # 240 m map: pixels average over the ridge (~4 m lower)

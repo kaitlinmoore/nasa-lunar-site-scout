@@ -71,6 +71,8 @@ def spec(f: DataFile) -> dict:
     s: dict = {"url": f.url}
     if f.clip:
         s["clip"] = {"x_m": f.clip.x_m, "y_m": f.clip.y_m, "half_width_m": f.clip.half_width_m}
+        if f.clip.label_url:  # only when set, so existing clips keep their manifest identity
+            s["clip"] |= {"label_url": f.clip.label_url, "scale": f.clip.scale}
     return s
 
 
@@ -157,6 +159,7 @@ def nodata_fraction(data, nodata) -> float:
 
 
 def clip(f: DataFile, part: Path, keep_source: bool = False) -> None:
+    import numpy as np
     import rasterio
     from rasterio.windows import Window
 
@@ -164,28 +167,40 @@ def clip(f: DataFile, part: Path, keep_source: bool = False) -> None:
     tmp = get_settings().data_dir / "tmp"
     tmp.mkdir(parents=True, exist_ok=True)
     source = tmp / f.url.rsplit("/", 1)[-1]
+    label = tmp / f.clip.label_url.rsplit("/", 1)[-1] if f.clip.label_url else None
+    if label is not None and not label.is_file():
+        download_url(f.clip.label_url, label, f.id + " label")
+        if not label.read_bytes().startswith(b"PDS_VERSION_ID"):
+            label.unlink()
+            raise RuntimeError(f"{f.id}: label is not a PDS3 label")
     if not source.is_file():
         src_part = source.with_name(source.name + ".part")
         print(f"    downloading the source to {source} (clipped locally, then deleted)")
         # A partial download is kept and resumed on the next run (the sources are GB-sized).
         download_url(f.url, src_part, f.id + " source", resume=True)
         with src_part.open("rb") as fh:
-            if not looks_like(f.kind, fh.read(16)):
+            if label is None and not looks_like(f.kind, fh.read(16)):  # raw PDS images have no magic
                 src_part.unlink()
                 raise RuntimeError(f"{f.id}: source is not a {f.kind} file")
         src_part.replace(source)
-    with rasterio.open(source) as src:
+    with rasterio.open(label or source) as src:
         col0, col1, row0, row1 = clip_window(src.transform, src.width, src.height, f.clip)
         win = Window(col0, row0, col1 - col0, row1 - row0)
         print(f"    window cols {col0}:{col1} rows {row0}:{row1} ({win.width} x {win.height} px)")
         data = src.read(1, window=win)
         frac = nodata_fraction(data, src.nodata)
+        if f.clip.scale != 1.0:  # stored counts -> metres, as float32 like the other DEMs
+            nan = np.isnan(data) if data.dtype.kind == "f" else data == src.nodata
+            data = np.where(nan, np.nan, data.astype(np.float32) * np.float32(f.clip.scale))
+            data = data.astype(np.float32)
         if frac > f.clip.max_nodata_fraction:
             raise RuntimeError(
                 f"{f.id}: clip is {frac:.2%} no-data (allowed {f.clip.max_nodata_fraction:.2%}); "
                 "the source is incomplete or the window is wrong"
             )
         profile = src.profile.copy()
+        if f.clip.scale != 1.0:
+            profile.update(dtype="float32", nodata=np.nan)
         profile.update(
             driver="GTiff",
             width=win.width,
@@ -204,6 +219,8 @@ def clip(f: DataFile, part: Path, keep_source: bool = False) -> None:
         dst.update_tags(**tags, LSS_SOURCE_URL=f.url, LSS_CLIP=json.dumps(spec(f)["clip"]))
     if not keep_source:
         source.unlink()
+        if label is not None:
+            label.unlink()
 
 
 def fetch(f: DataFile, manifest: dict, force: bool, keep_source: bool = False) -> bool:

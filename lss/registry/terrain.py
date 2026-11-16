@@ -50,37 +50,54 @@ def _dem(file_id: str, dataset_id: str, pole: str) -> DemLayer:
     return DemLayer(dataset_id, datafile(file_id).path, pole)
 
 
-# Finest first. Only layers the C1 slice has downloaded are listed.
-LAYERS: tuple[LayerSpec, ...] = (
-    LayerSpec(
-        "site01_dem",
-        "pgda_78_site_dems",
-        5.0,
-        "south",
-        (-19_000.0, -20_000.0, -3_000.0, -4_000.0),
-        "5 m PGDA site map",
-        use_to_m=5_000.0,
-        site_tile=True,
-    ),
-    LayerSpec(
-        "ldem_80s_80m",
-        "pgda_90_south_pole_dems",
-        80.0,
-        "south",
-        (-304_000.0, -304_000.0, 304_000.0, 304_000.0),
-        "80 m polar map",
-        use_to_m=100_000.0,
-    ),
-    LayerSpec(
-        "ldem_60s_240m",
-        "pgda_90_south_pole_dems",
-        240.0,
-        "south",
-        (-931_200.0, -931_200.0, 931_200.0, 931_200.0),
-        "240 m polar map",
-        use_to_m=None,
-    ),
+# Site tiles (PGDA product 78, 5 m) and the polar maps (product 90). Bounds checked against the files by
+# tests/engine/test_terrain.py when they are present.
+SITE01_TILE = LayerSpec(
+    "site01_dem",
+    "pgda_78_site_dems",
+    5.0,
+    "south",
+    (-19_000.0, -20_000.0, -3_000.0, -4_000.0),
+    "5 m PGDA site map",
+    use_to_m=5_000.0,
+    site_tile=True,
 )
+POLAR_80M = LayerSpec(
+    "ldem_80s_80m",
+    "pgda_90_south_pole_dems",
+    80.0,
+    "south",
+    (-304_000.0, -304_000.0, 304_000.0, 304_000.0),
+    "80 m polar map",
+    use_to_m=100_000.0,
+)
+POLAR_240M = LayerSpec(
+    "ldem_60s_240m",
+    "pgda_90_south_pole_dems",
+    240.0,
+    "south",
+    (-931_200.0, -931_200.0, 931_200.0, 931_200.0),
+    "240 m polar map",
+    use_to_m=None,
+)
+
+
+def _site_tile(n: str, bounds: tuple[float, float, float, float]) -> LayerSpec:
+    return LayerSpec(
+        f"site{n}_dem", "pgda_78_site_dems", 5.0, "south", bounds, "5 m PGDA site map", 5_000.0, True
+    )
+
+
+# C3 sites (lss/registry/sites.yaml); bounds from the GeoTIFF headers (2026-11-15).
+SITE_TILES_C3 = (
+    _site_tile("04", (-9_000.0, -15_000.0, 7_000.0, 1_000.0)),
+    _site_tile("07", (22_000.0, -28_000.0, 38_000.0, -12_000.0)),
+    _site_tile("11", (-45_000.0, 7_000.0, -29_000.0, 23_000.0)),
+)
+# The C1 stack (the served Site01 result and its validation).
+C1_LAYERS: tuple[LayerSpec, ...] = (SITE01_TILE, POLAR_80M, POLAR_240M)
+# Every layer the resolver may choose from. The first three are C1_LAYERS (scripts index them).
+LAYERS: tuple[LayerSpec, ...] = (*C1_LAYERS, *SITE_TILES_C3)
 
 # The `use_to_m` defaults follow Barker et al. (2021): 5 m within 5 km, 80 m to 100 km, 240 m beyond.
 # Checked, with the maximum ray range, by scripts/horizon_convergence.py (docs/methodology.md section 3.2).

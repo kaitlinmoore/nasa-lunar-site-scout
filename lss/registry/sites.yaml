@@ -1,0 +1,99 @@
+# SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
+#
+# Curated sites (plan F5), owned by stream A. lss.registry.sites loads these as contract Site objects for
+# /api/sites and fixtures/sites.json (stream C api generates those from here).
+#
+# Served point rule (Kaitlin, 2026-11-15): the centroid of the largest Barker et al. (2021) region of interest
+# (RoI) where the PGDA product 78 tile has RoIs; otherwise the Mazarico et al. (2011) coordinate, checked for
+# slope on the 5 m map. Barker's RoIs: connected 5 m pixels with average illumination > 70% at 1 m over
+# 2024-2025, area > 2500 m2. Centroid = centre of the 5 m pixel containing the mean of the RoI's pixel
+# centres (lss.registry.rois): this reproduces all seven Table 2 centroids at Site01 exactly.
+#
+# `point` is engine provenance (not in the contract): how the location was found, and the 5 m tile.
+# Coordinates: south polar stereographic metres (ps_m) on the 1737.4 km sphere, MOON_ME / DE421; lat/lon from
+# ps_m (lss.terrain.core.latlon_from_ps), 6 decimals (~4 mm at the pole).
+
+sites:
+  - id: pgda-site01
+    name: Site01 Connecting ridge (Barker 2021 RoI 4)
+    category: pgda
+    location: {lat: -89.452675, lon: -137.148653}
+    point: {rule: largest_roi_centroid, tile: Site01, roi: 4, roi_area_m2: 13300, ps_m: [-11287.5, -12167.5], centroid_from: Barker et al. (2021) Table 2}
+    description: >-
+      A ridge at the Moon's south pole, about 17 km from the pole, connecting the rims of Shackleton
+      crater and de Gerlache crater (Barker et al. 2021). Because it is high and close to the pole,
+      where the Sun always stays near the horizon, parts of it see the Sun most of the time: Mazarico
+      et al. (2011) ranked it first of the south polar sites for average illumination (their site 1),
+      and Barker et al. (2021) studied it as a potential landing site. They found seven regions on it
+      where, at 1 m above the ground in 2024-2025, more than 70% of the Sun's disc is in view on
+      average. The point used here is the centre of the largest, region 4.
+    dataset_ids: [pgda_78_site_dems, pgda_81_mosaic_5m, pgda_90_south_pole_dems]
+    has_dem_clones: true
+    source: >-
+      Barker, M. K., et al. (2021), Planet. Space Sci. 203, 105119, doi:10.1016/j.pss.2020.105119, Table 2:
+      centroid of Site01 region of interest 4, polar stereographic x = -11.2875 km, y = -12.1675 km
+      (89.452675 S, 222.851347 E), in the PGDA product 78 Site01 DEM tile. Site01 (Connecting ridge) is
+      site 1 of Mazarico, E., et al. (2011), Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030.
+
+  - id: pgda-site04
+    name: Site04 Shackleton rim (Barker 2021 RoI 1)
+    category: pgda
+    location: {lat: -89.761966, lon: -157.067197}
+    point: {rule: largest_roi_centroid, tile: Site04, roi: 1, roi_area_m2: 6975, ps_m: [-2812.5, -6647.5], centroid_from: Site04_ROIs.tgz (pixel containing the mean)}
+    description: >-
+      A point on the rim of Shackleton crater, about 7 km from the Moon's south pole. Mazarico et al.
+      (2011) ranked the south polar sites by average illumination; this is their site 4. Barker et al.
+      (2021) mapped it at 5 m as a potential landing site and outlined four regions on it where, at 1 m
+      above the ground in 2024-2025, more than 70% of the Sun's disc is in view on average. The point
+      used here is the centre of the largest, region 1.
+    dataset_ids: [pgda_78_site_dems, pgda_81_mosaic_5m, pgda_90_south_pole_dems]
+    has_dem_clones: true
+    source: >-
+      Centroid of region of interest 1 (the largest, 279 pixels = 6,975 m2) in Barker et al. (2021)'s
+      Site04_ROIs.tgz (PGDA product 78; Barker, M. K., et al. (2021), Planet. Space Sci. 203, 105119,
+      doi:10.1016/j.pss.2020.105119): polar stereographic x = -2.8125 km, y = -6.6475 km: the centre of the
+      5 m pixel containing the mean of the region's pixel centres (the rule that reproduces Barker's Table 2
+      centroids at Site01). Site 4 of Mazarico, E., et al. (2011), Icarus 211, 1066-1081,
+      doi:10.1016/j.icarus.2010.10.030.
+
+  - id: pgda-site07
+    name: Site07 Peak near Shackleton (Barker 2021 RoI 2)
+    category: pgda
+    location: {lat: -88.807326, lon: 123.776844}
+    point: {rule: largest_roi_centroid, tile: Site07, roi: 2, roi_area_m2: 16550, ps_m: [30062.5, -20107.5], centroid_from: Site07_ROIs.tgz (pixel containing the mean)}
+    description: >-
+      An isolated peak near Shackleton crater, on the Moon's far side, about 36 km from the south pole
+      (Barker et al. 2021). Mazarico et al. (2011) ranked the south polar sites by average illumination;
+      this is their site 7. Barker et al. (2021) mapped it at 5 m as a potential landing site and outlined
+      two regions on it where, at 1 m above the ground in 2024-2025, more than 70% of the Sun's disc is in
+      view on average. The point used here is the centre of the larger, region 2.
+    dataset_ids: [pgda_78_site_dems, pgda_81_mosaic_5m, pgda_90_south_pole_dems]
+    has_dem_clones: true
+    source: >-
+      Centroid of region of interest 2 (the largest, 662 pixels = 16,550 m2) in Barker et al. (2021)'s
+      Site07_ROIs.tgz (PGDA product 78; Barker, M. K., et al. (2021), Planet. Space Sci. 203, 105119,
+      doi:10.1016/j.pss.2020.105119): polar stereographic x = 30.0625 km, y = -20.1075 km: the centre of the
+      5 m pixel containing the mean of the region's pixel centres (the rule that reproduces Barker's Table 2
+      centroids at Site01). Site 7 of Mazarico, E., et al. (2011), Icarus 211, 1066-1081,
+      doi:10.1016/j.icarus.2010.10.030.
+
+  - id: pgda-site11
+    name: Site11 de Gerlache rim (Barker 2021 RoI 1)
+    category: pgda
+    location: {lat: -88.668256, lon: -68.375764}
+    point: {rule: largest_roi_centroid, tile: Site11, roi: 1, roi_area_m2: 13325, ps_m: [-37542.5, 14882.5], centroid_from: Site11_ROIs.tgz (pixel containing the mean)}
+    description: >-
+      A point on the rim of de Gerlache crater, about 40 km from the Moon's south pole. Mazarico et al.
+      (2011) ranked the south polar sites by average illumination; this is their site 11. Barker et al.
+      (2021) mapped it at 5 m as a potential landing site and outlined four regions on it where, at 1 m
+      above the ground in 2024-2025, more than 70% of the Sun's disc is in view on average. The point
+      used here is the centre of the largest, region 1.
+    dataset_ids: [pgda_78_site_dems, pgda_81_mosaic_5m, pgda_90_south_pole_dems]
+    has_dem_clones: true
+    source: >-
+      Centroid of region of interest 1 (the largest, 533 pixels = 13,325 m2) in Barker et al. (2021)'s
+      Site11_ROIs.tgz (PGDA product 78; Barker, M. K., et al. (2021), Planet. Space Sci. 203, 105119,
+      doi:10.1016/j.pss.2020.105119): polar stereographic x = -37.5425 km, y = 14.8825 km: the centre of the
+      5 m pixel containing the mean of the region's pixel centres (the rule that reproduces Barker's Table 2
+      centroids at Site01). Site 11 of Mazarico, E., et al. (2011), Icarus 211, 1066-1081,
+      doi:10.1016/j.icarus.2010.10.030.

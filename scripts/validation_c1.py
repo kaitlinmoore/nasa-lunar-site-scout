@@ -43,7 +43,7 @@ from lss.datafiles import get as datafile
 from lss.ephem import MOON_RADIUS_M, enu_basis
 from lss.horizon import HORIZON_VERSION, cached_horizon
 from lss.metrics import comms_metrics, power_metrics, time_mean
-from lss.registry.terrain import LAYERS, LayerSpec
+from lss.registry.terrain import C1_LAYERS, LAYERS, POLAR_240M, LayerSpec
 from lss.series import SERIES_VERSION, SeriesParams, body_visibility, compute_series, ephemeris_sampler
 from lss.terrain.core import latlon_from_ps
 
@@ -82,7 +82,7 @@ P69_CLIP = LayerSpec(
     "60 m polar map (validation clip)",
     use_to_m=148_000.0,
 )
-P69_LAYERS = (P69_CLIP, LAYERS[-1])  # 60 m to 148 km, then the 240 m map (beyond the clip)
+P69_LAYERS = (P69_CLIP, POLAR_240M)  # 60 m to 148 km, then the 240 m map (beyond the clip)
 
 FIXTURE = Path(__file__).resolve().parents[1] / "tests" / "engine" / "fixtures" / "validation_c1.json"
 
@@ -780,7 +780,7 @@ def stage_ridge(fresh: bool) -> None:
         )
     # Independent ray scan at the Sun's azimuths while visible, every 5 deg of azimuth visited.
     az_vis = np.unique(np.round(g.azimuth_deg[vis] / 5.0) * 5.0 % 360.0)
-    dems = [_Dem(spec.dem().path) for spec in LAYERS]
+    dems = [_Dem(spec.dem().path) for spec in C1_LAYERS]
     ind = independent_horizon(res.lat, res.lon, hz.observer_radius_m, az_vis, dems)
     scan = [
         {

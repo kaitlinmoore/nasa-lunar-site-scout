@@ -161,6 +161,8 @@ def test_barker_70pct_contour_is_reproduced_on_both_sides():
     assert c["outside_edge"]["pixels"] + c["outside_corner_only"]["pixels"] == 172
     assert c["inside"]["min"] >= c["contour_pct"] - c["tolerance_pp"]
     assert c["outside_edge"]["max"] <= c["contour_pct"] + c["tolerance_pp"]
+    # Barker joins pixels by "corners or sides touching", so corner-only neighbours must be outside it too.
+    assert c["outside_corner_only"]["max"] <= c["contour_pct"] + c["tolerance_pp"]
     assert all(c["pass"].values())
 
 

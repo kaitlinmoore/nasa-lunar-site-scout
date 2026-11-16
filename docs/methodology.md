@@ -90,6 +90,43 @@ RoI and is nearly flat.
 
 Slopes are from central differences over ±10 m on the bilinear 5 m surface.
 
+### 1.4 Curated sites (C3)
+
+The site list is registry data: `lss/registry/sites.yaml`, loaded by `lss/registry/sites.py` as contract
+`Site` objects, with coordinates, cited descriptions and sources. `/api/sites` is generated from it.
+
+**Served point rule** (Kaitlin, 2026-11-15):
+- **Where the PGDA product 78 tile has Barker et al. (2021) regions of interest:** the centroid of the largest
+  RoI. Barker defines an RoI as the connected 5 m pixels ("corners or sides touching") with average
+  illumination above 70% at 1 m over 2024–2025 and a total area above 2500 m² (Barker et al. 2021, section 5).
+- **Otherwise:** the Mazarico et al. (2011) coordinate, checked for slope on the 5 m map. Steep points are
+  flagged to Kaitlin.
+
+**Reading the RoIs** (`lss/registry/rois.py`).
+- An outline runs through pixel centres, so an RoI is the pixels inside it or on it.
+- Its centroid is the centre of the 5 m pixel that contains the mean of those pixel centres. Barker's
+  tabulated centroids are pixel centres, and this rule reproduces all seven at Site01 (Table 2) exactly.
+- Areas match Table 2 for 6 of the 7 Site01 RoIs. RoI 2 comes out two pixels larger (7,600 against 7,550 m²).
+
+**Sites so far** (all with Barker's 100 DEM clones):
+
+| Site | Largest RoI | Area | PS (km) | Lat, lon | Slope at the point |
+|---|---|---|---|---|---|
+| Site01 Connecting ridge | 4 (of 7) | 13,300 m² | −11.2875, −12.1675 | −89.452675, −137.148653 | 1.2° |
+| Site04 Shackleton rim | 1 (of 4) | 6,975 m² | −2.8125, −6.6475 | −89.761966, −157.067197 | **5.1°** |
+| Site07 Peak near Shackleton | 2 (of 2) | 16,550 m² | 30.0625, −20.1075 | −88.807326, 123.776844 | 1.6° |
+| Site11 de Gerlache rim | 1 (of 4) | 13,325 m² | −37.5425, 14.8825 | −88.668256, −68.375764 | 1.1° |
+
+Slopes here use the definition of section 5.6 (central differences at 5 m). Site01's 1.4° in section 1.3 used a
+±10 m baseline.
+
+**Not yet placed.**
+- Site06's RoI archive link on the PGDA page returns a "Not Found" page, so Site06 falls under the Mazarico rule.
+- Mazarico et al. (2011) Table 3, the source of the coordinates for Site06, 20, 23 and 42, is behind a paywall
+  and has not been read.
+- The other 19 product 78 tiles (Haworth, Shoemaker, DM, SL, NP and LM series) are not Mazarico sites, so
+  neither rule gives them a point yet.
+
 ## 2. Frames, time scales and topocentric geometry
 
 Implemented in `lss/ephem/core.py`; tested in `tests/engine/test_ephem.py`.
@@ -210,6 +247,17 @@ served numbers far more than these numerical settings do (section 6.6).
 - Distant terrain does not set the horizon here (400 km and 800 km agree exactly; 200 km also did at these
   points). 400 km is kept because other sites can see farther terrain, and the extra range is cheap.
 - C3 repeats the study for other site types.
+
+**A 10 m near field** (for locations beyond the 5 m maps; Kaitlin, 2026-11-15: measure first). The served
+Site01 point was recomputed with the PGDA product 90 10 m map (`LDEM_83S_10MPP_ADJ`, to 83°S) in place of the
+5 m tile, with the same hand-over at 5 km (`scripts/validation_c3.py`, stage `nearfield10m`).
+- **Horizon:** median difference 0.008°, 95th percentile 0.37°, maximum 0.60°. The large differences are at
+  azimuths whose horizon is set by terrain a few tens of metres away.
+- **Metrics:** illumination 68.8% against 69.8%, the same 4 shadow periods, longest shadow 139.7 h against
+  132.9 h, Earth metrics unchanged. All within the terrain-error band of section 6.6.
+- **Cost:** about 3.5 s per horizon, the same as with the 5 m tile.
+- **Data:** the map is 5.1 GB (43,280 × 43,280 float32, 7.5 GB in memory), and its download took 31 minutes
+  here. A ±20 km clip is 36 MB.
 
 **Timing:** wall-clock, measured on the development PC (24 logical CPUs, numba parallel over azimuths), with the DEMs
 already in memory; reference settings take 34–38 s. The first call in a process also reads the DEMs, about 0.5 GB for the three layers.
@@ -454,6 +502,31 @@ applied by default.
 - **Cost.** The served scenario (30 days, both bodies) takes about 2 s with the horizon cached; two years of
   Sun-only visibility take about 35 s (development PC).
 
+### 5.6 Slope (`lss.terrain.slope`)
+
+For the `terrain` and `site_summary` operations (C api's request RA4).
+- **Slope at a pixel:** central differences, tan(slope) = hypot(dz/dx, dz/dy), with
+  dz/dx = (z[col + 1] − z[col − 1]) / (2 Δx), and likewise along rows. It is the angle between the local
+  surface and the plane normal to the sphere's radius.
+  - This is the definition of Barker et al. (2021)'s published 5 m slope maps (product 78 `*_slp.tif`). Ours
+    reproduces Site01's map to a median 0.0001° and a 99th percentile of 0.001° (tested). A 3×3 Horn estimate
+    would differ from it by a median 0.10°, up to 17° on crater walls.
+  - Chosen for that reason (Kaitlin, 2026-11-15).
+- **Ground distances.** The polar stereographic map is conformal and true at the pole, with scale factor
+  k = 1 + (ρ / 2R)² at map distance ρ from the pole: 1.0002 at 88°S, 1.0037 at 83°S. A map step Δx is a
+  ground step Δx / k.
+- **Statistics within a radius:** min, max and mean over the pixels whose centres lie within that ground
+  distance of the point. The slope at the point is the slope of the pixel containing it.
+- **Layers** (Kaitlin, 2026-11-15):
+  - 1 km statistics are measured on the 5 m site tile.
+  - 10 km statistics are measured on the 10 m polar map over the whole circle, because the 5 m tiles reach only
+    6–9 km from the served points. One map per statistic keeps min, max and mean comparable within it.
+  - Slopes on a 10 m map are gentler than on a 5 m map: features smaller than about 20 m are not resolved.
+- **Limits.**
+  - About 90% of 5 m pixels are interpolated between LOLA tracks (Barker et al. 2021). Single-pixel slopes are
+    therefore low confidence, with a median RMS slope error of 1.9° (Barker et al. 2021, section 4).
+  - The maximum within a radius picks out crater walls and the steepest single pixel, not a typical value.
+
 ## 6. Validation results (step 4.7)
 
 All numbers below come from committed scripts. Their outputs are committed too and checked by tests:
@@ -492,6 +565,7 @@ Why each tolerance has its size:
 | Barker Fig. 19 nominal-DEM values (qualitative) | none | read 77.5% / 192 d / 10.1 d; ours 77.46% / 192.2 d / 10.05 d | agrees |
 | Product 69, Earth, 5 × 5 pixels: mean \|difference\| | 5 pp | 3.3 pp | pass |
 | Product 69, Sun, 5 × 5 pixels: mean \|difference\| | 5 pp | 8.7 pp (no bias: mean −1.7 pp); 7.56 pp without the zero pixel (diagnostic) | **miss**; inconclusive at this resolution; accepted for G1 as a stated difference (section 6.3) |
+| Product 69 rerun (C3), stand-in terrain `LDEM_75S_60M`: Sun at 0 m / 2 m; Earth | Sun 9.6 pp (derived); Earth 5 pp | Sun 7.28 / 17.74 pp; Earth 2.80 / 4.30 pp | Sun pass at 0 m (miss at 2 m); Earth pass |
 | Ridge-top: the Sun is seen only below the local horizontal | (stated) | confirmed four ways (section 6.4) | confirmed |
 
 How well the served numbers themselves are known (the terrain map limits them, not the numerics) is in
@@ -619,6 +693,22 @@ section 6.6.
   the served 5 m stack is 54.8% at 0 m and **87.0% at 1 m**; on the 60 m map at 0 m it is 71.0%. At 0 m on 5 m
   terrain, metre-scale relief blocks the Sun, and 1 m clears it. This is why product 69 (0 m, 60 m) and the served
   result (1 m, 5 m) must not be compared directly.
+
+- **C3 rerun on a stand-in for product 69's terrain** (`scripts/validation_c3.py`, stage `p69`; tolerances
+  fixed before the run, above).
+  - **Terrain:** the PDS LOLA map `LDEM_75S_60M` (version 2.0, 2017) to 148 km, then the 240 m map. It stands
+    in for `LDEM_85S_060M`, which is not public (Kaitlin, 2026-11-15). It is on product 69's 60 m pixel grid.
+    At the 25 pixels its heights differ from the orbit-adjusted 60 m map by a mean of −0.44 m and at most 1.8 m.
+  - **Sun at 0 m: pass.** Mean |difference| **7.28 pp** (≤ 9.6), mean difference −1.9 pp, correlation 0.78. The
+    C1 run on the adjusted map gave 8.66 pp and 0.72.
+  - **Sun at 2 m: miss.** 17.74 pp, and every pixel is brighter than product 69 (mean difference +17.7 pp).
+    Product 69 fits a surface-level observer far better than a 2 m one, which supports the 0 m assumption.
+  - **Earth: pass at both heights.** 2.80 pp at 0 m, 4.30 pp at 2 m (≤ 5).
+  - The start dates change the Sun values by at most 0.9 pp. Without the zero-valued product 69 pixel
+    (diagnostic only), the Sun at 0 m is 5.81 pp.
+  - **What it shows.** On terrain closer to product 69's own, the engine agrees better, with no bias and the
+    right sensitivity to height. The derived tolerance is still wide, so this is a consistency check, not a
+    sharp test. The sharp Sun checks remain Barker's contour and the ridge-top check.
 
 ### 6.4 Ridge-top check: the Sun is seen below the local horizontal
 
