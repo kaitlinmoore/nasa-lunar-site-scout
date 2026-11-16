@@ -14,15 +14,13 @@ import {
   type StaticNLEntry,
   WEB_CONTRACT_VERSION,
 } from '../api/client'
-import { mapCompareResponse } from '../api/compare'
 import { askNl, askNlExample, type DataSource, loadNlExamples, type NlExample } from '../api/source'
 import ApiProblemView from '../ApiProblemView'
 import { formatExactRange, formatHeight, formatLatLon, formatScenarioSummary } from '../format'
 import { displayName, placeLabel, useSiteNames } from '../siteNames'
 import { routeHref } from '../route'
-import CompareTable from '../saved/CompareTable'
+import CompareAnswer from './CompareAnswer'
 import { Value } from '../metrics'
-import { scenarioId } from '../scenario'
 import SiteScreen from '../SiteScreen'
 import {
   classifyNl,
@@ -81,30 +79,8 @@ function ResultView({ result }: { result: NlResult }) {
           <SiteScreen data={result.result} />
         </div>
       )
-    case 'compare': {
-      let mapped
-      try {
-        mapped = mapCompareResponse(result.scenarios, result.result)
-      } catch (e) {
-        return <Unreadable why={e instanceof Error ? e.message : String(e)} />
-      }
-      const entries = result.scenarios.map((s, i) => ({
-        saved: {
-          id: scenarioId(s),
-          label: placeLabel(names, s.location),
-          site_id: null,
-          saved_at: '',
-          scenario: s,
-        },
-        result: mapped.items[i],
-        reason: mapped.reasons[i],
-      }))
-      return (
-        <div className="nl-result">
-          <CompareTable entries={entries} />
-        </div>
-      )
-    }
+    case 'compare':
+      return <CompareAnswer comparison={result.comparison} filters={result.filters} rank={result.rank} />
     case 'series': {
       const r = result.result
       return (

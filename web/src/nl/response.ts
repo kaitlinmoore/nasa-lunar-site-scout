@@ -6,6 +6,7 @@
 // response body, as the endpoint returns it"; it is read here as that endpoint's own response type,
 // after a check that the fields this page shows are there, so the box can reuse the site screen's
 // views. Nothing here computes a value.
+import { type KeyedComparison, mapComparison } from '../api/compare'
 import type { components } from '../api/schema'
 
 type S = components['schemas']
@@ -42,7 +43,13 @@ export type NlResult =
   /** Nothing was run, or the query wasn't served (then `limitations` says why). */
   | { op: 'none' }
   | { op: 'metrics'; result: S['MetricsResponse'] }
-  | { op: 'compare'; scenarios: S['Scenario'][]; result: S['CompareResponse'] }
+  /** Columns from the answer's `compared`, items matched by scenario key (api/compare.ts). */
+  | {
+      op: 'compare'
+      comparison: KeyedComparison
+      filters: S['MetricFilter'][]
+      rank: S['CompareRank'] | null
+    }
   | { op: 'series'; result: S['SeriesResponse'] }
   | { op: 'horizon'; result: S['HorizonProfile'] }
   | { op: 'sites'; result: S['SitesResponse'] }
@@ -79,12 +86,18 @@ export function readResult(answer: NLAnswer): NlResult {
     case 'metrics':
       return { op: 'metrics', result: result as S['MetricsResponse'] }
     case 'compare': {
-      const scenarios = isRecord(params) && Array.isArray(params.scenarios) ? params.scenarios : null
-      if (!scenarios) return unreadable('the query has no list of scenarios to put the results under')
-      return {
-        op: 'compare',
-        scenarios: scenarios as S['Scenario'][],
-        result: result as S['CompareResponse'],
+      const p = isRecord(params) ? params : {}
+      const query = {
+        scenarios: (Array.isArray(p.scenarios) ? p.scenarios : []) as S['Scenario'][],
+        across: isRecord(p.across),
+        filters: (Array.isArray(p.filters) ? p.filters : []) as S['MetricFilter'][],
+        rank: (isRecord(p.rank) ? p.rank : null) as S['CompareRank'] | null,
+      }
+      try {
+        const comparison = mapComparison(result as S['CompareResponse'], query)
+        return { op: 'compare', comparison, filters: query.filters, rank: query.rank }
+      } catch (e) {
+        return unreadable(e instanceof Error ? e.message : String(e))
       }
     }
     case 'series':

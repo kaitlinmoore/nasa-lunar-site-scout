@@ -1,6 +1,7 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 // Side-by-side comparison (C6): one column per scenario, the site screen's metric rows, values
 // rendered exactly as on the site screen. A scenario without a result says so in its column.
+import type { ReactNode } from 'react'
 import type { MetricsResponse } from '../api/client'
 import { formatExactRange, formatScenarioSummary } from '../format'
 import { MetricValue } from '../metrics'
@@ -9,7 +10,19 @@ import { useSiteNames } from '../siteNames'
 import { NotComputed } from '../Value'
 import type { SavedScenario } from './store'
 
-export type CompareEntry = { saved: SavedScenario; result: MetricsResponse | null; reason: string | null }
+export type CompareEntry = {
+  saved: SavedScenario
+  result: MetricsResponse | null
+  reason: string | null
+  /** Replaces the "Result" cell (NL comparisons: rank, filtered out, not precomputed…). */
+  status?: ReactNode
+}
+
+/** Extra rows after "Result" (NL comparisons: the values the filters and the rank used). */
+export type CompareExtraGroup = {
+  title: string
+  rows: { key: string; header: ReactNode; cells: ReactNode[] }[]
+}
 
 function GroupRows<T extends object>({
   title,
@@ -54,7 +67,13 @@ function GroupRows<T extends object>({
   )
 }
 
-export default function CompareTable({ entries }: { entries: CompareEntry[] }) {
+export default function CompareTable({
+  entries,
+  extraGroup,
+}: {
+  entries: CompareEntry[]
+  extraGroup?: CompareExtraGroup
+}) {
   const names = useSiteNames()
   return (
     <div className="compare-scroll">
@@ -77,9 +96,11 @@ export default function CompareTable({ entries }: { entries: CompareEntry[] }) {
         <tbody>
           <tr>
             <th scope="row">Result</th>
-            {entries.map(({ saved, result, reason }) => (
+            {entries.map(({ saved, result, reason, status }) => (
               <td key={saved.id}>
-                {result ? (
+                {status !== undefined ? (
+                  status
+                ) : result ? (
                   <span className="muted value">scenario key {result.scenario_key}</span>
                 ) : (
                   <span className="not-computed">{reason ?? 'No result for this scenario.'}</span>
@@ -87,6 +108,23 @@ export default function CompareTable({ entries }: { entries: CompareEntry[] }) {
               </td>
             ))}
           </tr>
+          {extraGroup && (
+            <>
+              <tr className="compare-group">
+                <th scope="rowgroup" colSpan={entries.length + 1}>
+                  {extraGroup.title}
+                </th>
+              </tr>
+              {extraGroup.rows.map((row) => (
+                <tr key={row.key}>
+                  <th scope="row">{row.header}</th>
+                  {row.cells.map((cell, i) => (
+                    <td key={entries[i].saved.id}>{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </>
+          )}
           <GroupRows title="Power" spec={POWER_SPEC} entries={entries} pick={(r) => r.power} />
           <GroupRows
             title="Comms (direct to Earth)"
