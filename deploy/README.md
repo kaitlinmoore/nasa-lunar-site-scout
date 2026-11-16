@@ -92,6 +92,26 @@ Expected: both calls show the same `used_for_rate_limit` (your own address), and
 **TLS.** The anthropic SDK's HTTP client (httpx2) verifies against the OS CA store on Linux; the `Dockerfile`
 fails the build if the image has no CA certificates (`lss.api.nl.ca_certificates_available`).
 
+## Cached showcase answers (C8)
+
+The project owner chooses the showcase questions (candidates: `reference/logs/c8-candidates.md`, private).
+Each becomes one file in `LSS_DATA_DIR/cache/nl/`, then goes live with the usual two deploys:
+
+```bash
+# a question from a saved eval run: replays its saved model output, no LLM call, no cost
+uv run python -m lss.api.nl_cache add-from-run tests/nl/results/<run>.json <item id>
+# a question of her own: one live call through the demo's pipeline (with her okay)
+uv run python -m lss.api.nl_cache add "How steep is the terrain?" --site pgda-site01 --live
+uv run python -m lss.api.nl_cache list          # what is cached; `remove <name>` drops one
+bash deploy/deploy-api.sh                       # stages cache/nl into the image (checked as the API loads it)
+bash deploy/deploy-web.sh                       # publishes them in the static copy, checked against the API
+```
+
+A cached answer is returned for exactly its question (case, spacing and final punctuation ignored), selected
+site and selected scenario. It costs nothing, isn't rate limited, and still works after the daily cap or when
+the model can't be reached. It is fixed when recorded (default windows keep that date), and it is refused at
+deploy if made with an incompatible contract version, so record it again after such a bump.
+
 ## How the scripts stay off other accounts
 
 Every gcloud call runs with `CLOUDSDK_ACTIVE_CONFIG_NAME=lss`. That is a dedicated gcloud

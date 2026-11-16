@@ -162,18 +162,56 @@ def cache_key(req: NLRequest) -> tuple[str, str | None, str | None]:
     return text, req.selected_site_id, scenario
 
 
-def load_cache(directory: Path) -> dict[tuple, NLResult]:
-    """Cached showcase answers: one JSON file each, `{"request": NLRequest, "response": NLResponse}`."""
-    out: dict[tuple, NLResult] = {}
+class CacheFileError(ValueError):
+    """A cached answer that is inconsistent or made with an incompatible contract version."""
+
+
+def response_model(body: dict) -> type[BaseModel]:
+    return NLClarification if "question" in body else NLUnsupported if "unsupported" in body else NLAnswer
+
+
+@dataclass(frozen=True)
+class CachedAnswer:
+    request: NLRequest
+    response: NLResult
+    path: Path
+
+
+def load_cache_entries(directory: Path) -> dict[tuple, CachedAnswer]:
+    """Cached showcase answers (C8), one JSON file each: `{"format": 1, "request": NLRequest, "response":
+    NLResponse, "provenance": {...}}` (written by `python -m lss.api.nl_cache`). The same version rules as
+    served files: current or compatible contract version (re-stamped), no placeholder, no duplicate
+    request."""
+    from lss.api.served import COMPATIBLE_VERSIONS
+    from lss.contract import CONTRACT_VERSION
+
+    out: dict[tuple, CachedAnswer] = {}
     for p in sorted(directory.glob("*.json")) if directory.is_dir() else []:
         data = json.loads(p.read_text(encoding="utf-8"))
         req = NLRequest.model_validate(data["request"])
         body = data["response"]
-        model = (
-            NLClarification if "question" in body else NLUnsupported if "unsupported" in body else NLAnswer
-        )
-        out[cache_key(req)] = model.model_validate(body)
+        resp = response_model(body).model_validate(body)
+        if resp.placeholder:
+            raise CacheFileError(f"{p.name}: placeholder answer")
+        made_with = resp.contract_version
+        if made_with != CONTRACT_VERSION and made_with not in COMPATIBLE_VERSIONS:
+            raise CacheFileError(
+                f"{p.name}: made with contract {made_with}, the API is {CONTRACT_VERSION}; record it again "
+                "with python -m lss.api.nl_cache"
+            )
+        update: dict[str, Any] = {"contract_version": CONTRACT_VERSION}
+        if isinstance(resp, NLAnswer) and isinstance(resp.result, dict) and "contract_version" in resp.result:
+            update["result"] = {**resp.result, "contract_version": CONTRACT_VERSION}
+        key = cache_key(req)
+        if key in out:
+            raise CacheFileError(f"{p.name} and {out[key].path.name} answer the same request")
+        out[key] = CachedAnswer(req, resp.model_copy(update=update), p)
     return out
+
+
+def load_cache(directory: Path) -> dict[tuple, NLResult]:
+    """The cache NLService uses: cache key -> response."""
+    return {k: e.response for k, e in load_cache_entries(directory).items()}
 
 
 # ---------------------------------------------------------------------------- service

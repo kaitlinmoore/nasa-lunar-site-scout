@@ -11,12 +11,14 @@ Writes, under OUT_DIR (deploy/deploy-web.sh uses web/dist/static-api):
   return;
 - `metrics/<scenario_key>.json`, `series/<scenario_key>.json`: what POST /api/metrics and /api/series return;
 - `horizon/<horizon_key>.json`: what POST /api/horizon returns, where a served file has a horizon;
-- `terrain/<terrain_key>.json`: what POST /api/terrain returns (precomputed slope statistics).
+- `terrain/<terrain_key>.json`: what POST /api/terrain returns (precomputed slope statistics);
+- `nl/<name>.json`: the cached showcase answers (C8), what POST /api/nl returns for their requests.
 
 The files are built with the API's own loader (lss.api.served) and response code, so they are the API's
 bodies, and every one must carry the current CONTRACT_VERSION. `--check-api` also requires the deployed
 API to report the same contract version and to return the same metrics for every exported scenario and
-the same slope statistics for every exported location and radius.
+the same slope statistics for every exported location and radius, and the same answer for every cached
+showcase question (cached answers cost nothing and aren't rate limited).
 """
 
 from __future__ import annotations
@@ -31,8 +33,17 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from lss.api import app as api
+from lss.api.nl import cache_dir as nl_cache_dir
+from lss.api.nl import load_cache_entries
 from lss.api.served import horizons, load_all, load_terrain, served_dir, terrain_dir
-from lss.contract import CONTRACT_VERSION, ScenariosResponse, StaticEntry, StaticIndex, StaticTerrainEntry
+from lss.contract import (
+    CONTRACT_VERSION,
+    ScenariosResponse,
+    StaticEntry,
+    StaticIndex,
+    StaticNLEntry,
+    StaticTerrainEntry,
+)
 
 INDEX_NOTE = "Static copy of the API's precomputed results, for when the API is unavailable (plan 4.7)."
 
@@ -52,7 +63,12 @@ def _write(path: Path, body: BaseModel) -> dict:
     return data
 
 
-def export(out_dir: Path, served_from: Path | None = None, terrain_from: Path | None = None) -> StaticIndex:
+def export(
+    out_dir: Path,
+    served_from: Path | None = None,
+    terrain_from: Path | None = None,
+    nl_from: Path | None = None,
+) -> StaticIndex:
     """Write the static fallback to out_dir (replacing it); returns the index."""
     served = load_all(served_from or served_dir())
     if not served:
@@ -93,6 +109,12 @@ def export(out_dir: Path, served_from: Path | None = None, terrain_from: Path | 
         _write(out_dir / entry.path, st.body)
         terrain.append(entry)
 
+    nl_answers = []
+    for entry in load_cache_entries(nl_from or nl_cache_dir()).values():
+        rel = f"nl/{entry.path.stem}.json"
+        _write(out_dir / rel, entry.response)
+        nl_answers.append(StaticNLEntry(request=entry.request, path=rel))
+
     _write(out_dir / "sites.json", api._sites())
     _write(out_dir / "datasets.json", api._datasets())
     _write(out_dir / "scenarios.json", ScenariosResponse(scenarios=api.build_scenarios(served, sites)))
@@ -102,6 +124,7 @@ def export(out_dir: Path, served_from: Path | None = None, terrain_from: Path | 
         sites="sites.json",
         datasets="datasets.json",
         scenario_list="scenarios.json",
+        nl_answers=nl_answers,
         _note=INDEX_NOTE,
     )
     _write(out_dir / "index.json", index)
@@ -136,6 +159,10 @@ def check_api(index: StaticIndex, out_dir: Path, api_url: str) -> None:
         (out_dir / "scenarios.json").read_text(encoding="utf-8")
     ):
         raise StaticExportError("the API's scenario list differs from the static copy")
+    for a in index.nl_answers:
+        live = _get_json(f"{base}/api/nl", a.request.model_dump(mode="json", exclude_none=True))
+        if live != json.loads((out_dir / a.path).read_text(encoding="utf-8")):
+            raise StaticExportError(f"the API's cached answer for {a.path} differs from the static copy")
     for t in index.terrain:
         live = _get_json(
             f"{base}/api/terrain", {"location": t.location.model_dump(mode="json"), "radius_m": t.radius_m}
@@ -151,10 +178,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("out_dir", type=Path)
     parser.add_argument("--served-dir", type=Path, default=None, help="default: LSS_DATA_DIR/cache/served")
     parser.add_argument("--terrain-dir", type=Path, default=None, help="default: LSS_DATA_DIR/cache/terrain")
+    parser.add_argument("--nl-dir", type=Path, default=None, help="default: LSS_DATA_DIR/cache/nl")
     parser.add_argument("--check-api", metavar="URL", default=None, help="compare with the deployed API")
     args = parser.parse_args(argv)
     try:
-        index = export(args.out_dir, args.served_dir, args.terrain_dir)
+        index = export(args.out_dir, args.served_dir, args.terrain_dir, args.nl_dir)
         if args.check_api:
             check_api(index, args.out_dir, args.check_api)
     except StaticExportError as e:
@@ -164,7 +192,7 @@ def main(argv: list[str] | None = None) -> int:
     checked = f"; matches {args.check_api}" if args.check_api else ""
     print(
         f"static fallback: {len(index.scenarios)} scenario(s), {n_h} with a horizon, "
-        f"{len(index.terrain)} slope statistic(s), "
+        f"{len(index.terrain)} slope statistic(s), {len(index.nl_answers)} cached answer(s), "
         f"contract {CONTRACT_VERSION} -> {args.out_dir}{checked}"
     )
     return 0

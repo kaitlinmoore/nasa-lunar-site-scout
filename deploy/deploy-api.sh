@@ -15,8 +15,14 @@ cp "$SERVED_SRC"/*.json bundle/served/
 rm -rf bundle/terrain
 mkdir -p bundle/terrain
 cp "$TERRAIN_SRC"/*.json bundle/terrain/
-# Check both exactly as the API will load them (contract version, keys, not placeholder).
-uv run python -c "from pathlib import Path; from lss.api.served import load_all, load_terrain; s = load_all(Path('bundle/served')); t = load_terrain(Path('bundle/terrain')); assert s, 'no served results staged'; assert t, 'no slope statistics staged'; print(f'Staged {len(s)} served results and {len(t)} slope statistics')"
+# Cached showcase NL answers (C8), staged the same way; none is fine (the .keep keeps the folder in the
+# build context, so the Dockerfile's COPY always has a source).
+rm -rf bundle/nl
+mkdir -p bundle/nl
+touch bundle/nl/.keep
+if ls "$NL_CACHE_SRC"/*.json >/dev/null 2>&1; then cp "$NL_CACHE_SRC"/*.json bundle/nl/; fi
+# Check everything exactly as the API will load it (contract version, keys, not placeholder).
+uv run python -c "from pathlib import Path; from lss.api.served import load_all, load_terrain; from lss.api.nl import load_cache_entries; s = load_all(Path('bundle/served')); t = load_terrain(Path('bundle/terrain')); n = load_cache_entries(Path('bundle/nl')); assert s, 'no served results staged'; assert t, 'no slope statistics staged'; print(f'Staged {len(s)} served results, {len(t)} slope statistics and {len(n)} cached NL answers')"
 
 # The NL key comes from Secret Manager (never a plain env var or a file in the image).
 if ! gcloud secrets describe "$NL_SECRET" --project "$GCP_PROJECT" >/dev/null 2>&1; then

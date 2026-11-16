@@ -33,7 +33,7 @@ from pydantic import (
     model_validator,
 )
 
-CONTRACT_VERSION = "0.11.0"
+CONTRACT_VERSION = "0.12.0"
 
 Latitude = Annotated[float, Field(ge=-90.0, le=90.0, description="Planetocentric latitude, deg")]
 Longitude = Annotated[
@@ -1172,6 +1172,13 @@ class StaticTerrainEntry(Model):
     path: str = Field(description="Path of the TerrainResponse file")
 
 
+class StaticNLEntry(Model):
+    """A cached showcase answer (C8): the request it answers and the path of its NL response file."""
+
+    request: NLRequest
+    path: str = Field(description="Path of the NLAnswer / NLUnsupported / NLClarification file")
+
+
 class StaticIndex(Response):
     """index.json of the static fallback: every served scenario and where its files are."""
 
@@ -1180,6 +1187,9 @@ class StaticIndex(Response):
         default_factory=list, description="Precomputed slope statistics (contract 0.9.0)"
     )
     sites: str = Field(description="Path of the SitesResponse file")
+    nl_answers: list[StaticNLEntry] = Field(
+        default_factory=list, description="Cached showcase answers, the same as POST /api/nl returns (0.12.0)"
+    )
     scenario_list: str | None = Field(
         default=None,
         description="Path of the ScenariosResponse file, what GET /api/scenarios returns (0.11.0)",

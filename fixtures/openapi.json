@@ -3,8 +3,8 @@
   "info": {
     "title": "Lunar Site Scout API",
     "description": "Contract v0. Not affiliated with or endorsed by NASA.",
-    "version": "0.11.0",
-    "x-contract-version": "0.11.0"
+    "version": "0.12.0",
+    "x-contract-version": "0.12.0"
   },
   "paths": {
     "/api/health": {
@@ -1069,7 +1069,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1365,7 +1365,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1606,7 +1606,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.11.0",
+            "default": "0.12.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1721,7 +1721,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1756,7 +1756,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1878,7 +1878,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.11.0",
+            "default": "0.12.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -2025,7 +2025,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2224,7 +2224,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2289,7 +2289,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2359,7 +2359,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2440,7 +2440,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2758,7 +2758,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3028,7 +3028,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3276,7 +3276,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3523,7 +3523,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3620,7 +3620,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3755,7 +3755,7 @@
         "description": "index.json of the static fallback: every served scenario and where its files are.",
         "properties": {
           "contract_version": {
-            "default": "0.11.0",
+            "default": "0.12.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -3797,6 +3797,14 @@
             "title": "Sites",
             "type": "string"
           },
+          "nl_answers": {
+            "description": "Cached showcase answers, the same as POST /api/nl returns (0.12.0)",
+            "items": {
+              "$ref": "#/components/schemas/StaticNLEntry"
+            },
+            "title": "Nl Answers",
+            "type": "array"
+          },
           "scenario_list": {
             "anyOf": [
               {
@@ -3822,6 +3830,26 @@
           "datasets"
         ],
         "title": "StaticIndex",
+        "type": "object"
+      },
+      "StaticNLEntry": {
+        "additionalProperties": false,
+        "description": "A cached showcase answer (C8): the request it answers and the path of its NL response file.",
+        "properties": {
+          "request": {
+            "$ref": "#/components/schemas/NLRequest"
+          },
+          "path": {
+            "description": "Path of the NLAnswer / NLUnsupported / NLClarification file",
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request",
+          "path"
+        ],
+        "title": "StaticNLEntry",
         "type": "object"
       },
       "StaticTerrainEntry": {
@@ -4031,7 +4059,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.11.0"
+            "default": "0.12.0"
           },
           "_placeholder": {
             "type": "boolean",

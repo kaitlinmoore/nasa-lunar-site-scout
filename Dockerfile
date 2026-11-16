@@ -17,6 +17,8 @@ COPY fixtures ./fixtures
 COPY bundle/served /data/cache/served
 # Precomputed slope statistics (stream A's cache/terrain/), staged by deploy/deploy-api.sh.
 COPY bundle/terrain /data/cache/terrain
+# Cached showcase NL answers (C8), staged by deploy/deploy-api.sh (may hold only .keep).
+COPY bundle/nl /data/cache/nl
 RUN uv sync --frozen --no-dev
 # /api/nl calls the Anthropic API over TLS. httpx2 (the anthropic SDK's HTTP client) verifies against the
 # OS CA store on Linux, so the build fails here if the image has no CA certificates.
