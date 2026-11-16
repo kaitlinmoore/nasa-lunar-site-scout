@@ -175,17 +175,61 @@ The registry's non-dataset entry `lss_tool_capabilities` (the tool's own limits)
 
 - **What:** NASA JPL's on-line ephemeris service (a challenge starter resource). Used as the independent check
   of the engine's Sun and Earth directions: queried through its API (https://ssd.jpl.nasa.gov/api/horizons.api)
-  for the Connecting Ridge served point at 25 epochs. Horizons uses DE441 and its own lunar frame, so it is
-  independent of the DE421 kernels (methodology sections 2, 6.1). The responses are stored in
-  `tests/engine/fixtures/horizons_site01_roi4.json`, retrieved 2026-11-15.
+  for the Connecting Ridge served point and for Site06 (Nobile Rim, 85.30 S 37.07 E), at the same 25 epochs.
+  Horizons uses DE441 and its own lunar frame, so it is independent of the DE421 kernels (methodology sections
+  2, 6.1). The responses are stored in `tests/engine/fixtures/horizons_site01_roi4.json` (retrieved
+  2026-11-15) and `tests/engine/fixtures/horizons_pgda-site06.json` (retrieved 2026-11-16).
 - **URL:** https://ssd.jpl.nasa.gov/horizons/
 - **Cite:** the Horizons manual (https://ssd.jpl.nasa.gov/horizons/manual.html, "References for the Horizons
   system") asks for the system and its retrieval date, and lists the paper the methodology cites:
   - Giorgini, J. D., & JPL Solar System Dynamics Group. NASA/JPL Horizons On-Line Ephemeris System,
-    https://ssd.jpl.nasa.gov/horizons/, data retrieved 2026-11-15.
+    https://ssd.jpl.nasa.gov/horizons/, data retrieved 2026-11-15 and 2026-11-16.
   - Giorgini, J. D., Yeomans, D. K., Chamberlin, A. B., Chodas, P. W., Jacobson, R. A., Keesey, M. S.,
     Lieske, J. H., Ostro, S. J., Standish, E. M., & Wimberly, R. N. (1996). JPL's On-Line Solar System Data
     Service. *Bulletin of the American Astronomical Society* 28(3), 1158.
+
+### 1.5 Site positions not in the dataset registry
+
+The Apollo positions (Wagner et al. 2017) are in section 3. The Artemis III candidate regions (registry site
+list `lss/registry/sites.yaml`, category `artemis_iii`; methodology section 1.4.3) come from the sources below.
+They give the regions' names and points, not data any number is computed from.
+
+#### Down Selected Artemis III Candidate Landing Site Navigational Grids (McClernan 2024) — USGS
+
+- **Provider:** U.S. Geological Survey, Astrogeology Science Center (data release, distributed by ScienceBase).
+  Not NASA.
+- **URL:** https://doi.org/10.5066/P1MEQ6UK (ScienceBase item 671a6fa8d34efed5620f89f8): one zip per region
+  (`Peak_Near_Cabeus_B.zip`, `Haworth.zip`, … `Slater_Plain.zip`) and the metadata
+  `Publication_Data_Release_LGRS3.xml`.
+- **Used for:** the point of each Artemis III region: the centre of the region's 1 km navigation grid, from the
+  extent in each zip's `<region>_PolarLGRS_ACC_1km_S_Grid.shp` header, converted from the grid's polar
+  stereographic projection (1737.4 km sphere, scale factor 0.994, false easting and northing 500 km) to latitude
+  and longitude (methodology section 1.4.3).
+- **Cite** (the release's own form): McClernan, M.T., 2024, Down Selected Artemis III Candidate Landing Site
+  Navigational Grids: U.S. Geological Survey data release, https://doi.org/10.5066/P1MEQ6UK. Publication date
+  2024-12-05 (ScienceBase).
+- **Terms:** the metadata gives "Access constraints: None" and "Use constraints: None. Users are advised to read
+  the dataset's metadata thoroughly to understand appropriate use and data limitations." (USGS data release,
+  U.S. Government work.)
+- **Frame:** the metadata's horizontal datum is "Moon (2015) - Sphere" (radius 1737400 m). That fixes the
+  sphere, not whether the axes are the mean Earth or principal axis frame. The methodology cites this datum,
+  assumes mean Earth and has not checked it (section 1.4.3).
+
+#### NASA Artemis III candidate landing regions — NASA
+
+- NASA (2024). NASA Provides Update on Artemis III Moon Landing Regions. Release 24-136, 28 October 2024.
+  https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/. The nine regions
+  and their order: Peak near Cabeus B, Haworth, Malapert Massif, Mons Mouton Plateau, Mons Mouton, Nobile Rim 1,
+  Nobile Rim 2, de Gerlache Rim 2, Slater Plain. NASA gives no centre or outline for them.
+- NASA (2026). NASA Adds Mission to Artemis Lunar Program, Updates Architecture. Release 26-022, 27 February
+  2026. https://www.nasa.gov/news-release/nasa-adds-mission-to-artemis-lunar-program-updates-architecture/.
+  Artemis III becomes a test flight in low Earth orbit in 2027, ahead of "an Artemis IV landing in 2028".
+- NASA. Artemis IV mission page, https://www.nasa.gov/mission/artemis-iv/ (page last updated 16 March 2026). It
+  says the agency "has identified nine candidate landing regions near the lunar South Pole", with an image of
+  them; the text does not name them. The methodology (section 1.4.3) reads the image as the same nine regions.
+- Checked on the NASA pages 2026-11-16: titles, release numbers and dates, and the regions' names and order in
+  release 24-136.
+- **Terms:** NASA web content (U.S. Government work).
 
 ## 2. Credits that must be shown
 
@@ -239,6 +283,7 @@ not repeated.
   Also an independent check of LDEM_128's frame and datum: its heights at the six descent stages, against
   Wagner et al.'s NAC-DTM radii (methodology section 3.5).
 - Giorgini, J. D., et al. (1996): see section 1.4, JPL Horizons (section 6.1).
+- McClernan, M. T. (2024) and NASA releases 24-136 and 26-022: see section 1.5 (section 1.4.3).
 
 ## 4. Software
 

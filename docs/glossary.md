@@ -6,13 +6,27 @@ precise one for specialists (*Detail*), then a link to the [methodology](methodo
 term, where there is one. Field names such as `illumination_fraction` are the API's
 (`lss/contract/models.py`). Sources are listed in [references.md](references.md).
 
-[A](#azimuth) · [C](#clipped-period) · [D](#de-gerlache-rim) · [E](#earth-clearance) ·
-[F](#far-field-and-near-field) · [G](#geotiff) · [I](#illumination-fraction) · [L](#lcip-and-lcsp) ·
-[M](#m3-moon-mineralogy-mapper) · [N](#naif) · [P](#pds-planetary-data-system) · [R](#reference-sphere) ·
-[S](#scenario-and-window) · [T](#tdb-and-utc) · [U](#unit-height) · [V](#visible-fraction-f_sun-f_earth) ·
-[W](#window)
+[A](#artemis-iii-candidate-region) · [C](#clipped-period) · [D](#de-gerlache-rim) · [E](#earth-clearance) ·
+[F](#far-field-and-near-field) · [G](#geotiff) · [H](#haworth-region) · [I](#illumination-fraction) ·
+[L](#lcip-and-lcsp) · [M](#m3-moon-mineralogy-mapper) · [N](#naif) · [P](#pds-planetary-data-system) ·
+[R](#reference-sphere) · [S](#scenario-and-window) · [T](#tdb-and-utc) · [U](#unit-height) ·
+[V](#visible-fraction-f_sun-f_earth) · [W](#window)
 
 ---
+
+### Artemis III candidate region
+
+One of nine areas near the Moon's south pole that NASA named in October 2024 as possible landing regions for the
+Artemis program's first crewed landing. Each region holds several possible landing sites; the tool computes
+results at one point in each, the centre of the region's grid, which is not itself a landing site.
+*Detail:* NASA release 24-136 (28 October 2024) names the nine regions. In February 2026 NASA made Artemis III a
+crewed test flight in Earth orbit in 2027 and planned the first landing for Artemis IV in 2028 (release 26-022);
+NASA's Artemis IV page (updated 16 March 2026) still shows the nine regions. NASA gives no centre or outline. The
+point for each is "the centre of the region's 1 km navigation grid in McClernan (2024), a U.S. Geological Survey
+data release made for these nine regions" (see [navigation grid](#navigation-grid-usgs-1-km-grid)). The grids
+are 17 to 31 km on a side, except Mons Mouton Plateau (78 by 58 km), "whose centre represents its region only
+loosely". Registry category `artemis_iii`, ids `artemis3-*`; the list is under [Curated sites](#curated-sites).
+[Methodology §1.4.3](methodology.md#143-artemis-iii-candidate-regions).
 
 ### Azimuth
 
@@ -58,13 +72,13 @@ See [Curated sites](#curated-sites).
 
 ### Curated sites
 
-The places listed on the globe: south-pole landing-site candidates chosen from published studies, and the
-Apollo landing sites. Each south-pole site has one exact point where the tool computes its results (its
-[served point](#served-point)).
+The places listed on the globe: south-pole landing-site candidates chosen from published studies, the Apollo
+landing sites, and NASA's nine [Artemis III candidate regions](#artemis-iii-candidate-region). Each has one
+exact point where the tool computes its results (for a south-pole site, its [served point](#served-point)).
 *Detail:* from the registry's site list (`lss/registry/sites.yaml`), served by `/api/sites`. The UI names each
 site by its short name, with a subtitle: for a south-pole site, its [PGDA site
 number](#pgda-site-numbers-site01--site42) and where its point comes from; for an Apollo site, the place and
-landing date.
+landing date; for an Artemis III region, "Artemis III candidate region · NASA, Oct 2024".
 
 **South-pole sites:**
 
@@ -82,8 +96,10 @@ landing date.
 **Apollo landing sites:** each point is the Lunar Module's descent stage, "which is still on the surface, as
 located in Lunar Reconnaissance Orbiter camera images (Wagner et al. 2017)", in the mean Earth / DE421 frame the
 engine uses. Their terrain is the [global coarse layer](#global-coarse-layer-low-fidelity) (methodology §1.4.2),
-and they have no slope statistics, which are measured only on the polar maps (§5.6). This version has no
-precomputed results for them.
+and their slope statistics are measured on that 237 m map: "regional slopes, not comparable with the 5 m and 10 m
+values at the polar sites" (§6.5, §5.6.1). Their results carry the
+[fidelity label](#fidelity-label) "low": "At 237 m, relief smaller than a few hundred metres is not in the
+horizon. The values describe the regional setting, not a particular spot on the ground" (methodology §6.5).
 
 | Short name | Subtitle | Lat, lon (°) |
 |---|---|---|
@@ -94,14 +110,37 @@ precomputed results for them.
 | Apollo 16 | Descartes · 21 April 1972 | −8.9734, 15.5011 |
 | Apollo 17 | Taurus-Littrow · 11 December 1972 | 20.1911, 30.7723 |
 
+**Artemis III candidate regions:** the nine regions NASA named on 28 October 2024, in NASA's order. Each point is
+the centre of the region's 1 km navigation grid from the U.S. Geological Survey (McClernan 2024), "a geometric
+centre, not a landing site" (registry descriptions). Short names end in "region" so that they stay distinct from
+the south-pole sites. Three centres lie on 5 m PGDA site maps and get the high-fidelity terrain; the other six
+use the 80 m and 240 m polar maps (medium) (methodology §1.4.3).
+
+| Short name | Grid box (km) | Centre lat, lon (°) | Terrain near the point |
+|---|---|---|---|
+| Peak near Cabeus B region | 21 × 21 | −83.651364, −68.726263 | 80 m polar map |
+| Haworth region | 31 × 30 | −86.766106, −22.619865 | 80 m polar map |
+| Malapert Massif region | 21 × 22 | −85.987196, −0.236758 | 5 m site map (4.4 km from Malapert Massif) |
+| Mons Mouton Plateau region | 78 × 58 | −84.33747, 30.618605 | 80 m polar map |
+| Mons Mouton region | 17 × 17 | −85.421795, 31.675469 | 5 m site map (0.3 km from Leibnitz Beta Plateau) |
+| Nobile Rim 1 region | 21 × 21 | −85.433807, 37.327588 | 5 m site map (4.1 km from Nobile Rim) |
+| Nobile Rim 2 region | 20 × 21 | −83.954459, 58.793809 | 80 m polar map |
+| de Gerlache Rim 2 region | 21 × 21 | −88.226338, −65.112588 | 80 m polar map |
+| Slater Plain region | 21 × 21 | −87.169725, 125.459618 | 80 m polar map |
+
 Connecting Ridge is the ridge connecting the rims of Shackleton and de Gerlache craters. The four south-pole
 points at the Mazarico et al. coordinates lie on slopes of 6.6–8.0° on the 5 m maps, steeper than the RoI points
 (1.1–5.1°), because those coordinates were picked on a 240 m map.
-[Methodology §1.4](methodology.md#14-curated-sites-c3), [§1.3](methodology.md#13-the-served-site-site01-at-barker-et-al-2021-roi-4).
+[Methodology §1.4](methodology.md#14-curated-sites-c3), [§1.4.2](methodology.md#142-apollo-landing-sites),
+[§1.4.3](methodology.md#143-artemis-iii-candidate-regions), [§1.3](methodology.md#13-the-served-site-site01-at-barker-et-al-2021-roi-4).
 
 ### de Gerlache Rim
 
 See [Curated sites](#curated-sites).
+
+### de Gerlache Rim 2 region
+
+See [Curated sites](#curated-sites) and [Artemis III candidate region](#artemis-iii-candidate-region).
 
 ### de Gerlache–Kocher Massif
 
@@ -220,7 +259,8 @@ A short tag telling you how detailed the terrain behind a result is: high, mediu
 *Detail:* `FidelityLabel` = a tier and a summary such as "5 m polar DEM near field". The tier is high when the
 near field is 5 m or finer and a far field is present, medium when the near field is 80 m or finer, low
 otherwise (`lss/registry/terrain.py`). Locations on the [global coarse layer](#global-coarse-layer-low-fidelity)
-are "low" (methodology §3.5).
+are "low" (methodology §3.5). By site group: the south-pole sites are high, the Apollo sites low, and the
+Artemis III regions high (three) or medium (six) (see [Curated sites](#curated-sites)).
 
 ### GeoTIFF
 
@@ -243,6 +283,19 @@ Apollo descent stages, "LDEM_128 minus Wagner is −8.6, −2.1, +0.1, +6.1, +2.
 240 m polar map at 12 points from 61° S to 86° S, "mean difference 0.9 m, mean |difference| 2.8 m, maximum
 7.0 m". See [simple cylindrical](#simple-cylindrical).
 [Methodology §3.5](methodology.md#35-global-coarse-layer-c7-horizons-off-the-polar-maps).
+
+### Haworth region
+
+See [Curated sites](#curated-sites) and [Artemis III candidate region](#artemis-iii-candidate-region).
+
+### Hillshade
+
+Grey shading that makes hills and hollows easy to see on the [terrain map](#terrain-map-2d-site-view), as if lit
+from one side. It is not the real sunlight at the site.
+*Detail:* methodology §5.7: "cartographic shading for reading the relief, not the real Sun. Light from map
+azimuth 315° at 45° elevation, with the gradient by central differences." The azimuth is measured on the map
+grid, not from geographic north.
+[Methodology §5.7](methodology.md#57-terrain-images-for-the-2d-site-view-lssterrainviews).
 
 ### Illumination fraction
 
@@ -375,6 +428,10 @@ subsurface hydrogen at kilometre scale.
 
 See [Curated sites](#curated-sites).
 
+### Malapert Massif region
+
+See [Curated sites](#curated-sites) and [Artemis III candidate region](#artemis-iii-candidate-region).
+
 ### Mean visible disc fraction
 
 On average over the window, how much of the Sun's light reaches the site, from 0 (none) to 1 (the whole disc
@@ -383,6 +440,20 @@ all the time).
 [`f_sun`](#visible-fraction-f_sun-f_earth) over the window. It is light-weighted (limb-darkened), not a
 geometric area fraction.
 [Methodology §5.3](methodology.md#53-power-f3-powermetrics).
+
+### Mons Mouton
+
+See [Curated sites](#curated-sites) (Mons Mouton region). Mons Mouton "is the mountain sometimes known informally
+as Leibnitz Beta, named by the IAU in 2022 after NASA mathematician Melba Roy Mouton" (registry site list); the
+region's centre is 0.3 km from the Leibnitz Beta Plateau site.
+
+### Mons Mouton Plateau region
+
+See [Curated sites](#curated-sites) and [Artemis III candidate region](#artemis-iii-candidate-region).
+
+### Mons Mouton region
+
+See [Curated sites](#curated-sites) and [Artemis III candidate region](#artemis-iii-candidate-region).
 
 ### MOON_ME and MOON_PA
 
@@ -401,6 +472,21 @@ publishes the data files the tool uses for Sun, Earth and Moon geometry.
 server (registry `spice_de421`).
 [Methodology §1.1](methodology.md#11-ephemeris-and-frames-naif-spice-de421-era).
 
+### Navigation grid (USGS 1 km grid)
+
+A square grid of 1 km cells that the U.S. Geological Survey drew over each
+[Artemis III candidate region](#artemis-iii-candidate-region) for finding one's way on the surface. The tool uses
+only the centre of each region's grid, as the region's point.
+*Detail:* McClernan (2024), one `<region>_PolarLGRS_ACC_1km_S_Grid` shapefile per region; the point is the
+centre of its extent. The grid's projection file gives "a south polar stereographic projection on the 1737.4 km
+sphere with scale factor 0.994 and false easting and northing of 500 km, so the engine's polar stereographic
+metres (scale factor 1, origin at the pole) are (grid metres − 500 km) / 0.994." The latitude and longitude
+bounds published with each region agree with the converted box corners to 0.00005°, which checks the conversion.
+The release's metadata gives the datum as "Moon (2015) - Sphere": "That fixes the radius, not the frame: the
+release does not state the body-fixed frame. The mean Earth frame is assumed and has not been checked." See also
+[polar stereographic](#polar-stereographic).
+[Methodology §1.4.3](methodology.md#143-artemis-iii-candidate-regions).
+
 ### Near field
 
 See [Far field and near field](#far-field-and-near-field).
@@ -408,6 +494,14 @@ See [Far field and near field](#far-field-and-near-field).
 ### Nobile Rim
 
 See [Curated sites](#curated-sites).
+
+### Nobile Rim 1 region
+
+See [Curated sites](#curated-sites) and [Artemis III candidate region](#artemis-iii-candidate-region).
+
+### Nobile Rim 2 region
+
+See [Curated sites](#curated-sites) and [Artemis III candidate region](#artemis-iii-candidate-region).
 
 ### Nodal cycle (18.6 years)
 
@@ -431,6 +525,10 @@ NASA's long-term archive for planetary mission data.
 Geosciences Node distributes the LOLA map `LDEM_75S_60M` used for the internal product 69 rerun, and the planned
 LOLA global grid and Diviner products.
 [Methodology §4.2](methodology.md#42-pgda-product-69-internal-only-reproduction-never-served).
+
+### Peak near Cabeus B region
+
+See [Curated sites](#curated-sites) and [Artemis III candidate region](#artemis-iii-candidate-region).
 
 ### Peak near Shackleton
 
@@ -582,12 +680,16 @@ features.
 version). Each part is null when it was not requested or has no result, and the summary's
 [limitations](#limitations) say which and why.
 
+### Slater Plain region
+
+See [Curated sites](#curated-sites) and [Artemis III candidate region](#artemis-iii-candidate-region).
+
 ### Slope
 
 How steep the ground is, in degrees from level.
 *Detail:* central differences between neighbouring pixels, tan(slope) = hypot(dz/dx, dz/dy): the angle
-between the local surface and the plane normal to the sphere's radius. This is the definition of Barker et al.
-(2021)'s published 5 m slope maps, which the engine reproduces at Site01. Single-pixel slopes on the 5 m maps
+between the local surface and the plane normal to the sphere's radius. It reproduces Barker et al. (2021)'s
+published 5 m slope maps, whose method is not stated, at Site01 (median difference 0.0001°). Single-pixel slopes on the 5 m maps
 are low confidence, because about 90% of the pixels are interpolated between LOLA tracks. (Site01's 1.4° in
 methodology section 1.3 used a ±10 m baseline.) Slope is also a terrain layer in the API (`slope`).
 See also [Slope at the point](#slope-at-the-point) and
@@ -602,6 +704,17 @@ map named under "Measured on" (see [Slope statistics and slope layer](#slope-sta
 Single-pixel slopes on the 5 m maps are low confidence (see [Slope](#slope)).
 [Methodology §5.6](methodology.md#56-slope-lssterrainslope).
 
+### Slope classes
+
+The [terrain map](#terrain-map-2d-site-view)'s colours for how steep the ground is, in five steps from under 5°
+to 20° or more.
+*Detail:* the [slope](#slope) definition of methodology §5.6 "at the view's own pixel size, in five classes:
+under 5°, 5–10°, 10–15°, 15–20°, 20° or more." The image stores the class number; the screen colours it in
+one-hue blue (toggle "Slope classes", with an opacity slider). Pointing at the map reads out the class there.
+"Slopes at 20 m are gentler than at 5 m, so the two views' classes are not interchangeable." A pixel without
+data, or next to one, is shown as no data.
+[Methodology §5.7](methodology.md#57-terrain-images-for-the-2d-site-view-lssterrainviews).
+
 ### Slope statistics and slope layer
 
 The gentlest, steepest and average slope inside a circle around the location, and which height map they were
@@ -610,12 +723,16 @@ measured on.
 within `radius_m` of the point, as ground distance (map distances are corrected for the polar stereographic
 scale). `slope_layer` (UI: "Measured on") is "the DEM the slopes were measured on (its resolution sets what
 they can show)". 1 km statistics are measured on the 5 m site tile and 10 km statistics on the 10 m polar map
-(`LDEM_83S_10MPP_ADJ`), because the 5 m tiles reach only 6–9 km from the served points. Slopes on the 10 m map
+(`LDEM_83S_10MPP_ADJ`), because the 5 m tiles reach only 6–9 km from the served points. Where there is no 5 m
+tile (six of the Artemis III region centres), the 1 km statistics also use the 10 m map. Slopes on the 10 m map
 are gentler: features smaller than about 20 m are not resolved. The maximum picks out crater walls and the
-steepest single pixel, not a typical value. Both maps are polar, so the Apollo sites, on the global coarse
-layer, have no slope statistics. The statistics are precomputed; the API serves them only for the
+steepest single pixel, not a typical value. The Apollo sites, off the polar maps, use the 237 m
+[global coarse layer](#global-coarse-layer-low-fidelity) at both radii: with ~237 m pixels, "each slope is the
+average gradient over about 470 m", so these are regional slopes, gentler than on the 5 m and 10 m maps and not
+comparable with them (methodology §5.6.1). The statistics are precomputed; the API serves them only for the
 locations and radii it lists.
-[Methodology §5.6](methodology.md#56-slope-lssterrainslope).
+[Methodology §5.6](methodology.md#56-slope-lssterrainslope),
+[§5.6.1](methodology.md#561-slope-off-the-polar-maps-the-global-coarse-layer-c7).
 
 ### SPICE and kernels
 
@@ -639,8 +756,10 @@ The share of the time window during which the Sun stands between two chosen heig
 between 0° and 5°.
 *Detail:* methodology §5.3: "The fraction of the window with the Sun's elevation in [a, b] is taken from a time
 histogram stored in each served file". The quantity is "the apparent elevation of the Sun's disc centre above
-the local horizontal plane, as in `sun_elevation_deg`, with no refraction. The terrain plays no part, so a band
-can include times when the Sun is hidden." The histogram holds "the seconds spent in each 0.1° bin over the
+the local horizontal plane, as in `sun_elevation_deg`, with no refraction. Terrain is ignored: a band counts the
+time whether or not terrain hides the Sun." For a low band at a polar site this matters: "at Site20, 1 m, the
+Sun's elevation is between 0° and 2° for 15.5% of the 30-day window, and the Sun is never visible then." The
+histogram holds "the seconds spent in each 0.1° bin over the
 window", from the 60 s internal grid with the elevation linear between grid points. In the API it is the compare
 metric `sun_elevation_band_fraction` (`SunElevationBand`; null, not computed, where a result has no histogram).
 [Methodology §5.3](methodology.md#53-power-f3-powermetrics).
@@ -672,6 +791,20 @@ into the sky.
 interpolated linearly between azimuths. Depends only on location and unit height, so it is computed once and
 cached. The accepted horizon error is at most about 0.01° (convergence study at Site01).
 [Methodology §3](methodology.md#3-horizon).
+
+### Terrain map (2D site view)
+
+On the site screen, a flat map of the ground around the site's point, seen from above: the relief shaded, the
+slope coloured in five classes. Two sizes, 2 km and 20 km across.
+*Detail:* contract 0.13.0: `GET /api/terrain/views` lists each site's views (bounds, projection, pixel size,
+source map); `/api/terrain/view/{site_id}/{view}/{layer}.png` serves the [hillshade](#hillshade) and
+[slope-class](#slope-classes) images. Methodology §5.7: "For each PGDA site and each Artemis III region, two
+square views centred on the served point": 2 km from the 5 m site map (400 × 400 px at 5 m; the six Artemis III
+regions whose point lies on no 5 m map "get it from the 10 m polar map instead, 200 × 200 px at 10 m") and 20 km
+"from the 10 m polar map averaged over 2 × 2 pixels, 1000 × 1000 px at 20 m". "None for the Apollo sites, which
+are off the polar maps." "Map up" is the grid's +y axis, not geographic north; the screen shows an arrow to true
+north. Drawn in the browser with OpenLayers and proj4.
+[Methodology §5.7](methodology.md#57-terrain-images-for-the-2d-site-view-lssterrainviews).
 
 ### Time to sunset and time to Earthset
 
