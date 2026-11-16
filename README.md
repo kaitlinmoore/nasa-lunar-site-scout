@@ -5,11 +5,11 @@
 
 **Live app: https://penumbra-luna.web.app** (no login).
 
-- **Results are precomputed**, for the scenarios listed under [Sites](#sites); the app offers only those.
+- **Results are precomputed**, for the sites and scenarios listed under [Sites](#sites); the app offers only those.
 - **Questions** typed into the question box are sent to Claude live, with a rate limit per connection and a daily
   limit for the whole demo. When the daily limit is reached, live questions pause until the next day (UTC).
-- **Example questions** have saved answers: they return at once, without a model call, and keep working when live
-  questions are paused or the model can't be reached.
+- **Example questions**, listed under the question box, have saved answers: they return at once, without a model
+  call, and keep working when live questions are paused or the model can't be reached.
 
 Terrain-aware lunar landing site planner. Compare sites and dates for sunlight and direct-to-Earth communications using LOLA topography and JPL ephemerides.
 
@@ -29,9 +29,12 @@ The decision it supports: **where to land and when.** It is built for mission pl
 
 ### Sites
 
-The site list is [`lss/registry/sites.yaml`](lss/registry/sites.yaml) (served at `/api/sites`). It currently has **8 south-pole sites**: Connecting Ridge, Shackleton Rim, Peak near Shackleton, de Gerlache Rim, Nobile Rim, Leibnitz Beta Plateau, Malapert Massif and de Gerlache–Kocher Massif. Their points come from Barker et al. (2021) and Mazarico et al. (2011); see the [glossary](docs/glossary.md#curated-sites) for the table and [methodology §1.4](docs/methodology.md#14-curated-sites-c3) for the rule.
+The site list is [`lss/registry/sites.yaml`](lss/registry/sites.yaml) (served at `/api/sites`). It currently has **14 sites**, in two groups (table in the [glossary](docs/glossary.md#curated-sites)):
 
-**Results are precomputed.** For each site: unit heights 1, 2, 5 and 10 m, over two windows: 15 May – 14 Jun 2028 (results every hour) and all of 2028 (every 6 hours). Any other request is refused with the list of what is served.
+- **8 south-pole sites** from the PGDA landing-site maps: Connecting Ridge, Shackleton Rim, Peak near Shackleton, de Gerlache Rim, Nobile Rim, Leibnitz Beta Plateau, Malapert Massif and de Gerlache–Kocher Massif. Their points come from Barker et al. (2021) and Mazarico et al. (2011) ([methodology §1.4](docs/methodology.md#14-curated-sites-c3)).
+- **6 Apollo landing sites:** Apollo 11, 12, 14, 15, 16 and 17, at the position of each Lunar Module's descent stage as located in Lunar Reconnaissance Orbiter camera images (Wagner et al. 2017). They are on the globe with their descriptions; this version has no precomputed results for them.
+
+**Results are precomputed.** For each south-pole site: unit heights 1, 2, 5 and 10 m, over three windows: 15 May – 14 Jun 2028 and 15 – 25 Nov 2028 (results every hour), and all of 2028 (every 6 hours). Any other request is refused with the list of what is served.
 
 ## How it works
 

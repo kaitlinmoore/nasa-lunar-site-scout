@@ -24,7 +24,7 @@ Every external dataset, paper, book, software package and service this project u
 - **Provider:** NASA GSFC Planetary Geodesy Data Archive (PGDA), M. K. Barker.
 - **URL:** https://pgda.gsfc.nasa.gov/products/78
 - **Used for:**
-  - near-field terrain (5 m) for the horizons of the eight curated sites: the `*_final_adj_5mpp_surf.tif` maps
+  - near-field terrain (5 m) for the horizons of the eight south-pole curated sites: the `*_final_adj_5mpp_surf.tif` maps
     of Site01, 04, 06, 07, 11, 20, 23 and 42; also the 1 km slope statistics around them;
   - the region-of-interest outlines `Site01_ROIs.tgz`, `Site04_ROIs.tgz`, `Site07_ROIs.tgz` and
     `Site11_ROIs.tgz`, which give the served points of those four sites and the Site01 validation area
@@ -204,13 +204,21 @@ not repeated.
   170–178. https://doi.org/10.1016/j.pss.2017.07.006 (sections 4.2, 4.3).
 - Mazarico, E., et al. (2011): see section 1.1. Site numbering, the Site01 coordinate, and the Table 3
   coordinates and ranks of Site06, 20, 23 and 42 (sections 1.3, 1.4); product 69 setup and terrain-resolution
-  effect (sections 4.2, 4.3); Table 3 average illumination and visibility at all eight sites, as a validation
+  effect (sections 4.2, 4.3); Table 3 average illumination and visibility at all eight south-pole sites, as a validation
   reference (section 6.7).
 - Mazarico, E., Barker, M. K., & Nicholas, J. B. (2018). Advanced illumination modeling for data analysis and
   calibration. Application to the Moon. *Advances in Space Research* 62(11), 3214–3228.
   https://doi.org/10.1016/j.asr.2018.08.022 (section 1.2, nested terrain grids; the methodology cites it as
   "Mazarico et al. 2018", and Barker et al. 2021 cite it as 2018b for the same approach).
 - Folkner, W. M., et al. (2008): see section 1.1.
+- Wagner, R. V., Nelson, D. M., Plescia, J. B., Robinson, M. S., Speyerer, E. J., & Mazarico, E. (2017).
+  Coordinates of anthropogenic features on the Moon. *Icarus* 283, 92–103.
+  https://doi.org/10.1016/j.icarus.2016.05.011. Source of the Apollo landing-site positions (the Lunar Module
+  descent stages), cited in `lss/registry/sites.yaml`. Read there from the LROC PDS archive table
+  (LRO-L-LROC-5-RDR-V1.0, `EXTRAS/SHAPEFILE/ANTHROPOGENIC_OBJECTS`), and the same as NASA NSSDCA's "Apollo
+  Landing Site Coordinates" page, https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html (planetocentric
+  mean Earth / polar axis, DE421). Place names and landing dates: the NSSDCA mission pages
+  (https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo11info.html and the same pattern for 12, 14, 15, 16, 17).
 - Giorgini, J. D., et al. (1996): see section 1.4, JPL Horizons (section 6.1).
 
 ## 4. Software

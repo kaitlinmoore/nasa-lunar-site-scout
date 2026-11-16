@@ -39,17 +39,34 @@ A map file arranged so a program can download just the part it needs instead of 
 *Detail:* a tiled [GeoTIFF](#geotiff) laid out for partial (windowed) reads over HTTP. The PGDA product 90 maps
 are COGs; the engine reads windows of them remotely (registry `pgda_90_south_pole_dems`).
 
+### Compare filter and rank
+
+Ways to narrow down and sort a comparison of several scenarios: keep only those that meet a condition (for
+example "at least 60% illumination"), then put them in order by one value.
+*Detail:* in `POST /api/compare` (contract 0.10.0), "optional filters and a rank are applied by the API to the
+served results, never by the LLM". A filter (`MetricFilter`) keeps "a scenario only if `metric op value`
+holds. A null value never passes (it is listed as not computed)." The rank (`CompareRank`) orders "the passing
+scenarios by `metric`; equal values keep their request order and are reported in `CompareResponse.rank_ties`";
+its `limit` keeps "the first `limit`; the rest are counted". If every served scenario fails the filters, the
+result is empty: an answer ("none qualifies"), not an error. `across` adds "one scenario per curated site,
+expanded by the API [...]: the sites named, the sites tagged with `region`, or every curated site if neither is
+given" (see [Region tag](#region-tag)). In the app these appear through the question box's answers.
+
 ### Connecting Ridge
 
 See [Curated sites](#curated-sites).
 
 ### Curated sites
 
-The eight south-pole places listed on the globe, chosen from published landing-site studies. Each has one
-exact point where the tool computes its results (its [served point](#served-point)).
+The places listed on the globe: south-pole landing-site candidates chosen from published studies, and the
+Apollo landing sites. Each south-pole site has one exact point where the tool computes its results (its
+[served point](#served-point)).
 *Detail:* from the registry's site list (`lss/registry/sites.yaml`), served by `/api/sites`. The UI names each
-site by its short name, with a subtitle that gives its [PGDA site number](#pgda-site-numbers-site01--site42) and
-where its point comes from.
+site by its short name, with a subtitle: for a south-pole site, its [PGDA site
+number](#pgda-site-numbers-site01--site42) and where its point comes from; for an Apollo site, the place and
+landing date.
+
+**South-pole sites:**
 
 | Short name | PGDA site | Served point | Lat, lon (°) |
 |---|---|---|---|
@@ -62,8 +79,21 @@ where its point comes from.
 | Malapert Massif | Site23 | Mazarico et al. (2011) Table 3, rank 23 | −85.97, −2.30 |
 | de Gerlache–Kocher Massif | Site42 | Mazarico et al. (2011) Table 3, rank 42 | −85.83, −116.35 |
 
-Connecting Ridge is the ridge connecting the rims of Shackleton and de Gerlache craters. The four points at the
-Mazarico et al. coordinates lie on slopes of 6.6–8.0° on the 5 m maps, steeper than the RoI points
+**Apollo landing sites:** each point is the Lunar Module's descent stage, "which is still on the surface, as
+located in Lunar Reconnaissance Orbiter camera images (Wagner et al. 2017)", in the mean Earth / DE421 frame the
+engine uses. This version has no precomputed results for them.
+
+| Short name | Subtitle | Lat, lon (°) |
+|---|---|---|
+| Apollo 11 | Mare Tranquillitatis · 20 July 1969 | 0.67416, 23.47314 |
+| Apollo 12 | Oceanus Procellarum · 19 November 1969 | −3.0128, −23.4219 |
+| Apollo 14 | Fra Mauro · 5 February 1971 | −3.64589, −17.47194 |
+| Apollo 15 | Hadley Rille / Apennines · 30 July 1971 | 26.13239, 3.6333 |
+| Apollo 16 | Descartes · 21 April 1972 | −8.9734, 15.5011 |
+| Apollo 17 | Taurus-Littrow · 11 December 1972 | 20.1911, 30.7723 |
+
+Connecting Ridge is the ridge connecting the rims of Shackleton and de Gerlache craters. The four south-pole
+points at the Mazarico et al. coordinates lie on slopes of 6.6–8.0° on the 5 m maps, steeper than the RoI points
 (1.1–5.1°), because those coordinates were picked on a 240 m map.
 [Methodology §1.4](methodology.md#14-curated-sites-c3), [§1.3](methodology.md#13-the-served-site-site01-at-barker-et-al-2021-roi-4).
 
@@ -296,6 +326,23 @@ The NASA spacecraft orbiting the Moon that carries [LOLA](#lola-lunar-orbiter-la
 [Diviner](#diviner).
 *Detail:* the source mission for the terrain data used here and for several planned datasets in the registry.
 
+### LROC and NAC
+
+The camera on NASA's [Lunar Reconnaissance Orbiter](#lro-lunar-reconnaissance-orbiter) (LROC), and its Narrow
+Angle Cameras (NAC), which take its most detailed pictures of the surface.
+*Detail:* Wagner et al. (2017) located the Apollo [descent stages](#lunar-module-descent-stage) in LROC NAC
+images; the positions are read from the LROC PDS archive table (LRO-L-LROC-5-RDR-V1.0,
+`ANTHROPOGENIC_OBJECTS`). The Cesium Moon globe's imagery also includes LROC mosaics and NAC images of the poles
+(display only). The planned boulder map (registry `aussel_2025_boulders`) is made from NAC images.
+
+### Lunar Module descent stage
+
+The lower half of an Apollo lander. It stayed on the Moon when the astronauts left in the upper half, so it
+still marks where each mission landed.
+*Detail:* each Apollo site's point is "the lunar module's descent stage, which is still on the surface, as
+located in Lunar Reconnaissance Orbiter camera images (Wagner et al. 2017)", within 0.3–3.5 m depending on the
+site (registry site list). See [Curated sites](#curated-sites) and [LROC and NAC](#lroc-and-nac).
+
 ### M3 (Moon Mineralogy Mapper)
 
 An instrument on India's Chandrayaan-1 spacecraft whose data were used to find water ice exposed at the
@@ -351,6 +398,13 @@ that cycle. Long-term averages are taken over one full cycle.
 timesteps spanning 18.6 years"; its start date is not stated.
 [Methodology §4.2](methodology.md#42-pgda-product-69-internal-only-reproduction-never-served).
 
+### NSSDCA
+
+NASA's archive for space science data and mission information, at Goddard Space Flight Center.
+*Detail:* NASA Space Science Data Coordinated Archive. Its mission pages give the Apollo sites' place names and
+landing dates, and its "Apollo Landing Site Coordinates" page lists the same descent-stage positions (in the
+mean Earth / polar axis frame, DE421) as Wagner et al. (2017).
+
 ### PDS (Planetary Data System)
 
 NASA's long-term archive for planetary mission data.
@@ -402,6 +456,17 @@ positions are given as PS x, y in km. Scale grows away from the pole (1.4% too l
 horizon rays are traced as great circles on the sphere, not as straight lines on the map.
 [Methodology §1.2](methodology.md#12-terrain-nasa-gsfc-pgda-lola), [§3.1](methodology.md#31-geometry).
 
+### Precomputed scenario
+
+A [scenario](#scenario-and-window) whose results were worked out in advance and stored. The live app shows only
+these; the site screen's "Time window" and "Unit height" choices list just the ones that exist for that site.
+*Detail:* `GET /api/scenarios` returns "every precomputed scenario this API version serves", each with the
+curated site it belongs to (matched on its exact location). A request for anything else gets the API's reason:
+"This version has precomputed results only for the scenarios listed with this message. A request must match one
+of them exactly: the same location, unit height, time window and time step." Which scenarios are served is listed
+in the README's Sites section.
+[Methodology §5](methodology.md#5-metric-definitions).
+
 ### PSR (permanently shadowed region)
 
 Ground near the poles, usually in crater floors, where the Sun never shines.
@@ -422,6 +487,14 @@ rounded to the nearest sample.
 *Detail:* sign changes of the visibility margins between 60 s grid points are refined by bisection to 0.5 s;
 such events carry `refined: true`, and the UI marks them "refined".
 [Methodology §5.5](methodology.md#55-computation-and-accuracy-lssseries-lssmetrics).
+
+### Region tag
+
+A short label that groups curated sites in the same area, so a question can mean "all the sites around
+Shackleton".
+*Detail:* `Site.regions`, "region tags, e.g. 'shackleton'" (contract 0.10.0), set in the registry's site list.
+A comparison's `across.region` picks every site with that tag (see [Compare filter and
+rank](#compare-filter-and-rank)).
 
 ### RoI (region of interest)
 
@@ -529,6 +602,18 @@ The share of the window when the site has some sunlight and can also see Earth a
 *Detail:* `sun_earth_overlap_fraction` = time in the window with any part of both discs visible, divided by
 the window length.
 [Methodology §5.4](methodology.md#54-communications-f4-commsmetrics).
+
+### Sun elevation band
+
+The share of the time window during which the Sun stands between two chosen heights in the sky, for example
+between 0° and 5°.
+*Detail:* methodology §5.3: "The fraction of the window with the Sun's elevation in [a, b] is taken from a time
+histogram stored in each served file". The quantity is "the apparent elevation of the Sun's disc centre above
+the local horizontal plane, as in `sun_elevation_deg`, with no refraction. The terrain plays no part, so a band
+can include times when the Sun is hidden." The histogram holds "the seconds spent in each 0.1° bin over the
+window", from the 60 s internal grid with the elevation linear between grid points. In the API it is the compare
+metric `sun_elevation_band_fraction` (`SunElevationBand`; null, not computed, where a result has no histogram).
+[Methodology §5.3](methodology.md#53-power-f3-powermetrics).
 
 ### Sunrise and sunset
 
