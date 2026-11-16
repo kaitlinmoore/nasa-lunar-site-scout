@@ -13,8 +13,13 @@ from lss.metrics.core import (
     stat,
     time_mean,
 )
+from lss.metrics.elevation_band import ElevationHistogram, band_fraction, band_seconds, elevation_histogram
 
 __all__ = [
+    "ElevationHistogram",
+    "band_fraction",
+    "band_seconds",
+    "elevation_histogram",
     "azimuth_arc",
     "comms_metrics",
     "longest",

@@ -1,10 +1,13 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
 C3 served results: every curated site (lss/registry/sites.yaml) whose 5 m tile is downloaded, at the standard
-heights 1, 2, 5 and 10 m, over two windows (Kaitlin, 2026-11-15):
+heights 1, 2, 5 and 10 m, over three windows (Kaitlin, 2026-11-15 and 2026-11-16):
 
   - 2028-05-15 to 2028-06-14 at PT1H (the C1 window, comparable with Site01's served result);
   - 2028-01-01 to 2029-01-01 at PT6H (metrics from the 60 s internal grid, as always; PT6H sets the series).
+  - 2028-11-15 to 2028-11-25 at PT1H (C api's request RA8, eval item k6).
+
+Each file also carries the Sun-elevation histogram (format 3; RA7).
 
 One file per scenario in LSS_DATA_DIR/cache/served/ (format 2: metrics, series, horizon; lss/api/served.py),
 named c3_<site>_<height>m_<start>_<days>d.json. A scenario already served by another file (Site01, 1 m, C1
@@ -37,6 +40,7 @@ HEIGHTS_M = (1.0, 2.0, 5.0, 10.0)
 WINDOWS = (
     (datetime(2028, 5, 15, tzinfo=UTC), timedelta(days=30), timedelta(hours=1)),
     (datetime(2028, 1, 1, tzinfo=UTC), timedelta(days=366), timedelta(hours=6)),  # 2028 is a leap year
+    (datetime(2028, 11, 15, tzinfo=UTC), timedelta(days=10), timedelta(hours=1)),  # k6 (C api RA8)
 )
 
 
@@ -84,6 +88,7 @@ def write(site_id: str, sc: Scenario) -> dict:
         "metrics": metrics_response(res).model_dump(mode="json", by_alias=True),
         "series": series_response(res).model_dump(mode="json", by_alias=True),
         "horizon": horizon_response(res).model_dump(mode="json", by_alias=True),
+        "sun_elevation_histogram": C1.sun_histogram(res),
         "provenance": C1.provenance(res) | {"site_id": site_id, "compute_seconds": round(t_compute, 2)},
     }
     path = served_dir() / file_name(site_id, sc)

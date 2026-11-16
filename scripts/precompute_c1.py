@@ -27,11 +27,11 @@ from lss.ephem import ABCORR, FRAME
 from lss.ephem.core import KERNEL_IDS
 from lss.horizon import HORIZON_VERSION
 from lss.horizon.cache import cache_key, key_spec
-from lss.metrics import metrics_response
+from lss.metrics import elevation_histogram, metrics_response
 from lss.registry.terrain import resolve
 from lss.series import SERIES_VERSION, compute_series, horizon_response, series_response
 
-FORMAT = 2  # lss/api/served.py: format 2 adds the horizon
+FORMAT = 3  # lss/api/served.py: format 2 adds the horizon; 3 adds the Sun-elevation histogram (RA7)
 REGRESSION = Path(__file__).resolve().parents[1] / "tests" / "engine" / "fixtures" / "site01_roi4_c1.json"
 SERIES_EVERY = 6  # regression fixture keeps every 6th hourly sample
 HORIZON_EVERY = 10  # and every 10th horizon azimuth (1 deg)
@@ -66,6 +66,12 @@ def provenance(res) -> dict:
     }
 
 
+def sun_histogram(res) -> dict:
+    """RA7: time histogram of the Sun's disc-centre elevation over the window (lss.metrics.elevation_band)."""
+    g = res.sun.grid
+    return elevation_histogram(g.t_s, g.elevation_deg).to_json()
+
+
 def main() -> int:
     res = compute_series(SCENARIO)
     if res.horizon.missing_samples:  # methodology section 3.1: never serve a horizon with uncovered samples
@@ -80,6 +86,7 @@ def main() -> int:
         "metrics": m,
         "series": s,
         "horizon": h,
+        "sun_elevation_histogram": sun_histogram(res),
         "provenance": provenance(res),
     }
     out = served_path(key)

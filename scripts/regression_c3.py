@@ -1,8 +1,8 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Per-site regression fixtures for C3 (plan section 5.4): for every curated site other than Site01 (which has
-tests/engine/fixtures/site01_roi4_c1.json), the 1 m scenario over the C1 window (2028-05-15, 30 days, PT1H),
-taken from its served file so the fixture is exactly what the API serves.
+Per-site regression fixtures for C3 (plan section 5.4): for every curated site with a PGDA tile, other than
+Site01 (which has tests/engine/fixtures/site01_roi4_c1.json), the 1 m scenario over the C1 window (2028-05-15,
+30 days, PT1H), taken from its served file so the fixture is exactly what the API serves.
 
     tests/engine/fixtures/c3/<site id>.json: scenario key, metrics, the series every 24th sample and the
     horizon every 10th azimuth (no contract_version or created_utc, so a contract bump that leaves these
@@ -40,13 +40,14 @@ def thin(body: dict, every: int, keys: tuple[str, ...]) -> dict:
 
 def main() -> int:
     from lss.contract import Scenario
-    from lss.registry.sites import load_sites
+    from lss.registry.sites import load_sites, site_points
 
     c3 = _c3()
     start, length, step = c3.WINDOWS[0]
     OUT.mkdir(parents=True, exist_ok=True)
+    pgda = site_points()  # sites with a PGDA product 78 tile (served by precompute_c3.py)
     for site in load_sites():
-        if site.id == "pgda-site01":
+        if site.id == "pgda-site01" or site.id not in pgda:
             continue
         sc = Scenario(
             location=site.location,

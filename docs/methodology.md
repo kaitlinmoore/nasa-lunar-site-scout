@@ -462,6 +462,20 @@ The azimuth arc is found from the continuous track (unwrapped azimuth). It is a 
 unwrapped azimuth spans 360° or more; otherwise its ends are the unwrapped minimum and maximum, modulo 360°.
 If other bodies get azimuth statistics, the same rule applies.
 
+**Sun elevation in a band** (`lss.metrics.elevation_band`; C api's request RA7). The fraction of the window
+with the Sun's elevation in [a, b] is taken from a time histogram stored in each served file
+(`sun_elevation_histogram`, file format 3).
+- **Quantity:** the apparent elevation of the Sun's disc centre above the local horizontal plane, as in
+  `sun_elevation_deg`, with no refraction. The terrain plays no part, so a band can include times when the Sun is
+  hidden.
+- **Histogram:** the seconds spent in each 0.1° bin over the window. They come from the 60 s internal grid, with
+  the elevation taken as linear between grid points, so each interval's time is split across the bins it
+  crosses. The seconds sum to the window length.
+- **Band fraction:** the seconds in the bins inside [a, b], divided by the window length. It is exact for that
+  piecewise-linear track when a and b are multiples of 0.1°; otherwise the end bins are prorated linearly,
+  as if their time were spread evenly across the bin.
+  Tested against brute force on a densely sampled track (2·10⁻⁵).
+
 ### 5.4 Communications (F4): `CommsMetrics`
 
 These metrics describe the Earth as seen from the site: whether a direct line of sight to the Earth's disc
@@ -828,8 +842,9 @@ illumination and product 69 all agree with this.
 
 - **The served scenario** (key `00010cfa5fef681c`) was computed with the validated code and stored in two places:
   - the served result: `LSS_DATA_DIR/cache/served/c1_00010cfa5fef681c.json`, the metrics, series and horizon
-    responses with their provenance, written by `scripts/precompute_c1.py` (file format 2; the horizon is the
-    one the metrics were computed with, at every 0.1° azimuth);
+    responses with their provenance, written by `scripts/precompute_c1.py` (file format 3; the horizon is the
+    one the metrics were computed with, at every 0.1° azimuth; format 3 adds the Sun-elevation histogram,
+    section 5.3);
   - the regression fixture: `tests/engine/fixtures/site01_roi4_c1.json`, the same metrics, every 6th hourly
     sample and every 10th horizon azimuth.
 - `tests/engine/test_regression_c1.py` recomputes the scenario and requires fractions to agree to 10⁻⁶, durations
