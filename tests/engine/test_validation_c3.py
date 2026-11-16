@@ -58,3 +58,48 @@ def test_10m_near_field_at_site01():
     assert m10["shadow_count"] == m5["shadow_count"]
     assert abs(m10["earth_visibility_fraction"] - m5["earth_visibility_fraction"]) < 1e-5
     assert max(n["horizon_seconds"][1:]) < 10.0
+
+
+# ------------------------------------------------------------------ new sites (methodology 6.7)
+
+
+def test_barker_roi_definition_at_sites_04_07_11():
+    """Every sampled RoI pixel should average > 70% at 1 m (2024-2025). Site04 and Site11 pass; at Site07 one
+    of 163 sampled pixels is 0.97 pp below 70% (recorded as a miss, methodology 6.7)."""
+    b = V["barker_roi_sites"]
+    assert b["tolerance_pp"] == 0.5 and b["every"] == 5
+    assert b["pgda-site04"]["pass"] and b["pgda-site11"]["pass"]
+    s07 = b["pgda-site07"]
+    assert not s07["pass"] and 68.9 < s07["min_pct"] < 69.5 and s07["sampled_pixels"] == 163
+
+
+def test_barker_supplement_figures_agree():
+    """Read from figures (S9, S14, S19): per-RoI nominal-DEM averages vs our sampled RoI averages."""
+    b = V["barker_roi_sites"]
+    rows = [r for sid in ("pgda-site04", "pgda-site07", "pgda-site11")
+            for r in b[sid]["barker_supplement_read_from_figure"]["rois"]]  # fmt: skip
+    assert len(rows) == 10
+    assert all(abs(r["avg_ill_pct"]["diff"]) < 1.5 for r in rows)
+    assert all(abs(r["lcsp_d"]["diff"]) < 0.5 for r in rows)
+    assert sum(abs(r["lcip_d"]["diff"]) < 4.0 for r in rows) == 9  # Site04 RoI 3: +15.5 d
+
+
+def test_mazarico_table3_recorded_as_misses_with_the_rank_20_point_off_the_plateau():
+    m = V["mazarico_table3"]
+    assert m["primary"] == "emulated" and m["variants"]["emulated"] == {
+        "min_range_m": 240.0,
+        "azimuth_step_deg": 0.5,
+    }
+    for variant in ("emulated", "engine"):
+        for key, r in m[variant].items():
+            assert not r["pass"], (variant, key)  # every comparison misses its shift-derived tolerance
+            r20 = next(x for x in r["rows"] if x["rank"] == 20)
+            assert x_off(r20) > 30.0  # Site20's published point lands on the plateau's flank in our map
+    for variant in ("emulated", "engine"):
+        for q in ("10m_avg_ill_pct", "10m_visibility_pct"):
+            others = [x for x in m[variant][q]["rows"] if x["rank"] != 20]
+            assert sum(abs(x["ours"] - x["mazarico"]) for x in others) / len(others) < 1.0  # diagnostic
+
+
+def x_off(row):
+    return row["mazarico"] - row["ours"]

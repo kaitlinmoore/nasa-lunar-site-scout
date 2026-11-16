@@ -98,6 +98,33 @@ datasets:
       curated sites; a +-150 km window of LDEM_60S_60MPP_ADJ (60 m) for the internal product 69 comparison
       only. Fetched by scripts/fetch_data.py.
 
+  - id: pds_lola_gdr
+    name: LOLA gridded polar DEMs (PDS LRO-L-LOLA-4-GDR-V1.0), e.g. LDEM_75S_60M
+    kind: terrain
+    provider: NASA PDS Geosciences Node (LRO LOLA)
+    url: https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/
+    coverage:
+      description: Polar stereographic DEMs of both poles; LDEM_75S_60M covers 75-90 S at 60 m
+      lat_min: -90
+      lat_max: -75
+    resolution_m: 60
+    resolution_note: 60 m for LDEM_75S_60M (product version 2.0, 2017); other polar products at 10-40 m and 60 m
+    can_answer:
+      - Validation only - stand-in terrain for PGDA product 69's own 60 m map, which is not public
+    cannot_answer:
+      - Served results (this map is used only to validate against PGDA product 69)
+    citation: >-
+      Neumann, G. A. (2010). Lunar Orbiter Laser Altimeter Raw Data Set, LRO-L-LOLA-4-GDR-V1.0. NASA
+      Planetary Data System. PDS4 bundle: Smith, D. E., & Neumann, G. A. (2023). Lunar Reconnaissance
+      Orbiter LOLA Processed Data (RDR) Bundle. NASA Planetary Data System. doi:10.17189/tnyt-7007
+    license: NASA PDS data (U.S. Government work).
+    status: used
+    notes: >-
+      LDEM_75S_60M.IMG with its PDS3 label: 15248 x 15248 px, 16-bit counts x 0.5 m above 1737.4 km, polar
+      stereographic on the 1737.4 km sphere, pixel centres at 30 m + 60 m n (the same grid as PGDA product
+      69). Used for the internal product 69 rerun only (docs/methodology.md section 6.3); a +-150 km window
+      is clipped by scripts/fetch_data.py.
+
   - id: pgda_69_polar_illumination
     name: Lunar Polar Illumination (18.6-year averaged solar illumination, Earth and sky visibility)
     kind: illumination
@@ -283,15 +310,17 @@ datasets:
       - Hydrogen concentration at ~1 km scale (orbital neutron maps resolve ~10 km at best)
     citation: >-
       Feldman, W. C., et al. (1998). Fluxes of fast and epithermal neutrons from Lunar Prospector:
-      evidence for water ice at the lunar poles. Science 281, 1496-1500. Mitrofanov, I. G., et al. (2010).
-      Hydrogen mapping of the lunar south pole using the LRO neutron detector experiment LEND.
-      Science 330, 483-486.
+      evidence for water ice at the lunar poles. Science 281, 1496-1500. doi:10.1126/science.281.5382.1496.
+      Mitrofanov, I. G., et al. (2010). Hydrogen mapping of the lunar south pole using the LRO neutron
+      detector experiment LEND. Science 330, 483-486. doi:10.1126/science.1185696
     license: NASA PDS data (U.S. Government work).
     status: dropped
     notes: >-
       Not integrated: neutron maps cannot resolve site-scale hydrogen. Listed so the limit can be cited.
-      The labelled stand-in is m3_surface_ice (~280 m). Resolution figures: arXiv:0810.2478 (LP NS
-      footprint and reconstruction) and arXiv:1304.8123 (the LEND resolution debate).
+      The labelled stand-in is m3_surface_ice (~280 m). Resolution figures: Eke, V. R., Teodoro, L. F. A.,
+      & Elphic, R. C. (2009), Icarus 200(1), 12-18, doi:10.1016/j.icarus.2008.10.013 (LP NS footprint and
+      reconstruction); Teodoro, L. F. A., Eke, V. R., & Elphic, R. C. (2014), JGR Planets 119(3), 574-593,
+      doi:10.1002/2013JE004421 (the LEND resolution debate).
     # Plan question 9. VERIFY the PDS product pages for both instruments before the references list cites them.
 
   - id: aussel_2025_boulders

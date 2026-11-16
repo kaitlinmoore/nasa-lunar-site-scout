@@ -405,7 +405,7 @@ FILES: tuple[DataFile, ...] = (
         Kind.tiff,
         f"{PDS_LOLA_POLAR}/ldem_75s_60m.img",
         "data/pds_lola/clips/LDEM_75S_60M_site01_150km.tif",
-        "pgda_69_polar_illumination",
+        "pds_lola_gdr",
         "PDS LOLA GDR 60 m polar map (V2.0, 2017), stand-in for product 69's own terrain (LDEM_85S_060M, "
         "not public; Kaitlin 2026-11-15). Same 60 m pixel grid as product 69. +-150 km window, heights in m "
         "above 1737.4 km (counts x 0.5).",

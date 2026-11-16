@@ -106,6 +106,9 @@ The site list is registry data: `lss/registry/sites.yaml`, loaded by `lss/regist
 - An outline runs through pixel centres, so an RoI is the pixels inside it or on it.
 - Its centroid is the centre of the 5 m pixel that contains the mean of those pixel centres. Barker's
   tabulated centroids are pixel centres, and this rule reproduces all seven at Site01 (Table 2) exactly.
+- Barker et al. (2021, Appendix A. Supplementary data) maps illumination, LCIP and LCSP at Site04, 07 and 11
+  with the RoI outlines, and box-plots each RoI (Figs. S5–S19). Values read from those figures are used as an
+  approximate check in section 6.7.
 - Areas match Table 2 for 6 of the 7 Site01 RoIs. RoI 2 comes out two pixels larger (7,600 against 7,550 m²).
 
 **Sites at the centroid of the largest RoI** (all with Barker's 100 DEM clones):
@@ -130,7 +133,7 @@ link on the PGDA page returns a "Not Found" page.
 | Site | Table 3 rank | Average illumination (Table 3, surface) | PS (km) | Lat, lon | Slope at the point |
 |---|---|---|---|---|---|
 | Site06 Nobile rim 1 | 6 | 85.95% | 85.958, 113.780 | −85.30, 37.07 | **8.0°** |
-| Site20 Leibnitz beta plateau | 20 | 82.22% | 72.919, 117.928 | −85.43, 31.73 | **7.2°** |
+| Site20 Leibnitz beta plateau | 20 | 82.22% | 72.919, 117.928 | −85.43, 31.73 | **7.2°** (lies off the well-lit ground; section 6.7) |
 | Site23 Malapert massif | 23 | 81.76% | −4.906, 122.155 | −85.97, −2.30 | **6.6°** |
 | Site42 de Gerlache-Kocher massif | 42 | 79.59% | −113.360, −56.149 | −85.83, −116.35 | **6.8°** |
 
@@ -592,6 +595,8 @@ Why each tolerance has its size:
 | Product 69, Sun, 5 × 5 pixels: mean \|difference\| | 5 pp | 8.7 pp (no bias: mean −1.7 pp); 7.56 pp without the zero pixel (diagnostic) | **miss**; inconclusive at this resolution; accepted for G1 as a stated difference (section 6.3) |
 | Product 69 rerun (C3), stand-in terrain `LDEM_75S_60M`: Sun at 0 m / 2 m; Earth | Sun 9.6 pp (derived); Earth 5 pp | Sun 7.28 / 17.74 pp; Earth 2.80 / 4.30 pp | Sun pass at 0 m (miss at 2 m); Earth pass |
 | Ridge-top: the Sun is seen only below the local horizontal | (stated) | confirmed four ways (section 6.4) | confirmed |
+| Barker RoI definition at Site04, 07, 11 (sampled pixels > 70%) | 0.5 pp | Site04 70.02%, Site11 70.01%; Site07 one pixel at 69.03% | pass, pass, **miss** (section 6.7) |
+| Mazarico et al. (2011) Table 3, 8 sites, matched method | from 120 m shifts | all four comparisons above tolerance; at 10 m the 7 points other than rank 20 agree within 1.4 pp | **miss** (section 6.7) |
 
 How well the served numbers themselves are known (the terrain map limits them, not the numerics) is in
 section 6.6.
@@ -667,6 +672,10 @@ section 6.6.
 
 ### 6.3 PGDA product 69: internal pass (never served)
 
+**Scope: Site01 only.** The comparison covers the 5 × 5 product 69 pixels around Site01's served point. It was
+not repeated at the other curated sites (Kaitlin, 2026-11-16); it may be after submission. The other sites
+are checked against published numbers in section 6.7.
+
 - **Setup** (section 4.2). The observer is at 0 m on the 60 m map (`LDEM_60S_60MPP_ADJ` to 148 km, then 240 m to
   400 km). The quantity is the share of hourly time steps with any part of the disc visible. Each run covers 18.6
   years, from two start dates (2000-01-01 and 2024-01-01), and is averaged. It is computed at the 5 × 5 product 69
@@ -721,8 +730,9 @@ section 6.6.
 
 - **C3 rerun on a stand-in for product 69's terrain** (`scripts/validation_c3.py`, stage `p69`; tolerances
   fixed before the run, above).
-  - **Terrain:** the PDS LOLA map `LDEM_75S_60M` (version 2.0, 2017) to 148 km, then the 240 m map. It stands
-    in for `LDEM_85S_060M`, which is not public (Kaitlin, 2026-11-15). It is on product 69's 60 m pixel grid.
+  - **Terrain:** the PDS LOLA map `LDEM_75S_60M` (version 2.0, 2017; Neumann 2010, data set
+    LRO-L-LOLA-4-GDR-V1.0) to 148 km, then the 240 m map. It stands in for `LDEM_85S_060M`, which is not
+    public (Kaitlin, 2026-11-15). It is on product 69's 60 m pixel grid.
     At the 25 pixels its heights differ from the orbit-adjusted 60 m map by a mean of −0.44 m and at most 1.8 m.
   - **Sun at 0 m: pass.** Mean |difference| **7.28 pp** (≤ 9.6), mean difference −1.9 pp, correlation 0.78. The
     C1 run on the adjusted map gave 8.66 pp and 0.72.
@@ -902,11 +912,84 @@ same table to within 0.02 percentage points and 0.1 h.
 planned (S6). They would replace the uniform shifts above with the real error distribution.
 
 
+### 6.7 The other curated sites against published numbers
+
+`scripts/validation_c3.py`, stages `roisites` and `mazarico`; checked by `tests/engine/test_validation_c3.py`.
+Tolerances were fixed before the runs.
+
+**Barker et al. (2021) RoIs at Site04, 07 and 11.** Every 5th pixel of every RoI, plus the largest RoI's
+centroid, at 1 m over 2024–2025: the same quantities, grid and hourly sampling as at Site01 (section 6.2).
+
+- **RoI definition** (pixels averaging > 70%; tolerance 0.5 pp, as Site01's contour test).
+  - Site04: 139 pixels, 70.02–83.93%. **Pass.**
+  - Site11: 194 pixels, 70.01–81.73%. **Pass.**
+  - Site07: 163 pixels, 69.03–82.70%. **Miss.** One pixel, inside RoI 2, is at 69.03%, 0.97 pp below 70%;
+    the other 162 pass.
+- **Values read from figures** (Barker et al. 2021, Appendix A. Supplementary data, Figs. S9, S14, S19: the
+  nominal-DEM RoI averages, open circles). The circles were digitised from 400 dpi renders against the
+  gridlines, to about ±0.15 pp, ±0.6 d and ±0.08 d. Ours are averages over the sampled pixels of each RoI.
+  This is an approximate check, with no tolerance.
+
+  | Site, RoI | Average illumination, ours / figure | LCIP (d), ours / figure | LCSP (d), ours / figure |
+  |---|---|---|---|
+  | Site04, 1 | 75.1 / 74.7 | 82.9 / 82.8 | 7.1 / 7.3 |
+  | Site04, 2 | 72.0 / 72.1 | 110.8 / 112.9 | 10.1 / 10.1 |
+  | Site04, 3 | 75.7 / 74.5 | 120.3 / 104.8 | 11.2 / 11.7 |
+  | Site04, 4 | 77.1 / 76.6 | 158.2 / 154.8 | 10.4 / 10.7 |
+  | Site07, 1 | 73.0 / 72.9 | 166.8 / 165.0 | 15.0 / 15.0 |
+  | Site07, 2 | 74.9 / 74.8 | 148.2 / 147.9 | 14.1 / 14.0 |
+  | Site11, 1 | 76.7 / 76.5 | 144.0 / 144.9 | 12.6 / 12.9 |
+  | Site11, 2 | 71.3 / 71.4 | 146.5 / 146.4 | 15.1 / 15.2 |
+  | Site11, 3 | 71.9 / 71.9 | 146.3 / 146.4 | 9.5 / 9.6 |
+  | Site11, 4 | 72.4 / 72.3 | 145.4 / 145.7 | 10.0 / 10.1 |
+
+  Average illumination agrees to within 0.6 pp at 9 of the 10 RoIs (Site04 RoI 3: +1.2 pp). LCSP agrees to
+  within 0.5 d at all 10, and LCIP to within 3.5 d at 9 (Site04 RoI 3: +15.5 d).
+- **Barker's text** gives an LCIP of "~150–175 days" at 5 m for the sites other than Site01. At the three
+  largest-RoI centroids we get 147 d (Site04), 174 d (Site07) and 146 d (Site11).
+
+**Mazarico et al. (2011) Table 3 at all eight sites.** Their average illumination (mean visible solar-disc
+area) and visibility (share of time steps with any part visible) at the surface and at 10 m.
+- **Setup:** the Table 3 coordinates (ranks 1, 4, 6, 7, 11, 20, 23, 42), 1970-01-01 plus four 18.6-year cycles,
+  6 h steps, on the 240 m map only (their resolution), with the disc as a geometric area.
+- **Two settings.** The primary comparison uses a first ray sample at 240 m and a 0.5° azimuth step, to match
+  Mazarico's method, which takes the horizon from the other grid elements along 720 lines. The engine's own
+  setting (first sample at 1 m, 0.1° step) is also reported.
+- **Tolerance:** for each setting, the mean |change| when every point moves half a pixel (120 m) in the four
+  map directions. A setting passes if the mean |difference| over the eight points is within it.
+- **Result: every comparison misses its tolerance.**
+
+  | Setting, height, quantity | Tolerance | Mean \|difference\| (8 points) | Without rank 20 (diagnostic) |
+  |---|---|---|---|
+  | Matched, 0 m, average illumination | 8.6 pp | 14.4 pp | 8.2 pp |
+  | Matched, 0 m, visibility | 8.6 pp | 12.8 pp | 6.5 pp |
+  | Matched, 10 m, average illumination | 2.9 pp | 5.3 pp | **0.65 pp** (max 1.4) |
+  | Matched, 10 m, visibility | 2.4 pp | 4.4 pp | **0.15 pp** (max 0.4) |
+  | Engine setting, 0 m, average illumination | 2.9 pp | 45.1 pp | 43.2 pp |
+  | Engine setting, 10 m, average illumination | 3.9 pp | 5.4 pp | 0.80 pp |
+
+- **Rank 20 (Site20).** On our 240 m map, its published coordinate lies on the flank of the Leibnitz beta
+  plateau: the horizon rises to +5.7° within 0.3–0.5 km to the north and west. We get 24.6% at the surface and
+  45.6% at 10 m, against 82.2% and 83.3%. Moving the point 120 m in any map direction gives 21–33% at the surface.
+  The well-lit ground is beyond that distance, within the coordinate's 0.01° rounding (about 300 m in latitude)
+  and the difference between their 2010 map and ours.
+- **At 10 m the other seven points agree closely:** average illumination within 1.4 pp and visibility within
+  0.4 pp with the matched setting.
+- **At the surface the differences remain** (ours lower by 6–8 pp on average, up to 17 pp, with the matched
+  setting). At 0 m the horizon depends on the terrain closest to the observer, where the two methods differ
+  most. With the engine's own setting a 0 m observer on a 240 m surface is shadowed by its own pixel's slope
+  (section 6.3), which is why that setting is lower still.
+- **Consequence for the served Site20 point,** which is the same published coordinate (section 1.4): it is lit
+  17% of 2028 at 1 m and 36% at 10 m on the 5 m map. It does not represent the well-lit part of the plateau
+  that Table 3 describes.
+
 ## References
 
 - Allen, C. W. (1973). *Astrophysical Quantities*, 3rd edition. Athlone Press, London. §81, p. 171.
 - Barker, M. K., et al. (2021). Improved LOLA elevation maps for south pole landing sites: Error estimates and
   their impact on illumination conditions. *Planetary and Space Science* 203, 105119. doi:10.1016/j.pss.2020.105119
+- Barker, M. K., et al. (2021), Appendix A. Supplementary data (Figs. S1–S19: Sites 4, 7 and 11). Same article,
+  doi:10.1016/j.pss.2020.105119
 - Barker, M. K., et al. (2023). A New View of the Lunar South Pole from the Lunar Orbiter Laser Altimeter (LOLA).
   *Planetary Science Journal* 4(9), 183. doi:10.3847/PSJ/acf3e1
 - Gläser, P., et al. (2018). Illumination conditions at the lunar poles: Implications for future exploration.
@@ -916,7 +999,12 @@ planned (S6). They would replace the uniform shifts above with the real error di
 - Mazarico, E., Barker, M. K., & Nicholas, J. B. (2018). Advanced illumination modeling for data analysis and
   calibration. Application to the Moon. *Advances in Space Research* 62(11), 3214–3228.
   doi:10.1016/j.asr.2018.08.022
+- Neumann, G. A. (2010). Lunar Orbiter Laser Altimeter Raw Data Set, LRO-L-LOLA-4-GDR-V1.0. NASA Planetary
+  Data System. PDS4 bundle: Smith, D. E., & Neumann, G. A. (2023). Lunar Reconnaissance Orbiter LOLA Processed
+  Data (RDR) Bundle. doi:10.17189/tnyt-7007 (`LDEM_75S_60M`, section 6.3)
 - Giorgini, J. D., et al. (1996). JPL's On-Line Solar System Data Service. *Bulletin of the American
-  Astronomical Society* 28(3), 1158. (JPL Horizons, https://ssd.jpl.nasa.gov/horizons/)
+  Astronomical Society* 28(3), 1158.
+- JPL Solar System Dynamics: Horizons On-Line Ephemeris System, https://ssd.jpl.nasa.gov/horizons/, queried
+  through its API (https://ssd.jpl.nasa.gov/api/horizons.api) on 2026-11-15 (section 6.1).
 - Folkner, W. M., Williams, J. G., & Boggs, D. H. (2008). The Planetary and Lunar Ephemeris DE 421. JPL IOM
   343R-08-003.
