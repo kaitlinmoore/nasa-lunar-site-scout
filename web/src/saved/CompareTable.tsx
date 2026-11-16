@@ -2,7 +2,7 @@
 // Side-by-side comparison (C6): one column per scenario, the site screen's metric rows, values
 // rendered exactly as on the site screen. A scenario without a result says so in its column.
 import type { MetricsResponse } from '../api/client'
-import { formatScenarioSummary } from '../format'
+import { formatExactRange, formatScenarioSummary } from '../format'
 import { MetricValue } from '../metrics'
 import { COMMS_SPEC, fieldDoc, type MetricSpec, metricFields, POWER_SPEC } from '../metricSpec'
 import { NotComputed } from '../Value'
@@ -72,6 +72,7 @@ export default function CompareTable({
                 <th scope="col" key={saved.id}>
                   <div>{saved.label}</div>
                   <div className="definition value">{formatScenarioSummary(s)}</div>
+                  <div className="definition value">{formatExactRange(s.window_start, s.window_end)}</div>
                 </th>
               )
             })}

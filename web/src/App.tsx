@@ -124,7 +124,6 @@ function SiteIntro({ site }: { site: Site }) {
     <section className="site-intro">
       <h2>{site.name}</h2>
       {description && <p>{description}</p>}
-      <p className="muted value">{formatLatLon(site.location.lat, site.location.lon)}</p>
     </section>
   )
 }
@@ -211,6 +210,7 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
           <p className="muted">
             No computed scenario for this site yet. So far only the C1 thin-slice scenario has results.
           </p>
+          <p className="muted value">{formatLatLon(site.location.lat, site.location.lon)}</p>
         </section>
       )}
       {data && metricsForSite && (
@@ -254,21 +254,40 @@ export default function App() {
     )
   } else if (sites.kind === 'loading') body = <p className="muted">Loading sites…</p>
   else if (sites.kind === 'error') body = <ApiProblemView what="the curated sites" error={sites.error} />
-  else if (route.view === 'globe') {
-    body = <GlobeView data={sites.data} />
-  } else {
-    const site = sites.data.sites.find((s) => s.id === route.siteId)
-    body = site ? (
-      <SitePage key={site.id} site={site} source={source} />
-    ) : (
-      <div className="banner error" role="alert">
-        <strong>Unknown site:</strong> <span className="mono">{route.siteId}</span>
+  else {
+    // Globe and site share one layout (Kaitlin, 2026-11-15, layout (c)): the globe stays mounted,
+    // and a site's screen opens in a side panel beside it, so you keep your place on the Moon.
+    const siteId = route.view === 'site' ? route.siteId : null
+    const site = siteId ? sites.data.sites.find((s) => s.id === siteId) : undefined
+    body = (
+      <div className={`globe-layout${siteId ? ' with-panel' : ''}`}>
+        <GlobeView data={sites.data} focusSiteId={site ? site.id : null} />
+        {siteId && (
+          <aside className="site-panel" aria-label="Site details">
+            <button
+              type="button"
+              className="site-panel-close"
+              aria-label="Close site details"
+              title="Close (back to the whole Moon)"
+              onClick={() => navigate({ view: 'globe' })}
+            >
+              ✕
+            </button>
+            {site ? (
+              <SitePage key={site.id} site={site} source={source} />
+            ) : (
+              <div className="banner error" role="alert">
+                <strong>Unknown site:</strong> <span className="mono">{siteId}</span>
+              </div>
+            )}
+          </aside>
+        )}
       </div>
     )
   }
 
   return (
-    <main>
+    <main className={route.view === 'site' ? 'wide' : undefined}>
       <header>
         <h1>Penumbra Luna</h1>
         <p className="subtitle">Lunar Landing Site Navigator</p>

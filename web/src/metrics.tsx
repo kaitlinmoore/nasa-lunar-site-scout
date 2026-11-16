@@ -7,12 +7,7 @@ import { fieldDoc, type InWindow, type MetricSpec, type ScenarioWindow } from '.
 import { NotComputed, Num } from './Value'
 
 function WindowQualifier({ start, end }: ScenarioWindow) {
-  const q = formatWindowQualifier(start, end)
-  return (
-    <div className="definition">
-      {q.lead} <span className="nowrap">{q.start}</span> – <span className="nowrap">{q.end}</span>
-    </div>
-  )
+  return <div className="definition">{formatWindowQualifier(start, end)}</div>
 }
 
 /** A number with its unit, or "not computed"; counts also name the window they cover. */

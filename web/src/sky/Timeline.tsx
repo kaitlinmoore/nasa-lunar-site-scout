@@ -65,7 +65,7 @@ export default function Timeline({
           step={1}
           value={index}
           onChange={(e) => onChange(Number(e.target.value))}
-          aria-label="Selected time in the scenario window"
+          aria-label="Selected time in the time window"
           aria-valuetext={formatUtc(time[index])}
         />
         <div className="timeline-events">

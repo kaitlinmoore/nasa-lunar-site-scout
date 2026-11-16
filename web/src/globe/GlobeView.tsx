@@ -3,41 +3,106 @@
 // plain list of the same sites. The list is the accessible equivalent of the markers (canvas
 // markers can't be reached by keyboard or screen reader) and keeps working if WebGL or the
 // Cesium token fails.
-import { lazy, Suspense } from 'react'
+// Site selection (Kaitlin, 2026-11-15, layout (c)): clicking a marker or a list entry shows a
+// card on the globe (name, start of the description, "See details"); "See details" opens the
+// site's side panel beside the globe (`?site=<id>`), and the globe zooms toward the site.
+import { lazy, Suspense, useEffect, useState } from 'react'
 import type { Site, SitesResponse } from '../api/client'
-import { formatLatLon } from '../format'
+import { formatLatLon, truncateText } from '../format'
 import { navigate, routeHref } from '../route'
 
 const MoonGlobe = lazy(() => import('./MoonGlobe'))
 
 const ION_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN
 
-function SiteList({ sites }: { sites: Site[] }) {
+/** How much of a site's description the card shows before "See details". */
+const CARD_DESCRIPTION_CHARS = 180
+
+function detailsRoute(siteId: string) {
+  return { view: 'site', siteId } as const
+}
+
+/** The card shown next to a selected site's marker. */
+function SiteCard({ site, onClose }: { site: Site; onClose: () => void }) {
+  const description = site.description?.trim()
+  const route = detailsRoute(site.id)
+  return (
+    <div className="site-card" role="dialog" aria-labelledby={`site-card-${site.id}`}>
+      <button type="button" className="site-card-close" aria-label="Close" title="Close" onClick={onClose}>
+        ✕
+      </button>
+      <h3 id={`site-card-${site.id}`}>{site.name}</h3>
+      {description && <p>{truncateText(description, CARD_DESCRIPTION_CHARS)}</p>}
+      <a
+        className="button"
+        href={routeHref(route)}
+        onClick={(e) => {
+          e.preventDefault()
+          // The panel replaces the card. Clearing the selection also stops the card coming back
+          // (and pulling the globe toward the site) when the panel is closed.
+          onClose()
+          navigate(route)
+        }}
+      >
+        See details
+      </a>
+    </div>
+  )
+}
+
+function SiteList({
+  sites,
+  selected,
+  onSelect,
+}: {
+  sites: Site[]
+  selected: string | null
+  onSelect: (siteId: string) => void
+}) {
   return (
     <ul className="site-list">
-      {sites.map((site) => {
-        const route = { view: 'site', siteId: site.id } as const
-        return (
-          <li key={site.id}>
-            <a
-              href={routeHref(route)}
-              onClick={(e) => {
-                e.preventDefault()
-                navigate(route)
-              }}
-            >
-              {site.name}
-            </a>{' '}
-            <span className="muted value">{formatLatLon(site.location.lat, site.location.lon)}</span>
-          </li>
-        )
-      })}
+      {sites.map((site) => (
+        <li key={site.id}>
+          <a
+            href={routeHref(detailsRoute(site.id))}
+            aria-current={selected === site.id ? 'true' : undefined}
+            onClick={(e) => {
+              e.preventDefault()
+              onSelect(site.id)
+            }}
+          >
+            {site.name}
+          </a>{' '}
+          <span className="muted value">{formatLatLon(site.location.lat, site.location.lon)}</span>
+        </li>
+      ))}
     </ul>
   )
 }
 
-export default function GlobeView({ data }: { data: SitesResponse }) {
-  const open = (siteId: string) => navigate({ view: 'site', siteId })
+export default function GlobeView({
+  data,
+  focusSiteId,
+}: {
+  data: SitesResponse
+  focusSiteId: string | null
+}) {
+  const [selected, setSelected] = useState<string | null>(null)
+  const selectedSite = data.sites.find((s) => s.id === selected) ?? null
+  // With the panel open for a site, its card would repeat the panel: don't show it.
+  const cardSite = selectedSite && selectedSite.id !== focusSiteId ? selectedSite : null
+
+  // Escape closes the card.
+  useEffect(() => {
+    if (!cardSite) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setSelected(null)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [cardSite])
+
+  // Without a globe (no token), a list click goes straight to the site's panel.
+  const select = (siteId: string) => (ION_TOKEN ? setSelected(siteId) : navigate(detailsRoute(siteId)))
+
   return (
     <section className="card">
       <h2>Moon</h2>
@@ -49,31 +114,40 @@ export default function GlobeView({ data }: { data: SitesResponse }) {
       )}
       {ION_TOKEN ? (
         <Suspense fallback={<p className="muted">Loading the globe…</p>}>
-          <MoonGlobe sites={data.sites} token={ION_TOKEN} onSelect={open} />
+          <MoonGlobe
+            sites={data.sites}
+            token={ION_TOKEN}
+            onSelect={setSelected}
+            selectedSiteId={cardSite?.id ?? null}
+            focusSiteId={focusSiteId}
+            card={cardSite ? <SiteCard site={cardSite} onClose={() => setSelected(null)} /> : null}
+          />
         </Suspense>
       ) : (
         <p className="muted">
-          The globe needs a Cesium ion token, and this build has none. The site list below still
-          works.
+          The globe needs a Cesium ion token, and this build has none. The site list below still works.
         </p>
       )}
       {/* Caption wording chosen by Kaitlin (2026-11-15); expert detail behind "Details". */}
       <p className="globe-caption">
-        Near the Moon's south pole the Sun skims the horizon, so a few metres of height or a nearby
-        hill decide between light and shadow. Choose a site to see it worked out from our own terrain
-        calculations; the globe itself is just for finding your way.
+        Near the Moon's south pole the Sun skims the horizon, so a few metres of height or a nearby hill
+        decide between light and shadow. Choose a site to see it worked out from our own terrain calculations;
+        the globe itself is just for finding your way.
       </p>
       <details className="globe-details">
         <summary>Details</summary>
         <p>
-          The 3D Moon is Cesium's model (imagery and LOLA terrain), used for display only. Its terrain
-          sits about 2.5 km above the LOLA heights our calculations use, so site markers are placed on
-          its rendered surface and no values are taken from it. Every number in this tool comes from our
-          own API.
+          The 3D Moon is Cesium's model (imagery and LOLA terrain), used for display only. Its terrain sits
+          about 2.5 km above the LOLA heights our calculations use, so site markers are placed on its rendered
+          surface and no values are taken from it. Every number in this tool comes from our own API.
         </p>
       </details>
       <h3 className="list-heading">Curated sites</h3>
-      {data.sites.length === 0 ? <p className="muted">No curated sites.</p> : <SiteList sites={data.sites} />}
+      {data.sites.length === 0 ? (
+        <p className="muted">No curated sites.</p>
+      ) : (
+        <SiteList sites={data.sites} selected={cardSite?.id ?? focusSiteId} onSelect={select} />
+      )}
     </section>
   )
 }

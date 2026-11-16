@@ -8,8 +8,12 @@
 // - Lighting is a "flashlight" that follows the camera, and Cesium's Sun and Moon are hidden:
 //   Cesium's own Sun direction would paint illumination that isn't ours, and illumination is
 //   exactly what this tool computes.
+// - Site selection (Kaitlin, 2026-11-15, layout (c)): a click shows a card anchored next to the
+//   marker (`card`, positioned here after every render); "See details" opens the side panel and
+//   the globe zooms toward the site (`focusSiteId`); closing it returns to the whole Moon.
 // Loaded lazily (a separate chunk) so the site screen never pays for Cesium.
 import {
+  BoundingSphere,
   type Camera,
   Cartesian2,
   Cartesian3,
@@ -20,17 +24,19 @@ import {
   Ellipsoid,
   EllipsoidalOccluder,
   Entity,
+  HeadingPitchRange,
   HeightReference,
   Ion,
   LabelStyle,
   type PerspectiveFrustum,
   Math as CesiumMath,
+  SceneTransforms,
   ScreenSpaceEventType,
   VerticalOrigin,
   Viewer,
 } from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import type { Site } from '../api/client'
 
 /** Cesium ion asset: "Cesium Moon" (imagery + LOLA terrain in one 3D tileset). */
@@ -54,8 +60,11 @@ function startView(camera: Camera, canvas: HTMLCanvasElement, lon: number) {
   const radius = Ellipsoid.MOON.maximumRadius
   const frustum = camera.frustum as PerspectiveFrustum
   const aspect = canvas.clientWidth / Math.max(1, canvas.clientHeight)
-  const fovy = frustum.fovy ?? CesiumMath.toRadians(60)
-  const fovx = 2 * Math.atan(Math.tan(fovy / 2) * aspect)
+  // Cesium's `fov` is the angle across the wider side. Derive both angles from the canvas's
+  // current size: `frustum.fovy` lags a layout change (e.g. the side panel closing) by a frame.
+  const fov = frustum.fov ?? CesiumMath.toRadians(60)
+  const fovy = aspect <= 1 ? fov : 2 * Math.atan(Math.tan(fov / 2) / aspect)
+  const fovx = aspect <= 1 ? 2 * Math.atan(Math.tan(fov / 2) * aspect) : fov
   const distance = (radius * START_VIEW.margin) / Math.sin(Math.min(fovx, fovy) / 2)
   const out = Cartesian3.normalize(Cartesian3.fromDegrees(lon, START_VIEW.lat), new Cartesian3())
   const destination = Cartesian3.multiplyByScalar(out, distance, new Cartesian3())
@@ -86,18 +95,47 @@ const BUTTON_ZOOM = { inFraction: 0.35, outFraction: 0.6 }
 /** Entity id of the "South pole" label; it isn't a site and can't be selected. */
 const SOUTH_POLE_ID = 'south-pole-label'
 
-type Controls = { zoomIn: () => void; zoomOut: () => void; reset: () => void }
+/** "See details" view: the site from 55° above its horizon, 900 km away, so the region around it stays in view. */
+const FOCUS_VIEW = { pitchDeg: -55, rangeM: 900_000, durationS: 1.2 }
+
+/** Card placement next to its marker, in CSS pixels: gap from the marker, margin from the canvas edge. */
+const CARD = { gap: 16, margin: 8, raise: 24 }
+
+type Controls = {
+  zoomIn: () => void
+  zoomOut: () => void
+  reset: () => void
+  /** Zoom toward a site (the side panel is open). `instant` for a deep link. */
+  focusSite: (siteId: string, instant?: boolean) => void
+  /** Turn the globe so a site's marker is on screen (a list click on a hidden site). */
+  showSite: (siteId: string) => void
+  /** Re-place the card (after the selection or its content changed). */
+  refresh: () => void
+}
 
 export default function MoonGlobe({
   sites,
   token: ionToken,
   onSelect,
+  selectedSiteId,
+  focusSiteId,
+  card,
 }: {
   sites: Site[]
   token: string
-  onSelect: (siteId: string) => void
+  /** A site marker was clicked (its id), or empty space was (null). */
+  onSelect: (siteId: string | null) => void
+  /** The site whose card is shown, if any. */
+  selectedSiteId: string | null
+  /** The site whose side panel is open (the globe zooms toward it), if any. */
+  focusSiteId: string | null
+  /** The card's content, anchored next to the selected site's marker. */
+  card: ReactNode
 }) {
   const container = useRef<HTMLDivElement>(null)
+  const cardAnchor = useRef<HTMLDivElement>(null)
+  const selectedRef = useRef(selectedSiteId)
+  const focusRef = useRef(focusSiteId)
   const onSelectRef = useRef(onSelect)
   const controls = useRef<Controls | null>(null)
   const [status, setStatus] = useState<Status>({ kind: 'loading' })
@@ -197,10 +235,36 @@ export default function MoonGlobe({
           duration: 1,
           complete: () => setPoleNote(true),
         }),
+      focusSite: (siteId, instant = false) => {
+        const position = positions.get(siteId)
+        if (!position) return
+        hideNote()
+        scene.camera.flyToBoundingSphere(new BoundingSphere(position, 0), {
+          offset: new HeadingPitchRange(0, CesiumMath.toRadians(FOCUS_VIEW.pitchDeg), FOCUS_VIEW.rangeM),
+          duration: instant ? 0 : FOCUS_VIEW.durationS,
+        })
+      },
+      showSite: (siteId) => {
+        const position = positions.get(siteId)
+        if (!position || onScreen(position)) return
+        hideNote()
+        // Same height as now, looking at the site, so it comes into view without a jump in scale.
+        scene.camera.flyToBoundingSphere(new BoundingSphere(position, 0), {
+          offset: new HeadingPitchRange(0, CesiumMath.toRadians(-80), Math.max(height(), 1_500_000)),
+          duration: 1,
+        })
+      },
+      refresh: () => {
+        placeCard()
+        scene.requestRender()
+      },
     }
 
     // Site markers: clamped to the rendered tileset surface; no height is read back.
     const markers: { entity: Entity; position: Cartesian3 }[] = []
+    const positions = new Map(
+      sites.map((s) => [s.id, Cartesian3.fromDegrees(s.location.lon, s.location.lat)] as const),
+    )
     const markerColor = Color.fromCssColorString(token('--globe-marker') || 'white')
     const outlineColor = Color.fromCssColorString(token('--globe-marker-outline') || 'black')
     const labelFont = token('--globe-label-font') || '14px sans-serif'
@@ -208,7 +272,7 @@ export default function MoonGlobe({
     const outlineWidth = tokenNumber('--globe-marker-outline-width', 2)
     const labelOffset = tokenNumber('--globe-label-offset', 14)
     for (const site of sites) {
-      const position = Cartesian3.fromDegrees(site.location.lon, site.location.lat)
+      const position = positions.get(site.id) as Cartesian3
       const entity = v.entities.add(
         new Entity({
           id: site.id,
@@ -286,7 +350,41 @@ export default function MoonGlobe({
       if (changed) scene.requestRender()
     })
 
-    // Click a site marker -> open its site screen. Pointer cursor over site markers only.
+    // The card: anchored next to the selected site's marker after every render; hidden when the
+    // site is beyond the limb or off screen. Flips to the marker's left near the right edge.
+    const onScreen = (position: Cartesian3): boolean => {
+      if (!occluder.isPointVisible(position)) return false
+      const win = SceneTransforms.worldToWindowCoordinates(scene, position)
+      return (
+        !!win && win.x >= 0 && win.y >= 0 && win.x <= v.canvas.clientWidth && win.y <= v.canvas.clientHeight
+      )
+    }
+    const placeCard = () => {
+      const el = cardAnchor.current
+      if (!el) return
+      const id = selectedRef.current
+      const position = id ? positions.get(id) : undefined
+      const win =
+        position && onScreen(position) ? SceneTransforms.worldToWindowCoordinates(scene, position) : undefined
+      if (!win) {
+        el.style.visibility = 'hidden'
+        return
+      }
+      const w = v.canvas.clientWidth
+      const h = v.canvas.clientHeight
+      const cw = el.offsetWidth
+      const ch = el.offsetHeight
+      let x = win.x + CARD.gap
+      if (x + cw > w - CARD.margin) x = win.x - CARD.gap - cw
+      x = Math.max(CARD.margin, Math.min(x, w - cw - CARD.margin))
+      const y = Math.max(CARD.margin, Math.min(win.y - CARD.raise, h - ch - CARD.margin))
+      el.style.left = `${x}px`
+      el.style.top = `${y}px`
+      el.style.visibility = 'visible'
+    }
+    scene.postRender.addEventListener(placeCard)
+
+    // Click a site marker -> its card; click elsewhere -> no card. Pointer cursor over site markers.
     const siteIds = new Set(sites.map((s) => s.id))
     const pickedSiteId = (pos: Cartesian2): string | undefined => {
       const picked = scene.pick(pos)
@@ -296,12 +394,14 @@ export default function MoonGlobe({
     const handler = v.screenSpaceEventHandler
     handler.removeInputAction(ScreenSpaceEventType.LEFT_DOUBLE_CLICK) // no entity tracking
     handler.setInputAction((e: { position: Cartesian2 }) => {
-      const id = pickedSiteId(e.position)
-      if (id) onSelectRef.current(id)
+      onSelectRef.current(pickedSiteId(e.position) ?? null)
     }, ScreenSpaceEventType.LEFT_CLICK)
     handler.setInputAction((e: { endPosition: Cartesian2 }) => {
       v.canvas.style.cursor = pickedSiteId(e.endPosition) ? 'pointer' : ''
     }, ScreenSpaceEventType.MOUSE_MOVE)
+
+    // Deep link to a site's panel: start zoomed toward it.
+    if (focusRef.current) controls.current.focusSite(focusRef.current, true)
 
     Cesium3DTileset.fromIonAssetId(CESIUM_MOON_ASSET_ID, { enableCollision: true })
       .then((tileset) => {
@@ -323,9 +423,27 @@ export default function MoonGlobe({
     }
   }, [sites, ionToken])
 
+  // Selection: re-place the card; bring a hidden site into view (e.g. picked from the list).
+  useEffect(() => {
+    selectedRef.current = selectedSiteId
+    if (selectedSiteId) controls.current?.showSite(selectedSiteId)
+    controls.current?.refresh()
+  }, [selectedSiteId, card])
+
+  // Side panel: zoom toward its site when it opens or changes; back to the whole Moon when it closes.
+  useEffect(() => {
+    const previous = focusRef.current
+    focusRef.current = focusSiteId
+    if (focusSiteId && focusSiteId !== previous) controls.current?.focusSite(focusSiteId)
+    else if (!focusSiteId && previous) controls.current?.reset()
+  }, [focusSiteId])
+
   return (
     <div className="globe">
       <div ref={container} className="globe-canvas" />
+      <div ref={cardAnchor} className="globe-card-anchor" hidden={!card || status.kind === 'error'}>
+        {status.kind !== 'error' && card}
+      </div>
       {status.kind === 'ready' && poleNote && (
         <p className="globe-note" role="note">
           You're looking at the Moon's south pole (north is up).
@@ -366,6 +484,7 @@ export default function MoonGlobe({
           <div className="mono">{status.message}</div>
         </div>
       )}
+      {status.kind === 'error' && card && <div className="globe-card-static">{card}</div>}
     </div>
   )
 }

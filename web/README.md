@@ -37,7 +37,8 @@ The header shows which source is in use. Fixture data goes through the same gene
 
 - `/` (plus any `?source=`): the **globe** (C7a), the start page.
 - `?view=saved`: saved items and the comparison (C6).
-- `?site=<id>`: that curated site's screen. Back/forward work, and other query params (like `?source=fixtures`) are kept when moving between views. No router dependency (`src/route.ts`).
+- `?site=<id>`: the globe with that site's screen open in a side panel (the globe zooms toward the site). Back/forward work, and other query params (like `?source=fixtures`) are kept when moving between views. No router dependency (`src/route.ts`).
+- **Choosing a site** (Kaitlin, 2026-11-15, layout "card, then panel"): clicking a marker or a site in the list shows a card next to the marker (name, the start of the description, "See details", ✕; Escape or a click elsewhere closes it; a list click turns the globe to the site if it's out of view). "See details" opens the side panel beside the globe with the full site screen, and the globe zooms toward the site; closing the panel returns to the whole Moon. The globe stays mounted throughout. On narrow screens the panel stacks under the globe. Without a globe (no token, no WebGL) a list click opens the panel directly, or the card shows under the error.
 - A site's screen shows results only when they're for that site's location. So far only the C1 thin-slice scenario (Site01) has results; any other site says "No computed scenario for this site yet".
 
 ## Globe (C7a)
@@ -78,6 +79,7 @@ The horizon/sky plot and timeline use `fixtures/horizon.json` and `fixtures/seri
 - `sunset_in_window` / `earthset_in_window` (contract 0.4.0): when the flag is `false`, `time_to_sunset_h` / `time_to_earthset_h` is null because the event doesn't happen in the window, and the value shows "no sunset in this window" / "no Earthset in this window". A null time with the flag `null` (or `true`) still shows "not computed".
 - A contract version mismatch between the web build and the data shows a warning, in every build.
 - **Developer info** (data source, web/data contract versions) shows only in dev builds (`npm run dev`); production builds hide it. Placeholder notices and the mismatch warning always show.
+- **Time window** (not "window"): shown as the range first, then the exact UTC times, e.g. "15 May – 14 Jun 2028 · 30 days · results every hour" and "from 15 May 2028 00:00 UTC to 14 Jun 2028 00:00 UTC". The length is plain arithmetic on the two times the API sent (allowed by Kaitlin). The step is in plain words ("results every hour"); the technical details (step as ISO 8601, scenario key, coordinates and their frame) sit in a collapsed "Advanced" area.
 - **Times** are UTC and written explicitly ("2028-05-15 00:00 UTC"). The scenario form takes "YYYY-MM-DD HH:MM" in UTC (text fields with a visible "UTC"; the browser's date pickers would show local formats like "12:00 AM").
 - **Site description:** a site's screen opens with its name and its `description` from /api/sites; an empty description is left out.
 

@@ -12,7 +12,13 @@ import {
   WEB_CONTRACT_VERSION,
 } from '../api/client'
 import { type DataSource, loadCompare } from '../api/source'
-import { formatLatLon, formatScenarioSummary, formatUtcInput, parseUtcInput } from '../format'
+import {
+  formatExactRange,
+  formatLatLon,
+  formatScenarioSummary,
+  formatUtcInput,
+  parseUtcInput,
+} from '../format'
 import { navigate, routeHref } from '../route'
 import { validateScenario } from '../scenario'
 import CompareTable from './CompareTable'
@@ -56,8 +62,12 @@ function ScenarioForm({ sites, defaults }: { sites: Site[]; defaults: Scenario |
     if (!startIso || !endIso) {
       setMessage({
         kind: 'error',
-        text: 'Write window times as YYYY-MM-DD HH:MM in UTC, e.g. 2028-05-15 00:00.',
+        text: 'Write the times as YYYY-MM-DD HH:MM in UTC, e.g. 2028-05-15 00:00.',
       })
+      return
+    }
+    if (Date.parse(endIso) <= Date.parse(startIso)) {
+      setMessage({ kind: 'error', text: 'The time window must end after it starts.' })
       return
     }
     const v = validateScenario({
@@ -99,7 +109,7 @@ function ScenarioForm({ sites, defaults }: { sites: Site[]; defaults: Scenario |
         />
       </label>
       <label>
-        Window start
+        Time window start
         <span className="utc-field">
           <input
             type="text"
@@ -114,7 +124,7 @@ function ScenarioForm({ sites, defaults }: { sites: Site[]; defaults: Scenario |
         </span>
       </label>
       <label>
-        Window end
+        Time window end
         <span className="utc-field">
           <input
             type="text"
@@ -382,7 +392,9 @@ export default function SavedView({
                     Compare
                   </label>{' '}
                   {s.site_id ? <SiteLink siteId={s.site_id}>{s.label}</SiteLink> : <span>{s.label}</span>}{' '}
-                  <span className="muted value">{formatScenarioSummary(sc)}</span>{' '}
+                  <span className="muted value" title={formatExactRange(sc.window_start, sc.window_end)}>
+                    {formatScenarioSummary(sc)}
+                  </span>{' '}
                   <button type="button" className="link-button" onClick={() => saved.removeScenario(s.id)}>
                     Delete
                   </button>

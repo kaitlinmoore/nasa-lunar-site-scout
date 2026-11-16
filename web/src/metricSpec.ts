@@ -46,7 +46,7 @@ const POWER_CLIPPED: Record<PowerClippedFlag, keyof PowerMetrics> = {
   longest_shadow_clipped: 'longest_shadow_h',
 }
 // Contract 0.4.0: when the flag is false the time-to value is null because the event doesn't
-// happen in the window. That's a result ("no sunset in this window"), not "not computed".
+// happen in the window. That's a result ("no sunset in this time window"), not "not computed".
 const POWER_IN_WINDOW: Record<PowerInWindowFlag, InWindow<PowerMetrics>> = {
   sunset_in_window: { field: 'time_to_sunset_h', none: NO_SUNSET_IN_WINDOW },
 }

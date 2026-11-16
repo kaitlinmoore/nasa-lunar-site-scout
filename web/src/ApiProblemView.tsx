@@ -2,7 +2,7 @@
 // How a failed API request is shown (4.4). Each kind says what happened in plain words; no values
 // are shown for a failed request. "Not served" lists the scenarios this version does serve.
 import { ApiError } from './api/client'
-import { formatScenarioSummary, SCENARIO_FIELD_LABELS } from './format'
+import { formatExactRange, formatScenarioSummary, SCENARIO_FIELD_LABELS } from './format'
 
 function NotServedList({ served }: { served: ApiError['problem'] & { kind: 'not-served' } }) {
   if (served.served.length === 0) return null
@@ -13,6 +13,9 @@ function NotServedList({ served }: { served: ApiError['problem'] & { kind: 'not-
         {served.served.map((s) => (
           <li key={s.scenario_key}>
             <span className="value">{formatScenarioSummary(s.scenario)}</span>
+            <div className="definition value">
+              {formatExactRange(s.scenario.window_start, s.scenario.window_end)}
+            </div>
             {s.differs_in.length > 0 && (
               <span className="muted">
                 {' '}

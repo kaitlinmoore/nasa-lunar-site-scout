@@ -3,7 +3,18 @@
 // (or fixture) sent them. null = "not computed", never 0. Definitions come from the contract.
 import type { ReactNode } from 'react'
 import type { FidelityLabel, MetricEvent, MetricsResponse } from './api/client'
-import { EVENT_LABELS, formatDuration, formatHeight, formatLatLon, formatUtc, midSentence } from './format'
+import {
+  EVENT_LABELS,
+  formatDateRange,
+  formatDuration,
+  formatExactRange,
+  formatHeight,
+  formatLatLon,
+  formatLength,
+  formatStepPlain,
+  formatUtc,
+  midSentence,
+} from './format'
 import { MetricValue, Value } from './metrics'
 import {
   COMMS_SPEC,
@@ -65,7 +76,7 @@ function Events({ events, step }: { events: MetricEvent[]; step: string }) {
     <section className="card">
       <h2>Events</h2>
       {sorted.length === 0 ? (
-        <p className="muted">No events in this window.</p>
+        <p className="muted">No events in this time window.</p>
       ) : (
         <table className="events">
           <thead>
@@ -93,7 +104,7 @@ function Events({ events, step }: { events: MetricEvent[]; step: string }) {
       )}
       <p className="definition">
         {refinedDoc && <>Refined: {midSentence(refinedDoc)}. </>}
-        Sampling step: {formatDuration(step)}.
+        Times are at the calculation's samples ({formatStepPlain(step)}) unless refined.
       </p>
     </section>
   )
@@ -136,25 +147,38 @@ export default function SiteScreen({ data, children }: { data: MetricsResponse; 
         <dl>
           <dt>Site</dt>
           <dd>{location.name ?? <span className="muted">unnamed location</span>}</dd>
-          <dt>Coordinates</dt>
-          <dd className="value">
-            {formatLatLon(location.lat, location.lon)}
-            <div className="definition">Planetocentric, east-positive longitude.</div>
+          <dt>Time window</dt>
+          <dd>
+            <span className="value">
+              {formatDateRange(scenario.window_start, scenario.window_end)} ·{' '}
+              {formatLength(scenario.window_start, scenario.window_end)} · {formatStepPlain(scenario.step)}
+            </span>
+            <div className="definition value">
+              {formatExactRange(scenario.window_start, scenario.window_end)}
+            </div>
           </dd>
           <dt>Unit height</dt>
           <dd className="value">
             {formatHeight(scenario.unit_height_m)}
             {heightDoc && <div className="definition">{heightDoc}.</div>}
           </dd>
-          <dt>Window start</dt>
-          <dd className="value">{formatUtc(scenario.window_start)}</dd>
-          <dt>Window end</dt>
-          <dd className="value">{formatUtc(scenario.window_end)}</dd>
-          <dt>Step</dt>
-          <dd className="value">{formatDuration(scenario.step)}</dd>
-          <dt>Scenario key</dt>
-          <dd className="value muted">{data.scenario_key}</dd>
         </dl>
+        <details className="advanced">
+          <summary>Advanced</summary>
+          <dl>
+            <dt>Step</dt>
+            <dd className="value">
+              {scenario.step} ({formatDuration(scenario.step)})
+            </dd>
+            <dt>Scenario key</dt>
+            <dd className="value">{data.scenario_key}</dd>
+            <dt>Coordinates</dt>
+            <dd className="value">
+              {formatLatLon(location.lat, location.lon)}
+              <div className="definition">Planetocentric, east-positive longitude.</div>
+            </dd>
+          </dl>
+        </details>
       </section>
       {children}
       <div className="grid-2">
