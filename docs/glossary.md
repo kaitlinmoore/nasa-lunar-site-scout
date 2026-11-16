@@ -6,10 +6,11 @@ precise one for specialists (*Detail*), then a link to the [methodology](methodo
 term, where there is one. Field names such as `illumination_fraction` are the API's
 (`lss/contract/models.py`). Sources are listed in [references.md](references.md).
 
-[A](#azimuth) · [C](#clipped-period) · [D](#de421) · [E](#earth-clearance) · [F](#far-field-and-near-field) ·
-[G](#geotiff) · [I](#illumination-fraction) · [L](#lcip-and-lcsp) · [M](#m3-moon-mineralogy-mapper) ·
-[N](#naif) · [P](#pds-planetary-data-system) · [R](#reference-sphere) · [S](#scenario-and-window) ·
-[T](#tdb-and-utc) · [U](#unit-height) · [V](#visible-fraction-f_sun-f_earth)
+[A](#azimuth) · [C](#clipped-period) · [D](#de-gerlache-rim) · [E](#earth-clearance) ·
+[F](#far-field-and-near-field) · [G](#geotiff) · [I](#illumination-fraction) · [L](#lcip-and-lcsp) ·
+[M](#m3-moon-mineralogy-mapper) · [N](#naif) · [P](#pds-planetary-data-system) · [R](#reference-sphere) ·
+[S](#scenario-and-window) · [T](#tdb-and-utc) · [U](#unit-height) · [V](#visible-fraction-f_sun-f_earth) ·
+[W](#window)
 
 ---
 
@@ -38,9 +39,41 @@ A map file arranged so a program can download just the part it needs instead of 
 *Detail:* a tiled [GeoTIFF](#geotiff) laid out for partial (windowed) reads over HTTP. The PGDA product 90 maps
 are COGs; the engine reads windows of them remotely (registry `pgda_90_south_pole_dems`).
 
-### Connecting ridge
+### Connecting Ridge
 
-See [Site01](#site01).
+See [Curated sites](#curated-sites).
+
+### Curated sites
+
+The eight south-pole places listed on the globe, chosen from published landing-site studies. Each has one
+exact point where the tool computes its results (its [served point](#served-point)).
+*Detail:* from the registry's site list (`lss/registry/sites.yaml`), served by `/api/sites`. The UI names each
+site by its short name, with a subtitle that gives its [PGDA site number](#pgda-site-numbers-site01--site42) and
+where its point comes from.
+
+| Short name | PGDA site | Served point | Lat, lon (°) |
+|---|---|---|---|
+| Connecting Ridge | Site01 | Centroid of Barker et al. (2021) RoI 4 (largest of 7) | −89.452675, −137.148653 |
+| Shackleton Rim | Site04 | Centroid of RoI 1 (largest of 4) | −89.761966, −157.067197 |
+| Peak near Shackleton | Site07 | Centroid of RoI 2 (largest of 2) | −88.807326, 123.776844 |
+| de Gerlache Rim | Site11 | Centroid of RoI 1 (largest of 4) | −88.668256, −68.375764 |
+| Nobile Rim | Site06 | Mazarico et al. (2011) Table 3, rank 6 | −85.30, 37.07 |
+| Leibnitz Beta Plateau | Site20 | Mazarico et al. (2011) Table 3, rank 20 | −85.43, 31.73 |
+| Malapert Massif | Site23 | Mazarico et al. (2011) Table 3, rank 23 | −85.97, −2.30 |
+| de Gerlache–Kocher Massif | Site42 | Mazarico et al. (2011) Table 3, rank 42 | −85.83, −116.35 |
+
+Connecting Ridge is the ridge connecting the rims of Shackleton and de Gerlache craters. The four points at the
+Mazarico et al. coordinates lie on slopes of 6.6–8.0° on the 5 m maps, steeper than the RoI points
+(1.1–5.1°), because those coordinates were picked on a 240 m map.
+[Methodology §1.4](methodology.md#14-curated-sites-c3), [§1.3](methodology.md#13-the-served-site-site01-at-barker-et-al-2021-roi-4).
+
+### de Gerlache Rim
+
+See [Curated sites](#curated-sites).
+
+### de Gerlache–Kocher Massif
+
+See [Curated sites](#curated-sites).
 
 ### DE421
 
@@ -109,7 +142,9 @@ The series carries it per sample as `clearance_deg`.
 A stretch of time when Earth is completely hidden behind terrain (or below the horizon), so a direct link is
 impossible.
 *Detail:* a period with no part of the Earth disc visible (`f_earth = 0`); no minimum duration; clipped to the
-window. `longest_earth_gap_h` is the longest one.
+window. `longest_earth_gap_h` is the longest one. As the methodology puts it: "Periods are found
+on the 60 s internal grid [...], so a period shorter than 60 s can be missed if it starts and ends
+between two grid points; one that contains a grid point is found and refined."
 [Methodology §5.2](methodology.md#52-visibility-periods-and-clipping).
 
 ### Earthrise and Earthset
@@ -181,10 +216,13 @@ and `longest_shadow_h`.
 ### LDEM
 
 The file-name prefix of LOLA height maps; the terrain maps this tool reads are LDEMs.
-*Detail:* LOLA-based digital elevation model. The far-field maps are `LDEM_80S_80MPP_ADJ` (80 m) and
-`LDEM_60S_240MPP_ADJ` (240 m) from PGDA product 90; the product 69 maps were made from `LDEM_85S_060M`. "MPP" is
-metres per pixel; the `_ADJ` maps are the newer, orbit-adjusted product 90 maps.
-[Methodology §1.2](methodology.md#12-terrain-nasa-gsfc-pgda-lola).
+*Detail:* LOLA-based digital elevation model. From PGDA product 90: the far-field maps `LDEM_80S_80MPP_ADJ`
+(80 m) and `LDEM_60S_240MPP_ADJ` (240 m), and `LDEM_83S_10MPP_ADJ` (10 m) for the 10 km slope statistics. The
+product 69 maps were made from `LDEM_85S_060M`, which is not public; the internal rerun of product 69 uses the
+PDS LOLA map `LDEM_75S_60M` instead. "MPP" is metres per pixel; the `_ADJ` maps are the newer, orbit-adjusted
+product 90 maps.
+[Methodology §1.2](methodology.md#12-terrain-nasa-gsfc-pgda-lola), [§5.6](methodology.md#56-slope-lssterrainslope),
+[§6.3](methodology.md#63-pgda-product-69-internal-pass-never-served).
 
 ### Leap second
 
@@ -194,15 +232,19 @@ leap seconds are assumed after that, which affects only the UTC labels of future
 [Methodology §1.1](methodology.md#11-ephemeris-and-frames-naif-spice-de421-era),
 [§2](methodology.md#2-frames-time-scales-and-topocentric-geometry).
 
+### Leibnitz Beta Plateau
+
+See [Curated sites](#curated-sites).
+
 ### Libration
 
 The Moon's slow rocking as seen from Earth. Seen from the Moon, it means Earth does not sit still in the sky but
-drifts back and forth by a few degrees. Near the poles that can be the difference between Earth being above
-the terrain or hidden behind it.
+moves around it. At the Connecting Ridge site, Earth's elevation goes from −7.4° to +6.0° over the served
+window, so near the poles libration can decide whether Earth is above the terrain or hidden behind it.
 *Detail:* the combined effect of the Moon's eccentric, inclined orbit (optical libration) and small real
-oscillations in its rotation (physical libration). The engine has no separate libration model: it computes
-Earth's apparent direction in the Moon-fixed MOON_ME_DE421 frame from the DE421 ephemeris and lunar
-orientation, so libration is included in every Earth position.
+oscillations in its rotation (physical libration). The engine has no separate libration model: libration is
+already in every Earth position, via the DE421 ephemeris (the Earth–Moon vector) and the lunar orientation
+(PA DE421), because Earth's direction is computed in the Moon's body-fixed frame (MOON_ME_DE421).
 [Methodology §2](methodology.md#2-frames-time-scales-and-topocentric-geometry).
 
 ### Light time and stellar aberration
@@ -223,6 +265,13 @@ I(μ)/I(1) = 0.30 + 0.93 μ − 0.23 μ²; the limb is 30% as bright as the cent
 limb darkening at 550 nm but name no law. At the served point the choice moves the time-mean fraction by
 0.0002.
 [Methodology §5.1](methodology.md#51-visible-fraction-of-a-disc-at-one-instant).
+
+### Limitations
+
+Notes that come with a result, saying what it can't tell you or what is missing from it.
+*Detail:* the `limitations` lists of terrain and site-summary results. The UI shows them as "Limits of these
+values:" under slope statistics and "Not in this summary:" under a site summary. For example, when a summary has
+no slope part: "This version has no precomputed slope statistics for this location and radius."
 
 ### Local horizontal plane
 
@@ -256,6 +305,10 @@ detections of Li et al. (2018), about 280 m pixels poleward of about 70°, as pl
 `m3_surface_ice`): a clearly labeled stand-in for "water", which cannot give ice abundance or depth, or
 subsurface hydrogen at kilometre scale.
 
+### Malapert Massif
+
+See [Curated sites](#curated-sites).
+
 ### Mean visible disc fraction
 
 On average over the window, how much of the Sun's light reaches the site, from 0 (none) to 1 (the whole disc
@@ -286,6 +339,10 @@ server (registry `spice_de421`).
 
 See [Far field and near field](#far-field-and-near-field).
 
+### Nobile Rim
+
+See [Curated sites](#curated-sites).
+
 ### Nodal cycle (18.6 years)
 
 The Moon's orbit slowly wobbles, repeating every 18.6 years, so polar lighting patterns also repeat on about
@@ -297,9 +354,14 @@ timesteps spanning 18.6 years"; its start date is not stated.
 ### PDS (Planetary Data System)
 
 NASA's long-term archive for planetary mission data.
-*Detail:* the product 69 maps are described by PDS labels, which define the quantity mapped; the planned LOLA
-global grid and Diviner products are distributed by the PDS Geosciences Node.
+*Detail:* the product 69 maps are described by PDS labels, which define the quantity mapped. The PDS
+Geosciences Node distributes the LOLA map `LDEM_75S_60M` used for the internal product 69 rerun, and the planned
+LOLA global grid and Diviner products.
 [Methodology §4.2](methodology.md#42-pgda-product-69-internal-only-reproduction-never-served).
+
+### Peak near Shackleton
+
+See [Curated sites](#curated-sites).
 
 ### PGDA (Planetary Geodesy Data Archive)
 
@@ -307,6 +369,15 @@ A NASA Goddard Space Flight Center archive of Moon and planet maps; the source o
 *Detail:* PGDA products used: 78 (5 m site DEMs), 90 (large-area south polar DEMs) and 69 (polar
 illumination, for validation only). See [references.md](references.md#11-used).
 [Methodology §1.2](methodology.md#12-terrain-nasa-gsfc-pgda-lola).
+
+### PGDA site numbers (Site01 … Site42)
+
+The numbers in site names such as "Site04" come from a 2011 ranking of the best-lit spots near the south pole.
+*Detail:* the ranks in Mazarico et al. (2011, Table 3), the 50 most illuminated spots near each pole on a 240 m
+map; PGDA product 78 names its 5 m site maps by them, and Barker et al. (2021) use the same numbers. A site's
+subtitle says where its served point comes from: "PGDA Site04 · Barker 2021 RoI 1" is the centroid of that
+Barker region of interest; "PGDA Site06 · Mazarico 2011 rank 6" is the Mazarico et al. coordinate.
+[Methodology §1.4](methodology.md#14-curated-sites-c3).
 
 ### Placeholder data
 
@@ -369,13 +440,29 @@ of the scenario (the "scenario key" in the UI).
 [Methodology §5](methodology.md#5-metric-definitions),
 [§5.5](methodology.md#55-computation-and-accuracy-lssseries-lssmetrics).
 
+### Served point
+
+The exact spot within a site where the tool computes its results.
+*Detail:* the rule: where the PGDA product 78 tile has Barker et al. (2021) regions of
+interest, the centroid of the largest [RoI](#roi-region-of-interest); otherwise the Mazarico et al. (2011)
+coordinate, checked for slope on the 5 m map. The centroid is the centre of the 5 m pixel that contains the
+mean of the RoI's pixel centres; this reproduces all seven of Barker's tabulated Site01 centroids. At Site01 the
+served point is not the Mazarico et al. coordinate, which lies on an 8.6° slope on the 5 m map.
+[Methodology §1.4](methodology.md#14-curated-sites-c3), [§1.3](methodology.md#13-the-served-site-site01-at-barker-et-al-2021-roi-4).
+
+### Shackleton Rim
+
+See [Curated sites](#curated-sites).
+
 ### Shadow period and sunlit period
 
 A shadow period is a stretch of time when none of the Sun can be seen; a sunlit period is when at least part
 of it can.
 *Detail:* sunlit = `f_sun > 0`, shadow = `f_sun = 0`; together they tile the window. Partial loss of the disc
 is not a shadow. There is no minimum duration, and periods are clipped to the window. `shadow_count` counts
-shadow periods, including clipped ones.
+shadow periods, including clipped ones. As the methodology puts it: "Periods are found on the
+60 s internal grid [...], so a period shorter than 60 s can be missed if it starts and ends between
+two grid points; one that contains a grid point is found and refined."
 [Methodology §5.2](methodology.md#52-visibility-periods-and-clipping).
 
 ### SI
@@ -384,21 +471,48 @@ The term the NASA Space Apps Challenge uses for AI tools ("Super Intelligence").
 *Detail:* files written with SI assistance carry a header saying so; the README's "AI usage" section
 describes how SI was used.
 
-### Site01
+### Site summary
 
-The first site in the standard numbering of south-pole landing sites: the ridge connecting Shackleton and de
-Gerlache craters, known as the Connecting ridge.
-*Detail:* numbering from Mazarico et al. (2011), as adopted by Barker et al. (2021) and PGDA product 78. The
-tool's served point is "Site01 Connecting ridge (Barker 2021 RoI 4)", at 89.452675° S, 222.851347° E, not the
-Mazarico et al. coordinate, which lies on an 8.6° slope on the 5 m map.
-[Methodology §1.3](methodology.md#13-the-served-site-site01-at-barker-et-al-2021-roi-4).
+One answer that gathers what the tool has for a place: its slope, its Sun and Earth metrics, and nearby
+features.
+*Detail:* `POST /api/site_summary` (UI: "Summary for … within …"). Its parts are the slope statistics
+(`terrain`), the metrics for a scenario (`metrics`) and nearby features (`features`, not available yet in this
+version). Each part is null when it was not requested or has no result, and the summary's
+[limitations](#limitations) say which and why.
 
 ### Slope
 
 How steep the ground is, in degrees from level.
-*Detail:* slopes quoted in the methodology are central differences over ±10 m on the bilinear 5 m surface.
-Slope is also a terrain layer in the API (`slope`).
-[Methodology §1.3](methodology.md#13-the-served-site-site01-at-barker-et-al-2021-roi-4).
+*Detail:* central differences between neighbouring pixels, tan(slope) = hypot(dz/dx, dz/dy): the angle
+between the local surface and the plane normal to the sphere's radius. This is the definition of Barker et al.
+(2021)'s published 5 m slope maps, which the engine reproduces at Site01. Single-pixel slopes on the 5 m maps
+are low confidence, because about 90% of the pixels are interpolated between LOLA tracks. (Site01's 1.4° in
+methodology section 1.3 used a ±10 m baseline.) Slope is also a terrain layer in the API (`slope`).
+See also [Slope at the point](#slope-at-the-point) and
+[Slope statistics and slope layer](#slope-statistics-and-slope-layer).
+[Methodology §5.6](methodology.md#56-slope-lssterrainslope).
+
+### Slope at the point
+
+How steep the ground is exactly at the chosen location.
+*Detail:* `slope_at_point_deg` (UI: "At the point"): the slope of the pixel containing the location, on the
+map named under "Measured on" (see [Slope statistics and slope layer](#slope-statistics-and-slope-layer)).
+Single-pixel slopes on the 5 m maps are low confidence (see [Slope](#slope)).
+[Methodology §5.6](methodology.md#56-slope-lssterrainslope).
+
+### Slope statistics and slope layer
+
+The gentlest, steepest and average slope inside a circle around the location, and which height map they were
+measured on.
+*Detail:* `slope_deg` (UI: "Within the radius") = min, max and mean slope over the pixels whose centres lie
+within `radius_m` of the point, as ground distance (map distances are corrected for the polar stereographic
+scale). `slope_layer` (UI: "Measured on") is "the DEM the slopes were measured on (its resolution sets what
+they can show)". 1 km statistics are measured on the 5 m site tile and 10 km statistics on the 10 m polar map
+(`LDEM_83S_10MPP_ADJ`), because the 5 m tiles reach only 6–9 km from the served points. Slopes on the 10 m map
+are gentler: features smaller than about 20 m are not resolved. The maximum picks out crater walls and the
+steepest single pixel, not a typical value. The statistics are precomputed; the API serves them only for the
+locations and radii it lists.
+[Methodology §5.6](methodology.md#56-slope-lssterrainslope).
 
 ### SPICE and kernels
 
