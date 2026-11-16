@@ -1,7 +1,8 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 #
-# Curated sites (plan F5), owned by stream A. lss.registry.sites loads these as contract Site objects for
-# /api/sites and fixtures/sites.json (stream C api generates those from here).
+# Curated sites (plan F5), owned by stream E (sites) since 2026-11-16 (stream A before). lss.registry.sites
+# loads these as contract Site objects for /api/sites and fixtures/sites.json (stream C api generates those
+# from here).
 #
 # Visitor-facing: name, short_name, subtitle, description and source. Keep internal notes in comments.
 # `regions`: region tags (contract Site.regions), used by /api/compare `across.region` and the NL layer. Each
@@ -199,3 +200,130 @@ sites:
       (south pole, rank 42): 243.65 E, 85.83 S (polar stereographic x = -113.360 km,
       y = -56.149 km on the 1737.4 km sphere). Site name and 5 m map: PGDA product 78 (Barker, M. K.,
       et al. (2021), Planet. Space Sci. 203, 105119, doi:10.1016/j.pss.2020.105119).
+
+  # Apollo landing sites (Kaitlin, 2026-11-16): the Lunar Module descent stage position from Wagner et al. (2017),
+  # LROC NAC images, read from the LROC PDS archive table (LRO-L-LROC-5-RDR-V1.0, ANTHROPOGENIC_OBJECTS, DBF field
+  # LONGITUDE in -180..180) and identical on NASA NSSDCA's Apollo Landing Site Coordinates page ("planetocentric Mean
+  # Earth/Polar Axis Lunar Reference System - DE421 ephemeris"): the engine's MOON_ME / DE421 frame. Uncertainty is
+  # the table's "Uncertainty (m)" column. Place names and UT landing dates: NSSDCA mission pages. No `point`: there
+  # is no PGDA product 78 tile here, so site_points() (polar sites only) does not list these. dataset_ids stay empty
+  # until the global coarse layer (C7) is in the registry.
+  - id: apollo-11
+    name: Apollo 11 landing site (Lunar Module Eagle descent stage)
+    short_name: Apollo 11
+    subtitle: Mare Tranquillitatis · 20 July 1969
+    category: apollo
+    location: {lat: 0.67416, lon: 23.47314}
+    description: >-
+      Where Apollo 11's lunar module Eagle landed on 20 July 1969 (UT), in Mare Tranquillitatis, the Sea of Tranquility, near the Moon's equator. The point is the lunar
+      module's descent stage, which is still on the surface, as located in Lunar Reconnaissance Orbiter
+      camera images (Wagner et al. 2017), to within 0.3 m.
+    dataset_ids: []
+    has_dem_clones: false
+    source: >-
+      Wagner, R. V., Nelson, D. M., Plescia, J. B., Robinson, M. S., Speyerer, E. J., and Mazarico, E. (2017),
+      Coordinates of anthropogenic features on the Moon, Icarus 283, 92-103, doi:10.1016/j.icarus.2016.05.011:
+      descent stage of Lunar Module "Eagle", 0.67416 N, 23.47314 E, uncertainty 0.3 m, as listed in the LROC PDS
+      archive (LRO-L-LROC-5-RDR-V1.0, EXTRAS/SHAPEFILE/ANTHROPOGENIC_OBJECTS) and on NASA NSSDCA's Apollo
+      Landing Site Coordinates page (planetocentric mean Earth/polar axis frame, DE421 ephemeris). Site name and
+      landing date: NSSDCA, https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo11info.html.
+
+  - id: apollo-12
+    name: Apollo 12 landing site (Lunar Module Intrepid descent stage)
+    short_name: Apollo 12
+    subtitle: Oceanus Procellarum · 19 November 1969
+    category: apollo
+    location: {lat: -3.0128, lon: -23.4219}
+    description: >-
+      Where Apollo 12's lunar module Intrepid landed on 19 November 1969 (UT), in Oceanus Procellarum, the Ocean of Storms, near the Moon's equator. The point is the lunar
+      module's descent stage, which is still on the surface, as located in Lunar Reconnaissance Orbiter
+      camera images (Wagner et al. 2017), to within 2.2 m.
+    dataset_ids: []
+    has_dem_clones: false
+    source: >-
+      Wagner, R. V., Nelson, D. M., Plescia, J. B., Robinson, M. S., Speyerer, E. J., and Mazarico, E. (2017),
+      Coordinates of anthropogenic features on the Moon, Icarus 283, 92-103, doi:10.1016/j.icarus.2016.05.011:
+      descent stage of Lunar Module "Intrepid", 3.0128 S, 23.4219 W, uncertainty 2.2 m, as listed in the LROC PDS
+      archive (LRO-L-LROC-5-RDR-V1.0, EXTRAS/SHAPEFILE/ANTHROPOGENIC_OBJECTS) and on NASA NSSDCA's Apollo
+      Landing Site Coordinates page (planetocentric mean Earth/polar axis frame, DE421 ephemeris). Site name and
+      landing date: NSSDCA, https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo12info.html.
+
+  - id: apollo-14
+    name: Apollo 14 landing site (Lunar Module Antares descent stage)
+    short_name: Apollo 14
+    subtitle: Fra Mauro · 5 February 1971
+    category: apollo
+    location: {lat: -3.64589, lon: -17.47194}
+    description: >-
+      Where Apollo 14's lunar module Antares landed on 5 February 1971 (UT), in the Fra Mauro region, near the Moon's equator. The point is the lunar
+      module's descent stage, which is still on the surface, as located in Lunar Reconnaissance Orbiter
+      camera images (Wagner et al. 2017), to within 0.4 m.
+    dataset_ids: []
+    has_dem_clones: false
+    source: >-
+      Wagner, R. V., Nelson, D. M., Plescia, J. B., Robinson, M. S., Speyerer, E. J., and Mazarico, E. (2017),
+      Coordinates of anthropogenic features on the Moon, Icarus 283, 92-103, doi:10.1016/j.icarus.2016.05.011:
+      descent stage of Lunar Module "Antares", 3.64589 S, 17.47194 W, uncertainty 0.4 m, as listed in the LROC PDS
+      archive (LRO-L-LROC-5-RDR-V1.0, EXTRAS/SHAPEFILE/ANTHROPOGENIC_OBJECTS) and on NASA NSSDCA's Apollo
+      Landing Site Coordinates page (planetocentric mean Earth/polar axis frame, DE421 ephemeris). Site name and
+      landing date: NSSDCA, https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo14info.html.
+
+  - id: apollo-15
+    name: Apollo 15 landing site (Lunar Module Falcon descent stage)
+    short_name: Apollo 15
+    subtitle: Hadley Rille / Apennines · 30 July 1971
+    category: apollo
+    location: {lat: 26.13239, lon: 3.6333}
+    description: >-
+      Where Apollo 15's lunar module Falcon landed on 30 July 1971 (UT), in the Hadley Rille and Apennines region. The point is the lunar
+      module's descent stage, which is still on the surface, as located in Lunar Reconnaissance Orbiter
+      camera images (Wagner et al. 2017), to within 1.0 m.
+    dataset_ids: []
+    has_dem_clones: false
+    source: >-
+      Wagner, R. V., Nelson, D. M., Plescia, J. B., Robinson, M. S., Speyerer, E. J., and Mazarico, E. (2017),
+      Coordinates of anthropogenic features on the Moon, Icarus 283, 92-103, doi:10.1016/j.icarus.2016.05.011:
+      descent stage of Lunar Module "Falcon", 26.13239 N, 3.63330 E, uncertainty 1.0 m, as listed in the LROC PDS
+      archive (LRO-L-LROC-5-RDR-V1.0, EXTRAS/SHAPEFILE/ANTHROPOGENIC_OBJECTS) and on NASA NSSDCA's Apollo
+      Landing Site Coordinates page (planetocentric mean Earth/polar axis frame, DE421 ephemeris). Site name and
+      landing date: NSSDCA, https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo15info.html.
+
+  - id: apollo-16
+    name: Apollo 16 landing site (Lunar Module Orion descent stage)
+    short_name: Apollo 16
+    subtitle: Descartes · 21 April 1972
+    category: apollo
+    location: {lat: -8.9734, lon: 15.5011}
+    description: >-
+      Where Apollo 16's lunar module Orion landed on 21 April 1972 (UT), in the Descartes region, near the Moon's equator. The point is the lunar
+      module's descent stage, which is still on the surface, as located in Lunar Reconnaissance Orbiter
+      camera images (Wagner et al. 2017), to within 3.0 m.
+    dataset_ids: []
+    has_dem_clones: false
+    source: >-
+      Wagner, R. V., Nelson, D. M., Plescia, J. B., Robinson, M. S., Speyerer, E. J., and Mazarico, E. (2017),
+      Coordinates of anthropogenic features on the Moon, Icarus 283, 92-103, doi:10.1016/j.icarus.2016.05.011:
+      descent stage of Lunar Module "Orion", 8.9734 S, 15.5011 E, uncertainty 3.0 m, as listed in the LROC PDS
+      archive (LRO-L-LROC-5-RDR-V1.0, EXTRAS/SHAPEFILE/ANTHROPOGENIC_OBJECTS) and on NASA NSSDCA's Apollo
+      Landing Site Coordinates page (planetocentric mean Earth/polar axis frame, DE421 ephemeris). Site name and
+      landing date: NSSDCA, https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo16info.html.
+
+  - id: apollo-17
+    name: Apollo 17 landing site (Lunar Module Challenger descent stage)
+    short_name: Apollo 17
+    subtitle: Taurus-Littrow · 11 December 1972
+    category: apollo
+    location: {lat: 20.1911, lon: 30.7723}
+    description: >-
+      Where Apollo 17's lunar module Challenger landed on 11 December 1972 (UT), in the Taurus-Littrow region. The point is the lunar
+      module's descent stage, which is still on the surface, as located in Lunar Reconnaissance Orbiter
+      camera images (Wagner et al. 2017), to within 3.5 m.
+    dataset_ids: []
+    has_dem_clones: false
+    source: >-
+      Wagner, R. V., Nelson, D. M., Plescia, J. B., Robinson, M. S., Speyerer, E. J., and Mazarico, E. (2017),
+      Coordinates of anthropogenic features on the Moon, Icarus 283, 92-103, doi:10.1016/j.icarus.2016.05.011:
+      descent stage of Lunar Module "Challenger", 20.1911 N, 30.7723 E, uncertainty 3.5 m, as listed in the LROC PDS
+      archive (LRO-L-LROC-5-RDR-V1.0, EXTRAS/SHAPEFILE/ANTHROPOGENIC_OBJECTS) and on NASA NSSDCA's Apollo
+      Landing Site Coordinates page (planetocentric mean Earth/polar axis frame, DE421 ephemeris). Site name and
+      landing date: NSSDCA, https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo17info.html.

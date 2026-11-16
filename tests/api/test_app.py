@@ -26,7 +26,7 @@ def test_sites_serves_fixture():
 
 
 def test_sites_category_filter():
-    assert client.get("/api/sites", params={"category": "apollo"}).json()["sites"] == []
+    assert {s["category"] for s in client.get("/api/sites?category=apollo").json()["sites"]} == {"apollo"}
 
 
 def test_cors_allows_dev_origin():

@@ -17,7 +17,7 @@ def test_sites_load_as_contract_sites():
     assert len({s.id for s in sites}) == len(sites)
     for s in sites:
         assert s.location.name == s.name and s.description and s.source
-        assert s.id in site_points()
+        assert (s.id in site_points()) == (s.category == "pgda")  # polar tile sites only
 
 
 def test_site01_is_what_the_api_serves_today():

@@ -1,10 +1,11 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Loader for the curated site registry (`sites.yaml`, owned by stream A).
+Loader for the curated site registry (`sites.yaml`, owned by stream E, sites, since 2026-11-16).
 
-`load_sites()` returns contract `Site` objects (what /api/sites serves); `site_points()` returns the engine's
-provenance for each location (rule, 5 m tile, polar stereographic point), used by C3's precompute and checked
-by tests/engine/test_sites.py.
+`load_sites()` returns contract `Site` objects (what /api/sites serves), every category. `site_points()`
+returns the engine's provenance (rule, 5 m tile, polar stereographic point) for the PGDA polar sites only,
+the entries with a `point`; used by C3's precompute and checked by tests/engine/test_sites.py. Sites
+elsewhere (e.g. the Apollo sites) have no product 78 tile and no `point`, so it does not list them.
 """
 
 from __future__ import annotations
@@ -55,6 +56,8 @@ def load_sites() -> tuple[Site, ...]:
 def site_points() -> dict[str, SitePoint]:
     out = {}
     for e in _raw():
+        if "point" not in e:  # not a PGDA tile site
+            continue
         p = e["point"]
         if p["rule"] not in RULES:
             raise ValueError(f"{e['id']}: unknown point rule {p['rule']!r}")
