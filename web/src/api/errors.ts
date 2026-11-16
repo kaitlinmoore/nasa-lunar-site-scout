@@ -5,7 +5,8 @@
 // The error bodies are contract models (lss/contract/models.py). A 422 from /api/metrics,
 // /api/series or /api/horizon is `UnprocessableError` = NotServedError | InvalidRequestError, and
 // from /api/compare `CompareUnprocessableError` = CompareNotServedError | InvalidRequestError; the
-// contract says to tell them apart by `detail`: an object vs a list. A 503 is `UnavailableError`.
+// contract says to tell them apart by `detail`: an object vs a list. A 503 is `UnavailableError`;
+// a 429 from /api/nl is `RateLimitedError` (contract 0.8.0).
 // Only that discrimination (and a check that the object has its `reason`) is done at runtime; the
 // rest is the generated types. Anything else is reported as a plain HTTP error.
 import type { components } from './schema'
@@ -23,6 +24,8 @@ export type ApiProblem =
   | { kind: 'invalid-request'; issues: S['ValidationIssue'][] }
   /** 503: no usable precomputed results are installed. `detail.technical` is for developers. */
   | { kind: 'unavailable'; detail: S['UnavailableDetail'] }
+  /** 429 from /api/nl: too many live questions from this client; `retry_after_s` from the API. */
+  | { kind: 'rate-limited'; detail: S['RateLimitedDetail'] }
   /** Any other non-OK answer. */
   | { kind: 'http'; status: number; text: string }
   /** No answer at all. */
@@ -49,6 +52,8 @@ function describeProblem(p: ApiProblem): string {
       return `malformed request (422): ${p.issues.map((i) => `${i.loc.join('.')}: ${i.msg}`).join('; ')}`
     case 'unavailable':
       return `results unavailable (503): ${p.detail.reason}`
+    case 'rate-limited':
+      return `rate limited (429): ${p.detail.reason} (retry after ${p.detail.retry_after_s} s)`
     case 'http':
       return `HTTP ${p.status}${p.text ? `: ${p.text}` : ''}`
     case 'network':
@@ -77,6 +82,14 @@ export function classifyError(path: string, status: number, bodyText: string): A
       return { kind: 'compare-not-served', detail: (body as S['CompareNotServedError']).detail }
     }
     return { kind: 'not-served', detail: (body as S['NotServedError']).detail }
+  }
+  if (
+    status === 429 &&
+    isRecord(detail) &&
+    typeof detail.reason === 'string' &&
+    typeof detail.retry_after_s === 'number'
+  ) {
+    return { kind: 'rate-limited', detail: (body as S['RateLimitedError']).detail }
   }
   if (status === 503 && isRecord(detail) && typeof detail.reason === 'string') {
     return { kind: 'unavailable', detail: (body as S['UnavailableError']).detail }

@@ -73,6 +73,16 @@ The horizon/sky plot and timeline use `fixtures/horizon.json` and `fixtures/seri
 - **Timeline:** the slider steps through the series samples (no interpolation between them). Event marks sit at the event's own time; selecting one shows that time as the API sent it (to the second, with a "refined" badge when refined), while the plot and readout move to the nearest sample and say so. Moving the slider clears the selection. The readout shows the Sun/Earth azimuth, elevation, visible disc and clearance at that sample, plus the terrain horizon at each body's azimuth. That horizon value is interpolated linearly between the two neighbouring profile samples (periodic over 360°), as the contract specifies, so it's the same value the engine uses; the readout says so and names the two samples. It uses the profile's own azimuths, so any spacing works (the real horizon is 0.1°). This is the one interpolated number on screen; everything else is shown as sent.
 - **Checks:** the horizon and series must be for the same location and unit height, or nothing is plotted. Placeholder horizon or series data gets a notice in the section and a watermark in the plot.
 
+## Questions (C7b, the NL box)
+
+Below the dashboard on the site screen (Kaitlin, 2026-11-16), one box per site. A question goes to `POST /api/nl` (contract 0.8.0) with the site's id and, when the site has a computed scenario, that scenario. The language model only turns the question into one of the API's queries; the numbers come from the API's results and are shown with the site screen's own views (`src/nl/NlBox.tsx`; `src/nl/response.ts` tells the three answers apart and checks a result's fields before showing it).
+
+- **Answer** (`NLAnswer`): "Understood as" (the echo), "Assumed" (`assumptions`), "Not answered" (`limitations`, with the data considered), then the result: metrics as the site screen, compare as the saved comparison table, sites as links, locate as its terrain stack; series and horizon get a short summary (no plot on their own yet). Any other operation, or a result missing fields this page reads, says it can't be shown and shows no values. The structured query is under "Query sent to the API".
+- **Can't answer** (`NLUnsupported`) and **needs more information** (`NLClarification`): the API's reason or question, with the echo.
+- **Errors:** 429 shows the API's reason and `retry_after_s`, and the Ask button stays off that long; 503 (paused at the daily cap, or the model can't be reached) shows the API's reason; no answer or a 404 says live questions aren't available (there's no saved copy of live answers, so no static fallback). The question length limit (`NLRequest.text` maxLength, 1000) comes from `fixtures/openapi.json` at build time (`__NL_MAX_TEXT_CHARS__`).
+- **Fixture mode** doesn't send the question: a selector picks one of C api's example answers (`fixtures/nl_*.json`), shown as placeholder data.
+- Live questions work on the deployed site once C api deploys `/api/nl`.
+
 ## Display rules
 
 - Values are shown exactly as sent (rounded for display; hover a value to see the API's number). Nothing is derived or defaulted, except the terrain horizon at a body's azimuth, which the contract defines as a linear interpolation of the profile (see Sky view).

@@ -33,6 +33,8 @@ console.info(
 
 const openapi = JSON.parse(readFileSync(resolve(repoRoot, 'fixtures/openapi.json'), 'utf-8'))
 const contractVersion: string = openapi.info['x-contract-version']
+// The longest question POST /api/nl accepts (NLRequest.text maxLength), so the box can't drift from it.
+const nlMaxTextChars: number = openapi.components.schemas.NLRequest.properties.text.maxLength
 
 // { SchemaName: { field: description } } for the models the UI explains to the user.
 type JsonSchema = { properties?: Record<string, { description?: string }> }
@@ -78,6 +80,7 @@ export default defineConfig({
     CESIUM_BASE_URL: JSON.stringify(`/${cesiumBaseUrl}/`),
     __CONTRACT_VERSION__: JSON.stringify(contractVersion),
     __FIELD_DOCS__: JSON.stringify(fieldDocs),
+    __NL_MAX_TEXT_CHARS__: JSON.stringify(nlMaxTextChars),
     'import.meta.env.VITE_CESIUM_ION_TOKEN': JSON.stringify(cesiumToken),
   },
   server: {

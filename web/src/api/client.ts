@@ -22,6 +22,8 @@ export type SeriesResponse = Schemas['SeriesResponse']
 export type BodyTrack = Schemas['BodyTrack']
 export type HorizonProfile = Schemas['HorizonProfile']
 export type TerrainLayer = Schemas['TerrainLayer']
+export type LocateResponse = Schemas['LocateResponse']
+export type NLRequest = Schemas['NLRequest']
 
 export const API_BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/$/, '')
 
@@ -65,4 +67,6 @@ export const postMetrics = (scenario: Scenario) => postJson<MetricsResponse>('/a
 export const postSeries = (scenario: Scenario) => postJson<SeriesResponse>('/api/series', { scenario })
 export const postHorizon = (location: SiteLocation, unit_height_m: number) =>
   postJson<HorizonProfile>('/api/horizon', { location, unit_height_m })
+/** POST /api/nl: the body is NLAnswer | NLUnsupported | NLClarification (read by nl/response.ts). */
+export const postNl = (request: NLRequest) => postJson<unknown>('/api/nl', request)
 export const postCompare = (scenarios: Scenario[]) => postJson<CompareResponse>('/api/compare', { scenarios })

@@ -26,6 +26,7 @@ import GlobeView from './globe/GlobeView'
 import { navigate, type Route, routeHref, useRoute } from './route'
 import { useUsingStaticCopy } from './api/staticFallback'
 import SavedView from './saved/SavedView'
+import NlBox from './nl/NlBox'
 import { useSaved } from './saved/store'
 import SiteScreen from './SiteScreen'
 import SkyView from './sky/SkyView'
@@ -252,6 +253,13 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
           <SiteScreen data={data}>{skySection}</SiteScreen>
         </>
       )}
+      {/* Questions (C7b), below the dashboard; a fresh box per site. */}
+      <NlBox
+        key={site.id}
+        site={site}
+        scenario={metricsForSite && data ? data.scenario : null}
+        source={source}
+      />
     </>
   )
 }

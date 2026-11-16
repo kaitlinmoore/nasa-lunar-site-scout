@@ -10,9 +10,11 @@ import {
   getSites,
   type HorizonProfile,
   type MetricsResponse,
+  type NLRequest,
   postCompare,
   postHorizon,
   postMetrics,
+  postNl,
   postSeries,
   type Scenario,
   type SeriesResponse,
@@ -154,4 +156,22 @@ async function liveCompare(scenarios: Scenario[]): Promise<ComparisonResult> {
     throw e
   }
   return mapCompareResponse(scenarios, response)
+}
+
+/** Which committed example answer fixture mode shows (C api's fixtures/nl_*.json). */
+export type NlExample = 'answer' | 'unsupported' | 'clarification'
+
+/**
+ * Ask a question (C7b). Live: POST /api/nl. There's no saved copy of live answers, so no static
+ * fallback. Fixtures: the question isn't sent anywhere; the chosen example answer is returned.
+ */
+export async function askNl(source: DataSource, request: NLRequest, example: NlExample): Promise<unknown> {
+  if (source !== 'fixtures') return postNl(request)
+  const mod =
+    example === 'answer'
+      ? await import('../../../fixtures/nl_answer.json')
+      : example === 'unsupported'
+        ? await import('../../../fixtures/nl_unsupported.json')
+        : await import('../../../fixtures/nl_clarification.json')
+  return mod.default
 }

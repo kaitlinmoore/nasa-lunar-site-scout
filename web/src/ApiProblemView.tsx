@@ -62,6 +62,13 @@ export default function ApiProblemView({ what, error }: { what: string; error: u
           {import.meta.env.DEV && p.detail.technical && <div className="mono">{p.detail.technical}</div>}
         </div>
       )
+    case 'rate-limited':
+      return (
+        <div className="banner notice" role="status">
+          <strong>Too many requests.</strong> {p.detail.reason} You can try again in {p.detail.retry_after_s}{' '}
+          s.
+        </div>
+      )
     case 'invalid-request':
       return (
         <div className="banner error" role="alert">

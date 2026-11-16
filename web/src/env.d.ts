@@ -4,6 +4,8 @@
 declare const __CONTRACT_VERSION__: string
 /** Contract field descriptions, { SchemaName: { field: description } }, from fixtures/openapi.json. */
 declare const __FIELD_DOCS__: Record<string, Record<string, string>>
+/** NLRequest.text maxLength from fixtures/openapi.json: the longest question /api/nl accepts. */
+declare const __NL_MAX_TEXT_CHARS__: number
 
 interface ImportMetaEnv {
   readonly VITE_API_BASE?: string
