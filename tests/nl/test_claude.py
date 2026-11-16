@@ -199,7 +199,9 @@ def test_eval_cli_turns_the_refusal_fallback_off(monkeypatch):
             made.append(self)
 
     monkeypatch.setattr(nl_claude, "ClaudeProvider", Recording)
-    monkeypatch.setattr(nl_eval, "run_eval", lambda provider, include_blocked=False: {"fallbacks": None})
+    monkeypatch.setattr(
+        nl_eval, "run_eval", lambda provider, include_blocked=False, split=None: {"fallbacks": None}
+    )
     nl_eval.main(["--provider", "claude", "--live", "--model", "claude-opus-5-5", "--no-write"])
     assert made and made[0].fallbacks is False
     assert ClaudeProvider("claude-opus-5-5", client=StandInClient(response())).fallbacks is True

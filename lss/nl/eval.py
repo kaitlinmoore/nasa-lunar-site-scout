@@ -221,10 +221,17 @@ def _score(results: list[ItemResult], attr: str) -> dict[str, Any]:
 
 
 def run_eval(
-    provider: Provider, eval_set: EvalSet | None = None, include_blocked: bool = False
+    provider: Provider,
+    eval_set: EvalSet | None = None,
+    include_blocked: bool = False,
+    split: Split | None = None,
 ) -> dict[str, Any]:
+    """`split`: run only that split's items (e.g. dev for a tuning run); the others are not sent to the
+    provider at all, so the holdout stays unseen."""
     eval_set = eval_set or load_eval_set()
     items = [i for i in eval_set.items if include_blocked or i.status == ItemStatus.ready]
+    if split is not None:
+        items = [i for i in items if i.split == split]
     results = [run_item(i, provider, eval_set) for i in items]
     return {
         "run_at": datetime.now(UTC).isoformat(timespec="seconds"),
@@ -351,6 +358,12 @@ def main(argv: list[str] | None = None) -> int:
         "--live", action="store_true", help="required for providers that call an API (costs money)"
     )
     p.add_argument("--include-blocked", action="store_true", help="also run blocked items (not scored)")
+    p.add_argument(
+        "--split",
+        choices=[s.value for s in Split],
+        default=None,
+        help="run only this split's items (default: all); e.g. dev, keeping the holdout unseen",
+    )
     p.add_argument("--no-write", action="store_true", help="print scores only; don't write a results file")
     p.add_argument(
         "--rescore", type=Path, help="score a saved results file against the current labels (no API)"
@@ -375,7 +388,9 @@ def main(argv: list[str] | None = None) -> int:
         # (project author, 2026-11-15); the deployed demo keeps it on (ClaudeProvider's default).
         provider = ClaudeProvider(model=args.model, effort=args.effort, fallbacks=False)
     if args.rescore is None:
-        report = run_eval(provider, include_blocked=args.include_blocked)
+        split = Split(args.split) if args.split else None
+        report = run_eval(provider, include_blocked=args.include_blocked, split=split)
+        report["split_run"] = args.split
     print(
         json.dumps(
             {
@@ -385,6 +400,7 @@ def main(argv: list[str] | None = None) -> int:
                     "model",
                     "prompt_version",
                     "rescored_from",
+                    "split_run",
                     "counts",
                     "scores",
                     "scores_by_split",

@@ -328,3 +328,16 @@ def test_rescore_refuses_runs_from_another_schema(tmp_path):
     path = nl_eval.write_results({**report, "schema_version": "nl-output-3"}, tmp_path)
     with pytest.raises(ValueError, match="nl-output-3"):
         nl_eval.rescore(path, eval_set())
+
+
+def test_split_dev_never_sends_holdout_items_to_the_provider():
+    from lss.nl.eval import oracle_provider
+    from lss.nl.evalset import Split, load_eval_set
+
+    eval_set = load_eval_set()
+    provider = oracle_provider(eval_set)
+    report = nl_eval.run_eval(provider, eval_set, split=Split.dev)
+    holdout_texts = {i.text for i in eval_set.items if i.split == Split.holdout}
+    assert holdout_texts and not holdout_texts & {c.meta["text"] for c in provider.calls}
+    assert report["scores_by_split"]["holdout"]["valid_output"]["total"] == 0
+    assert report["scores_by_split"]["dev"]["valid_output"]["total"] == 19
