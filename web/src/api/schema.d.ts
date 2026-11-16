@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Scenarios */
+        get: operations["scenarios_api_scenarios_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/datasets": {
         parameters: {
             query?: never;
@@ -336,13 +353,68 @@ export interface components {
             earthset_in_window?: boolean | null;
         };
         /**
+         * CompareAcross
+         * @description One scenario per curated site, expanded by the API (Kaitlin's C8 choice): the sites named, the sites
+         *     tagged with `region`, or every curated site if neither is given.
+         */
+        CompareAcross: {
+            /** Site Ids */
+            site_ids?: string[];
+            /**
+             * Region
+             * @description A Site.regions tag, e.g. 'shackleton'
+             */
+            region?: string | null;
+            /** Unit Height M */
+            unit_height_m: number;
+            /**
+             * Window Start
+             * Format: date-time
+             */
+            window_start: string;
+            /** Window End */
+            window_end?: string | null;
+            /**
+             * Window Days
+             * @description Instead of window_end: the window's length in days (computed by code)
+             */
+            window_days?: number | null;
+            /**
+             * Step
+             * Format: duration
+             * @description Sampling step (ISO 8601)
+             * @default PT1H
+             */
+            step: string;
+        };
+        /** CompareFilteredOut */
+        CompareFilteredOut: {
+            /**
+             * Index
+             * @description Position in the compared scenarios (see CompareResponse.compared)
+             */
+            index: number;
+            /** Scenario Key */
+            scenario_key: string;
+            /**
+             * Failed
+             * @description Metrics whose filter it did not pass
+             */
+            failed?: string[];
+            /**
+             * Not Computed
+             * @description Metrics with no value for it
+             */
+            not_computed?: string[];
+        };
+        /**
          * CompareNotServed
          * @description A compared scenario this API version has no precomputed result for.
          */
         CompareNotServed: {
             /**
              * Index
-             * @description Position of the scenario in the request's `scenarios`
+             * @description Position in the compared scenarios (see CompareResponse.compared)
              */
             index: number;
             /**
@@ -376,19 +448,44 @@ export interface components {
         CompareNotServedError: {
             detail: components["schemas"]["CompareNotServedDetail"];
         };
-        /** CompareRequest */
+        /**
+         * CompareRank
+         * @description Order the passing scenarios by `metric`; equal values keep their request order and are reported in
+         *     `CompareResponse.rank_ties`. Null values are excluded and listed as not computed.
+         */
+        CompareRank: {
+            /** Metric */
+            metric: components["schemas"]["MetricName"] | components["schemas"]["SunElevationBand"];
+            /** @default desc */
+            order: components["schemas"]["RankOrder"];
+            /**
+             * Limit
+             * @description Keep the first `limit`; the rest are counted
+             */
+            limit?: number | null;
+        };
+        /**
+         * CompareRequest
+         * @description Scenarios to compare: `scenarios`, plus one per site of `across` (in that order). Optional filters and
+         *     a rank are applied by the API to the served results, never by the LLM (contract 0.10.0).
+         */
         CompareRequest: {
             /** Scenarios */
-            scenarios: components["schemas"]["Scenario"][];
+            scenarios?: components["schemas"]["Scenario"][];
+            across?: components["schemas"]["CompareAcross"] | null;
+            /** Filters */
+            filters?: components["schemas"]["MetricFilter"][];
+            rank?: components["schemas"]["CompareRank"] | null;
         };
         /**
          * CompareResponse
-         * @description At least one compared scenario is served (otherwise 422 CompareNotServedError).
+         * @description At least one compared scenario is served (otherwise 422 CompareNotServedError). Every served scenario
+         *     may still fail the filters: then `items` is empty, which is an answer ("none qualifies"), not an error.
          */
         CompareResponse: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -401,7 +498,7 @@ export interface components {
             _note?: string | null;
             /**
              * Items
-             * @description Metrics for every served scenario, in the request's order (match them to the request by scenario_key). Scenarios without a result are in not_served instead
+             * @description Metrics for every served scenario that passes the filters: in rank order if a rank was given, else in the compared order (match them by scenario_key). Scenarios without a result are in not_served; those removed by a filter are in filtered_out
              */
             items: components["schemas"]["MetricsResponse"][];
             /**
@@ -409,6 +506,32 @@ export interface components {
              * @description The request's scenarios with no precomputed result, in order
              */
             not_served?: components["schemas"]["CompareNotServed"][];
+            /**
+             * Compared
+             * @description Every compared scenario in order: the request's scenarios, then one per `across` site (contract 0.10.0). Indexes in not_served and filtered_out refer to this list
+             */
+            compared?: components["schemas"]["Scenario"][];
+            /**
+             * Evaluated
+             * @description Every value a filter or the rank used, per served scenario
+             */
+            evaluated?: components["schemas"]["EvaluatedValue"][];
+            /**
+             * Filtered Out
+             * @description Served scenarios removed by a filter, or with no value to rank by
+             */
+            filtered_out?: components["schemas"]["CompareFilteredOut"][];
+            /**
+             * Rank Ties
+             * @description Groups of scenario_keys with equal rank values, in rank order
+             */
+            rank_ties?: string[][];
+            /**
+             * Beyond Limit
+             * @description Passing scenarios cut by rank.limit
+             * @default 0
+             */
+            beyond_limit: number;
         };
         /**
          * CompareUnprocessableError
@@ -479,7 +602,7 @@ export interface components {
         DatasetsResponse: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -492,6 +615,26 @@ export interface components {
             _note?: string | null;
             /** Datasets */
             datasets: components["schemas"]["DatasetCapability"][];
+        };
+        /** EvaluatedValue */
+        EvaluatedValue: {
+            /** Scenario Key */
+            scenario_key: string;
+            /**
+             * Metric
+             * @description MetricName value, or SunElevationBand.label()
+             */
+            metric: string;
+            /**
+             * Value
+             * @description Null: not computed
+             */
+            value: number | null;
+            /**
+             * Source
+             * @description Where a terrain value was measured, e.g. '5 m PGDA site map'
+             */
+            source?: string | null;
         };
         /** Event */
         Event: {
@@ -563,7 +706,7 @@ export interface components {
         FeaturesResponse: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -598,6 +741,11 @@ export interface components {
          * @enum {string}
          */
         FidelityTier: "high" | "medium" | "low";
+        /**
+         * FilterOp
+         * @enum {string}
+         */
+        FilterOp: "lt" | "le" | "gt" | "ge" | "eq";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -607,7 +755,7 @@ export interface components {
         HealthResponse: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -629,7 +777,7 @@ export interface components {
         HorizonProfile: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -677,7 +825,7 @@ export interface components {
         Job: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -746,7 +894,7 @@ export interface components {
         LocateResponse: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -803,11 +951,30 @@ export interface components {
              */
             area_id: string | null;
         };
+        /**
+         * MetricFilter
+         * @description Keep a scenario only if `metric op value` holds. A null value never passes (it is listed as not
+         *     computed).
+         */
+        MetricFilter: {
+            /** Metric */
+            metric: components["schemas"]["MetricName"] | components["schemas"]["SunElevationBand"];
+            op: components["schemas"]["FilterOp"];
+            /** Value */
+            value: number;
+        };
+        /**
+         * MetricName
+         * @description A numeric value a compare filter or rank can use: a dotted path into MetricsResponse, or the slope
+         *     at the scenario's location (terrain.*, from the precomputed slope statistics on the finest map).
+         * @enum {string}
+         */
+        MetricName: "power.illumination_fraction" | "power.mean_visible_disk_fraction" | "power.sunlit_duration_h" | "power.longest_sunlit_period_h" | "power.longest_shadow_h" | "power.shadow_count" | "power.time_to_sunset_h" | "power.sun_elevation_deg.min" | "power.sun_elevation_deg.max" | "power.sun_elevation_deg.mean" | "comms.earth_visibility_fraction" | "comms.earth_full_disc_fraction" | "comms.longest_earth_gap_h" | "comms.earth_elevation_deg.min" | "comms.earth_elevation_deg.max" | "comms.earth_elevation_deg.mean" | "comms.earth_clearance_deg.min" | "comms.earth_clearance_deg.max" | "comms.earth_clearance_deg.mean" | "comms.sun_earth_overlap_fraction" | "comms.time_to_earthset_h" | "terrain.slope_at_point_deg";
         /** MetricsResponse */
         MetricsResponse: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -831,7 +998,7 @@ export interface components {
         NLAnswer: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -873,7 +1040,7 @@ export interface components {
         NLClarification: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -907,7 +1074,7 @@ export interface components {
         NLUnsupported: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -1052,7 +1219,7 @@ export interface components {
         ProximityResponse: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -1075,6 +1242,11 @@ export interface components {
              */
             total?: number | null;
         };
+        /**
+         * RankOrder
+         * @enum {string}
+         */
+        RankOrder: "desc" | "asc";
         /** RateLimitedDetail */
         RateLimitedDetail: {
             /**
@@ -1133,6 +1305,25 @@ export interface components {
             step: string;
         };
         /**
+         * ScenarioEntry
+         * @description One precomputed scenario, with the curated site it belongs to (matched on its exact location).
+         */
+        ScenarioEntry: {
+            /**
+             * Site Id
+             * @description The curated site at this scenario's location; null if none
+             */
+            site_id: string | null;
+            /** Scenario Key */
+            scenario_key: string;
+            scenario: components["schemas"]["Scenario"];
+            /**
+             * Has Horizon
+             * @description POST /api/horizon has this location and unit height
+             */
+            has_horizon: boolean;
+        };
+        /**
          * ScenarioField
          * @description The parts of a scenario that `Scenario.key()` covers (the location name is not one of them).
          * @enum {string}
@@ -1144,6 +1335,40 @@ export interface components {
          */
         ScenarioRequest: {
             scenario: components["schemas"]["Scenario"];
+        };
+        /**
+         * ScenariosQuery
+         * @description Query parameters of GET /api/scenarios (contract 0.11.0).
+         */
+        ScenariosQuery: {
+            /**
+             * Site Id
+             * @description Only this curated site's scenarios
+             * @default null
+             */
+            site_id: string | null;
+        };
+        /**
+         * ScenariosResponse
+         * @description Every precomputed scenario this API version serves (stream B's site page picker, Kaitlin's option b):
+         *     by site in the site list's order, then by unit height, window start, window end, step.
+         */
+        ScenariosResponse: {
+            /**
+             * Contract Version
+             * @default 0.11.0
+             */
+            contract_version: string;
+            /**
+             * Placeholder
+             * @description True when the values are placeholders, not computed results.
+             * @default false
+             */
+            _placeholder: boolean;
+            /** Note */
+            _note?: string | null;
+            /** Scenarios */
+            scenarios: components["schemas"]["ScenarioEntry"][];
         };
         /** SearchCandidate */
         SearchCandidate: {
@@ -1218,7 +1443,7 @@ export interface components {
         SeriesResponse: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -1273,6 +1498,11 @@ export interface components {
              * @description Short display name in title case, e.g. 'Connecting Ridge' (contract 0.9.0; Kaitlin, 2026-11-16). Null: show name
              */
             short_name?: string | null;
+            /**
+             * Regions
+             * @description Region tags, e.g. 'shackleton' (contract 0.10.0; stream A's registry, Kaitlin approves)
+             */
+            regions?: string[];
             /**
              * Subtitle
              * @description Small line under the display name, e.g. 'PGDA Site01 · Barker 2021 RoI 4'
@@ -1329,7 +1559,7 @@ export interface components {
         SiteSummaryResponse: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -1361,7 +1591,7 @@ export interface components {
         SitesResponse: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -1390,6 +1620,12 @@ export interface components {
             /** Scenario Key */
             scenario_key: string;
             /**
+             * Site Id
+             * @description The curated site at this location (0.11.0)
+             * @default null
+             */
+            site_id: string | null;
+            /**
              * Metrics
              * @description Path of this scenario's MetricsResponse file
              */
@@ -1413,7 +1649,7 @@ export interface components {
         StaticIndex: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -1439,6 +1675,12 @@ export interface components {
              * @description Path of the SitesResponse file
              */
             sites: string;
+            /**
+             * Scenario List
+             * @description Path of the ScenariosResponse file, what GET /api/scenarios returns (0.11.0)
+             * @default null
+             */
+            scenario_list: string | null;
             /**
              * Datasets
              * @description Path of the DatasetsResponse file
@@ -1471,6 +1713,23 @@ export interface components {
             params?: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * SunElevationBand
+         * @description Fraction of the window with the Sun's disc-centre elevation in [min_deg, max_deg] (k7). Computed from
+         *     stream A's data (request RA7); until a served result carries it, its value is null (not computed).
+         */
+        SunElevationBand: {
+            /**
+             * Kind
+             * @default sun_elevation_band_fraction
+             * @constant
+             */
+            kind: "sun_elevation_band_fraction";
+            /** Min Deg */
+            min_deg: number;
+            /** Max Deg */
+            max_deg: number;
         };
         /** TerrainLayer */
         TerrainLayer: {
@@ -1536,7 +1795,7 @@ export interface components {
         TerrainResponse: {
             /**
              * Contract Version
-             * @default 0.9.0
+             * @default 0.11.0
              */
             contract_version: string;
             /**
@@ -1678,6 +1937,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scenarios_api_scenarios_get: {
+        parameters: {
+            query?: {
+                site_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenariosResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description No usable precomputed results are installed */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnavailableError"];
                 };
             };
         };
