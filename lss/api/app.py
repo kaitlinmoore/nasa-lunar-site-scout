@@ -180,7 +180,7 @@ def terrain_for(req: TerrainRequest) -> TerrainResponse:
     raise HTTPException(422, detail=detail.model_dump(mode="json"))
 
 
-# Claude-drafted (2026-11-16), pending the project author's review.
+# Claude-drafted, approved by the project author (2026-11-16).
 NO_TERRAIN_IMAGE_REASON = "This version has no precomputed terrain image for this site, view and layer."
 
 

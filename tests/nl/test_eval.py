@@ -351,7 +351,8 @@ def test_route_rules_are_general_not_item_specific():
     from lss.nl.prompt import PROMPT_VERSION, fill_system_prompt, route_system_prompt
 
     route = route_system_prompt()
-    assert PROMPT_VERSION == "p9-draft"
+    assert PROMPT_VERSION == "p10-draft"
+    assert "longest gap" in route and "never for working out a number" in route  # p10: summaries are metrics
     assert "Prefer answering part of a question to refusing it" in route
     assert "never substitute a different quantity" in route  # p9: no data at all stays a refusal
     assert "use compare across" in route and "time-dependent area search" in route

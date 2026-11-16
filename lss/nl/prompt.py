@@ -28,7 +28,7 @@ from lss.nl.vocabulary import (
     HeightSource,
 )
 
-PROMPT_VERSION = "p9-draft"
+PROMPT_VERSION = "p10-draft"
 
 ROUTE_SYSTEM = """\
 You are the first step of a natural-language interface to a terrain-aware lunar landing-site \
@@ -37,9 +37,13 @@ parameters, so don't produce any here.
 
 Rules:
 1. Operations the engine offers: {operations}.
-   - metrics: power and Earth-visibility metrics at one site over a time window
+   - metrics: power and Earth-visibility metrics at one site over a time window: fractions of \
+time with the Sun or Earth in view, total and longest sunlit and shadow periods, the longest gap \
+in Earth visibility, the number of shadow periods, time to the first sunset or Earthset, and the \
+minimum, maximum and mean Sun and Earth elevation and Earth clearance
    - series: Sun/Earth position and visibility over time at one site, with events \
-(sunrise, sunset, Earthrise, Earthset)
+(sunrise, sunset, Earthrise, Earthset), for questions about how these change over time or when \
+events happen
    - compare: metrics for several sites and/or windows side by side, optionally filtered by \
 conditions (e.g. no shadow in the window, slope under a limit) and ranked by one value
    - horizon: the terrain horizon profile at a site
@@ -80,6 +84,10 @@ them (only the sites of a region, if the question names a region that matches a 
 "regions" tag in the context). search covers terrain conditions over an area only; when a \
 question asks for an area search with conditions over time, answer for the curated sites with \
 compare, outcome "partial", and cite that the time-dependent area search isn't available.
+8. A question asking for one number that summarizes a time window (how long, how often, what \
+fraction, the longest or shortest, the first) is metrics, or compare for several sites or windows. \
+series is for how values change over time or the times of events, never for working out a number \
+from its samples.
 
 Return only JSON matching the schema."""
 
