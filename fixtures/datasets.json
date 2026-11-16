@@ -54,6 +54,7 @@
         "Slope / flat-area screening poleward of 87 S (low confidence at single-pixel scale)"
       ],
       "cannot_answer": [
+        "High-confidence single-pixel slope (~90% of 5 m pixels are interpolated)",
         "Terrain equatorward of 87 S",
         "Hazards smaller than a few pixels (e.g. sub-meter boulders)"
       ],
@@ -83,7 +84,8 @@
         "Near-field terrain where no 5 m product exists (80-87 S at 20 m)"
       ],
       "cannot_answer": [
-        "Northern hemisphere or mid-latitude terrain"
+        "Northern hemisphere or mid-latitude terrain",
+        "Flat areas smaller than one pixel (20 m pixel = 400 m²) equatorward of 87°S"
       ],
       "citation": "Barker, M. K., et al. (2023). A New View of the Lunar South Pole from the Lunar Orbiter Laser Altimeter (LOLA). Planetary Science Journal 4(9), 183. doi:10.3847/PSJ/acf3e1. Data: doi:10.60903/gsfcpgda-lola-spole",
       "license": "NASA-produced data (U.S. Government work). No license stated; the PGDA Data Usage Policy asks users to cite the paper (Barker et al. 2023) (checked 2026-11-15).",
@@ -220,7 +222,7 @@
         "Typical surface temperature range by season and time of day poleward of 80 (S5)"
       ],
       "cannot_answer": [
-        "Temperatures between 60 and 80 latitude (no product identified)",
+        "Temperatures equatorward of 80° (the tool has not integrated a Diviner product for that range)",
         "Spacecraft thermal or battery-heating requirements (needs a spacecraft thermal model)"
       ],
       "citation": "Williams, J.-P., et al. (2019). Seasonal polar temperatures on the Moon. JGR Planets 124, 2505-2521. doi:10.1029/2019JE006028. VERIFY product names and citation.",
@@ -284,6 +286,31 @@
       "notes": null
     },
     {
+      "id": "orbital_neutron_hydrogen",
+      "name": "Orbital neutron hydrogen maps (Lunar Prospector Neutron Spectrometer; LRO LEND)",
+      "kind": "other",
+      "provider": "NASA Lunar Prospector and LRO missions (PDS)",
+      "url": "https://ode.rsl.wustl.edu/moon/pagehelp/Content/Missions_Instruments/LRO/LEND/Intro.htm",
+      "coverage": {
+        "description": "Global orbital coverage; polar hydrogen enhancements at both poles",
+        "lat_min": -90.0,
+        "lat_max": 90.0,
+        "lon_min": null,
+        "lon_max": null,
+        "sites_only": false
+      },
+      "resolution_m": null,
+      "resolution_note": "Far coarser than a landing site. Lunar Prospector NS footprint ~45 km FWHM from the low-altitude orbit (~130 km from the high orbit); reconstructions reach ~13-20 km. LRO LEND collimated: ~10 km claimed (5 km design goal), disputed in the literature.",
+      "can_answer": [],
+      "cannot_answer": [
+        "Hydrogen concentration at ~1 km scale (orbital neutron maps resolve ~10 km at best)"
+      ],
+      "citation": "Feldman, W. C., et al. (1998). Fluxes of fast and epithermal neutrons from Lunar Prospector: evidence for water ice at the lunar poles. Science 281, 1496-1500. Mitrofanov, I. G., et al. (2010). Hydrogen mapping of the lunar south pole using the LRO neutron detector experiment LEND. Science 330, 483-486.",
+      "license": "NASA PDS data (U.S. Government work).",
+      "status": "dropped",
+      "notes": "Not integrated: neutron maps cannot resolve site-scale hydrogen (plan question 9). Listed so the limit can be cited. The labelled stand-in is m3_surface_ice (~280 m). Resolution figures: arXiv:0810.2478 (LP NS footprint and reconstruction) and arXiv:1304.8123 (the LEND resolution debate). VERIFY the PDS product pages for both instruments before the references list cites them."
+    },
+    {
       "id": "aussel_2025_boulders",
       "name": "Global lunar boulder map from LRO NAC images (Aussel et al. 2025)",
       "kind": "features",
@@ -337,6 +364,35 @@
       "license": "NAIF generic kernels are freely available (U.S. Government work).",
       "status": "used",
       "notes": "Files: de421.bsp (NAIF now serves it from spk/planets/a_old_versions/), moon_pa_de421_1900-2050.bpc, moon_080317.tf, moon_assoc_me.tf, naif0012.tls, pck00010.tpc. Coverage measured from the files with spiceypy (2026-11-14). Stored in LSS_DATA_DIR/kernels (gitignored); fetched by scripts/fetch_data.py."
+    },
+    {
+      "id": "lss_tool_capabilities",
+      "name": "Lunar Site Scout tool capabilities (not a dataset)",
+      "kind": "other",
+      "provider": "This project",
+      "url": "https://github.com/kaitlinmoore/nasa-lunar-site-scout",
+      "coverage": {
+        "description": "Limits of the tool itself, not of any dataset",
+        "lat_min": null,
+        "lat_max": null,
+        "lon_min": null,
+        "lon_max": null,
+        "sites_only": false
+      },
+      "resolution_m": null,
+      "resolution_note": null,
+      "can_answer": [],
+      "cannot_answer": [
+        "Time-dependent area search (not available yet)",
+        "Temperature queries (not available yet)",
+        "Drive routes or traverse distances (distances are straight-line)",
+        "Sun angle along a descent trajectory (Sun elevation is computed at the site)",
+        "Questions outside lunar landing-site planning"
+      ],
+      "citation": "This project (not a dataset)",
+      "license": "Apache-2.0",
+      "status": "used",
+      "notes": null
     }
   ]
 }
