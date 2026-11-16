@@ -278,6 +278,8 @@ Libraries bundled inside those packages that do the core work:
 | Package | Version | Used for | License | Link |
 |---|---|---|---|---|
 | CesiumJS (`cesium`) | 1.147.0 | 3D Moon globe | Apache-2.0 | https://cesium.com/platform/cesiumjs/ |
+| OpenLayers (`ol`) | 10.11.0 | 2D site view: map of the terrain images (hillshade, slope classes) | BSD-2-Clause | https://openlayers.org |
+| proj4 (`proj4`) | 2.23.0 | 2D site view: converts between the terrain images' south polar stereographic grid and latitude/longitude on the lunar sphere | MIT | https://proj4js.github.io/proj4js/ |
 | React, React DOM | 19.3.1 | User interface | MIT | https://react.dev |
 | TypeScript (dev) | 7.0.2 | Type checking and build | Apache-2.0 | https://www.typescriptlang.org |
 | Vite (dev) | 8.3.8 | Dev server and bundler | MIT | https://vite.dev |
