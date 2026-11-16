@@ -13,6 +13,15 @@ echo "Building web against API: $API_URL"
 
 (cd web && npm ci && VITE_API_BASE="$API_URL" npm run build)
 
+# Static JSON fallback (plan 4.7): the precomputed results the API image was built with (bundle/served,
+# staged by deploy-api.sh), as static files at /static-api/. Fails unless every file is at the current
+# contract version and the deployed API reports that version and returns the same metrics.
+if ! ls bundle/served/*.json >/dev/null 2>&1; then
+  echo "No bundle/served/: run bash deploy/deploy-api.sh first (it stages the served results)." >&2
+  exit 1
+fi
+uv run python -m lss.api.static_export web/dist/static-api --served-dir bundle/served --check-api "$API_URL"
+
 # Firebase config is generated (gitignored) from deploy/firebase.json with the site ID from config.sh,
 # so the site ID lives in one place.
 GEN=firebase.generated.json  # at repo root: Firebase requires "public" inside the config's directory

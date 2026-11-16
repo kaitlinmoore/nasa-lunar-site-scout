@@ -26,7 +26,23 @@ The API serves precomputed results only (plan 4.6; C1 serves one scenario). They
 data folder (`LSS_DATA_DIR/cache/served/*.json`, written by `scripts/precompute_c1.py`), outside the
 repo. `deploy-api.sh` copies them into `bundle/served/` (gitignored), checks them with the same loader
 the API uses (contract version, scenario keys, not placeholder), and the `Dockerfile` copies them to
-`/data/cache/served`. Rerun the precompute after any contract version bump, then redeploy.
+`/data/cache/served`. A file made with an older contract version is still served if that version is in
+`COMPATIBLE_VERSIONS` (`lss/api/served.py`, kept by the contract owner); otherwise rerun the precompute
+after the contract bump, then redeploy.
+
+## Static JSON fallback (plan 4.7)
+
+`deploy-web.sh` also publishes the precomputed results as static files on the web host, at
+`https://penumbra-luna.web.app/static-api/`, so the demo still works when the API is down:
+`index.json` (a `StaticIndex`: every served scenario and the paths of its files), `sites.json`,
+`datasets.json`, `metrics/<scenario_key>.json`, `series/<scenario_key>.json`, and
+`horizon/<horizon_key>.json` where a served file has a horizon. They are written by
+`uv run python -m lss.api.static_export` from `bundle/served/`, the files `deploy-api.sh` staged into the
+API image, with the API's own loader, so they are the API's bodies. The deploy stops if any file is not at
+the current contract version, or if the deployed API reports another version or returns different
+metrics. So **deploy the API first**. `/static-api/**` is sent with `Cache-Control: no-cache`.
+Firebase's catch-all rewrite answers a missing file with `index.html` (status 200), so clients must check
+the content type or parse the JSON.
 
 ## How the scripts stay off other accounts
 

@@ -28,11 +28,12 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    RootModel,
     field_validator,
     model_validator,
 )
 
-CONTRACT_VERSION = "0.5.0"
+CONTRACT_VERSION = "0.6.0"
 
 Latitude = Annotated[float, Field(ge=-90.0, le=90.0, description="Planetocentric latitude, deg")]
 Longitude = Annotated[
@@ -226,6 +227,12 @@ ELEVATION_CONVENTION = (
 class HorizonRequest(Model):
     location: Location
     unit_height_m: float = Field(gt=0.0)
+
+    def key(self) -> str:
+        """Stable hash of location (name excluded) and unit height: a horizon depends on nothing else."""
+        payload = self.model_dump(mode="json", exclude={"location": {"name"}})
+        canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode()).hexdigest()[:16]
 
 
 class HorizonProfile(Response):
@@ -486,8 +493,26 @@ class CompareRequest(Model):
     scenarios: list[Scenario] = Field(min_length=1)
 
 
+class CompareNotServed(Model):
+    """A compared scenario this API version has no precomputed result for."""
+
+    index: int = Field(ge=0, description="Position of the scenario in the request's `scenarios`")
+    scenario_key: str = Field(description="Scenario.key() of that scenario")
+    reason: str = Field(description="Plain-language explanation, suitable to show to visitors")
+
+
 class CompareResponse(Response):
-    items: list[MetricsResponse] = Field(description="Same order as the request's scenarios")
+    """At least one compared scenario is served (otherwise 422 CompareNotServedError)."""
+
+    items: list[MetricsResponse] = Field(
+        description=(
+            "Metrics for every served scenario, in the request's order (match them to the request by "
+            "scenario_key). Scenarios without a result are in not_served instead"
+        )
+    )
+    not_served: list[CompareNotServed] = Field(
+        default_factory=list, description="The request's scenarios with no precomputed result, in order"
+    )
 
 
 # ---------------------------------------------------------------------- features
@@ -647,3 +672,133 @@ class NLUnsupported(Response):
 
 
 NLResponse = NLAnswer | NLUnsupported
+
+
+# ------------------------------------------------------------------- error bodies
+# The API serves precomputed results only (plan section 4.6). These are the bodies of its error responses
+# (contract 0.6.0), in FastAPI's `{"detail": ...}` shape. They are not `Response`s: no contract_version or
+# placeholder flag.
+
+
+class ScenarioField(StrEnum):
+    """The parts of a scenario that `Scenario.key()` covers (the location name is not one of them)."""
+
+    location = "location"
+    unit_height_m = "unit_height_m"
+    window_start = "window_start"
+    window_end = "window_end"
+    step = "step"
+
+
+class ServedScenario(Model):
+    """One scenario this API version has a precomputed result for."""
+
+    scenario: Scenario
+    scenario_key: str
+    differs_in: list[ScenarioField] = Field(
+        description="The parts of the requested scenario that differ from this one"
+    )
+
+
+class NotServedDetail(Model):
+    reason: str = Field(description="Plain-language explanation, suitable to show to visitors")
+    scenario_key: str = Field(
+        description="Scenario.key() of the requested scenario (HorizonRequest.key() for /api/horizon)"
+    )
+    served: list[ServedScenario] = Field(
+        description=(
+            "Every scenario this API version serves (for /api/horizon: one per served location and unit "
+            "height, and differs_in names only location and unit_height_m)"
+        )
+    )
+
+
+class NotServedError(Model):
+    """422: a valid request for a scenario (or location and height) with no precomputed result."""
+
+    detail: NotServedDetail
+
+
+class ValidationIssue(BaseModel):
+    """One item of FastAPI's request-validation error list (extra keys such as `input`, `ctx` may appear)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    loc: list[str | int] = Field(description="Where in the request the problem is")
+    msg: str
+    type: str
+
+
+class InvalidRequestError(Model):
+    """422: FastAPI rejected a malformed request (a client bug, not a scenario without results)."""
+
+    detail: list[ValidationIssue]
+
+
+class UnavailableDetail(Model):
+    reason: str = Field(description="Plain-language explanation, suitable to show to visitors")
+    technical: str | None = Field(
+        default=None, description="The technical cause, for developers (not meant for visitors)"
+    )
+
+
+class UnavailableError(Model):
+    """503: no usable precomputed results are installed on the server."""
+
+    detail: UnavailableDetail
+
+
+class CompareNotServedDetail(Model):
+    reason: str = Field(description="Plain-language explanation, suitable to show to visitors")
+    not_served: list[CompareNotServed] = Field(description="Every scenario of the request")
+
+
+class CompareNotServedError(Model):
+    """422 from POST /api/compare: none of the compared scenarios has a precomputed result."""
+
+    detail: CompareNotServedDetail
+
+
+class NoTerrainDetail(Model):
+    reason: str = Field(description="Plain-language explanation, suitable to show to visitors")
+
+
+class NoTerrainError(Model):
+    """422 from POST /api/locate: no terrain data in this version covers the location."""
+
+    detail: NoTerrainDetail
+
+
+class UnprocessableError(RootModel[NotServedError | InvalidRequestError]):
+    """422 from /api/metrics, /api/series, /api/horizon: tell the two apart by `detail` (object vs list)."""
+
+
+class CompareUnprocessableError(RootModel[CompareNotServedError | InvalidRequestError]):
+    """422 from POST /api/compare: tell the two apart by `detail` (an object vs a list)."""
+
+
+class LocateUnprocessableError(RootModel[NoTerrainError | InvalidRequestError]):
+    """422 from POST /api/locate: tell the two apart by `detail` (an object vs a list)."""
+
+
+# ------------------------------------------------------------- static fallback
+# Plan section 4.7 (Kaitlin, 2026-11-15): the served results are also published as static files on the web
+# host, for when the API is down. Paths are relative to the directory holding index.json.
+
+
+class StaticEntry(Model):
+    scenario: Scenario
+    scenario_key: str
+    metrics: str = Field(description="Path of this scenario's MetricsResponse file")
+    series: str = Field(description="Path of this scenario's SeriesResponse file")
+    horizon: str | None = Field(
+        default=None, description="Path of the HorizonProfile for its location and unit height, if served"
+    )
+
+
+class StaticIndex(Response):
+    """index.json of the static fallback: every served scenario and where its files are."""
+
+    scenarios: list[StaticEntry]
+    sites: str = Field(description="Path of the SitesResponse file")
+    datasets: str = Field(description="Path of the DatasetsResponse file")

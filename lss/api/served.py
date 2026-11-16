@@ -1,10 +1,17 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Precomputed results for the C1 thin slice (plan section 4.6: cached results are allowed).
+Precomputed results (plan section 4.6: cached results are allowed).
 
-`scripts/precompute_c1.py` writes one file per served scenario to `LSS_DATA_DIR/cache/served/`; this module
-loads them, keyed by `Scenario.key()` (location, unit height, window and step all count). Nothing here
-touches DEMs or SPICE kernels, so the deployed API needs only these files.
+Stream A's precompute scripts write one file per served scenario to `LSS_DATA_DIR/cache/served/`; this
+module loads them, keyed by `Scenario.key()` (location, unit height, window and step all count). Nothing
+here touches DEMs or SPICE kernels, so the deployed API needs only these files.
+
+File format (JSON object; owned here, written by stream A):
+- `format`: 1 or 2; `scenario_key`; `provenance` (free-form, not served);
+- `metrics`: a MetricsResponse body; `series`: a SeriesResponse body;
+- format 2 adds `horizon`: the HorizonProfile body for the scenario's location and unit height (optional;
+  without it, /api/horizon has no profile for that location and height).
+All bodies must be made with the same contract version.
 """
 
 from __future__ import annotations
@@ -14,11 +21,26 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from lss.config import get_settings
-from lss.contract import CONTRACT_VERSION, MetricsResponse, Scenario, SeriesResponse
+from lss.contract import (
+    CONTRACT_VERSION,
+    HorizonProfile,
+    HorizonRequest,
+    MetricsResponse,
+    Scenario,
+    ScenarioField,
+    SeriesResponse,
+)
+
+# Older contract versions whose served bodies (MetricsResponse, SeriesResponse) are unchanged in the current
+# contract. Files made with them are still served, stamped with the current version; any other version is
+# refused (503) until the file is regenerated. Maintained by the contract owner: on a bump that leaves those
+# models alone, add the previous version(s); on a bump that changes them, empty this set.
+#   0.5.0 -> 0.6.0: error-body models only.
+COMPATIBLE_VERSIONS = frozenset({"0.5.0"})
 
 
 class ServedFileError(ValueError):
-    """A served-result file that is inconsistent or made with another contract version."""
+    """A served-result file that is inconsistent or made with an incompatible contract version."""
 
 
 @dataclass(frozen=True)
@@ -27,6 +49,19 @@ class Served:
     metrics: MetricsResponse
     series: SeriesResponse
     path: Path
+    made_with: str  # the contract version the file was written with
+    horizon: HorizonProfile | None = None
+
+    @property
+    def horizon_key(self) -> str:
+        """HorizonRequest.key() of this scenario's location and unit height."""
+        return horizon_key(
+            self.scenario.location.lat, self.scenario.location.lon, self.scenario.unit_height_m
+        )
+
+
+def horizon_key(lat: float, lon: float, unit_height_m: float) -> str:
+    return HorizonRequest(location={"lat": lat, "lon": lon}, unit_height_m=unit_height_m).key()
 
 
 def served_dir() -> Path:
@@ -42,13 +77,31 @@ def load_file(path: Path) -> Served:
         raise ServedFileError(f"{path.name}: scenario keys disagree")
     if m.placeholder or s.placeholder:
         raise ServedFileError(f"{path.name}: placeholder data")
-    for r in (m, s):
-        if r.contract_version != CONTRACT_VERSION:
-            raise ServedFileError(
-                f"{path.name}: made with contract {r.contract_version}, the API is {CONTRACT_VERSION}; "
-                "regenerate it with scripts/precompute_c1.py"
-            )
-    return Served(m.scenario, m, s, path)
+    h = HorizonProfile.model_validate(data["horizon"]) if data.get("horizon") is not None else None
+    if h is not None:
+        same_point = (h.location.lat, h.location.lon) == (m.scenario.location.lat, m.scenario.location.lon)
+        if not same_point or h.unit_height_m != m.scenario.unit_height_m:
+            raise ServedFileError(f"{path.name}: the horizon is for another location or unit height")
+        if h.placeholder:
+            raise ServedFileError(f"{path.name}: placeholder horizon")
+    versions = {r.contract_version for r in (m, s, h) if r is not None}
+    if len(versions) != 1:
+        raise ServedFileError(f"{path.name}: its parts were made with different contract versions")
+    made_with = m.contract_version
+    if made_with != CONTRACT_VERSION and made_with not in COMPATIBLE_VERSIONS:
+        raise ServedFileError(
+            f"{path.name}: made with contract {made_with}, the API is {CONTRACT_VERSION}; "
+            "regenerate it with scripts/precompute_c1.py"
+        )
+    stamp = {"contract_version": CONTRACT_VERSION}
+    return Served(
+        m.scenario,
+        m.model_copy(update=stamp),
+        s.model_copy(update=stamp),
+        path,
+        made_with,
+        h.model_copy(update=stamp) if h is not None else None,
+    )
 
 
 def load_all(directory: Path | None = None) -> dict[str, Served]:
@@ -57,21 +110,35 @@ def load_all(directory: Path | None = None) -> dict[str, Served]:
     out: dict[str, Served] = {}
     for p in sorted(d.glob("*.json")) if d.is_dir() else []:
         sv = load_file(p)
-        out[sv.scenario.key()] = sv
+        key = sv.scenario.key()
+        if key in out:
+            raise ServedFileError(f"{p.name} and {out[key].path.name} serve the same scenario ({key})")
+        out[key] = sv
     return out
 
 
-def differences(asked: Scenario, served: Scenario) -> list[str]:
-    """Which parts of the scenario key differ, in words (for the 4xx reason)."""
+def horizons(served: dict[str, Served]) -> dict[str, Served]:
+    """One served scenario per horizon key, among those whose file has a horizon (first by scenario key)."""
+    out: dict[str, Served] = {}
+    for sv in served.values():
+        if sv.horizon is not None:
+            out.setdefault(sv.horizon_key, sv)
+    return out
+
+
+def differences(asked: Scenario | HorizonRequest, served: Scenario) -> list[ScenarioField]:
+    """Which parts of the scenario key differ (for the 422 body); a HorizonRequest has no window or step."""
     out = []
     if (asked.location.lat, asked.location.lon) != (served.location.lat, served.location.lon):
-        out.append("location")
+        out.append(ScenarioField.location)
     if asked.unit_height_m != served.unit_height_m:
-        out.append("unit_height_m")
+        out.append(ScenarioField.unit_height_m)
+    if isinstance(asked, HorizonRequest):
+        return out
     if asked.window_start != served.window_start:
-        out.append("window_start")
+        out.append(ScenarioField.window_start)
     if asked.window_end != served.window_end:
-        out.append("window_end")
+        out.append(ScenarioField.window_end)
     if asked.step != served.step:
-        out.append("step")
+        out.append(ScenarioField.step)
     return out

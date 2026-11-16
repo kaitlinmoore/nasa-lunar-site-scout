@@ -3,8 +3,8 @@
   "info": {
     "title": "Lunar Site Scout API",
     "description": "Contract v0. Not affiliated with or endorsed by NASA.",
-    "version": "0.5.0",
-    "x-contract-version": "0.5.0"
+    "version": "0.6.0",
+    "x-contract-version": "0.6.0"
   },
   "paths": {
     "/api/health": {
@@ -71,6 +71,110 @@
         }
       }
     },
+    "/api/datasets": {
+      "get": {
+        "summary": "Datasets",
+        "operationId": "datasets_api_datasets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/locate": {
+      "post": {
+        "summary": "Locate Endpoint",
+        "operationId": "locate_endpoint_api_locate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "No terrain data covers the location (NoTerrainError), or a malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocateUnprocessableError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/horizon": {
+      "post": {
+        "summary": "Horizon",
+        "operationId": "horizon_api_horizon_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HorizonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HorizonProfile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "No precomputed result for this request (NotServedError), or a malformed request (InvalidRequestError, FastAPI validation)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnprocessableError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No usable precomputed results are installed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnavailableError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/metrics": {
       "post": {
         "summary": "Metrics",
@@ -97,10 +201,24 @@
             }
           },
           "422": {
-            "description": "No precomputed result for this scenario (detail.reason, detail.served)"
+            "description": "No precomputed result for this request (NotServedError), or a malformed request (InvalidRequestError, FastAPI validation)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnprocessableError"
+                }
+              }
+            }
           },
           "503": {
-            "description": "No usable precomputed results are installed (detail.reason)"
+            "description": "No usable precomputed results are installed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnavailableError"
+                }
+              }
+            }
           }
         }
       }
@@ -131,10 +249,72 @@
             }
           },
           "422": {
-            "description": "No precomputed result for this scenario (detail.reason, detail.served)"
+            "description": "No precomputed result for this request (NotServedError), or a malformed request (InvalidRequestError, FastAPI validation)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnprocessableError"
+                }
+              }
+            }
           },
           "503": {
-            "description": "No usable precomputed results are installed (detail.reason)"
+            "description": "No usable precomputed results are installed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnavailableError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/compare": {
+      "post": {
+        "summary": "Compare",
+        "operationId": "compare_api_compare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompareResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "None of the scenarios is served (CompareNotServedError), or a malformed request (InvalidRequestError, FastAPI validation)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompareUnprocessableError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No usable precomputed results are installed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnavailableError"
+                }
+              }
+            }
           }
         }
       }
@@ -302,37 +482,103 @@
         "title": "CommsMetrics",
         "description": "F4 (direct-to-Earth at the unit height). Nullable: null = not computed. See methodology section 5.\n\nEarth visible = any part of the Earth disc above the terrain horizon; a gap = no part of it above.\nGaps that start before window_start or run past window_end are clipped to the window."
       },
-      "CompareRequest": {
+      "CompareNotServed": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Index",
+            "description": "Position of the scenario in the request's `scenarios`"
+          },
+          "scenario_key": {
+            "type": "string",
+            "title": "Scenario Key",
+            "description": "Scenario.key() of that scenario"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Plain-language explanation, suitable to show to visitors"
+          }
+        },
         "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "index",
+          "scenario_key",
+          "reason"
+        ],
+        "title": "CompareNotServed",
+        "description": "A compared scenario this API version has no precomputed result for."
+      },
+      "CompareNotServedDetail": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Plain-language explanation, suitable to show to visitors"
+          },
+          "not_served": {
+            "items": {
+              "$ref": "#/components/schemas/CompareNotServed"
+            },
+            "type": "array",
+            "title": "Not Served",
+            "description": "Every scenario of the request"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason",
+          "not_served"
+        ],
+        "title": "CompareNotServedDetail"
+      },
+      "CompareNotServedError": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/CompareNotServedDetail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "CompareNotServedError",
+        "description": "422 from POST /api/compare: none of the compared scenarios has a precomputed result."
+      },
+      "CompareRequest": {
         "properties": {
           "scenarios": {
             "items": {
               "$ref": "#/components/schemas/Scenario"
             },
+            "type": "array",
             "minItems": 1,
-            "title": "Scenarios",
-            "type": "array"
+            "title": "Scenarios"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "scenarios"
         ],
-        "title": "CompareRequest",
-        "type": "object"
+        "title": "CompareRequest"
       },
       "CompareResponse": {
-        "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.5.0",
+            "type": "string",
             "title": "Contract Version",
-            "type": "string"
+            "default": "0.6.0"
           },
           "_placeholder": {
-            "default": false,
-            "description": "True when the values are placeholders, not computed results.",
+            "type": "boolean",
             "title": "Placeholder",
-            "type": "boolean"
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
           },
           "_note": {
             "anyOf": [
@@ -343,116 +589,133 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Note"
           },
           "items": {
-            "description": "Same order as the request's scenarios",
             "items": {
               "$ref": "#/components/schemas/MetricsResponse"
             },
+            "type": "array",
             "title": "Items",
-            "type": "array"
+            "description": "Metrics for every served scenario, in the request's order (match them to the request by scenario_key). Scenarios without a result are in not_served instead"
+          },
+          "not_served": {
+            "items": {
+              "$ref": "#/components/schemas/CompareNotServed"
+            },
+            "type": "array",
+            "title": "Not Served",
+            "description": "The request's scenarios with no precomputed result, in order"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "items"
         ],
         "title": "CompareResponse",
-        "type": "object"
+        "description": "At least one compared scenario is served (otherwise 422 CompareNotServedError)."
+      },
+      "CompareUnprocessableError": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/CompareNotServedError"
+          },
+          {
+            "$ref": "#/components/schemas/InvalidRequestError"
+          }
+        ],
+        "title": "CompareUnprocessableError",
+        "description": "422 from POST /api/compare: tell the two apart by `detail` (an object vs a list)."
       },
       "Coverage": {
-        "additionalProperties": false,
         "properties": {
           "description": {
-            "title": "Description",
-            "type": "string"
+            "type": "string",
+            "title": "Description"
           },
           "lat_min": {
             "anyOf": [
               {
-                "description": "Planetocentric latitude, deg",
+                "type": "number",
                 "maximum": 90.0,
                 "minimum": -90.0,
-                "type": "number"
+                "description": "Planetocentric latitude, deg"
               },
               {
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Lat Min"
           },
           "lat_max": {
             "anyOf": [
               {
-                "description": "Planetocentric latitude, deg",
+                "type": "number",
                 "maximum": 90.0,
                 "minimum": -90.0,
-                "type": "number"
+                "description": "Planetocentric latitude, deg"
               },
               {
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Lat Max"
           },
           "lon_min": {
             "anyOf": [
               {
-                "description": "East-positive longitude, deg, -180..180",
+                "type": "number",
                 "maximum": 180.0,
                 "minimum": -180.0,
-                "type": "number"
+                "description": "East-positive longitude, deg, -180..180"
               },
               {
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Lon Min"
           },
           "lon_max": {
             "anyOf": [
               {
-                "description": "East-positive longitude, deg, -180..180",
+                "type": "number",
                 "maximum": 180.0,
                 "minimum": -180.0,
-                "type": "number"
+                "description": "East-positive longitude, deg, -180..180"
               },
               {
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Lon Max"
           },
           "sites_only": {
-            "default": false,
-            "description": "Covers listed sites only, not an area",
+            "type": "boolean",
             "title": "Sites Only",
-            "type": "boolean"
+            "description": "Covers listed sites only, not an area",
+            "default": false
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "description"
         ],
-        "title": "Coverage",
-        "type": "object"
+        "title": "Coverage"
       },
       "DatasetCapability": {
-        "additionalProperties": false,
         "properties": {
           "id": {
-            "title": "Id",
-            "type": "string"
+            "type": "string",
+            "title": "Id"
           },
           "name": {
-            "title": "Name",
-            "type": "string"
+            "type": "string",
+            "title": "Name"
           },
           "kind": {
+            "type": "string",
             "enum": [
               "terrain",
               "illumination",
@@ -461,16 +724,15 @@
               "ephemeris",
               "other"
             ],
-            "title": "Kind",
-            "type": "string"
+            "title": "Kind"
           },
           "provider": {
-            "title": "Provider",
-            "type": "string"
+            "type": "string",
+            "title": "Provider"
           },
           "url": {
-            "title": "Url",
-            "type": "string"
+            "type": "string",
+            "title": "Url"
           },
           "coverage": {
             "$ref": "#/components/schemas/Coverage"
@@ -484,9 +746,8 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "description": "Nominal ground resolution, m",
-            "title": "Resolution M"
+            "title": "Resolution M",
+            "description": "Nominal ground resolution, m"
           },
           "resolution_note": {
             "anyOf": [
@@ -497,30 +758,29 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Resolution Note"
           },
           "can_answer": {
             "items": {
               "type": "string"
             },
-            "title": "Can Answer",
-            "type": "array"
+            "type": "array",
+            "title": "Can Answer"
           },
           "cannot_answer": {
             "items": {
               "type": "string"
             },
-            "title": "Cannot Answer",
-            "type": "array"
+            "type": "array",
+            "title": "Cannot Answer"
           },
           "citation": {
-            "title": "Citation",
-            "type": "string"
+            "type": "string",
+            "title": "Citation"
           },
           "license": {
-            "title": "License",
-            "type": "string"
+            "type": "string",
+            "title": "License"
           },
           "status": {
             "$ref": "#/components/schemas/DatasetStatus",
@@ -535,10 +795,11 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Notes"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "id",
           "name",
@@ -549,31 +810,29 @@
           "citation",
           "license"
         ],
-        "title": "DatasetCapability",
-        "type": "object"
+        "title": "DatasetCapability"
       },
       "DatasetStatus": {
+        "type": "string",
         "enum": [
           "planned",
           "used",
           "dropped"
         ],
-        "title": "DatasetStatus",
-        "type": "string"
+        "title": "DatasetStatus"
       },
       "DatasetsResponse": {
-        "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.5.0",
+            "type": "string",
             "title": "Contract Version",
-            "type": "string"
+            "default": "0.6.0"
           },
           "_placeholder": {
-            "default": false,
-            "description": "True when the values are placeholders, not computed results.",
+            "type": "boolean",
             "title": "Placeholder",
-            "type": "boolean"
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
           },
           "_note": {
             "anyOf": [
@@ -584,22 +843,22 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Note"
           },
           "datasets": {
             "items": {
               "$ref": "#/components/schemas/DatasetCapability"
             },
-            "title": "Datasets",
-            "type": "array"
+            "type": "array",
+            "title": "Datasets"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "datasets"
         ],
-        "title": "DatasetsResponse",
-        "type": "object"
+        "title": "DatasetsResponse"
       },
       "Event": {
         "properties": {
@@ -738,7 +997,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.5.0",
+            "default": "0.6.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -842,7 +1101,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.5.0"
+            "default": "0.6.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -873,18 +1132,17 @@
         "title": "HealthResponse"
       },
       "HorizonProfile": {
-        "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.5.0",
+            "type": "string",
             "title": "Contract Version",
-            "type": "string"
+            "default": "0.6.0"
           },
           "_placeholder": {
-            "default": false,
-            "description": "True when the values are placeholders, not computed results.",
+            "type": "boolean",
             "title": "Placeholder",
-            "type": "boolean"
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
           },
           "_note": {
             "anyOf": [
@@ -895,31 +1153,30 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Note"
           },
           "location": {
             "$ref": "#/components/schemas/Location"
           },
           "unit_height_m": {
-            "title": "Unit Height M",
-            "type": "number"
+            "type": "number",
+            "title": "Unit Height M"
           },
           "azimuth_deg": {
-            "description": "Azimuth of each horizon sample, deg, 0-360, clockwise from north, in the site's topocentric frame (east-north-up at the site, from the normal to the 1737.4 km reference sphere, MOON_ME_DE421); the same frame as the Sun/Earth tracks (BodyTrack.azimuth_deg). Interpolate linearly between samples, periodic over 360",
             "items": {
               "type": "number"
             },
+            "type": "array",
             "title": "Azimuth Deg",
-            "type": "array"
+            "description": "Azimuth of each horizon sample, deg, 0-360, clockwise from north, in the site's topocentric frame (east-north-up at the site, from the normal to the 1737.4 km reference sphere, MOON_ME_DE421); the same frame as the Sun/Earth tracks (BodyTrack.azimuth_deg). Interpolate linearly between samples, periodic over 360"
           },
           "elevation_deg": {
-            "description": "Terrain horizon elevation at each azimuth, deg, measured from the local horizontal plane: the plane through the observer (DEM surface + unit height) normal to the reference sphere's radius at the site; the same plane as the Sun/Earth tracks (BodyTrack.elevation_deg)",
             "items": {
               "type": "number"
             },
+            "type": "array",
             "title": "Elevation Deg",
-            "type": "array"
+            "description": "Terrain horizon elevation at each azimuth, deg, measured from the local horizontal plane: the plane through the observer (DEM surface + unit height) normal to the reference sphere's radius at the site; the same plane as the Sun/Earth tracks (BodyTrack.elevation_deg)"
           },
           "max_range_km": {
             "anyOf": [
@@ -930,15 +1187,14 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Max Range Km"
           },
           "terrain_stack": {
             "items": {
               "$ref": "#/components/schemas/TerrainLayer"
             },
-            "title": "Terrain Stack",
-            "type": "array"
+            "type": "array",
+            "title": "Terrain Stack"
           },
           "fidelity": {
             "anyOf": [
@@ -948,43 +1204,61 @@
               {
                 "type": "null"
               }
-            ],
-            "default": null
+            ]
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "location",
           "unit_height_m",
           "azimuth_deg",
           "elevation_deg"
         ],
-        "title": "HorizonProfile",
-        "type": "object"
+        "title": "HorizonProfile"
       },
       "HorizonRequest": {
-        "additionalProperties": false,
         "properties": {
           "location": {
             "$ref": "#/components/schemas/Location"
           },
           "unit_height_m": {
+            "type": "number",
             "exclusiveMinimum": 0.0,
-            "title": "Unit Height M",
-            "type": "number"
+            "title": "Unit Height M"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "location",
           "unit_height_m"
         ],
-        "title": "HorizonRequest",
-        "type": "object"
+        "title": "HorizonRequest"
+      },
+      "InvalidRequestError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "InvalidRequestError",
+        "description": "422: FastAPI rejected a malformed request (a client bug, not a scenario without results)."
       },
       "Job": {
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.5.0",
+            "default": "0.6.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1102,43 +1376,42 @@
         "type": "object"
       },
       "LocateRequest": {
-        "additionalProperties": false,
         "properties": {
           "lat": {
-            "description": "Planetocentric latitude, deg",
+            "type": "number",
             "maximum": 90.0,
             "minimum": -90.0,
             "title": "Lat",
-            "type": "number"
+            "description": "Planetocentric latitude, deg"
           },
           "lon": {
-            "description": "East-positive longitude, deg, -180..180",
+            "type": "number",
             "maximum": 180.0,
             "minimum": -180.0,
             "title": "Lon",
-            "type": "number"
+            "description": "East-positive longitude, deg, -180..180"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "lat",
           "lon"
         ],
-        "title": "LocateRequest",
-        "type": "object"
+        "title": "LocateRequest"
       },
       "LocateResponse": {
-        "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.5.0",
+            "type": "string",
             "title": "Contract Version",
-            "type": "string"
+            "default": "0.6.0"
           },
           "_placeholder": {
-            "default": false,
-            "description": "True when the values are placeholders, not computed results.",
+            "type": "boolean",
             "title": "Placeholder",
-            "type": "boolean"
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
           },
           "_note": {
             "anyOf": [
@@ -1149,7 +1422,6 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Note"
           },
           "location": {
@@ -1159,20 +1431,33 @@
             "items": {
               "$ref": "#/components/schemas/TerrainLayer"
             },
-            "title": "Terrain Stack",
-            "type": "array"
+            "type": "array",
+            "title": "Terrain Stack"
           },
           "fidelity": {
             "$ref": "#/components/schemas/FidelityLabel"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "location",
           "terrain_stack",
           "fidelity"
         ],
-        "title": "LocateResponse",
-        "type": "object"
+        "title": "LocateResponse"
+      },
+      "LocateUnprocessableError": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/NoTerrainError"
+          },
+          {
+            "$ref": "#/components/schemas/InvalidRequestError"
+          }
+        ],
+        "title": "LocateUnprocessableError",
+        "description": "422 from POST /api/locate: tell the two apart by `detail` (an object vs a list)."
       },
       "Location": {
         "properties": {
@@ -1259,7 +1544,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.5.0"
+            "default": "0.6.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1323,7 +1608,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.5.0",
+            "default": "0.6.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1425,7 +1710,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.5.0",
+            "default": "0.6.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1456,6 +1741,79 @@
         ],
         "title": "NLUnsupported",
         "type": "object"
+      },
+      "NoTerrainDetail": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Plain-language explanation, suitable to show to visitors"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "NoTerrainDetail"
+      },
+      "NoTerrainError": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/NoTerrainDetail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "NoTerrainError",
+        "description": "422 from POST /api/locate: no terrain data in this version covers the location."
+      },
+      "NotServedDetail": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Plain-language explanation, suitable to show to visitors"
+          },
+          "scenario_key": {
+            "type": "string",
+            "title": "Scenario Key",
+            "description": "Scenario.key() of the requested scenario (HorizonRequest.key() for /api/horizon)"
+          },
+          "served": {
+            "items": {
+              "$ref": "#/components/schemas/ServedScenario"
+            },
+            "type": "array",
+            "title": "Served",
+            "description": "Every scenario this API version serves (for /api/horizon: one per served location and unit height, and differs_in names only location and unit_height_m)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason",
+          "scenario_key",
+          "served"
+        ],
+        "title": "NotServedDetail"
+      },
+      "NotServedError": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/NotServedDetail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "NotServedError",
+        "description": "422: a valid request for a scenario (or location and height) with no precomputed result."
       },
       "Operation": {
         "description": "API operations a structured query can target; `params` = that endpoint's request.",
@@ -1657,7 +2015,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.5.0",
+            "default": "0.6.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1696,6 +2054,39 @@
         ],
         "title": "ProximityResponse",
         "type": "object"
+      },
+      "RootModel_Union_CompareNotServedError__InvalidRequestError__": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/CompareNotServedError"
+          },
+          {
+            "$ref": "#/components/schemas/InvalidRequestError"
+          }
+        ],
+        "title": "RootModel[Union[CompareNotServedError, InvalidRequestError]]"
+      },
+      "RootModel_Union_NoTerrainError__InvalidRequestError__": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/NoTerrainError"
+          },
+          {
+            "$ref": "#/components/schemas/InvalidRequestError"
+          }
+        ],
+        "title": "RootModel[Union[NoTerrainError, InvalidRequestError]]"
+      },
+      "RootModel_Union_NotServedError__InvalidRequestError__": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/NotServedError"
+          },
+          {
+            "$ref": "#/components/schemas/InvalidRequestError"
+          }
+        ],
+        "title": "RootModel[Union[NotServedError, InvalidRequestError]]"
       },
       "Scenario": {
         "properties": {
@@ -1736,6 +2127,18 @@
         ],
         "title": "Scenario",
         "description": "The unit of everything (plan section 3.1): results are keyed by `Scenario.key()`."
+      },
+      "ScenarioField": {
+        "type": "string",
+        "enum": [
+          "location",
+          "unit_height_m",
+          "window_start",
+          "window_end",
+          "step"
+        ],
+        "title": "ScenarioField",
+        "description": "The parts of a scenario that `Scenario.key()` covers (the location name is not one of them)."
       },
       "ScenarioRequest": {
         "properties": {
@@ -1926,7 +2329,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.5.0"
+            "default": "0.6.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1990,6 +2393,34 @@
           "earth"
         ],
         "title": "SeriesResponse"
+      },
+      "ServedScenario": {
+        "properties": {
+          "scenario": {
+            "$ref": "#/components/schemas/Scenario"
+          },
+          "scenario_key": {
+            "type": "string",
+            "title": "Scenario Key"
+          },
+          "differs_in": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioField"
+            },
+            "type": "array",
+            "title": "Differs In",
+            "description": "The parts of the requested scenario that differ from this one"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scenario",
+          "scenario_key",
+          "differs_in"
+        ],
+        "title": "ServedScenario",
+        "description": "One scenario this API version has a precomputed result for."
       },
       "Site": {
         "properties": {
@@ -2072,7 +2503,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.5.0"
+            "default": "0.6.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2146,6 +2577,102 @@
         "type": "object",
         "title": "Stat"
       },
+      "StaticEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "scenario": {
+            "$ref": "#/components/schemas/Scenario"
+          },
+          "scenario_key": {
+            "title": "Scenario Key",
+            "type": "string"
+          },
+          "metrics": {
+            "description": "Path of this scenario's MetricsResponse file",
+            "title": "Metrics",
+            "type": "string"
+          },
+          "series": {
+            "description": "Path of this scenario's SeriesResponse file",
+            "title": "Series",
+            "type": "string"
+          },
+          "horizon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Path of the HorizonProfile for its location and unit height, if served",
+            "title": "Horizon"
+          }
+        },
+        "required": [
+          "scenario",
+          "scenario_key",
+          "metrics",
+          "series"
+        ],
+        "title": "StaticEntry",
+        "type": "object"
+      },
+      "StaticIndex": {
+        "additionalProperties": false,
+        "description": "index.json of the static fallback: every served scenario and where its files are.",
+        "properties": {
+          "contract_version": {
+            "default": "0.6.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/StaticEntry"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          },
+          "sites": {
+            "description": "Path of the SitesResponse file",
+            "title": "Sites",
+            "type": "string"
+          },
+          "datasets": {
+            "description": "Path of the DatasetsResponse file",
+            "title": "Datasets",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenarios",
+          "sites",
+          "datasets"
+        ],
+        "title": "StaticIndex",
+        "type": "object"
+      },
       "StructuredQuery": {
         "additionalProperties": false,
         "properties": {
@@ -2166,23 +2693,22 @@
         "type": "object"
       },
       "TerrainLayer": {
-        "additionalProperties": false,
         "properties": {
           "dataset_id": {
-            "title": "Dataset Id",
-            "type": "string"
+            "type": "string",
+            "title": "Dataset Id"
           },
           "role": {
+            "type": "string",
             "enum": [
               "near_field",
               "far_field"
             ],
-            "title": "Role",
-            "type": "string"
+            "title": "Role"
           },
           "resolution_m": {
-            "title": "Resolution M",
-            "type": "number"
+            "type": "number",
+            "title": "Resolution M"
           },
           "max_range_km": {
             "anyOf": [
@@ -2193,17 +2719,70 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Max Range Km"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "dataset_id",
           "role",
           "resolution_m"
         ],
-        "title": "TerrainLayer",
-        "type": "object"
+        "title": "TerrainLayer"
+      },
+      "UnavailableDetail": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Plain-language explanation, suitable to show to visitors"
+          },
+          "technical": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Technical",
+            "description": "The technical cause, for developers (not meant for visitors)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "UnavailableDetail"
+      },
+      "UnavailableError": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/UnavailableDetail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "UnavailableError",
+        "description": "503: no usable precomputed results are installed on the server."
+      },
+      "UnprocessableError": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/NotServedError"
+          },
+          {
+            "$ref": "#/components/schemas/InvalidRequestError"
+          }
+        ],
+        "title": "UnprocessableError",
+        "description": "422 from /api/metrics, /api/series, /api/horizon: tell the two apart by `detail` (object vs list)."
       },
       "ValidationError": {
         "properties": {
@@ -2244,6 +2823,42 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "ValidationIssue": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Loc",
+            "description": "Where in the request the problem is"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Msg"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationIssue",
+        "description": "One item of FastAPI's request-validation error list (extra keys such as `input`, `ctx` may appear)."
       }
     }
   }
