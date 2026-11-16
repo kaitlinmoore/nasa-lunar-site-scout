@@ -132,9 +132,10 @@ def test_resolver_polar_maps_only_and_unsupported():
     s70 = reg.resolve(-70.0, 30.0)
     assert [sl.spec.resolution_m for sl in s70.layers] == [240.0]
     assert s70.fidelity().tier == FidelityTier.low
-    for lat, lon in [(0.0, 0.0), (45.0, 10.0), (89.0, 0.0)]:
+    for lat, lon in [(0.0, 0.0), (45.0, 10.0), (89.0, 0.0)]:  # off the polar maps: the global layer (C7)
         s = reg.resolve(lat, lon)
-        assert not s.supported and s.fidelity() is None and s.contract_layers() == []
+        assert [sl.spec.dataset_id for sl in s.layers] == ["lola_ldem_128"]
+        assert s.fidelity().tier == FidelityTier.low
 
 
 def test_resolver_short_max_range_uses_fewer_layers():
@@ -143,7 +144,9 @@ def test_resolver_short_max_range_uses_fewer_layers():
     assert got == [(5.0, 5_000.0), (80.0, 50_000.0)]
 
 
-@pytest.mark.parametrize("spec", reg.LAYERS, ids=lambda s: s.file_id)
+@pytest.mark.parametrize(
+    "spec", [s for s in reg.LAYERS if not isinstance(s, reg.GlobalLayerSpec)], ids=lambda s: s.file_id
+)
 def test_layer_metadata_matches_files(spec):
     path = datafile(spec.file_id).path
     if not path.is_file():

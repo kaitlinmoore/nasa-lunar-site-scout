@@ -28,6 +28,7 @@ class Group(StrEnum):
     sites = "sites"  # C3: the other PGDA product 78 site tiles
     farfield = "farfield"
     validation = "validation"
+    global_ = "global"  # C7: the global coarse layer (LOLA LDEM_128, 2.1 GB), for points off the polar maps
 
 
 class Kind(StrEnum):
@@ -37,6 +38,10 @@ class Kind(StrEnum):
     text_kernel = "text_kernel"  # SPICE text kernel: starts with "KPL/"
     tiff = "tiff"  # (Big)TIFF / GeoTIFF / COG
     gzip = "gzip"  # .tgz archive
+    pds3_label = "pds3_label"  # detached PDS3 label (text): starts with "PDS_VERSION_ID"
+    # Raw binary image with no header (e.g. a PDS3 .IMG): nothing to check in its leading bytes. Its reader
+    # checks the exact byte size against the label instead (lss.terrain.global_layer).
+    raw = "raw"
 
 
 MAGIC: dict[Kind, tuple[bytes, ...]] = {
@@ -44,6 +49,8 @@ MAGIC: dict[Kind, tuple[bytes, ...]] = {
     Kind.text_kernel: (b"KPL/",),
     Kind.tiff: (b"II*\x00", b"MM\x00*", b"II+\x00", b"MM\x00+"),
     Kind.gzip: (b"\x1f\x8b",),
+    Kind.pds3_label: (b"PDS_VERSION_ID",),
+    Kind.raw: (b"",),
 }
 
 
@@ -87,6 +94,9 @@ NAIF = "https://naif.jpl.nasa.gov/pub/naif/generic_kernels"
 PGDA = "https://pgda.gsfc.nasa.gov/data"
 PDS_LOLA_POLAR = (
     "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img"
+)
+PDS_LOLA_CYL = (
+    "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img"
 )
 
 # Centre of the Site01 validation clip, PS metres, rounded: within 1.2 m of Site01 (Connecting ridge,
@@ -415,6 +425,27 @@ FILES: tuple[DataFile, ...] = (
             label_url=f"{PDS_LOLA_POLAR}/ldem_75s_60m.lbl",
             scale=0.5,
         ),
+    ),
+    # --- Global coarse layer (C7, stream E): LOLA LDEM_128 (LRO-L-LOLA-4-GDR-V1.0, product version 3.0,
+    # 2017-09-15), simple cylindrical, 128 px/deg, MEAN EARTH/POLAR AXIS OF DE421, int16 x 0.5 m above
+    # 1737.4 km. Used whole (read by window around each point), never clipped.
+    DataFile(
+        "ldem_128_lbl",
+        Group.global_,
+        Kind.pds3_label,
+        f"{PDS_LOLA_CYL}/ldem_128.lbl",
+        "data/pds_lola/cylindrical/LDEM_128.LBL",
+        "lola_ldem_128",
+        "PDS3 label of LDEM_128: checked field by field (lss.terrain.global_layer) before the image is read.",
+    ),
+    DataFile(
+        "ldem_128_img",
+        Group.global_,
+        Kind.raw,
+        f"{PDS_LOLA_CYL}/ldem_128.img",
+        "data/pds_lola/cylindrical/LDEM_128.IMG",
+        "lola_ldem_128",
+        "LDEM_128 heights, 23040 x 46080 int16 (2,123,366,400 bytes; the reader checks the size).",
     ),
 )
 

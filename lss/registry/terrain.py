@@ -17,7 +17,8 @@ last one always continues to the maximum ray range. The first layer is the near 
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import math
+from dataclasses import dataclass, replace
 from functools import cache
 
 from lss.contract import FidelityLabel, FidelityTier, Location, TerrainLayer
@@ -98,10 +99,51 @@ SITE_TILES_C3 = (
     _site_tile("23", (-11_000.0, 111_000.0, 10_000.0, 132_000.0)),
     _site_tile("42", (-123_400.0, -66_100.0, -103_400.0, -46_100.0)),
 )
+
+
+@dataclass(frozen=True)
+class GlobalLayerSpec(LayerSpec):
+    """The global coarse layer (C7, stream E; docs/methodology.md section 3.5): LOLA LDEM_128 on a latitude /
+    longitude grid, read by window around each point (lss.terrain.global_layer).
+
+    Used only where no other layer covers the point (`resolve`), so every location the polar maps cover keeps
+    exactly the stack it had before C7. `resolve` returns a copy with `centre` and `window_m` set; `dem()`
+    then reads that window.
+    """
+
+    label_file_id: str = ""
+    centre: tuple[float, float] | None = None  # (lat, lon) of the point the window is read around
+    window_m: float = 0.0  # arc radius of the window (the maximum ray range)
+
+    def covers(self, x_m: float, y_m: float, margin_m: float = 0.0) -> bool:
+        return True
+
+    def dem(self):
+        from lss.terrain.global_layer import cached_window
+
+        if self.centre is None:
+            raise ValueError("the global layer is read around a point: use the spec returned by resolve()")
+        return cached_window(
+            datafile(self.file_id).path, datafile(self.label_file_id).path, *self.centre, self.window_m
+        )
+
+
+GLOBAL_128 = GlobalLayerSpec(
+    "ldem_128_img",
+    "lola_ldem_128",
+    236.901,  # MAP_SCALE: pixel size along a meridian (east-west: 236.901 m x cos(latitude))
+    "global",
+    (-math.inf, -math.inf, math.inf, math.inf),
+    "237 m global map (LOLA LDEM_128)",
+    use_to_m=None,
+    label_file_id="ldem_128_lbl",
+)
+
 # The C1 stack (the served Site01 result and its validation).
 C1_LAYERS: tuple[LayerSpec, ...] = (SITE01_TILE, POLAR_80M, POLAR_240M)
-# Every layer the resolver may choose from. The first three are C1_LAYERS (scripts index them).
-LAYERS: tuple[LayerSpec, ...] = (*C1_LAYERS, *SITE_TILES_C3)
+# Every layer the resolver may choose from. The first three are C1_LAYERS (scripts index them). The global
+# layer is last and is chosen only where no other layer covers the point.
+LAYERS: tuple[LayerSpec, ...] = (*C1_LAYERS, *SITE_TILES_C3, GLOBAL_128)
 
 # The `use_to_m` defaults follow Barker et al. (2021): 5 m within 5 km, 80 m to 100 km, 240 m beyond.
 # Checked, with the maximum ray range, by scripts/horizon_convergence.py (docs/methodology.md section 3.2).
@@ -173,6 +215,8 @@ def resolve(
     loc = Location(lat=lat, lon=lon)
     chosen: list[LayerSpec] = []
     for spec in sorted(layers, key=lambda s: s.resolution_m):  # stable: listing order breaks ties
+        if isinstance(spec, GlobalLayerSpec):  # C7: considered below, only if nothing else covers the point
+            continue
         x, y = ps_from_latlon(lat, lon, spec.pole)
         margin = (spec.use_to_m or 0.0) if spec.site_tile else 0.0
         if not spec.covers(float(x), float(y), margin):
@@ -180,6 +224,10 @@ def resolve(
         if chosen and spec.resolution_m <= chosen[-1].resolution_m:
             continue
         chosen.append(spec)
+    if not chosen:  # C7: off every polar map, the global layer alone, read around this point
+        fallback = [s for s in layers if isinstance(s, GlobalLayerSpec)]
+        if fallback:
+            chosen = [replace(fallback[0], centre=(float(lat), float(lon)), window_m=float(max_range_m))]
 
     out: list[StackLayer] = []
     start = 0.0

@@ -73,6 +73,47 @@ class Grid(NamedTuple):
         return bilinear(self.array, col, row)
 
 
+class LonLatGrid(NamedTuple):
+    """An elevation raster on a planetocentric latitude / east-longitude grid (simple cylindrical), in memory.
+
+    Added for the global coarse layer (C7, stream E; lss.terrain.global_layer, docs/methodology.md section
+    3.5). Pixel-registered like `Grid`: a value belongs to its pixel's centre; heights between centres are
+    bilinear in (longitude, latitude).
+
+    `lon0`, `lat0` are the outer west and north edges (deg). Longitudes are measured eastward from `lon0`
+    modulo 360, so a window may straddle the 0/360 meridian. `res_deg` is the pixel size in degrees (the
+    same in latitude and longitude). `res` is the spacing in metres used to step rays over this grid
+    (lss.horizon.core.ray_samples), set by the reader. `wrap`: the columns span the full 360 deg, so the last
+    column is next to the first. `pole` is always "lonlat": it tells the ray caster this is not a polar
+    stereographic grid.
+    """
+
+    array: np.ndarray
+    lon0: float
+    lat0: float
+    res_deg: float
+    res: float
+    wrap: bool = False
+    pole: str = "lonlat"
+
+    def to_pixel(self, lat_deg, lon_deg):
+        """(lat, lon) deg -> fractional (col, row) of pixel centres (centre of pixel (0, 0) is (0, 0))."""
+        col = np.mod(np.asarray(lon_deg, dtype=float) - self.lon0, 360.0) / self.res_deg - 0.5
+        row = (self.lat0 - np.asarray(lat_deg, dtype=float)) / self.res_deg - 0.5
+        return col, row
+
+    def height_at_latlon(self, lat_deg, lon_deg) -> np.ndarray:
+        """Bilinear height (m above the sphere); NaN outside the grid or next to no-data."""
+        col, row = self.to_pixel(lat_deg, lon_deg)
+        if not self.wrap:
+            return bilinear(self.array, col, row)
+        # Full circle: append the first column after the last, and move columns west of the first centre
+        # (col in [-0.5, 0)) to the far side, so every longitude has two neighbouring columns.
+        a = np.concatenate([self.array, self.array[:, :1]], axis=1)
+        col = np.where(np.asarray(col) < 0.0, np.asarray(col) + self.array.shape[1], col)
+        return bilinear(a, col, row)
+
+
 @dataclass
 class DemLayer:
     """One elevation raster (north-up, square pixels, polar stereographic metres)."""

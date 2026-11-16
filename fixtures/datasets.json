@@ -177,10 +177,10 @@
     },
     {
       "id": "lola_ldem_128",
-      "name": "LOLA global gridded DEM, LDEM_128 (candidate coarse global layer)",
+      "name": "LOLA global gridded DEM, LDEM_128",
       "kind": "terrain",
       "provider": "NASA LRO LOLA / PDS Geosciences Node",
-      "url": "https://pds-geosciences.wustl.edu/missions/lro/lola.htm",
+      "url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/",
       "coverage": {
         "description": "Global",
         "lat_min": -90.0,
@@ -189,18 +189,18 @@
         "lon_max": null,
         "sites_only": false
       },
-      "resolution_m": 237.0,
-      "resolution_note": "128 pixels/degree (~237 m at the equator)",
+      "resolution_m": 236.901,
+      "resolution_note": "128 pixels per degree: 236.9 m along a meridian; east-west, 236.9 m x cos(latitude). Product version 3.0 (2017), LOLA data through 2016. Used for locations off the south polar maps (north of about 60 S).",
       "can_answer": [
         "Coarse horizon and terrain anywhere on the Moon (fidelity label \"low\")"
       ],
       "cannot_answer": [
         "Fine-scale horizon or slope at sub-kilometer scale"
       ],
-      "citation": "Smith, D. E., et al. (2010). Initial observations from the Lunar Orbiter Laser Altimeter (LOLA). Geophysical Research Letters 37(18). doi:10.1029/2010GL043751",
+      "citation": "Neumann, G. A. (2010). Lunar Orbiter Laser Altimeter Raw Data Set, LRO-L-LOLA-4-GDR-V1.0. NASA Planetary Data System (product LDEM_128, version 3.0). Smith, D. E., et al. (2010). Initial observations from the Lunar Orbiter Laser Altimeter (LOLA). Geophysical Research Letters 37(18). doi:10.1029/2010GL043751",
       "license": "NASA PDS data (U.S. Government work).",
-      "status": "planned",
-      "notes": "Candidate coarse global layer; product choice and frame alignment not yet checked."
+      "status": "used",
+      "notes": "LDEM_128.IMG with its PDS3 label: simple cylindrical, 23040 x 46080 pixels, 16-bit counts x 0.5 m above a 1737.4 km sphere, in the mean Earth/polar axis frame of DE421 (the frame of the polar maps). Read by window around each location, out to the 400 km maximum ray range."
     },
     {
       "id": "sldem2015",

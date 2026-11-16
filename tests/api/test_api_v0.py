@@ -18,7 +18,6 @@ from lss.contract import (
     HorizonRequest,
     InvalidRequestError,
     LocateResponse,
-    NoTerrainError,
     NotServedError,
     UnavailableError,
 )
@@ -99,11 +98,14 @@ def test_locate_gives_the_stack_the_served_result_used():
     assert served_fidelity["scenario"]["location"]["lat"] == body.location.lat
 
 
-def test_locate_outside_all_terrain_is_422_with_a_plain_reason():
+def test_locate_off_the_polar_maps_is_the_low_fidelity_global_layer():
+    # C7 (stream E, one-off exception): every valid location is covered, off the polar maps by the global
+    # coarse layer (LOLA LDEM_128), so this is a 200 with a low fidelity label, no longer a 422.
     r = client().post("/api/locate", json={"lat": 0.0, "lon": 0.0})
-    assert r.status_code == 422
-    d = NoTerrainError.model_validate(r.json()).detail
-    assert d.reason == app_module.NO_TERRAIN_REASON
+    assert r.status_code == 200
+    body = LocateResponse.model_validate(r.json())
+    assert [layer.dataset_id for layer in body.terrain_stack] == ["lola_ldem_128"]
+    assert body.fidelity.tier == "low"
 
 
 def test_locate_malformed_is_validation_422():

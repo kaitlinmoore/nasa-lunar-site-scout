@@ -145,6 +145,47 @@ an 8.6° slope. The coordinates were picked on a 240 m map, where this relief is
 **Left out of C3** (Kaitlin, 2026-11-15): the other 19 product 78 tiles (Haworth, Shoemaker, DM, SL, NP and LM
 series). They are not Mazarico sites, so neither rule gives them a point.
 
+#### 1.4.1 Site20: the published coordinate against nearby grid nodes
+
+At 10 m, three of the four Mazarico points reproduce Table 3 within the section 6.7 tolerances (2.86 pp
+average illumination, 2.39 pp visibility, Mazarico-matched setting): Site06, Site23 and Site42 differ by
+0.0–1.4 pp. Site20's published coordinate differs by 37.7 and 34.4 pp (section 6.7). So Site20 was checked
+for a better point, by a rule fixed before any value was computed (Kaitlin, 2026-11-16;
+`scripts/mazarico_node.py`):
+- **Candidates.** Table 3 rounds to 0.01°, so Mazarico's grid node lies in the cell of values that round to
+  31.73 E, 85.43 S: about 303 m north-south but 24 m east-west. Candidates are the points of a 240 m polar
+  stereographic lattice in that cell, under both registrations of a 240 m grid (our 240 m map's pixel centres
+  and its pixel corners); for a registration with no point in the cell, its point nearest the cell.
+- **Values.** Each candidate is run with the section 6.7 Mazarico-matched setting (240 m map to 400 km, first
+  ray sample 240 m, 0.5° azimuth step, 1970-01-01 plus 4 × 18.6 years at 6 h, observer at 0 m and 10 m).
+- **Selection and acceptance.** The candidate closest to Table 3 at 10 m (mean |difference| over average
+  illumination and visibility) replaces the published coordinate only if it is within both 10 m tolerances.
+  Otherwise the published coordinate is kept.
+
+Neither registration has a lattice point inside the 24 m-wide cell, so there were two candidates:
+
+| Point | PS (km) | From the published point | 10 m: avg ill / visibility | 0 m: avg ill / visibility |
+|---|---|---|---|---|
+| Published (31.73 E, 85.43 S) | 72.919, 117.928 | — | 45.58 / 52.23% | 24.62 / 29.16% |
+| Pixel-centre lattice | 72.840, 117.960 | 85 m | 47.06 / 53.55% | 27.09 / 32.11% |
+| Pixel-corner lattice | 72.960, 118.080 | 158 m | 57.85 / 62.82% | 35.02 / 39.56% |
+| Table 3 | | | 83.32 / 86.66% | 82.22 / 85.76% |
+
+**Result: the published coordinate is kept.** The closest candidate (pixel corners) is 25.5 and 23.8 pp below
+Table 3 at 10 m. Slope on the 5 m map: 7.2° at the published point, 6.3° at the pixel-corner point. The site's
+description says that the point does not reproduce the illumination Mazarico et al. report there.
+Section 6.7 compares the published coordinate.
+
+#### 1.4.2 Apollo landing sites
+
+Six entries (`apollo-11`, `-12`, `-14`, `-15`, `-16`, `-17`; Kaitlin, 2026-11-16). Each point is the Lunar
+Module descent stage as located in LROC NAC images by Wagner et al. (2017, Icarus 283, 92–103,
+doi:10.1016/j.icarus.2016.05.011), read from the LROC PDS archive table (LRO-L-LROC-5-RDR-V1.0,
+`EXTRAS/SHAPEFILE/ANTHROPOGENIC_OBJECTS`). The same values are on NASA NSSDCA's Apollo Landing Site
+Coordinates page, which gives the frame as the mean Earth/polar axis system of DE421 (the engine's frame).
+The table's stated uncertainties are 0.3–3.5 m. Place names and UT landing dates: NSSDCA mission pages.
+Terrain there is the global layer (section 3.5).
+
 ## 2. Frames, time scales and topocentric geometry
 
 Implemented in `lss/ephem/core.py`; tested in `tests/engine/test_ephem.py`.
@@ -307,6 +348,57 @@ file also records the DEMs' SHA-256 hashes from `MANIFEST.json`, for provenance.
 - **Site01, real data:** the numba kernel matches a separate NumPy calculation to 10⁻⁶° on five azimuths. That
   calculation uses the great-circle destination formula and the terrain module's height lookup.
 - **Cache:** a second request is read from the file (verified), and a different unit height is a different key.
+
+### 3.5 Global coarse layer (C7): horizons off the polar maps
+
+**Data.** LOLA LDEM_128 (PDS data set LRO-L-LOLA-4-GDR-V1.0, product version 3.0, 2017-09-15; registry
+`lola_ldem_128`; `lss/terrain/global_layer.py`). From its PDS3 label, checked field by field before each read:
+simple cylindrical, 128 pixels per degree (236.901 m along a meridian), 23040 × 46080 16-bit counts × 0.5 m
+above a 1737.4 km sphere, pixel registered, frame "MEAN EARTH/POLAR AXIS OF DE421". This is the PGDA maps' frame
+and reference sphere, so no alignment is applied. The 0-based line r is centred at latitude (11519.5 − r)/128
+and sample s at east longitude 180 + (s − 23039.5)/128. The image's size is checked against the label.
+
+**Checks of frame and datum** (bilinear heights at points, 2026-11-16):
+- Against Wagner et al. (2017)'s NAC-DTM radii of the six Apollo Lunar Module descent stages (independent of
+  LOLA gridding): LDEM_128 minus Wagner is −8.6, −2.1, +0.1, +6.1, +2.0 and −2.5 m (Apollo 11, 12, 14, 15, 16,
+  17).
+- Against the PGDA 240 m polar map at 12 points from 61° S to 86° S: mean difference 0.9 m, mean |difference|
+  2.8 m, maximum 7.0 m.
+
+**Where it is used** (`lss/registry/terrain.py`, `GlobalLayerSpec`). Only where no polar layer covers the
+location, as the single layer of the stack, from the observer to the 400 km maximum range. Every location the
+polar maps cover keeps exactly the stack it had before (tested at all eight polar sites), so their results are
+unchanged. The fidelity tier is "low": the resolver gives "low" when the near field is coarser than 80 m. A
+location inside the polar maps whose rays leave them (north of about 73° S) keeps its polar stack; ray samples
+beyond the 240 m map are counted as missing, as before.
+
+**Reading.** For each location the reader takes a window of the map covering every point within the maximum
+ray range: a latitude band of ±400 km and the longitude span that band needs, asin(sin δ / cos φ) each way
+for a range of δ radians at latitude φ, plus two pixels. Windows that contain a pole take whole rows, with the
+last column next to the first. Windows may straddle the 0/360° meridian.
+
+**How rays are stepped on the lat/lon grid** (`lss/horizon/core.py`, `_height_lonlat`). The geometry of
+section 3.1 is unchanged: each ray is a great circle, and its samples are unit vectors p in MOON_ME. For a lat/lon
+grid, each sample's latitude is asin(p_z) and its east longitude atan2(p_y, p_x). The height is bilinear in
+(longitude, latitude) between the four surrounding pixel centres. Longitude is measured from the window's west
+edge modulo 360°. The sample spacing follows section 3.2 with the pixel size set to 236.901 m (the north-south
+pixel): at most 118 m far out, finer close to the observer. That is half a pixel north-south and at most one
+pixel east-west up to 60° latitude, where an east-west pixel is 236.9 m × cos(latitude). **Step check:** at
+all six Apollo sites, halving the spacing changes the horizon by at most 0.0033° (1 m and 10 m observers;
+largest at Apollo 16). One horizon takes about 3 s.
+
+**Tests** (`tests/engine/test_horizon_lonlat.py`, `tests/engine/test_global_layer.py`):
+- synthetic lat/lon grids built from independent spherical formulas: a flat sphere gives the pure curvature dip
+  (10⁻⁵°); a ring ridge matches its analytic maximum (10⁻³°) at the equator, 20° N and 45° S;
+- the azimuth convention; a window across 0/360° gives the same horizon as the same terrain at 90° E (10⁻⁴°);
+- a whole-row grid over the north pole (0.02°);
+- a stack with a polar near field and a lat/lon far field matches a polar-only stack (10⁻³°);
+- the reader: pixel mapping from the label, label and size checks, window contents, seam and pole windows;
+- on the real map: heights at the six Lunar Modules within 10 m of Wagner et al.; a full horizon at Apollo 11.
+
+**Limits.** The label states that coverage is incomplete (GMT "surface" was used "to compensate for incomplete
+coverage") and that there "may be edge artifacts" at its 45° latitude band boundaries. Rays through the half-pixel cap at a pole find no data there
+(counted as missing). North of 60° latitude the east-west pixel is smaller than the ray spacing.
 
 ## 4. Validation references
 
