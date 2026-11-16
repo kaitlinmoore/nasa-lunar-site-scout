@@ -191,3 +191,13 @@ def test_installed_served_file_is_the_validated_result():
     got = sv.metrics.model_dump(mode="json", by_alias=True)
     assert got["power"] == ref["metrics"]["power"] and got["comms"] == ref["metrics"]["comms"]
     assert len(sv.series.time) == 721
+
+
+def test_compatible_mechanism_works_while_the_list_is_empty(data_dir, monkeypatch):
+    """COMPATIBLE_VERSIONS is empty when every file is current; the re-stamping path must still work."""
+    import lss.api.served as served_module
+
+    monkeypatch.setattr(served_module, "COMPATIBLE_VERSIONS", frozenset({"0.0.9"}))
+    write_served(data_dir / "cache" / "served", version="0.0.9")
+    r = TestClient(app_module.create_app()).post("/api/metrics", json={"scenario": WEB_SCENARIO})
+    assert r.status_code == 200 and r.json()["contract_version"] == CONTRACT_VERSION

@@ -41,9 +41,9 @@ from lss.contract import (
 #   each against a snapshot in tests/api/served_formats/ (how to make one: lss/api/served_format.py);
 # - drop a version, and its snapshot, once stream A has regenerated its served files at a newer version.
 #   0.5.0 and 0.6.0 dropped 2026-11-16: A regenerated every served file (format 2, with horizons) at 0.7.0.
-#   0.7.0: 32 installed served files; drop once A regenerates them (request RA5).
-#   0.8.0: the other served files and every terrain file (contract 0.9.0 only added error and index models).
-COMPATIBLE_VERSIONS = frozenset({"0.7.0", "0.8.0"})
+#   0.7.0 and 0.8.0 dropped 2026-11-16: A regenerated every served and terrain file at 0.9.0 (RA5).
+#   Empty now: every installed file is at the current version.
+COMPATIBLE_VERSIONS: frozenset[str] = frozenset()
 
 
 class ServedFileError(ValueError):
