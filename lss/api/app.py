@@ -27,6 +27,7 @@ from functools import lru_cache
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from lss.api import compare as compare_rules
 from lss.api import nl as nl_service
 from lss.api.served import (
     Served,
@@ -241,20 +242,62 @@ def horizon_for(req: HorizonRequest) -> HorizonProfile:
     raise not_served(req, key, by_horizon)
 
 
+def _layer_label(dataset_id: str, resolution_m: float) -> str:
+    """The terrain resolver's short label for a layer (e.g. '5 m PGDA site map'), else '<res> m map'."""
+    from lss.registry.terrain import LAYERS
+
+    for spec in LAYERS:
+        if spec.dataset_id == dataset_id and spec.resolution_m == resolution_m:
+            return spec.label
+    return f"{resolution_m:g} m map"
+
+
+def slope_at_point(lat: float, lon: float) -> tuple[float, str] | None:
+    """(slope, map label) at a location from the precomputed statistics on the finest map there (5 m at
+    the PGDA sites, Kaitlin's C4 choice), or None."""
+    try:
+        found = _terrain()
+    except ServedFileError:
+        return None
+    here = [t.body for t in found.values() if (t.body.location.lat, t.body.location.lon) == (lat, lon)]
+    here = [b for b in here if b.slope_at_point_deg is not None and b.slope_layer is not None]
+    if not here:
+        return None
+    best = min(here, key=lambda b: b.slope_layer.resolution_m)
+    return best.slope_at_point_deg, _layer_label(best.slope_layer.dataset_id, best.slope_layer.resolution_m)
+
+
 def compare_served(req: CompareRequest) -> CompareResponse:
-    """Metrics for the served scenarios in request order; a 422 only when none is served."""
+    """Served metrics for the compared scenarios, filtered and ranked (lss.api.compare); a 422 only when
+    none is served. Scenarios = the request's, then one per `across` site."""
+    compared = list(req.scenarios)
+    if req.across is not None:
+        try:
+            compared += compare_rules.expand(req.across, _sites().sites)
+        except compare_rules.UnknownSitesError as e:
+            issue = {"loc": ["body", "across"], "msg": str(e), "type": "value_error"}
+            raise HTTPException(422, detail=[issue]) from e
     served = served_results()
-    items, missing = [], []
-    for i, sc in enumerate(req.scenarios):
+    hits, missing = [], []
+    for i, sc in enumerate(compared):
         key = sc.key()
         if key in served:
-            items.append(served[key].metrics)
+            hits.append((i, served[key].metrics))
         else:
             missing.append(CompareNotServed(index=i, scenario_key=key, reason=COMPARE_NOT_SERVED_REASON))
-    if not items:
+    if not hits:
         detail = CompareNotServedDetail(reason=COMPARE_NOT_SERVED_REASON, not_served=missing)
         raise HTTPException(422, detail=detail.model_dump(mode="json"))
-    return CompareResponse(items=items, not_served=missing)
+    out = compare_rules.apply(hits, req.filters, req.rank, slope_at_point)
+    return CompareResponse(
+        items=out.items,
+        not_served=missing,
+        compared=compared if req.across is not None else [],
+        evaluated=out.evaluated,
+        filtered_out=out.filtered_out,
+        rank_ties=out.rank_ties,
+        beyond_limit=out.beyond_limit,
+    )
 
 
 def locate(req: LocateRequest) -> LocateResponse:

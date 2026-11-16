@@ -1,5 +1,5 @@
 {
-  "contract_version": "0.9.0",
+  "contract_version": "0.10.0",
   "_placeholder": true,
   "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
   "interpretation": "Power and Earth-visibility metrics for Site01 Connecting ridge (Barker 2021 RoI 4) at 1 m height, 2028-05-15 to 2028-06-14 UTC.",
@@ -20,7 +20,7 @@
     }
   },
   "result": {
-    "contract_version": "0.9.0",
+    "contract_version": "0.10.0",
     "_placeholder": true,
     "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
     "scenario": {

@@ -20,7 +20,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from pydantic import ValidationError
@@ -44,8 +44,11 @@ from lss.nl.vocabulary import (
     PROXY_ASSUMPTION_TEXT,
     RADIUS_DEFAULTS,
     RADIUS_KEYS,
+    RANKING_WINDOW,
+    RANKING_WINDOW_TEXT,
     SAFE_MAX_SLOPE_DEG,
     SAFE_NOT_MEASURED_TEXT,
+    SLOPE_FILTER_METRIC,
     SLOPE_KEYS,
     UNIT_HEIGHT_PROXIES_M,
     HeightSource,
@@ -166,9 +169,12 @@ def _check_heights(output: NLOutput, params: dict[str, Any], ctx: NLContext, pro
 def _windows(value: Any) -> list[tuple[datetime, datetime]]:
     found: list[tuple[datetime, datetime]] = []
     if isinstance(value, dict):
-        if "window_start" in value and "window_end" in value:
+        if "window_start" in value and value.get("window_end") is not None:
             start, end = value["window_start"], value["window_end"]
             found.append((datetime.fromisoformat(start), datetime.fromisoformat(end)))
+        elif "window_start" in value and value.get("window_days") is not None:  # a compare `across` template
+            start = datetime.fromisoformat(value["window_start"])
+            found.append((start, start + timedelta(days=int(value["window_days"]))))
         for v in value.values():
             found.extend(_windows(v))
     elif isinstance(value, list):
@@ -196,6 +202,18 @@ def _check_windows(output: NLOutput, params: dict[str, Any], ctx: NLContext, pro
             start = datetime(ctx.today.year, ctx.today.month, ctx.today.day, tzinfo=UTC)
             if any(s != start for s, _ in windows):
                 problems.append(f"the default window starts at {start.isoformat()} (the request's date)")
+    elif src == WindowSource.ranking_default:
+        start, end, step = RANKING_WINDOW
+        if ctx.selected_scenario is not None:
+            problems.append("window_source is 'ranking_default' but a scenario is selected (use its window)")
+        if not params.get("rank"):
+            problems.append("window_source 'ranking_default' is only for rankings (params need a rank)")
+        if any((s, e) != (start, end) for s, e in windows):
+            problems.append(
+                f"window_source 'ranking_default' requires {start.isoformat()} to {end.isoformat()}"
+            )
+        if (params.get("across") or {}).get("step") != "PT6H":
+            problems.append(f"window_source 'ranking_default' requires step {step} (the precomputed year)")
     elif src == WindowSource.selected_scenario:
         sc = ctx.selected_scenario
         if sc is None:
@@ -233,8 +251,18 @@ def _check_default_value(
         problems.append(f"{name}_source {src.value!r} requires {name} = {defaults[src]:g}, got {values}")
 
 
+def _filter_slopes(params: dict[str, Any]) -> list[float]:
+    """Slope limits written as compare filters (`terrain.slope_at_point_deg lt|le <limit>`)."""
+    return [
+        float(f["value"])
+        for f in params.get("filters") or []
+        if f.get("metric") == SLOPE_FILTER_METRIC and f.get("op") in ("lt", "le")
+    ]
+
+
 def _check_slope_radius(output: NLOutput, params: dict[str, Any], problems: list[str]) -> None:
-    slopes, radii = _values(params, SLOPE_KEYS), _values(params, RADIUS_KEYS)
+    slopes = _values(params, SLOPE_KEYS) + _filter_slopes(params)
+    radii = _values(params, RADIUS_KEYS)
     _check_default_value(
         "slope", output.slope_source, {SlopeSource.safe_default: SAFE_MAX_SLOPE_DEG}, slopes, problems
     )
@@ -335,6 +363,8 @@ def validate_output(raw: str | Mapping[str, Any] | NLOutput, ctx: NLContext) -> 
         assumptions.insert(0, RADIUS_DEFAULTS[output.radius_source][1])
     if output.height_source in PROXY_ASSUMPTION_TEXT:
         assumptions.insert(0, PROXY_ASSUMPTION_TEXT[output.height_source])
+    if output.window_source == WindowSource.ranking_default:
+        assumptions.insert(0, RANKING_WINDOW_TEXT)
     if output.window_source == WindowSource.default and structured is not None:
         start = _windows(structured.params)[0][0]
         assumptions.insert(0, default_window_text(start.date().isoformat()))

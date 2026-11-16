@@ -42,8 +42,9 @@ from lss.contract import (
 # - drop a version, and its snapshot, once stream A has regenerated its served files at a newer version.
 #   0.5.0 and 0.6.0 dropped 2026-11-16: A regenerated every served file (format 2, with horizons) at 0.7.0.
 #   0.7.0 and 0.8.0 dropped 2026-11-16: A regenerated every served and terrain file at 0.9.0 (RA5).
-#   Empty now: every installed file is at the current version.
-COMPATIBLE_VERSIONS: frozenset[str] = frozenset()
+#   0.9.0: every installed served and terrain file (contract 0.10.0 only added compare filter / rank and
+#   Site.regions); drop once A regenerates them at 0.10.0 or later.
+COMPATIBLE_VERSIONS = frozenset({"0.9.0"})
 
 
 class ServedFileError(ValueError):

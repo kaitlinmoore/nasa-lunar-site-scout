@@ -340,4 +340,5 @@ def test_split_dev_never_sends_holdout_items_to_the_provider():
     holdout_texts = {i.text for i in eval_set.items if i.split == Split.holdout}
     assert holdout_texts and not holdout_texts & {c.meta["text"] for c in provider.calls}
     assert report["scores_by_split"]["holdout"]["valid_output"]["total"] == 0
-    assert report["scores_by_split"]["dev"]["valid_output"]["total"] == 19
+    dev_ready = [i for i in eval_set.items if i.split == Split.dev and i.status.value == "ready"]
+    assert report["scores_by_split"]["dev"]["valid_output"]["total"] == len(dev_ready)

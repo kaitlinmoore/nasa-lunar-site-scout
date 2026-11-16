@@ -25,7 +25,7 @@ nearby features at one site; the project author's choice for her query #1) to th
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 
 from pydantic import BaseModel
@@ -97,10 +97,23 @@ class WindowSource(StrEnum):
     user = "user"  # the user gave dates
     selected_scenario = "selected_scenario"  # taken from the scenario selected in the UI
     default = "default"  # no dates: DEFAULT_WINDOW from the request's date (D-window)
+    ranking_default = "ranking_default"  # a ranking with no dates: the precomputed year (Kaitlin's C5 choice)
     not_applicable = "not_applicable"  # the operation has no window
 
 
 DEFAULT_WINDOW = timedelta(days=30)
+
+
+# Ranking questions with no dates use the precomputed year (Kaitlin, 2026-11-16, C3 design option C5):
+# exactly stream A's served 2028 window and step. Single-site questions keep DEFAULT_WINDOW (D-window).
+RANKING_WINDOW = (datetime(2028, 1, 1, tzinfo=UTC), datetime(2029, 1, 1, tzinfo=UTC), timedelta(hours=6))
+# Claude-drafted, pending the project author's review.
+RANKING_WINDOW_TEXT = (
+    "Window: the year 2028, the precomputed year (default for rankings; no dates were given)."
+)
+
+# A slope limit inside a compare filter (contract 0.10.0): the metric that carries it.
+SLOPE_FILTER_METRIC = "terrain.slope_at_point_deg"
 
 
 def default_window_text(start_iso_date: str) -> str:

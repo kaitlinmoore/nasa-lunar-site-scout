@@ -52,7 +52,7 @@ from lss.nl.claude import ClaudeProvider, ProviderError, estimate_cost_usd
 from lss.nl.interpret import interpret
 from lss.nl.provider import Provider, ProviderFatalError
 from lss.nl.validate import NLValidationError, default_context, to_response, validate_output
-from lss.nl.vocabulary import OPERATION_PARAMS, SlopeSource
+from lss.nl.vocabulary import OPERATION_PARAMS, SLOPE_FILTER_METRIC, SlopeSource
 
 log = logging.getLogger("lss.api.nl")
 
@@ -241,6 +241,8 @@ class NLService:
             return to_response(validated, ctx)
 
         result, limitation, slope_terrain, measured = self._run(sq.operation, sq.params)
+        if result is not None and slope_terrain is None:
+            slope_terrain = _slope_sources(result)
         safe = validated.output.slope_source == SlopeSource.safe_default
         if safe and measured and not slope_terrain:
             measured = False  # the result names no slope layer: say it wasn't measured, never guess
@@ -280,6 +282,18 @@ class NLService:
         except ValidationError:
             return None, Limitation(reason=NOT_UNDERSTOOD_REASON), None, False
         return body.model_dump(mode="json", by_alias=True), None, None, True
+
+
+def _slope_sources(result: dict[str, Any]) -> str | None:
+    """The map(s) a compare's slope filter was measured on (CompareResponse.evaluated sources), or None."""
+    sources = sorted(
+        {
+            e["source"]
+            for e in result.get("evaluated") or []
+            if e.get("metric") == SLOPE_FILTER_METRIC and e.get("source")
+        }
+    )
+    return " and ".join(sources) or None
 
 
 def _unavailable(reason: str, technical: str) -> HTTPException:

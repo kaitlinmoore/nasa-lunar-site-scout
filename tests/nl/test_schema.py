@@ -555,3 +555,69 @@ def test_site_model_fields_are_optional():
         display_name(Site.model_validate({**s.model_dump(), "short_name": "Connecting Ridge"}))
         == "Connecting Ridge"
     )
+
+
+# ------------------------------------------- C3: filters, rank, across (contract 0.10.0)
+
+
+def ranking_output(**over) -> dict[str, Any]:
+    params = {
+        "across": {
+            "unit_height_m": 5.0,
+            "window_start": "2028-01-01T00:00:00Z",
+            "window_end": "2029-01-01T00:00:00Z",
+            "step": "PT6H",
+        },
+        "rank": {"metric": "power.illumination_fraction", "order": "desc", "limit": 3},
+    }
+    params.update(over.pop("params", {}))
+    return {
+        "outcome": "answer",
+        "interpretation": "Top three sites by illumination.",
+        "query": {"operation": "compare", "params": params},
+        "height_source": "default",
+        "window_source": "ranking_default",
+        **over,
+    }
+
+
+def test_ranking_default_window_is_checked_and_disclosed():
+    from lss.nl.vocabulary import RANKING_WINDOW_TEXT
+
+    ctx = default_context()
+    resp = to_response(validate_output(ranking_output(), ctx), ctx)
+    assert RANKING_WINDOW_TEXT in resp.assumptions
+    with pytest.raises(NLValidationError, match="only for rankings"):
+        validate_output(ranking_output(params={"rank": None}), ctx)
+    wrong = ranking_output()
+    wrong["query"]["params"]["across"]["window_end"] = "2028-12-01T00:00:00Z"
+    with pytest.raises(NLValidationError, match="ranking_default' requires"):
+        validate_output(wrong, ctx)
+
+
+def test_safe_slope_in_a_compare_filter_is_checked():
+    ctx = default_context()
+
+    def k6_like(limit):
+        return {
+            "outcome": "answer",
+            "interpretation": "Safe sites without shadow.",
+            "query": {
+                "operation": "compare",
+                "params": {
+                    "across": {
+                        "unit_height_m": 5.0,
+                        "window_start": "2028-11-15T00:00:00Z",
+                        "window_days": 10,
+                    },
+                    "filters": [{"metric": "terrain.slope_at_point_deg", "op": "lt", "value": limit}],
+                },
+            },
+            "height_source": "default",
+            "window_source": "user",
+            "slope_source": "safe_default",
+        }
+
+    validate_output(k6_like(5.0), ctx)  # the window comes from window_days
+    with pytest.raises(NLValidationError, match="safe_default' requires slope = 5"):
+        validate_output(k6_like(6.0), ctx)

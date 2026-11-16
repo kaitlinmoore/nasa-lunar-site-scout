@@ -17,7 +17,8 @@
 #                  replaced s13 on 2026-11-15 because s13's label changed after its output was seen).
 #                  s11 became ready when the registry batch merged (03d24f4).
 #   blocked_on     request ids from reference/logs/nl-progress.md:
-#                    C*    blocked on contract (C1, C2, C4-C6, C8, C9 added in contract 0.7.0; open: C3, C7)
+#                    C*    blocked on contract (C1, C2, C4-C6, C8, C9 added in contract 0.7.0; C3 in 0.10.0;
+#                          open: C7)
 #                    G-R*  blocked on registry (G-R1..G-R4 merged as 03d24f4; none open)
 #                    D-*   blocked on a default the project author hasn't decided yet (none open:
 #                          D-height, D-window, D-safe and D-radius were all decided 2026-11-15)
@@ -26,7 +27,7 @@
 #     query        {operation, params}; locations may be {site_id: ...}
 #     params_match exact (default) | subset (only the keys given are checked)
 #     height_source  see lss.nl.vocabulary.HeightSource
-#     window_source  see lss.nl.vocabulary.WindowSource
+#     window_source  see lss.nl.vocabulary.WindowSource (ranking_default: the precomputed 2028 year)
 #     slope_source   see lss.nl.vocabulary.SlopeSource ("safe" with no limit -> 5 degrees, D-safe)
 #     radius_source  see lss.nl.vocabulary.RadiusSource ("nearby" with no distance -> 10 km, D-radius)
 #     site_source    see lss.nl.vocabulary.SiteSource (no site named + a site selected -> selected_site)
@@ -173,14 +174,28 @@ items:
     target: >-
       Before time-dependent area search exists: answer for curated sites in the region and say area
       search isn't available yet. Echo how "safe" was interpreted (slope limit).
-    status: blocked
-    blocked_on: [C3]
+    status: ready
     notes: >-
-      D-safe resolved 2026-11-15: "safe" with no slope limit is slope under 5 degrees, and the echo names
-      the terrain data the slope is measured on (from the engine's result). Waits on filter/rank (C3).
+      C3 (contract 0.10.0) with the project author's design choices (2026-11-16): "continuous sunlight for at
+      least 10 days starting 15 Nov" = no shadow in 2028-11-15 + 10 days; the Shackleton region is a site
+      region tag; "safe" = slope at the site's point < 5 degrees (D-safe), the echo naming the map. No height
+      given: the 5 m lander proxy (D-height). Curated sites only (area search not available).
     expected:
       outcome: partial
+      height_source: default
+      window_source: user
       slope_source: safe_default
+      query:
+        operation: compare
+        params:
+          across:
+            region: shackleton
+            unit_height_m: 5.0
+            window_start: "2028-11-15T00:00:00Z"
+            window_days: 10
+          filters:
+            - {metric: power.shadow_count, op: eq, value: 0}
+            - {metric: terrain.slope_at_point_deg, op: lt, value: 5.0}
       citations:
         - {dataset_id: lss_tool_capabilities, cannot_answer: Time-dependent area search (not available yet)}
 
@@ -193,10 +208,31 @@ items:
     target: >-
       Answer for curated/saved sites; echo the assumed date; note it is Sun elevation at the site, not
       along the approach trajectory.
-    status: blocked
-    blocked_on: [C3]
+    status: ready
+    notes: >-
+      C3 (contract 0.10.0) with the project author's design choices (2026-11-16): a ranking with no dates uses
+      the precomputed 2028 year (disclosed); rank by the fraction of time with the Sun at 10-25 degrees, after
+      dropping sites with none; top five; all curated sites; 5 m lander proxy (D-height).
     expected:
       outcome: partial
+      height_source: default
+      window_source: ranking_default
+      query:
+        operation: compare
+        params:
+          across:
+            unit_height_m: 5.0
+            window_start: "2028-01-01T00:00:00Z"
+            window_end: "2029-01-01T00:00:00Z"
+            step: PT6H
+          filters:
+            - metric: {min_deg: 10, max_deg: 25}
+              op: gt
+              value: 0
+          rank:
+            metric: {min_deg: 10, max_deg: 25}
+            order: desc
+            limit: 5
       citations:
         - dataset_id: lss_tool_capabilities
           cannot_answer: Sun angle along a descent trajectory (Sun elevation is computed at the site)

@@ -28,7 +28,7 @@ from lss.nl.vocabulary import (
     HeightSource,
 )
 
-PROMPT_VERSION = "p6-draft"
+PROMPT_VERSION = "p7-draft"
 
 ROUTE_SYSTEM = """\
 You are the first step of a natural-language interface to a terrain-aware lunar landing-site \
@@ -40,7 +40,8 @@ Rules:
    - metrics: power and Earth-visibility metrics at one site over a time window
    - series: Sun/Earth position and visibility over time at one site, with events \
 (sunrise, sunset, Earthrise, Earthset)
-   - compare: metrics for several sites and/or windows side by side
+   - compare: metrics for several sites and/or windows side by side, optionally filtered by \
+conditions (e.g. no shadow in the window, slope under a limit) and ranked by one value
    - horizon: the terrain horizon profile at a site
    - sites: list curated sites, optionally by category
    - locate: which terrain data covers a point, and how detailed it is
@@ -94,7 +95,7 @@ the question names no site (e.g. "this site", "here") and a site is selected -> 
 <month>" is the whole month (00:00 UTC on the 1st to 00:00 UTC on the 1st of the next month).
    Times are UTC, ISO 8601 with "Z". "Today" is given in the context. Leave "step" out unless \
 the user asks for a sampling step.
-5. Slope limits (max_slope_deg) and slope_source:
+5. Slope limits (max_slope_deg, or a terrain.slope_at_point_deg filter, rule 9) and slope_source:
    - the user gave a slope limit -> that value, "user";
    - the user asked for "safe" terrain and gave no slope limit -> {safe_slope} degrees, \
 "safe_default";
@@ -116,10 +117,22 @@ site_summary, and gave no distance -> {nearby_m} m, "nearby_default";
 8. site_summary: include "scenario" (for the metrics part) with the height and window rules above; \
 list feature_types only when the user asks about specific kinds of features (e.g. hazards -> \
 crater, hazard), otherwise leave it empty.
-9. If you read a vague term in a particular way, say so in "interpretation". The selected site, \
+9. compare over several sites: use "across" (one height and window for every site): "site_ids" for \
+named sites, "region" for a region from the sites' "regions" in the context, neither for all curated sites. \
+Conditions go in "filters", a ranking in "rank" (with "limit" for "top N"); never filter or rank yourself.
+   - Sunlight without interruption for the whole window -> {{"metric": "power.shadow_count", "op": "eq", \
+"value": 0}}.
+   - A slope limit (or "safe", rule 5) on sites -> {{"metric": "terrain.slope_at_point_deg", "op": "lt", \
+"value": <limit>}}.
+   - A Sun elevation between a and b degrees -> the metric {{"min_deg": a, "max_deg": b}}; when ranking by \
+it, also filter it "gt" 0, so sites with no such time aren't ranked.
+   - "For N days starting <date>" -> "window_start" <date> and "window_days" N; never compute an end date.
+   - A ranking with no dates and no selected scenario -> the precomputed year: window_start \
+2028-01-01T00:00:00Z, window_end 2029-01-01T00:00:00Z, step PT6H, window_source "ranking_default".
+10. If you read a vague term in a particular way, say so in "interpretation". The selected site, \
 proxy heights, default windows, the "safe" slope limit and the "nearby" / "around" distances are \
 disclosed automatically from the *_source fields; don't repeat them.
-10. "interpretation" restates the query exactly as you filled it (site, height, dates, \
+11. "interpretation" restates the query exactly as you filled it (site, height, dates, \
 thresholds), in one or two plain sentences. Call sites by their "name" from the context.
 
 Return only JSON matching the schema."""
@@ -151,7 +164,13 @@ def _context(ctx: NLContext, today: date, registry: bool) -> dict[str, Any]:
         # Short display names (Kaitlin, 2026-11-16), so echoes read naturally; the subtitle helps match
         # references such as "Site01". Full technical names stay in the API's results.
         "sites": [
-            {"site_id": s.id, "name": display_name(s), "subtitle": s.subtitle, "category": s.category.value}
+            {
+                "site_id": s.id,
+                "name": display_name(s),
+                "subtitle": s.subtitle,
+                "category": s.category.value,
+                "regions": s.regions,
+            }
             for s in ctx.sites
         ],
         "selected_site_id": ctx.selected_site_id,

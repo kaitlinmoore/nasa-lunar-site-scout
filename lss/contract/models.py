@@ -33,7 +33,7 @@ from pydantic import (
     model_validator,
 )
 
-CONTRACT_VERSION = "0.9.0"
+CONTRACT_VERSION = "0.10.0"
 
 Latitude = Annotated[float, Field(ge=-90.0, le=90.0, description="Planetocentric latitude, deg")]
 Longitude = Annotated[
@@ -119,6 +119,10 @@ class Site(Model):
         default=None,
         description="Short display name in title case, e.g. 'Connecting Ridge' (contract 0.9.0; Kaitlin, "
         "2026-11-16). Null: show name",
+    )
+    regions: list[str] = Field(
+        default_factory=list,
+        description="Region tags, e.g. 'shackleton' (contract 0.10.0; stream A's registry, Kaitlin approves)",
     )
     subtitle: str | None = Field(
         default=None, description="Small line under the display name, e.g. 'PGDA Site01 · Barker 2021 RoI 4'"
@@ -502,30 +506,183 @@ class MetricsResponse(Response):
     fidelity: FidelityLabel | None = None
 
 
+# ---- filter and rank on compare (contract 0.10.0, NL gap C3; Kaitlin's decisions 2026-11-16) ----
+
+
+class MetricName(StrEnum):
+    """A numeric value a compare filter or rank can use: a dotted path into MetricsResponse, or the slope
+    at the scenario's location (terrain.*, from the precomputed slope statistics on the finest map)."""
+
+    illumination_fraction = "power.illumination_fraction"
+    mean_visible_disk_fraction = "power.mean_visible_disk_fraction"
+    sunlit_duration_h = "power.sunlit_duration_h"
+    longest_sunlit_period_h = "power.longest_sunlit_period_h"
+    longest_shadow_h = "power.longest_shadow_h"
+    shadow_count = "power.shadow_count"
+    time_to_sunset_h = "power.time_to_sunset_h"
+    sun_elevation_min_deg = "power.sun_elevation_deg.min"
+    sun_elevation_max_deg = "power.sun_elevation_deg.max"
+    sun_elevation_mean_deg = "power.sun_elevation_deg.mean"
+    earth_visibility_fraction = "comms.earth_visibility_fraction"
+    earth_full_disc_fraction = "comms.earth_full_disc_fraction"
+    longest_earth_gap_h = "comms.longest_earth_gap_h"
+    earth_elevation_min_deg = "comms.earth_elevation_deg.min"
+    earth_elevation_max_deg = "comms.earth_elevation_deg.max"
+    earth_elevation_mean_deg = "comms.earth_elevation_deg.mean"
+    earth_clearance_min_deg = "comms.earth_clearance_deg.min"
+    earth_clearance_max_deg = "comms.earth_clearance_deg.max"
+    earth_clearance_mean_deg = "comms.earth_clearance_deg.mean"
+    sun_earth_overlap_fraction = "comms.sun_earth_overlap_fraction"
+    time_to_earthset_h = "comms.time_to_earthset_h"
+    slope_at_point_deg = "terrain.slope_at_point_deg"
+
+
+class SunElevationBand(Model):
+    """Fraction of the window with the Sun's disc-centre elevation in [min_deg, max_deg] (k7). Computed from
+    stream A's data (request RA7); until a served result carries it, its value is null (not computed)."""
+
+    kind: Literal["sun_elevation_band_fraction"] = "sun_elevation_band_fraction"
+    min_deg: float = Field(ge=-90.0, le=90.0)
+    max_deg: float = Field(ge=-90.0, le=90.0)
+
+    @model_validator(mode="after")
+    def _ordered(self) -> SunElevationBand:
+        if self.max_deg <= self.min_deg:
+            raise ValueError("max_deg must be above min_deg")
+        return self
+
+    def label(self) -> str:
+        return f"sun_elevation_band_fraction[{self.min_deg:g},{self.max_deg:g}]"
+
+
+CompareMetric = MetricName | SunElevationBand
+
+
+class FilterOp(StrEnum):
+    lt = "lt"
+    le = "le"
+    gt = "gt"
+    ge = "ge"
+    eq = "eq"
+
+
+class MetricFilter(Model):
+    """Keep a scenario only if `metric op value` holds. A null value never passes (it is listed as not
+    computed)."""
+
+    metric: CompareMetric
+    op: FilterOp
+    value: float
+
+
+class RankOrder(StrEnum):
+    desc = "desc"
+    asc = "asc"
+
+
+class CompareRank(Model):
+    """Order the passing scenarios by `metric`; equal values keep their request order and are reported in
+    `CompareResponse.rank_ties`. Null values are excluded and listed as not computed."""
+
+    metric: CompareMetric
+    order: RankOrder = RankOrder.desc
+    limit: int | None = Field(default=None, ge=1, description="Keep the first `limit`; the rest are counted")
+
+
+class CompareAcross(Model):
+    """One scenario per curated site, expanded by the API (Kaitlin's C8 choice): the sites named, the sites
+    tagged with `region`, or every curated site if neither is given."""
+
+    site_ids: list[str] = Field(default_factory=list)
+    region: str | None = Field(default=None, description="A Site.regions tag, e.g. 'shackleton'")
+    unit_height_m: float = Field(gt=0.0)
+    window_start: AwareDatetime
+    window_end: AwareDatetime | None = None
+    window_days: int | None = Field(
+        default=None,
+        ge=1,
+        description="Instead of window_end: the window's length in days (computed by code)",
+    )
+    step: timedelta = Field(default=timedelta(hours=1), description="Sampling step (ISO 8601)")
+
+    @model_validator(mode="after")
+    def _one_of(self) -> CompareAcross:
+        if self.site_ids and self.region:
+            raise ValueError("give site_ids or region, not both")
+        if (self.window_end is None) == (self.window_days is None):
+            raise ValueError("give exactly one of window_end and window_days")
+        return self
+
+
 class CompareRequest(Model):
-    scenarios: list[Scenario] = Field(min_length=1)
+    """Scenarios to compare: `scenarios`, plus one per site of `across` (in that order). Optional filters and
+    a rank are applied by the API to the served results, never by the LLM (contract 0.10.0)."""
+
+    scenarios: list[Scenario] = Field(default_factory=list)
+    across: CompareAcross | None = None
+    filters: list[MetricFilter] = Field(default_factory=list)
+    rank: CompareRank | None = None
+
+    @model_validator(mode="after")
+    def _something(self) -> CompareRequest:
+        if not self.scenarios and self.across is None:
+            raise ValueError("give scenarios, across, or both")
+        return self
+
+
+class EvaluatedValue(Model):
+    scenario_key: str
+    metric: str = Field(description="MetricName value, or SunElevationBand.label()")
+    value: float | None = Field(description="Null: not computed")
+    source: str | None = Field(
+        default=None, description="Where a terrain value was measured, e.g. '5 m PGDA site map'"
+    )
+
+
+class CompareFilteredOut(Model):
+    index: int = Field(ge=0, description="Position in the compared scenarios (see CompareResponse.compared)")
+    scenario_key: str
+    failed: list[str] = Field(default_factory=list, description="Metrics whose filter it did not pass")
+    not_computed: list[str] = Field(default_factory=list, description="Metrics with no value for it")
 
 
 class CompareNotServed(Model):
     """A compared scenario this API version has no precomputed result for."""
 
-    index: int = Field(ge=0, description="Position of the scenario in the request's `scenarios`")
+    index: int = Field(ge=0, description="Position in the compared scenarios (see CompareResponse.compared)")
     scenario_key: str = Field(description="Scenario.key() of that scenario")
     reason: str = Field(description="Plain-language explanation, suitable to show to visitors")
 
 
 class CompareResponse(Response):
-    """At least one compared scenario is served (otherwise 422 CompareNotServedError)."""
+    """At least one compared scenario is served (otherwise 422 CompareNotServedError). Every served scenario
+    may still fail the filters: then `items` is empty, which is an answer ("none qualifies"), not an error."""
 
     items: list[MetricsResponse] = Field(
         description=(
-            "Metrics for every served scenario, in the request's order (match them to the request by "
-            "scenario_key). Scenarios without a result are in not_served instead"
+            "Metrics for every served scenario that passes the filters: in rank order if a rank was given, "
+            "else in the compared order (match them by scenario_key). Scenarios without a result are in "
+            "not_served; those removed by a filter are in filtered_out"
         )
     )
     not_served: list[CompareNotServed] = Field(
         default_factory=list, description="The request's scenarios with no precomputed result, in order"
     )
+    compared: list[Scenario] = Field(
+        default_factory=list,
+        description="Every compared scenario in order: the request's scenarios, then one per `across` site "
+        "(contract 0.10.0). Indexes in not_served and filtered_out refer to this list",
+    )
+    evaluated: list[EvaluatedValue] = Field(
+        default_factory=list, description="Every value a filter or the rank used, per served scenario"
+    )
+    filtered_out: list[CompareFilteredOut] = Field(
+        default_factory=list, description="Served scenarios removed by a filter, or with no value to rank by"
+    )
+    rank_ties: list[list[str]] = Field(
+        default_factory=list, description="Groups of scenario_keys with equal rank values, in rank order"
+    )
+    beyond_limit: int = Field(default=0, ge=0, description="Passing scenarios cut by rank.limit")
 
 
 # ---------------------------------------------------------------------- features

@@ -158,3 +158,29 @@ def test_static_copy_includes_terrain_and_checks_it(client, data_dir, monkeypatc
     assert sorted(t.radius_m for t in index.terrain) == [1000, 10_000]
     first = index.terrain[0]
     assert json.loads((out / first.path).read_text(encoding="utf-8"))["radius_m"] == first.radius_m
+
+
+def test_nl_safe_compare_names_the_map_the_slopes_came_from(client):
+    from lss.nl.vocabulary import safe_slope_text
+
+    out = {
+        "outcome": "answer",
+        "interpretation": "Safe sites among the Site01 scenario.",
+        "query": {
+            "operation": "compare",
+            "params": {
+                "scenarios": [WEB_SCENARIO],
+                "filters": [{"metric": "terrain.slope_at_point_deg", "op": "lt", "value": 5.0}],
+            },
+        },
+        "height_source": "user",
+        "window_source": "user",
+        "slope_source": "safe_default",
+    }
+    service = nl.NLService(
+        executors=app_module.NL_EXECUTORS, provider_factory=lambda: FakeProvider({"q": out})
+    )
+    body = service.answer(NLRequest(text="q"), "1.2.3.4")
+    assert body.result["evaluated"][0]["source"] == "5 m PGDA site map"
+    assert body.assumptions[0] == safe_slope_text("5 m PGDA site map")
+    assert len(body.result["items"]) == 1  # 1.2 deg passes "under 5"

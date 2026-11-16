@@ -26,17 +26,17 @@ def test_blockers_are_known_request_ids():
             assert KNOWN_BLOCKERS.match(b), (item.id, b)
 
 
-def test_contract_blocked_items_are_labeled():
+def test_filter_rank_items_are_ready():
+    """Contract 0.10.0 (C3, filter and rank on compare) unblocked k6 and k7."""
     by_id = {i.id: i for i in EVAL.items}
-    assert by_id["k6"].blocked_reasons == ["blocked on contract"]  # C3 filter/rank
-    assert by_id["k7"].blocked_reasons == ["blocked on contract"]
-    assert by_id["k5"].blocked_reasons == []
+    for item_id in ("k6", "k7"):
+        assert by_id[item_id].status == ItemStatus.ready and by_id[item_id].blocked_reasons == []
+        assert by_id[item_id].expected.query.operation.value == "compare"
 
 
-def test_only_the_filter_rank_items_are_still_blocked():
-    """Contract 0.7.0 and the registry batch (03d24f4) unblocked everything except C3."""
-    blocked = {i.id: i.blocked_on for i in EVAL.items if i.status == ItemStatus.blocked}
-    assert blocked == {"k6": ["C3"], "k7": ["C3"]}
+def test_no_item_is_blocked():
+    """Contract 0.7.0, the registry batch (03d24f4) and contract 0.10.0 (C3) unblocked every item."""
+    assert [i.id for i in EVAL.items if i.status == ItemStatus.blocked] == []
 
 
 def test_clarify_label_is_scored_in_a():

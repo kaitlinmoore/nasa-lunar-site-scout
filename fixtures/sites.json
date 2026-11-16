@@ -1,5 +1,5 @@
 {
-  "contract_version": "0.9.0",
+  "contract_version": "0.10.0",
   "_placeholder": false,
   "_note": "Generated from lss/registry/sites.yaml (curated sites).",
   "sites": [
@@ -7,6 +7,7 @@
       "id": "pgda-site01",
       "name": "Site01 Connecting ridge (Barker 2021 RoI 4)",
       "short_name": "Connecting Ridge",
+      "regions": [],
       "subtitle": "PGDA Site01 · Barker 2021 RoI 4",
       "category": "pgda",
       "location": {
@@ -27,6 +28,7 @@
       "id": "pgda-site04",
       "name": "Site04 Shackleton rim (Barker 2021 RoI 1)",
       "short_name": "Shackleton Rim",
+      "regions": [],
       "subtitle": "PGDA Site04 · Barker 2021 RoI 1",
       "category": "pgda",
       "location": {
@@ -47,6 +49,7 @@
       "id": "pgda-site07",
       "name": "Site07 Peak near Shackleton (Barker 2021 RoI 2)",
       "short_name": "Peak near Shackleton",
+      "regions": [],
       "subtitle": "PGDA Site07 · Barker 2021 RoI 2",
       "category": "pgda",
       "location": {
@@ -67,6 +70,7 @@
       "id": "pgda-site11",
       "name": "Site11 de Gerlache rim (Barker 2021 RoI 1)",
       "short_name": "de Gerlache Rim",
+      "regions": [],
       "subtitle": "PGDA Site11 · Barker 2021 RoI 1",
       "category": "pgda",
       "location": {
@@ -87,6 +91,7 @@
       "id": "pgda-site06",
       "name": "Site06 Nobile rim 1 (Mazarico 2011 site 6)",
       "short_name": "Nobile Rim",
+      "regions": [],
       "subtitle": "PGDA Site06 · Mazarico 2011 rank 6",
       "category": "pgda",
       "location": {
@@ -106,6 +111,7 @@
       "id": "pgda-site20",
       "name": "Site20 Leibnitz beta plateau (Mazarico 2011 site 20)",
       "short_name": "Leibnitz Beta Plateau",
+      "regions": [],
       "subtitle": "PGDA Site20 · Mazarico 2011 rank 20",
       "category": "pgda",
       "location": {
@@ -125,6 +131,7 @@
       "id": "pgda-site23",
       "name": "Site23 Malapert massif (Mazarico 2011 site 23)",
       "short_name": "Malapert Massif",
+      "regions": [],
       "subtitle": "PGDA Site23 · Mazarico 2011 rank 23",
       "category": "pgda",
       "location": {
@@ -144,6 +151,7 @@
       "id": "pgda-site42",
       "name": "Site42 de Gerlache-Kocher massif (Mazarico 2011 site 42)",
       "short_name": "de Gerlache–Kocher Massif",
+      "regions": [],
       "subtitle": "PGDA Site42 · Mazarico 2011 rank 42",
       "category": "pgda",
       "location": {
