@@ -72,18 +72,17 @@ From [methodology §6](docs/methodology.md#6-validation-results-step-47). Every 
 
 The question box is scored on a labelled eval set (`tests/nl/eval_set.yaml`, 26 items, with a dev and a holdout split) for (a) the structured query and (b) the reason given when it refuses or answers in part.
 
-**Latest scored run: run 6** (2026-11-16): prompt **`p8-draft`**, schema `nl-output-6`, `claude-opus-5-5` at effort low, refusal fallback off, dev split only. Scores are copied from the harness output, [run 6](tests/nl/results/2026-11-16T072624Z_claude_claude-opus-5-5_p8-draft.json); run 5 ([harness output](tests/nl/results/2026-11-16T042950Z_claude_claude-opus-5-5_p6-draft.json)) is the previous result.
+**Latest scored run: run 7** (2026-11-16): prompt **`p9-draft`**, schema `nl-output-6`, `claude-opus-5-5` at effort low, refusal fallback off, dev split only. Scores are copied from the harness output, [run 7](tests/nl/results/2026-11-16T081500Z_claude_claude-opus-5-5_p9-draft.json); run 6 ([harness output](tests/nl/results/2026-11-16T072624Z_claude_claude-opus-5-5_p8-draft.json)) is the previous result.
 
-| Score (dev split) | Run 6, `p8-draft` (latest) | Run 5, `p6-draft` (previous) |
+| Score (dev split) | Run 7, `p9-draft` (latest) | Run 6, `p8-draft` (previous) |
 |---|---|---|
-| (a) structured query | 13 / 15 (of which clarification 1 / 1) | 11 / 13 (of which clarification 1 / 1) |
-| (b) refusal / partial reason | 7 / 13 | 6 / 11 |
-| valid output | 21 / 21 | 19 / 19 |
+| (a) structured query | 13 / 15 (of which clarification 1 / 1) | 13 / 15 (of which clarification 1 / 1) |
+| (b) refusal / partial reason | 8 / 13 | 7 / 13 |
+| valid output | 21 / 21 | 21 / 21 |
 
-- Run 6 covered 21 of the 26 items and run 5 covered 19, all from the dev split. **The holdout split has not been run.**
-- k6 and k7, labelled after run 5, are both correct in run 6.
-- One regression: s13 is answered in part instead of refused (it was correct in run 5).
-- **The live site runs `p8-draft`** ([`lss/nl/prompt.py`](lss/nl/prompt.py)), the prompt scored in run 6. Eval runs turn the refusal fallback off, so every score is the chosen model's own answer; the live question box has it on (a request the model declines on safety grounds is re-run on another model).
+- Both runs covered 21 of the 26 items, all from the dev split. **The holdout split has not been run.**
+- Run 7 fixes s13 (now refused, as labelled; run 6 answered it in part). No other item changed, so there are no regressions from run 6. k6 and k7 are correct in both runs.
+- **The live site runs `p9-draft`** ([`lss/nl/prompt.py`](lss/nl/prompt.py)), the prompt scored in run 7. Eval runs turn the refusal fallback off, so every score is the chosen model's own answer; the live question box has it on (a request the model declines on safety grounds is re-run on another model).
 
 ## Data, references and glossary
 
