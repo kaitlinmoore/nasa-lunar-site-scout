@@ -34,12 +34,14 @@ import {
   Math as CesiumMath,
   SceneTransforms,
   ScreenSpaceEventType,
+  HorizontalOrigin,
   VerticalOrigin,
   Viewer,
 } from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { displayName } from '../siteNames'
+import { type MarkerCircle, poleLabelRightEdge } from './poleLabel'
 import type { Site } from '../api/client'
 
 /** Cesium ion asset: "Cesium Moon" (imagery + LOLA terrain in one 3D tileset). */
@@ -97,6 +99,9 @@ const BUTTON_ZOOM = { inFraction: 0.35, outFraction: 0.6 }
 
 /** Entity id of the "South pole" label; it isn't a site and can't be selected. */
 const SOUTH_POLE_ID = 'south-pole-label'
+
+/** Space between the "South pole" label and the pole point or a site marker, CSS px (poleLabel.ts). */
+const POLE_LABEL_GAP_PX = 4
 
 /** "See details" view: the site from 55° above its horizon, 900 km away, so the region around it stays in view. */
 const FOCUS_VIEW = { pitchDeg: -55, rangeM: 900_000, durationS: 1.2 }
@@ -351,10 +356,20 @@ export default function MoonGlobe({
       markers.push({ entity, position })
     }
 
-    // "South pole" label at 90° S: below its small point (site labels sit above theirs, so
-    // Site01's label, ~60 km away, doesn't collide). Not a site: it can't be selected.
+    // "South pole" label at 90° S, left of its small point and kept clear of the site markers
+    // (placed every frame below; Kaitlin, 2026-11-16). Not a site: it can't be selected.
     const polePosition = Cartesian3.fromDegrees(0, -90)
     const poleColor = Color.fromCssColorString(token('--globe-pole') || 'white')
+    const poleFont = token('--globe-pole-font') || '12px sans-serif'
+    const poleRadius = tokenNumber('--globe-pole-size', 6) / 2 + outlineWidth
+    const poleLabelBox = (() => {
+      const ctx = document.createElement('canvas').getContext('2d')
+      if (ctx) ctx.font = poleFont
+      const m = ctx?.measureText('South pole')
+      const height = m ? m.actualBoundingBoxAscent + m.actualBoundingBoxDescent : 12
+      // + the outline drawn around the text on both sides
+      return { width: (m?.width ?? 70) + 2 * (outlineWidth + 1), height: height + 2 * (outlineWidth + 1) }
+    })()
     const poleEntity = v.entities.add(
       new Entity({
         id: SOUTH_POLE_ID,
@@ -369,13 +384,14 @@ export default function MoonGlobe({
         },
         label: {
           text: 'South pole',
-          font: token('--globe-pole-font') || '12px sans-serif',
+          font: poleFont,
           fillColor: poleColor,
           outlineColor,
           outlineWidth: outlineWidth + 1,
           style: LabelStyle.FILL_AND_OUTLINE,
-          verticalOrigin: VerticalOrigin.TOP,
-          pixelOffset: new Cartesian2(0, labelOffset - 4),
+          verticalOrigin: VerticalOrigin.CENTER,
+          horizontalOrigin: HorizontalOrigin.RIGHT,
+          pixelOffset: new Cartesian2(-(poleRadius + POLE_LABEL_GAP_PX), 0),
           heightReference: HeightReference.CLAMP_TO_3D_TILE,
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
         },
@@ -396,6 +412,28 @@ export default function MoonGlobe({
         }
       }
       if (changed) scene.requestRender()
+    })
+
+    // Keep the "South pole" label clear of the visible site markers (poleLabel.ts).
+    let poleLabelRight = Number.NaN
+    scene.preRender.addEventListener(() => {
+      const pole = SceneTransforms.worldToWindowCoordinates(scene, polePosition)
+      if (!pole || !poleEntity.label) return
+      const circles: MarkerCircle[] = []
+      for (const m of markers) {
+        if (m.entity === poleEntity || !m.entity.show || !m.entity.point) continue
+        const win = SceneTransforms.worldToWindowCoordinates(scene, m.position)
+        if (!win) continue
+        const size = m.entity.point.pixelSize?.getValue() ?? markerSize
+        const outline = m.entity.point.outlineWidth?.getValue() ?? outlineWidth
+        circles.push({ dx: win.x - pole.x, dy: win.y - pole.y, r: size / 2 + outline })
+      }
+      const right = Math.round(poleLabelRightEdge(circles, poleLabelBox, poleRadius, POLE_LABEL_GAP_PX))
+      if (right !== poleLabelRight) {
+        poleLabelRight = right
+        poleEntity.label.pixelOffset = new ConstantProperty(new Cartesian2(right, 0))
+        scene.requestRender()
+      }
     })
 
     // The card: anchored next to the selected site's marker after every render; hidden when the
@@ -445,6 +483,7 @@ export default function MoonGlobe({
     // a chooser listing them (readiness fix P3; the top marker alone hid the others); none -> no
     // card. Pointer cursor over site markers.
     const siteIds = new Set(sites.map((s) => s.id))
+    const siteOrder = new Map(sites.map((s, i) => [s.id, i]))
     const pickedSiteId = (pos: Cartesian2): string | undefined => {
       const picked = scene.pick(pos)
       const id = defined(picked) && picked.id instanceof Entity ? picked.id.id : undefined
@@ -456,7 +495,8 @@ export default function MoonGlobe({
         const id = defined(picked) && picked.id instanceof Entity ? picked.id.id : undefined
         if (id !== undefined && siteIds.has(id) && !ids.includes(id)) ids.push(id)
       }
-      return ids
+      // In site-list order, like the list under the globe (not the order the picks came back in).
+      return ids.sort((a, b) => (siteOrder.get(a) ?? 0) - (siteOrder.get(b) ?? 0))
     }
     const handler = v.screenSpaceEventHandler
     handler.removeInputAction(ScreenSpaceEventType.LEFT_DOUBLE_CLICK) // no entity tracking
