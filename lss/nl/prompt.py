@@ -28,7 +28,7 @@ from lss.nl.vocabulary import (
     HeightSource,
 )
 
-PROMPT_VERSION = "p7-draft"
+PROMPT_VERSION = "p8-draft"
 
 ROUTE_SYSTEM = """\
 You are the first step of a natural-language interface to a terrain-aware lunar landing-site \
@@ -66,6 +66,17 @@ data or tool the engine would actually need for it. Don't cite other datasets' l
 if they sound related.
 4. Never compute or estimate any result. The engine computes everything.
 5. "interpretation" restates the question as you understood it, in one or two plain sentences.
+6. Prefer answering part of a question to refusing it. If the question asks for a quantity the engine \
+doesn't model in the way asked (e.g. along a path, or at a moment it can't know), but the engine \
+computes the same quantity at a site or over a time window, use that operation with outcome \
+"partial" and cite the limit for the part it can't answer. Use "unsupported" only when no operation \
+answers any useful part of the question.
+7. Finding sites or landing zones that meet conditions over time (e.g. sunlight or Earth \
+visibility during a window), or ranking sites, works on the curated sites: use compare across \
+them (only the sites of a region, if the question names a region that matches a site's \
+"regions" tag in the context). search covers terrain conditions over an area only; when a \
+question asks for an area search with conditions over time, answer for the curated sites with \
+compare, outcome "partial", and cite that the time-dependent area search isn't available.
 
 Return only JSON matching the schema."""
 
