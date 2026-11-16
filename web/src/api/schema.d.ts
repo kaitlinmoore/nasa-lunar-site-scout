@@ -508,7 +508,7 @@ export interface components {
             not_served?: components["schemas"]["CompareNotServed"][];
             /**
              * Compared
-             * @description Every compared scenario in order: the request's scenarios, then one per `across` site (contract 0.10.0). Indexes in not_served and filtered_out refer to this list
+             * @description Every compared scenario in order: the request's scenarios, then one per `across` site (contract 0.10.0; always filled). Indexes in not_served and filtered_out refer to this list; items are matched to it by scenario_key
              */
             compared?: components["schemas"]["Scenario"][];
             /**
@@ -1733,9 +1733,10 @@ export interface components {
         };
         /**
          * SunElevationBand
-         * @description Fraction of the window with the Sun's disc-centre elevation in [min_deg, max_deg] (k7): from stream
-         *     A's Sun-elevation histogram in the served files (methodology 5.3); null (not computed) where a result has
-         *     none.
+         * @description Fraction of the window with the Sun's disc-centre apparent elevation in [min_deg, max_deg] (k7). The
+         *     elevation is above the local horizontal plane at the site, whether or not terrain hides the Sun (the
+         *     terrain horizon is not applied), as for PowerMetrics.sun_elevation_deg. From stream A's Sun-elevation
+         *     histogram in the served files (methodology 5.3); null (not computed) where a result has none.
          */
         SunElevationBand: {
             /**
