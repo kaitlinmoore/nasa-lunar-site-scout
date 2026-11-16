@@ -2,7 +2,7 @@
 // App shell: header (data source, contract versions), the current view, footer.
 // Views (src/route.ts): the globe (default, C7a), a site's screen (`?site=<id>`) and the saved
 // items + comparison (`?view=saved`, C6).
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import {
   API_BASE,
   type Scenario,
@@ -28,6 +28,9 @@ import { navigate, type Route, routeHref, useRoute } from './route'
 import { useUsingStaticCopy } from './api/staticFallback'
 import SavedView from './saved/SavedView'
 import NlBox from './nl/NlBox'
+
+// 2D site view (C5): OpenLayers + proj4 load as their own chunk, only where the map is shown.
+const TerrainSection = lazy(() => import('./terrain/TerrainSection'))
 import { displayName, SiteNamesContext, siteNames, subtitleOf } from './siteNames'
 import { useSaved } from './saved/store'
 import SiteScreen from './SiteScreen'
@@ -315,6 +318,19 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
           <SiteScreen data={data}>{skySection}</SiteScreen>
         </>
       )}
+      {/* 2D site view (C5): fixture mode only, from stream A's pilot images on the dev server, until
+          C api serves GET /api/terrain/views (contract 0.13.0). */}
+      {source === 'fixtures' &&
+        (import.meta.env.DEV ? (
+          <Suspense fallback={<p className="muted">Loading the terrain map…</p>}>
+            <TerrainSection key={site.id} site={site} />
+          </Suspense>
+        ) : (
+          <section className="card">
+            <h2>Terrain map</h2>
+            <p className="muted">The terrain map's pilot images are served by the dev server only.</p>
+          </section>
+        ))}
       {/* Questions (C7b), below the dashboard; a fresh box per site. It sends the chosen scenario. */}
       <NlBox key={site.id} site={site} scenario={entry ? entry.scenario : null} source={source} />
     </>
