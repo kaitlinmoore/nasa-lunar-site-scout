@@ -140,6 +140,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/nl": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Nl */
+        post: operations["nl_api_nl_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -337,7 +354,7 @@ export interface components {
         CompareResponse: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -428,7 +445,7 @@ export interface components {
         DatasetsResponse: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -518,7 +535,7 @@ export interface components {
         FeaturesResponse: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -562,7 +579,7 @@ export interface components {
         HealthResponse: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -584,7 +601,7 @@ export interface components {
         HorizonProfile: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -632,7 +649,7 @@ export interface components {
         Job: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -701,7 +718,7 @@ export interface components {
         LocateResponse: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -762,7 +779,7 @@ export interface components {
         MetricsResponse: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -786,7 +803,7 @@ export interface components {
         NLAnswer: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -795,11 +812,8 @@ export interface components {
              * @default false
              */
             _placeholder: boolean;
-            /**
-             * Note
-             * @default null
-             */
-            _note: string | null;
+            /** Note */
+            _note?: string | null;
             /**
              * Interpretation
              * @description Echo of how the request was understood
@@ -809,9 +823,8 @@ export interface components {
             /**
              * Result
              * @description The operation's response body, as the endpoint returns it
-             * @default null
              */
-            result: {
+            result?: {
                 [key: string]: unknown;
             } | null;
             /**
@@ -832,7 +845,7 @@ export interface components {
         NLClarification: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -841,11 +854,8 @@ export interface components {
              * @default false
              */
             _placeholder: boolean;
-            /**
-             * Note
-             * @default null
-             */
-            _note: string | null;
+            /** Note */
+            _note?: string | null;
             /**
              * Interpretation
              * @description Echo of how the request was understood
@@ -861,19 +871,15 @@ export interface components {
         NLRequest: {
             /** Text */
             text: string;
-            /**
-             * Selected Site Id
-             * @default null
-             */
-            selected_site_id: string | null;
-            /** @default null */
-            selected_scenario: components["schemas"]["Scenario"] | null;
+            /** Selected Site Id */
+            selected_site_id?: string | null;
+            selected_scenario?: components["schemas"]["Scenario"] | null;
         };
         /** NLUnsupported */
         NLUnsupported: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -882,18 +888,14 @@ export interface components {
              * @default false
              */
             _placeholder: boolean;
-            /**
-             * Note
-             * @default null
-             */
-            _note: string | null;
+            /** Note */
+            _note?: string | null;
             unsupported: components["schemas"]["Limitation"];
             /**
              * Interpretation
              * @description Echo of how the request was understood
-             * @default null
              */
-            interpretation: string | null;
+            interpretation?: string | null;
         };
         /** NoTerrainDetail */
         NoTerrainDetail: {
@@ -1022,7 +1024,7 @@ export interface components {
         ProximityResponse: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -1048,6 +1050,26 @@ export interface components {
              * @default null
              */
             total: number | null;
+        };
+        /** RateLimitedDetail */
+        RateLimitedDetail: {
+            /**
+             * Reason
+             * @description Plain-language explanation, suitable to show to visitors
+             */
+            reason: string;
+            /**
+             * Retry After S
+             * @description Seconds until this client may ask again
+             */
+            retry_after_s: number;
+        };
+        /**
+         * RateLimitedError
+         * @description 429 from POST /api/nl: this client asked too many live questions (contract 0.8.0).
+         */
+        RateLimitedError: {
+            detail: components["schemas"]["RateLimitedDetail"];
         };
         /** RootModel[Union[CompareNotServedError, InvalidRequestError]] */
         RootModel_Union_CompareNotServedError__InvalidRequestError__: components["schemas"]["CompareNotServedError"] | components["schemas"]["InvalidRequestError"];
@@ -1170,7 +1192,7 @@ export interface components {
         SeriesResponse: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -1271,7 +1293,7 @@ export interface components {
         SiteSummaryResponse: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -1309,7 +1331,7 @@ export interface components {
         SitesResponse: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -1361,7 +1383,7 @@ export interface components {
         StaticIndex: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -1429,7 +1451,7 @@ export interface components {
         TerrainResponse: {
             /**
              * Contract Version
-             * @default 0.7.0
+             * @default 0.8.0
              */
             contract_version: string;
             /**
@@ -1788,6 +1810,57 @@ export interface operations {
                 };
             };
             /** @description No usable precomputed results are installed */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnavailableError"];
+                };
+            };
+        };
+    };
+    nl_api_nl_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NLRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NLAnswer"] | components["schemas"]["NLUnsupported"] | components["schemas"]["NLClarification"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too many live questions from this client */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateLimitedError"];
+                };
+            };
+            /** @description Live questions unavailable (daily spend cap reached, or the model can't be reached) */
             503: {
                 headers: {
                     [name: string]: unknown;
