@@ -50,6 +50,7 @@ from lss.nl.vocabulary import (
     SAFE_NOT_MEASURED_TEXT,
     SLOPE_FILTER_METRIC,
     SLOPE_KEYS,
+    SUN_BAND_TEXT,
     UNIT_HEIGHT_PROXIES_M,
     HeightSource,
     SiteSource,
@@ -331,6 +332,13 @@ def normalize_query(query: NLQuery, ctx: NLContext) -> StructuredQuery:
     return StructuredQuery(operation=op, params=model.model_dump(mode="json"))
 
 
+def _uses_sun_band(params: dict[str, Any]) -> bool:
+    """Whether a compare filters or ranks by a Sun elevation band (contract SunElevationBand)."""
+    metrics = [f.get("metric") for f in params.get("filters") or []]
+    metrics.append((params.get("rank") or {}).get("metric"))
+    return any(isinstance(m, dict) and m.get("kind") == "sun_elevation_band_fraction" for m in metrics)
+
+
 def _fill_from_selection(value: Any, sel: dict[str, Any], height: bool, window: bool) -> Any:
     """Copy the selected scenario's unit height and/or window (start, end, step) into every place in the
     params that has them, whatever the model wrote there (B's G2 recheck, 2026-11-16: a dropped step made a
@@ -407,6 +415,8 @@ def validate_output(raw: str | Mapping[str, Any] | NLOutput, ctx: NLContext) -> 
     if output.window_source == WindowSource.default and structured is not None:
         start = _windows(structured.params)[0][0]
         assumptions.insert(0, default_window_text(start.date().isoformat()))
+    if structured is not None and _uses_sun_band(structured.params):
+        assumptions.append(SUN_BAND_TEXT)
     sel = ctx.selected_scenario
     if output.window_source == WindowSource.selected_scenario and sel is not None:
         assumptions.insert(0, selected_window_text(sel.window_start, sel.window_end, sel.step))

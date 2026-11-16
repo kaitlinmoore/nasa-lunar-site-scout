@@ -143,6 +143,13 @@ def selected_window_text(start: datetime, end: datetime, step: timedelta) -> str
     return f"Window: {_when(start)} – {_when(end)} UTC, {step_text(step)}, from the selected scenario."
 
 
+# Disclosure for a Sun elevation band in a compare filter or rank (Fable G2 review m5, 2026-11-16).
+# Claude-drafted, pending the project author's review.
+SUN_BAND_TEXT = (
+    "Sun elevation: measured above the local horizontal at each site, whether or not terrain hides the Sun."
+)
+
+
 def default_window_text(start_iso_date: str) -> str:
     return f"Window: 30 days from {start_iso_date} 00:00 UTC (default; no dates were given)."
 

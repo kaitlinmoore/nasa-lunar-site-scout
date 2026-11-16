@@ -715,3 +715,18 @@ def test_step_text():
 
     assert step_text(timedelta(hours=1)) == "every hour" and step_text(timedelta(hours=6)) == "every 6 hours"
     assert step_text(timedelta(minutes=30)) == "every 30 minutes"
+
+
+def test_sun_band_answers_disclose_the_horizontal_not_the_terrain():
+    """Fable G2 review m5: band elevations are above the local horizontal, terrain or not."""
+    from lss.nl.vocabulary import SUN_BAND_TEXT
+
+    band = {"min_deg": 10, "max_deg": 25}
+    ctx = default_context()
+    out = ranking_output(
+        params={"filters": [{"metric": band, "op": "gt", "value": 0}], "rank": {"metric": band}}
+    )
+    resp = to_response(validate_output(out, ctx), ctx)
+    assert SUN_BAND_TEXT in resp.assumptions and "whether or not terrain hides the Sun" in SUN_BAND_TEXT
+    plain = to_response(validate_output(ranking_output(), ctx), ctx)  # ranks by illumination: no band
+    assert SUN_BAND_TEXT not in plain.assumptions

@@ -560,9 +560,10 @@ class MetricName(StrEnum):
 
 
 class SunElevationBand(Model):
-    """Fraction of the window with the Sun's disc-centre elevation in [min_deg, max_deg] (k7): from stream
-    A's Sun-elevation histogram in the served files (methodology 5.3); null (not computed) where a result has
-    none."""
+    """Fraction of the window with the Sun's disc-centre apparent elevation in [min_deg, max_deg] (k7). The
+    elevation is above the local horizontal plane at the site, whether or not terrain hides the Sun (the
+    terrain horizon is not applied), as for PowerMetrics.sun_elevation_deg. From stream A's Sun-elevation
+    histogram in the served files (methodology 5.3); null (not computed) where a result has none."""
 
     kind: Literal["sun_elevation_band_fraction"] = "sun_elevation_band_fraction"
     min_deg: float = Field(ge=-90.0, le=90.0)
