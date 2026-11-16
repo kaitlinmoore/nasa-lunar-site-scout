@@ -107,7 +107,7 @@ DEFAULT_WINDOW = timedelta(days=30)
 # Ranking questions with no dates use the precomputed year (Kaitlin, 2026-11-16, C3 design option C5):
 # exactly stream A's served 2028 window and step. Single-site questions keep DEFAULT_WINDOW (D-window).
 RANKING_WINDOW = (datetime(2028, 1, 1, tzinfo=UTC), datetime(2029, 1, 1, tzinfo=UTC), timedelta(hours=6))
-# Claude-drafted, pending the project author's review.
+# Claude-drafted, approved by the project author (2026-11-16).
 RANKING_WINDOW_TEXT = (
     "Window: the year 2028, the precomputed year (default for rankings; no dates were given)."
 )

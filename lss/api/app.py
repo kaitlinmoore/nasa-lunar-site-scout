@@ -111,7 +111,7 @@ NO_TERRAIN_REASON = "No terrain data in this version covers this location."
 # SUMMARY_NO_TERRAIN_REASON (inside a site summary, no list): Claude-drafted, approved by her 2026-11-16.
 TERRAIN_NOT_SERVED_REASON = "Slope statistics are available only for the locations and radii listed here."
 # Inside an NL answer nothing is listed, so the reasons that refer to a list are replaced by list-free ones
-# (stream B, 2026-11-16; as for the comparison). HORIZON_NO_LIST_REASON: Claude-drafted, pending review.
+# (stream B, 2026-11-16; as for the comparison). HORIZON_NO_LIST_REASON: Claude-drafted, approved.
 HORIZON_NO_LIST_REASON = "This version has no precomputed horizon profile for this location and unit height."
 SUMMARY_NO_TERRAIN_REASON = "This version has no precomputed slope statistics for this location and radius."
 UNAVAILABLE_REASON = (
