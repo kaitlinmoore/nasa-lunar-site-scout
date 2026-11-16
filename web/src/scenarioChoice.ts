@@ -57,15 +57,36 @@ export function siteWindows(entries: ScenarioEntry[], siteId: string): WindowOpt
 
 export type Choice = { windowKey: string; unit_height_m: number }
 
-/** The default: the first window (shortest, most detailed) at its lowest height. */
+/**
+ * The window the picker opens on when the site has it (Kaitlin, 2026-11-16): the 30 days from
+ * 15 May 2028 (any step). The other windows are still offered.
+ */
+export const PREFERRED_WINDOW = { start: '2028-05-15T00:00:00Z', days: 30 }
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+function isPreferred(w: WindowOption): boolean {
+  const start = Date.parse(PREFERRED_WINDOW.start)
+  return (
+    Date.parse(w.window_start) === start &&
+    Date.parse(w.window_end) === start + PREFERRED_WINDOW.days * DAY_MS
+  )
+}
+
+/** The window to open on: the preferred one if the site has it, else the shortest (the first). */
+function defaultWindow(windows: WindowOption[]): WindowOption | undefined {
+  return windows.find(isPreferred) ?? windows[0]
+}
+
+/** The default: the preferred window (else the shortest) at its lowest height. */
 export function defaultChoice(windows: WindowOption[]): Choice | null {
-  const w = windows[0]
+  const w = defaultWindow(windows)
   return w && w.heights.length > 0 ? { windowKey: w.key, unit_height_m: w.heights[0].unit_height_m } : null
 }
 
 /**
- * The chosen window and height, made valid: an unknown window falls back to the default, and a
- * height the window doesn't have falls back to that window's lowest height.
+ * The chosen window and height, made valid: an unknown window falls back to the default window,
+ * and a height the window doesn't have falls back to that window's lowest height.
  */
 export function resolveChoice(
   windows: WindowOption[],
@@ -74,7 +95,8 @@ export function resolveChoice(
   const fallback = defaultChoice(windows)
   const want = choice ?? fallback
   if (!want) return null
-  const window = windows.find((w) => w.key === want.windowKey) ?? windows[0]
+  const window = windows.find((w) => w.key === want.windowKey) ?? defaultWindow(windows)
+  if (!window) return null
   const height = window.heights.find((h) => h.unit_height_m === want.unit_height_m) ?? window.heights[0]
   return height ? { window, entry: height.entry } : null
 }
