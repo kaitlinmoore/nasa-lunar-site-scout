@@ -117,8 +117,8 @@ class Site(Model):
     name: str = Field(description="Full technical name, e.g. 'Site01 Connecting ridge (Barker 2021 RoI 4)'")
     short_name: str | None = Field(
         default=None,
-        description="Short display name, e.g. 'Connecting ridge' (contract 0.9.0; Kaitlin, 2026-11-16). "
-        "Null: show name",
+        description="Short display name in title case, e.g. 'Connecting Ridge' (contract 0.9.0; Kaitlin, "
+        "2026-11-16). Null: show name",
     )
     subtitle: str | None = Field(
         default=None, description="Small line under the display name, e.g. 'PGDA Site01 · Barker 2021 RoI 4'"

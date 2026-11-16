@@ -7,7 +7,7 @@ round numbers, flagged with `_placeholder: true` and a `_note`. They exist so th
 and NL streams can build against the contract before the engine produces real results.
 They are NOT computed results and must never be presented as such.
 
-Scope (C1 thin slice, handoff 03): one PGDA site (Site01, Connecting ridge), one unit
+Scope (C1 thin slice, handoff 03): one PGDA site (Site01, Connecting Ridge), one unit
 height (1 m, chosen by Kaitlin to match Barker et al. 2021), one window (30 days from
 2028-05-15 UTC, covering one full 29.53-day synodic month; chosen by Kaitlin so the window has
 shadow periods: from mid-July to mid-January every 30-day window is fully sunlit at RoI 4).

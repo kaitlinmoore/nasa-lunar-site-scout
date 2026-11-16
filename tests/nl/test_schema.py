@@ -39,7 +39,7 @@ def metrics_output(**overrides: Any) -> dict[str, Any]:
     scenario = fixture("nl_answer.json")["structured_query"]["params"]["scenario"]
     out = {
         "outcome": "answer",
-        "interpretation": "Power and Earth-visibility metrics for Connecting ridge (Site01).",
+        "interpretation": "Power and Earth-visibility metrics for Connecting Ridge (Site01).",
         "query": {
             "operation": "metrics",
             "params": {"scenario": {**scenario, "location": {"site_id": "pgda-site01"}}},
@@ -244,7 +244,7 @@ def test_sites_query_validates_category(ctx):
 def default_output(start="2026-11-15T00:00:00Z", end="2026-12-15T00:00:00Z", height=5.0):
     return {
         "outcome": "answer",
-        "interpretation": "Power and Earth-visibility metrics for Connecting ridge.",
+        "interpretation": "Power and Earth-visibility metrics for Connecting Ridge.",
         "query": {
             "operation": "metrics",
             "params": {
@@ -297,7 +297,7 @@ def test_window_source_needed_when_params_have_a_window(ctx):
 def proximity_output(radius=10_000.0, radius_source="nearby_default") -> dict[str, Any]:
     return {
         "outcome": "answer",
-        "interpretation": "Craters near Connecting ridge.",
+        "interpretation": "Craters near Connecting Ridge.",
         "query": {
             "operation": "proximity",
             "params": {"location": {"site_id": "pgda-site01"}, "types": ["crater"], "radius_m": radius},
@@ -410,7 +410,7 @@ def fixture_unsupported_output() -> dict[str, Any]:
 def terrain_output(radius=1000.0, radius_source="around_default") -> dict[str, Any]:
     return {
         "outcome": "answer",
-        "interpretation": "Slope at and around Connecting ridge.",
+        "interpretation": "Slope at and around Connecting Ridge.",
         "query": {
             "operation": "terrain",
             "params": {"location": {"site_id": "pgda-site01"}, "radius_m": radius},
@@ -429,7 +429,7 @@ def test_around_default_is_checked_and_disclosed(ctx):
 def test_site_summary_scenario_must_be_at_the_site(ctx):
     out = {
         "outcome": "answer",
-        "interpretation": "Summary of Connecting ridge.",
+        "interpretation": "Summary of Connecting Ridge.",
         "query": {
             "operation": "site_summary",
             "params": {
@@ -510,7 +510,7 @@ def test_selected_site_is_checked_and_disclosed_by_code():
 # ------------------------------------------------ short display names (Kaitlin, 2026-11-16)
 
 
-def _ctx_with_short_name(short="Connecting ridge"):
+def _ctx_with_short_name(short="Connecting Ridge"):
     from dataclasses import replace
 
     base = default_context(selected_site_id="pgda-site01")
@@ -530,7 +530,7 @@ def test_model_sees_short_names_and_subtitles():
     entry = next(
         s for s in _context(ctx, date(2026, 11, 16), registry=False)["sites"] if s["site_id"] == "pgda-site01"
     )
-    assert entry["name"] == "Connecting ridge" and entry["subtitle"] == "PGDA Site01 · Barker 2021 RoI 4"
+    assert entry["name"] == "Connecting Ridge" and entry["subtitle"] == "PGDA Site01 · Barker 2021 RoI 4"
     plain = next(s for s in _context(default_context(), date(2026, 11, 16), registry=False)["sites"])
     assert plain["name"] == default_context().sites[0].name  # no short name yet: the full name
 
@@ -539,7 +539,7 @@ def test_selected_site_disclosure_uses_the_short_name():
     ctx = _ctx_with_short_name()
     out = {**terrain_output(), "site_source": "selected_site"}
     resp = to_response(validate_output(out, ctx), ctx)
-    assert resp.assumptions[0] == "Using the selected site, Connecting ridge."
+    assert resp.assumptions[0] == "Using the selected site, Connecting Ridge."
     loc = resp.structured_query.params["location"]
     assert loc["name"] == "Site01 Connecting ridge (Barker 2021 RoI 4)"  # results keep the full name
 
@@ -550,6 +550,6 @@ def test_site_model_fields_are_optional():
     s = default_context().sites[0]
     assert s.short_name is None and display_name(s) == s.name
     assert (
-        display_name(Site.model_validate({**s.model_dump(), "short_name": "Connecting ridge"}))
-        == "Connecting ridge"
+        display_name(Site.model_validate({**s.model_dump(), "short_name": "Connecting Ridge"}))
+        == "Connecting Ridge"
     )

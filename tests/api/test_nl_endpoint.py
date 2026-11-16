@@ -30,7 +30,7 @@ TODAY = date(2026, 11, 15)
 
 SERVED_METRICS = {
     "outcome": "answer",
-    "interpretation": "Power and Earth-visibility metrics at Connecting ridge, 1 m, 15 May - 14 Jun 2028.",
+    "interpretation": "Power and Earth-visibility metrics at Connecting Ridge, 1 m, 15 May - 14 Jun 2028.",
     "query": {
         "operation": "metrics",
         "params": {
@@ -47,7 +47,7 @@ SERVED_METRICS = {
 }
 DEFAULT_METRICS = {
     "outcome": "answer",
-    "interpretation": "Power metrics at Connecting ridge.",
+    "interpretation": "Power metrics at Connecting Ridge.",
     "query": {
         "operation": "metrics",
         "params": {
@@ -84,7 +84,7 @@ CLARIFY = {
 }
 PROXIMITY = {
     "outcome": "answer",
-    "interpretation": "Craters within 5 km of Connecting ridge.",
+    "interpretation": "Craters within 5 km of Connecting Ridge.",
     "query": {
         "operation": "proximity",
         "params": {"location": SITE, "types": ["crater"], "radius_m": 5000.0},
@@ -172,7 +172,7 @@ def test_unserved_scenario_is_a_limitation_with_the_echo_and_disclosures(setup):
     assert body.result is None
     assert body.limitations[-1].reason == app_module.NOT_SERVED_REASON
     assert PROXY_ASSUMPTION_TEXT[HeightSource.default] in body.assumptions
-    assert body.interpretation == "Power metrics at Connecting ridge."
+    assert body.interpretation == "Power metrics at Connecting Ridge."
 
 
 def test_refusal_and_clarification(setup):

@@ -119,7 +119,7 @@ def test_site_summary_says_what_is_missing(client):
 def test_nl_terrain_question_gets_the_statistics(client):
     out = {
         "outcome": "answer",
-        "interpretation": "Slope at and around Connecting ridge.",
+        "interpretation": "Slope at and around Connecting Ridge.",
         "query": {
             "operation": "terrain",
             "params": {"location": {"site_id": "pgda-site01"}, "radius_m": 1000.0},
