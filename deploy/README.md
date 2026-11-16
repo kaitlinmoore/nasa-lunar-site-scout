@@ -92,6 +92,15 @@ Expected: both calls show the same `used_for_rate_limit` (your own address), and
 **TLS.** The anthropic SDK's HTTP client (httpx2) verifies against the OS CA store on Linux; the `Dockerfile`
 fails the build if the image has no CA certificates (`lss.api.nl.ca_certificates_available`).
 
+## Terrain images for the 2D site view (contract 0.13.0)
+
+Stream A writes them to `LSS_DATA_DIR/cache/terrain_view/<site id>/<view>/` (`view.json`, `hillshade.png`,
+`slope.png`; views `2km` and `20km`; about 5.6 MB for the 8 PGDA sites). `deploy-api.sh` stages the folder into
+`bundle/terrain_view/` and checks it with the API's loader (8-bit greyscale PNGs of the stated size, no
+colour-profile chunks, centre within one pixel of the site's served point); the `Dockerfile` copies it to
+`/data/cache/terrain_view`. `deploy-web.sh` publishes the same files in the static copy
+(`terrain_view/…`, `terrain_views.json`) and checks the list against the deployed API.
+
 ## Cached showcase answers (C8)
 
 The project owner chooses the showcase questions (candidates: `reference/logs/c8-candidates.md`, private).

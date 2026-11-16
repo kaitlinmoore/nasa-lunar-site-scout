@@ -21,8 +21,13 @@ rm -rf bundle/nl
 mkdir -p bundle/nl
 touch bundle/nl/.keep
 if ls "$NL_CACHE_SRC"/*.json >/dev/null 2>&1; then cp "$NL_CACHE_SRC"/*.json bundle/nl/; fi
+# Terrain images for the 2D site view (contract 0.13.0), staged the same way (folders per site and view).
+rm -rf bundle/terrain_view
+mkdir -p bundle/terrain_view
+touch bundle/terrain_view/.keep
+if [ -d "$TERRAIN_VIEW_SRC" ]; then cp -r "$TERRAIN_VIEW_SRC"/. bundle/terrain_view/; fi
 # Check everything exactly as the API will load it (contract version, keys, not placeholder).
-uv run python -c "from pathlib import Path; from lss.api.served import load_all, load_terrain; from lss.api.nl import load_cache_entries; s = load_all(Path('bundle/served')); t = load_terrain(Path('bundle/terrain')); n = load_cache_entries(Path('bundle/nl')); assert s, 'no served results staged'; assert t, 'no slope statistics staged'; print(f'Staged {len(s)} served results, {len(t)} slope statistics and {len(n)} cached NL answers')"
+uv run python -c "from pathlib import Path; from lss.api.served import load_all, load_terrain; from lss.api.nl import load_cache_entries; from lss.api.terrain_views import load_views; from lss.registry.sites import load_sites; s = load_all(Path('bundle/served')); t = load_terrain(Path('bundle/terrain')); n = load_cache_entries(Path('bundle/nl')); v = load_views(Path('bundle/terrain_view'), sites=load_sites()); assert s, 'no served results staged'; assert t, 'no slope statistics staged'; print(f'Staged {len(s)} served results, {len(t)} slope statistics, {len(n)} cached NL answers and {len(v)} terrain views')"
 
 # The NL key comes from Secret Manager (never a plain env var or a file in the image).
 if ! gcloud secrets describe "$NL_SECRET" --project "$GCP_PROJECT" >/dev/null 2>&1; then

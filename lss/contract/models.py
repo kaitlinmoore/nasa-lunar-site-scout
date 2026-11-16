@@ -33,7 +33,7 @@ from pydantic import (
     model_validator,
 )
 
-CONTRACT_VERSION = "0.12.0"
+CONTRACT_VERSION = "0.13.0"
 
 Latitude = Annotated[float, Field(ge=-90.0, le=90.0, description="Planetocentric latitude, deg")]
 Longitude = Annotated[
@@ -241,11 +241,93 @@ class LocateResponse(Response):
 
 
 class TerrainViewLayer(StrEnum):
-    """`layer` query values for GET /api/terrain/view (the response is an image)."""
+    """Layers of the 2D site view's terrain images (GET /api/terrain/view/{site_id}/{view}/{layer}.png).
+    Only hillshade and slope are precomputed (Kaitlin, 2026-11-16); elevation is reserved."""
 
     hillshade = "hillshade"
     slope = "slope"
     elevation = "elevation"
+
+
+# ---- terrain images for the 2D site view (contract 0.13.0; A's cache/terrain_view/, methodology 5.7) ----
+
+
+class TerrainViewSource(Model):
+    dataset_id: str = Field(description="Registry id of the map the images were made from")
+    url: str
+    source_pixel_m: float | None = Field(default=None, description="The source map's pixel size, m")
+    block_mean: int | None = Field(
+        default=None, description="Source pixels averaged per image pixel, per axis"
+    )
+
+
+class TerrainViewHillshade(Model):
+    light_azimuth_map_deg: float = Field(description="Light direction, deg clockwise from map up (grid +y)")
+    light_altitude_deg: float
+    note: str | None = None
+
+
+class TerrainViewSlope(Model):
+    definition: str
+    class_edges_deg: list[float] = Field(
+        description="Upper edges of the classes; the last class is open-ended"
+    )
+    class_labels: list[str] = Field(description="One label per class value 0..n (PNG pixel value = class)")
+    nodata: int = Field(description="PNG pixel value with no slope (show transparent)")
+    palette_light: list[str] = Field(description="Suggested colour per class, light theme (stream A)")
+    palette_dark: list[str] = Field(description="Suggested colour per class, dark theme (stream A)")
+
+
+class TerrainView(Model):
+    """One precomputed square view around a site. The images are 8-bit greyscale PNGs (hillshade: shade;
+    slope: class number) with no colour-profile chunks, so canvas reads the values exactly. The image's top
+    edge is the polar stereographic grid's +y (`map_up`), not geographic north."""
+
+    site_id: str
+    view: str = Field(description="View name, e.g. '2km' (±1 km) or '20km' (±10 km)")
+    center: Location = Field(
+        description="The site's served point; the bounds snap to the pixel grid (≤ 1 px)"
+    )
+    bounds_ps_m: list[float] = Field(
+        min_length=4, max_length=4, description="[left, bottom, right, top] in the projection below, m"
+    )
+    proj4: str = Field(
+        description="The images' projection (south polar stereographic on the 1737.4 km sphere)"
+    )
+    map_up: str
+    pixel_m: float
+    width: int = Field(gt=0)
+    height: int = Field(gt=0)
+    layers: list[TerrainViewLayer] = Field(
+        description="Images available: GET /api/terrain/view/{site_id}/{view}/{layer}.png (static copy: "
+        "terrain_view/{site_id}/{view}/{layer}.png)"
+    )
+    source: TerrainViewSource
+    hillshade: TerrainViewHillshade | None = None
+    slope: TerrainViewSlope | None = None
+
+
+class TerrainViewsQuery(Model):
+    """Query parameters of GET /api/terrain/views."""
+
+    site_id: str | None = Field(default=None, description="Only this site's views")
+
+
+class TerrainViewsResponse(Response):
+    """Precomputed terrain views, by site in the site list's order, then by view size (smallest first).
+    Sites without views (e.g. off the polar maps) are simply absent."""
+
+    views: list[TerrainView]
+
+
+class NotFoundDetail(Model):
+    reason: str = Field(description="Plain-language explanation, suitable to show to visitors")
+
+
+class NotFoundError(Model):
+    """404 from GET /api/terrain/view/...: no such precomputed image."""
+
+    detail: NotFoundDetail
 
 
 # ------------------------------------------------------------------------ horizon
@@ -708,6 +790,10 @@ class CompareResponse(Response):
         default_factory=list, description="Groups of scenario_keys with equal rank values, in rank order"
     )
     beyond_limit: int = Field(default=0, ge=0, description="Passing scenarios cut by rank.limit")
+    compared_keys: list[str] = Field(
+        default_factory=list,
+        description="Scenario.key() of each entry of `compared`, same order (contract 0.13.0; stream B)",
+    )
 
 
 # ---------------------------------------------------------------------- features
@@ -1190,6 +1276,11 @@ class StaticIndex(Response):
         default_factory=list, description="Precomputed slope statistics (contract 0.9.0)"
     )
     sites: str = Field(description="Path of the SitesResponse file")
+    terrain_views: str | None = Field(
+        default=None,
+        description="Path of the TerrainViewsResponse file; images at "
+        "terrain_view/{site_id}/{view}/{layer}.png (0.13.0)",
+    )
     nl_answers: list[StaticNLEntry] = Field(
         default_factory=list, description="Cached showcase answers, the same as POST /api/nl returns (0.12.0)"
     )

@@ -51,8 +51,9 @@ from lss.metrics.elevation_band import band_fraction as elevation_band_fraction
 #   0.7.0 and 0.8.0 dropped 2026-11-16: A regenerated every served and terrain file at 0.9.0 (RA5).
 #   0.10.0 and 0.11.0 dropped 2026-11-16: A regenerated every served file at 0.12.0 (format 3).
 #   0.9.0 dropped 2026-11-16: A regenerated the 16 terrain statistics at 0.12.0 (RA11).
-#   Empty now: every installed served and terrain file is at the current version.
-COMPATIBLE_VERSIONS: frozenset[str] = frozenset()
+#   0.12.0: every installed served and terrain file and cached NL answer (contract 0.13.0 only added the
+#   terrain views, CompareResponse.compared_keys and StaticIndex.terrain_views); drop once regenerated.
+COMPATIBLE_VERSIONS = frozenset({"0.12.0"})
 
 
 class ServedFileError(ValueError):

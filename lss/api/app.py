@@ -13,6 +13,8 @@ nothing is computed live, so the API needs no DEMs, kernels or numba.
 - `POST /api/compare`: metrics for every served scenario of the request; the rest are listed as not served.
 - `POST /api/terrain`: precomputed slope statistics for a location and radius (stream A's cache/terrain/).
 - `POST /api/site_summary`: slope statistics, metrics for a served scenario, and (later, S3) nearby features.
+- `GET /api/terrain/views`, `GET /api/terrain/view/{site_id}/{view}/{layer}.png`: precomputed terrain
+  images for the 2D site view (stream A's cache/terrain_view/; contract 0.13.0).
 
 A valid request with no precomputed result gets a 422 with a plain-language reason and what is served; no
 usable results installed gets a 503 (contract error models in lss.contract).
@@ -24,9 +26,11 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from lss.api import compare as compare_rules
 from lss.api import nl as nl_service
@@ -44,6 +48,7 @@ from lss.api.served import (
     terrain_dir,
     terrain_key,
 )
+from lss.api.terrain_views import ServedView, TerrainViewError, load_views
 from lss.config import get_settings
 from lss.contract import (
     CONTRACT_VERSION,
@@ -65,6 +70,8 @@ from lss.contract import (
     NLRequest,
     NLUnsupported,
     NoTerrainDetail,
+    NotFoundDetail,
+    NotFoundError,
     NotServedDetail,
     Operation,
     RateLimitedError,
@@ -85,6 +92,9 @@ from lss.contract import (
     TerrainRequest,
     TerrainResponse,
     TerrainUnprocessableError,
+    TerrainViewLayer,
+    TerrainViewsQuery,
+    TerrainViewsResponse,
     UnavailableDetail,
     UnavailableError,
     UnprocessableError,
@@ -168,6 +178,43 @@ def terrain_for(req: TerrainRequest) -> TerrainResponse:
         served=[TerrainOption(location=t.body.location, radius_m=t.body.radius_m) for t in found.values()],
     )
     raise HTTPException(422, detail=detail.model_dump(mode="json"))
+
+
+# Claude-drafted (2026-11-16), pending the project author's review.
+NO_TERRAIN_IMAGE_REASON = "This version has no precomputed terrain image for this site, view and layer."
+
+
+@lru_cache(maxsize=1)
+def _terrain_views() -> dict[tuple[str, str], ServedView]:
+    return load_views(sites=_sites().sites)
+
+
+def terrain_views_for(query: TerrainViewsQuery) -> TerrainViewsResponse:
+    try:
+        views = _terrain_views()
+    except TerrainViewError as e:
+        raise unavailable(f"precomputed terrain images are unusable: {e}") from e
+    return TerrainViewsResponse(
+        views=[sv.view for sv in views.values() if query.site_id is None or sv.view.site_id == query.site_id]
+    )
+
+
+def terrain_image(site_id: str, view: str, layer: str) -> Path:
+    try:
+        views = _terrain_views()
+    except TerrainViewError as e:
+        raise unavailable(f"precomputed terrain images are unusable: {e}") from e
+    sv = views.get((site_id, view))
+    path = (
+        sv.image(TerrainViewLayer(layer))
+        if sv is not None and layer in TerrainViewLayer._value2member_map_
+        else None
+    )
+    if path is None:
+        raise HTTPException(
+            404, detail=NotFoundDetail(reason=NO_TERRAIN_IMAGE_REASON).model_dump(mode="json")
+        )
+    return path
 
 
 def site_summary(req: SiteSummaryRequest) -> SiteSummaryResponse:
@@ -309,6 +356,7 @@ def compare_served(req: CompareRequest) -> CompareResponse:
         filtered_out=out.filtered_out,
         rank_ties=out.rank_ties,
         beyond_limit=out.beyond_limit,
+        compared_keys=[sc.key() for sc in compared],
     )
 
 
@@ -520,6 +568,28 @@ def create_app() -> FastAPI:
     )
     def terrain(req: TerrainRequest) -> TerrainResponse:
         return terrain_for(req)
+
+    @app.get(
+        "/api/terrain/views",
+        response_model=TerrainViewsResponse,
+        response_model_by_alias=True,
+        responses={
+            503: {"model": UnavailableError, "description": "Precomputed terrain images are unusable"}
+        },
+    )
+    def terrain_views(site_id: str | None = None) -> TerrainViewsResponse:
+        return terrain_views_for(TerrainViewsQuery(site_id=site_id))
+
+    @app.get(
+        "/api/terrain/view/{site_id}/{view}/{layer}.png",
+        response_class=FileResponse,
+        responses={
+            200: {"content": {"image/png": {}}, "description": "8-bit greyscale PNG (see TerrainView)"},
+            404: {"model": NotFoundError, "description": "No such precomputed image"},
+        },
+    )
+    def terrain_view_image(site_id: str, view: str, layer: str) -> FileResponse:
+        return FileResponse(terrain_image(site_id, view, layer), media_type="image/png")
 
     @app.post("/api/site_summary", response_model=SiteSummaryResponse, response_model_by_alias=True)
     def site_summary_endpoint(req: SiteSummaryRequest) -> SiteSummaryResponse:

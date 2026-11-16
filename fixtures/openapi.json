@@ -3,8 +3,8 @@
   "info": {
     "title": "Lunar Site Scout API",
     "description": "Contract v0. Not affiliated with or endorsed by NASA.",
-    "version": "0.12.0",
-    "x-contract-version": "0.12.0"
+    "version": "0.13.0",
+    "x-contract-version": "0.13.0"
   },
   "paths": {
     "/api/health": {
@@ -416,6 +416,125 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UnavailableError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/terrain/views": {
+      "get": {
+        "summary": "Terrain Views",
+        "operationId": "terrain_views_api_terrain_views_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerrainViewsResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Precomputed terrain images are unusable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnavailableError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/terrain/view/{site_id}/{view}/{layer}.png": {
+      "get": {
+        "summary": "Terrain View Image",
+        "operationId": "terrain_view_image_api_terrain_view__site_id___view___layer__png_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "view",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "View"
+            }
+          },
+          {
+            "name": "layer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Layer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "8-bit greyscale PNG (see TerrainView)",
+            "content": {
+              "image/png": {}
+            }
+          },
+          "404": {
+            "description": "No such precomputed image",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -1069,7 +1188,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1145,6 +1264,14 @@
             "title": "Beyond Limit",
             "description": "Passing scenarios cut by rank.limit",
             "default": 0
+          },
+          "compared_keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Compared Keys",
+            "description": "Scenario.key() of each entry of `compared`, same order (contract 0.13.0; stream B)"
           }
         },
         "additionalProperties": false,
@@ -1365,7 +1492,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1606,7 +1733,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.12.0",
+            "default": "0.13.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1721,7 +1848,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1756,7 +1883,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1878,7 +2005,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.12.0",
+            "default": "0.13.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -2025,7 +2152,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2224,7 +2351,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2289,7 +2416,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2359,7 +2486,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2440,7 +2567,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2510,6 +2637,35 @@
         ],
         "title": "NoTerrainError",
         "description": "422 from POST /api/locate: no terrain data in this version covers the location."
+      },
+      "NotFoundDetail": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Plain-language explanation, suitable to show to visitors"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "NotFoundDetail"
+      },
+      "NotFoundError": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/NotFoundDetail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "NotFoundError",
+        "description": "404 from GET /api/terrain/view/...: no such precomputed image."
       },
       "NotServedDetail": {
         "properties": {
@@ -2758,7 +2914,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3028,7 +3184,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3276,7 +3432,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3523,7 +3679,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3620,7 +3776,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -3755,7 +3911,7 @@
         "description": "index.json of the static fallback: every served scenario and where its files are.",
         "properties": {
           "contract_version": {
-            "default": "0.12.0",
+            "default": "0.13.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -3796,6 +3952,19 @@
             "description": "Path of the SitesResponse file",
             "title": "Sites",
             "type": "string"
+          },
+          "terrain_views": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Path of the TerrainViewsResponse file; images at terrain_view/{site_id}/{view}/{layer}.png (0.13.0)",
+            "title": "Terrain Views"
           },
           "nl_answers": {
             "description": "Cached showcase answers, the same as POST /api/nl returns (0.12.0)",
@@ -4059,7 +4228,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.12.0"
+            "default": "0.13.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -4139,6 +4308,306 @@
         ],
         "title": "TerrainUnprocessableError",
         "description": "422 from POST /api/terrain: tell the two apart by `detail` (an object vs a list)."
+      },
+      "TerrainView": {
+        "properties": {
+          "site_id": {
+            "type": "string",
+            "title": "Site Id"
+          },
+          "view": {
+            "type": "string",
+            "title": "View",
+            "description": "View name, e.g. '2km' (±1 km) or '20km' (±10 km)"
+          },
+          "center": {
+            "$ref": "#/components/schemas/Location",
+            "description": "The site's served point; the bounds snap to the pixel grid (≤ 1 px)"
+          },
+          "bounds_ps_m": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "maxItems": 4,
+            "minItems": 4,
+            "title": "Bounds Ps M",
+            "description": "[left, bottom, right, top] in the projection below, m"
+          },
+          "proj4": {
+            "type": "string",
+            "title": "Proj4",
+            "description": "The images' projection (south polar stereographic on the 1737.4 km sphere)"
+          },
+          "map_up": {
+            "type": "string",
+            "title": "Map Up"
+          },
+          "pixel_m": {
+            "type": "number",
+            "title": "Pixel M"
+          },
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Height"
+          },
+          "layers": {
+            "items": {
+              "$ref": "#/components/schemas/TerrainViewLayer"
+            },
+            "type": "array",
+            "title": "Layers",
+            "description": "Images available: GET /api/terrain/view/{site_id}/{view}/{layer}.png (static copy: terrain_view/{site_id}/{view}/{layer}.png)"
+          },
+          "source": {
+            "$ref": "#/components/schemas/TerrainViewSource"
+          },
+          "hillshade": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TerrainViewHillshade"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "slope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TerrainViewSlope"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "site_id",
+          "view",
+          "center",
+          "bounds_ps_m",
+          "proj4",
+          "map_up",
+          "pixel_m",
+          "width",
+          "height",
+          "layers",
+          "source"
+        ],
+        "title": "TerrainView",
+        "description": "One precomputed square view around a site. The images are 8-bit greyscale PNGs (hillshade: shade;\nslope: class number) with no colour-profile chunks, so canvas reads the values exactly. The image's top\nedge is the polar stereographic grid's +y (`map_up`), not geographic north."
+      },
+      "TerrainViewHillshade": {
+        "properties": {
+          "light_azimuth_map_deg": {
+            "type": "number",
+            "title": "Light Azimuth Map Deg",
+            "description": "Light direction, deg clockwise from map up (grid +y)"
+          },
+          "light_altitude_deg": {
+            "type": "number",
+            "title": "Light Altitude Deg"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "light_azimuth_map_deg",
+          "light_altitude_deg"
+        ],
+        "title": "TerrainViewHillshade"
+      },
+      "TerrainViewLayer": {
+        "type": "string",
+        "enum": [
+          "hillshade",
+          "slope",
+          "elevation"
+        ],
+        "title": "TerrainViewLayer",
+        "description": "Layers of the 2D site view's terrain images (GET /api/terrain/view/{site_id}/{view}/{layer}.png).\nOnly hillshade and slope are precomputed (Kaitlin, 2026-11-16); elevation is reserved."
+      },
+      "TerrainViewSlope": {
+        "properties": {
+          "definition": {
+            "type": "string",
+            "title": "Definition"
+          },
+          "class_edges_deg": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Class Edges Deg",
+            "description": "Upper edges of the classes; the last class is open-ended"
+          },
+          "class_labels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Class Labels",
+            "description": "One label per class value 0..n (PNG pixel value = class)"
+          },
+          "nodata": {
+            "type": "integer",
+            "title": "Nodata",
+            "description": "PNG pixel value with no slope (show transparent)"
+          },
+          "palette_light": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Palette Light",
+            "description": "Suggested colour per class, light theme (stream A)"
+          },
+          "palette_dark": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Palette Dark",
+            "description": "Suggested colour per class, dark theme (stream A)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "definition",
+          "class_edges_deg",
+          "class_labels",
+          "nodata",
+          "palette_light",
+          "palette_dark"
+        ],
+        "title": "TerrainViewSlope"
+      },
+      "TerrainViewSource": {
+        "properties": {
+          "dataset_id": {
+            "type": "string",
+            "title": "Dataset Id",
+            "description": "Registry id of the map the images were made from"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "source_pixel_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Pixel M",
+            "description": "The source map's pixel size, m"
+          },
+          "block_mean": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Block Mean",
+            "description": "Source pixels averaged per image pixel, per axis"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "dataset_id",
+          "url"
+        ],
+        "title": "TerrainViewSource"
+      },
+      "TerrainViewsQuery": {
+        "additionalProperties": false,
+        "description": "Query parameters of GET /api/terrain/views.",
+        "properties": {
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Only this site's views",
+            "title": "Site Id"
+          }
+        },
+        "title": "TerrainViewsQuery",
+        "type": "object"
+      },
+      "TerrainViewsResponse": {
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "title": "Contract Version",
+            "default": "0.13.0"
+          },
+          "_placeholder": {
+            "type": "boolean",
+            "title": "Placeholder",
+            "description": "True when the values are placeholders, not computed results.",
+            "default": false
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "views": {
+            "items": {
+              "$ref": "#/components/schemas/TerrainView"
+            },
+            "type": "array",
+            "title": "Views"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "views"
+        ],
+        "title": "TerrainViewsResponse",
+        "description": "Precomputed terrain views, by site in the site list's order, then by view size (smallest first).\nSites without views (e.g. off the polar maps) are simply absent."
       },
       "UnavailableDetail": {
         "properties": {

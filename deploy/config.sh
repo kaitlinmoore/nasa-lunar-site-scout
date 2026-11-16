@@ -27,3 +27,5 @@ SERVED_SRC="${LSS_DATA_DIR_POSIX}/cache/served"
 TERRAIN_SRC="${LSS_DATA_DIR_POSIX}/cache/terrain"
 # Cached showcase NL answers (C8), written by `uv run python -m lss.api.nl_cache`; may be empty.
 NL_CACHE_SRC="${LSS_DATA_DIR_POSIX}/cache/nl"
+# Terrain images for the 2D site view (stream A; contract 0.13.0): <site>/<view>/{view.json,*.png}.
+TERRAIN_VIEW_SRC="${LSS_DATA_DIR_POSIX}/cache/terrain_view"
