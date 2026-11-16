@@ -509,6 +509,16 @@ applied by default.
   synthetic tracks known in closed form (within 1 s), periods tiling the window, clipped edges, a 36 s
   flicker counted; every metric on synthetic series with known answers; on real data, the served scenario's
   responses, fractions against brute force on the real horizon, and grid-step independence.
+- **End to end on a synthetic DEM** (`tests/engine/test_synthetic_e2e.py`, C3). A ring ridge around a point at
+  88°S gives a horizon that is the same at every azimuth and known analytically (h₀ ≈ 0.16°). The whole engine
+  path runs on it with the real ephemeris for 120 days (about four lunar days). That path is the ray caster,
+  the disc margins and their refinement, the visible fractions and the metrics.
+  - **Expected values** use only the ephemeris and h₀. Any part of a disc is visible iff el + r > h₀, and all
+    of it iff el − r ≥ h₀. The Earth's fraction is the circular segment above the horizon line. The Sun's is
+    the limb-darkened segment, integrated by brute force.
+  - **Results.** The ray caster matches h₀ to 2·10⁻⁵°. There are 7 Sun and 8 Earth rises and sets. Every
+    crossing is within |horizon error| / elevation rate + 2 s (at most 3.6 s, at a grazing Sun). The time
+    fractions, Earth segment fractions, shadow count, longest shadow and Sun–Earth overlap all match.
 - **Limits (polar geometry).** Two approximations hold for bodies near the horizon, as at the poles. A disc
   point's azimuth az + x / cos(el) degrades as a body nears the zenith. The azimuth arc assumes the azimuth
   moves less than 180° between 60 s samples, which also fails near the zenith. Neither matters at the served
@@ -814,6 +824,10 @@ illumination and product 69 all agree with this.
     sample and every 10th horizon azimuth.
 - `tests/engine/test_regression_c1.py` recomputes the scenario and requires fractions to agree to 10⁻⁶, durations
   to 10⁻³ h, angles to 10⁻⁶° and event times to 1 s.
+- **Per-site fixtures (C3).** `tests/engine/fixtures/c3/<site id>.json` holds every other curated site's 1 m
+  result over the same window. Each is written by `scripts/regression_c3.py` from the served file, so it is
+  exactly what the API serves. `tests/engine/test_regression_c3.py` recomputes each with the same tolerances.
+  Each fixture keeps the metrics, every 24th hourly sample and every 10th horizon azimuth.
 - **Final served values** at the 1 h step, alongside the 10-minute previews quoted when window B was chosen:
 
   | Metric | Served (1 h step; metrics from the 60 s grid, refined) | Preview (10 min) |
