@@ -116,3 +116,36 @@ def test_every_listing_reason_has_a_list_free_version():
     ):
         free = app_module.LIST_FREE_REASONS[listing]
         assert "listed" not in free and "here" not in free.split()
+
+
+def test_nl_with_a_selected_scenario_reaches_its_result(data_dir):
+    """B's G2 recheck: the model drops the step and changes the window; code restores the selection."""
+    from lss.contract import Scenario
+
+    sel = Scenario.model_validate(dict(WEB_SCENARIO, unit_height_m=2.0))  # served (write_served_at 2 m)
+    out = {
+        "outcome": "answer",
+        "interpretation": "Longest shadow here.",
+        "query": {
+            "operation": "metrics",
+            "params": {
+                "scenario": {
+                    "location": {"site_id": "pgda-site01"},
+                    "unit_height_m": 1.0,
+                    "window_start": WEB_SCENARIO["window_start"],
+                    "window_end": "2028-06-10T00:00:00Z",
+                }
+            },
+        },
+        "height_source": "selected_scenario",
+        "window_source": "selected_scenario",
+        "site_source": "selected_site",
+    }
+    service = nl.NLService(
+        executors=app_module.NL_EXECUTORS, provider_factory=lambda: FakeProvider({"q": out})
+    )
+    body = service.answer(
+        NLRequest(text="q", selected_site_id="pgda-site01", selected_scenario=sel), "1.2.3.4"
+    )
+    assert isinstance(body, NLAnswer) and body.limitations == []
+    assert body.result["scenario_key"] == sel.key()

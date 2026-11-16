@@ -621,3 +621,97 @@ def test_safe_slope_in_a_compare_filter_is_checked():
     validate_output(k6_like(5.0), ctx)  # the window comes from window_days
     with pytest.raises(NLValidationError, match="safe_default' requires slope = 5"):
         validate_output(k6_like(6.0), ctx)
+
+
+# ---------------------------- a selected scenario's values are filled in by code (B's G2 recheck, 2026-11-16)
+
+
+def _year_10m():
+    from lss.contract import Scenario
+
+    site = default_context().sites[0]
+    return Scenario(
+        location=site.location,
+        unit_height_m=10.0,
+        window_start="2028-01-01T00:00:00Z",
+        window_end="2029-01-01T00:00:00Z",
+        step="PT6H",
+    )
+
+
+def test_selected_scenario_values_replace_the_models():
+    sel = _year_10m()
+    ctx = default_context(selected_site_id="pgda-site01", selected_scenario=sel)
+    out = {
+        "outcome": "answer",
+        "interpretation": "Longest shadow here.",
+        "query": {
+            "operation": "metrics",
+            "params": {
+                "scenario": {  # step dropped, window end and height changed: what B saw once
+                    "location": {"site_id": "pgda-site01"},
+                    "unit_height_m": 5.0,
+                    "window_start": "2028-01-01T00:00:00Z",
+                    "window_end": "2028-12-31T00:00:00Z",
+                }
+            },
+        },
+        "height_source": "selected_scenario",
+        "window_source": "selected_scenario",
+        "site_source": "selected_site",
+    }
+    v = validate_output(out, ctx)
+    sc = v.structured_query.params["scenario"]
+    assert (sc["unit_height_m"], sc["window_start"], sc["window_end"], sc["step"]) == (
+        10.0,
+        "2028-01-01T00:00:00Z",
+        "2029-01-01T00:00:00Z",
+        "PT6H",
+    )
+    from lss.contract import Scenario
+
+    assert Scenario.model_validate(sc).key() == sel.key()
+    resp = to_response(v, ctx)
+    assert "Height 10 m: from the selected scenario." in resp.assumptions
+    assert (
+        "Window: 1 Jan 2028 – 1 Jan 2029 UTC, every 6 hours, from the selected scenario." in resp.assumptions
+    )
+
+
+def test_only_the_selected_parts_are_filled():
+    ctx = default_context(selected_site_id="pgda-site01", selected_scenario=_year_10m())
+    out = {
+        "outcome": "answer",
+        "interpretation": "Metrics at 2 m over the selected window.",
+        "query": {
+            "operation": "metrics",
+            "params": {
+                "scenario": {
+                    "location": {"site_id": "pgda-site01"},
+                    "unit_height_m": 2.0,
+                    "window_start": "2028-01-01T00:00:00Z",
+                    "window_end": "2029-01-01T00:00:00Z",
+                }
+            },
+        },
+        "height_source": "user",  # the user asked for 2 m
+        "window_source": "selected_scenario",
+        "site_source": "selected_site",
+    }
+    sc = validate_output(out, ctx).structured_query.params["scenario"]
+    assert sc["unit_height_m"] == 2.0 and sc["step"] == "PT6H"
+
+
+def test_selected_scenario_source_without_a_selection_is_still_refused():
+    out = {**metrics_output(), "height_source": "selected_scenario"}
+    with pytest.raises(NLValidationError, match="no scenario is selected"):
+        validate_output(out, default_context())
+
+
+def test_step_text():
+    from datetime import timedelta
+
+    from lss.nl.vocabulary import step_text
+
+    assert step_text(timedelta(hours=1)) == "every hour" and step_text(timedelta(hours=6)) == "every 6 hours"
+    assert step_text(timedelta(minutes=30)) == "every 30 minutes"

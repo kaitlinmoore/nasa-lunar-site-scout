@@ -57,7 +57,9 @@ from lss.nl.vocabulary import (
     WindowSource,
     default_window_text,
     safe_slope_text,
+    selected_height_text,
     selected_site_text,
+    selected_window_text,
 )
 from lss.registry.loader import load_datasets
 
@@ -329,9 +331,46 @@ def normalize_query(query: NLQuery, ctx: NLContext) -> StructuredQuery:
     return StructuredQuery(operation=op, params=model.model_dump(mode="json"))
 
 
+def _fill_from_selection(value: Any, sel: dict[str, Any], height: bool, window: bool) -> Any:
+    """Copy the selected scenario's unit height and/or window (start, end, step) into every place in the
+    params that has them, whatever the model wrote there (B's G2 recheck, 2026-11-16: a dropped step made a
+    served scenario unserved). A dict with `window_start` is a Scenario or a CompareAcross; both take a
+    step."""
+    if isinstance(value, list):
+        return [_fill_from_selection(v, sel, height, window) for v in value]
+    if not isinstance(value, dict):
+        return value
+    out = {k: _fill_from_selection(v, sel, height, window) for k, v in value.items()}
+    is_scenario_like = "window_start" in out
+    if height and ("unit_height_m" in out or (is_scenario_like and "location" in out)):
+        out["unit_height_m"] = sel["unit_height_m"]
+    if window and is_scenario_like:
+        out["window_start"], out["window_end"], out["step"] = (
+            sel["window_start"],
+            sel["window_end"],
+            sel["step"],
+        )
+        if "window_days" in out:
+            out["window_days"] = None
+    return out
+
+
+def apply_selection(output: NLOutput, ctx: NLContext) -> NLOutput:
+    """When height_source / window_source say "selected_scenario", the selection's values replace the
+    model's (deterministic). Without a selection the output is returned unchanged (the checks report it)."""
+    sel = ctx.selected_scenario
+    height = output.height_source == HeightSource.selected_scenario
+    window = output.window_source == WindowSource.selected_scenario
+    if output.query is None or sel is None or not (height or window):
+        return output
+    params = _fill_from_selection(output.query.params, sel.model_dump(mode="json"), height, window)
+    return output.model_copy(update={"query": output.query.model_copy(update={"params": params})})
+
+
 def validate_output(raw: str | Mapping[str, Any] | NLOutput, ctx: NLContext) -> ValidatedOutput:
     """Validate the LLM's output against the vocabulary, contract and registry; raise on any problem."""
     output = raw if isinstance(raw, NLOutput) else parse_output(raw)
+    output = apply_selection(output, ctx)
     problems: list[str] = []
     structured: StructuredQuery | None = None
 
@@ -368,6 +407,11 @@ def validate_output(raw: str | Mapping[str, Any] | NLOutput, ctx: NLContext) -> 
     if output.window_source == WindowSource.default and structured is not None:
         start = _windows(structured.params)[0][0]
         assumptions.insert(0, default_window_text(start.date().isoformat()))
+    sel = ctx.selected_scenario
+    if output.window_source == WindowSource.selected_scenario and sel is not None:
+        assumptions.insert(0, selected_window_text(sel.window_start, sel.window_end, sel.step))
+    if output.height_source == HeightSource.selected_scenario and sel is not None:
+        assumptions.insert(0, selected_height_text(sel.unit_height_m))
     if output.site_source == SiteSource.selected_site:
         site = next(s for s in ctx.sites if s.id == ctx.selected_site_id)
         assumptions.insert(0, selected_site_text(display_name(site)))

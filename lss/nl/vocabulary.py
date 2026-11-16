@@ -116,6 +116,33 @@ RANKING_WINDOW_TEXT = (
 SLOPE_FILTER_METRIC = "terrain.slope_at_point_deg"
 
 
+def _when(t: datetime) -> str:
+    day = f"{t.day} {t:%b %Y}"
+    return day if (t.hour, t.minute) == (0, 0) else f"{day} {t:%H:%M}"
+
+
+def step_text(step: timedelta) -> str:
+    """'every hour', 'every 6 hours', 'every 30 minutes', else the ISO-like duration."""
+    secs = int(step.total_seconds())
+    if secs % 3600 == 0:
+        hours = secs // 3600
+        return "every hour" if hours == 1 else f"every {hours} hours"
+    if secs % 60 == 0:
+        mins = secs // 60
+        return "every minute" if mins == 1 else f"every {mins} minutes"
+    return f"every {secs} s"
+
+
+# Disclosures when a selected scenario's values were used (filled in by code, B's G2 recheck 2026-11-16).
+# Claude-drafted, pending the project author's review.
+def selected_height_text(height_m: float) -> str:
+    return f"Height {height_m:g} m: from the selected scenario."
+
+
+def selected_window_text(start: datetime, end: datetime, step: timedelta) -> str:
+    return f"Window: {_when(start)} – {_when(end)} UTC, {step_text(step)}, from the selected scenario."
+
+
 def default_window_text(start_iso_date: str) -> str:
     return f"Window: 30 days from {start_iso_date} 00:00 UTC (default; no dates were given)."
 
