@@ -134,7 +134,7 @@ def step_text(step: timedelta) -> str:
 
 
 # Disclosures when a selected scenario's values were used (filled in by code, B's G2 recheck 2026-11-16).
-# Claude-drafted, pending the project author's review.
+# Claude-drafted, approved by the project author (2026-11-16).
 def selected_height_text(height_m: float) -> str:
     return f"Height {height_m:g} m: from the selected scenario."
 

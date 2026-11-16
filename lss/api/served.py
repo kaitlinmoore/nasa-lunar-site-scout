@@ -48,8 +48,9 @@ from lss.contract import (
 #   0.5.0 and 0.6.0 dropped 2026-11-16: A regenerated every served file (format 2, with horizons) at 0.7.0.
 #   0.7.0 and 0.8.0 dropped 2026-11-16: A regenerated every served and terrain file at 0.9.0 (RA5).
 #   0.10.0 and 0.11.0 dropped 2026-11-16: A regenerated every served file at 0.12.0 (format 3).
-#   0.9.0: the 16 terrain statistics (cache/terrain/) are still 0.9.0; drop once A regenerates them (RA11).
-COMPATIBLE_VERSIONS = frozenset({"0.9.0"})
+#   0.9.0 dropped 2026-11-16: A regenerated the 16 terrain statistics at 0.12.0 (RA11).
+#   Empty now: every installed served and terrain file is at the current version.
+COMPATIBLE_VERSIONS: frozenset[str] = frozenset()
 
 
 class ServedFileError(ValueError):
