@@ -10,12 +10,14 @@ from typing import Any
 import pytest
 
 from lss.config import FIXTURES_DIR
-from lss.contract import NLAnswer, NLUnsupported, Operation
-from lss.nl.schema import llm_json_schema
+from lss.contract import NLAnswer, NLClarification, NLUnsupported, Operation, SitesQuery
+from lss.nl.schema import fill_json_schema, llm_json_schema
 from lss.nl.validate import NLValidationError, default_context, to_response, validate_output
 from lss.nl.vocabulary import (
     ALLOWED_OPERATIONS,
+    AROUND_RADIUS_TEXT,
     NEARBY_RADIUS_TEXT,
+    OPERATION_PARAMS,
     PROXY_ASSUMPTION_TEXT,
     HeightSource,
     safe_slope_text,
@@ -147,7 +149,7 @@ def test_proxy_heights_are_disclosed(ctx, source, height):
     out = metrics_output(height_source=source)
     out["query"]["params"]["scenario"]["unit_height_m"] = height
     resp = to_response(validate_output(out, ctx), ctx)
-    assert PROXY_ASSUMPTION_TEXT[HeightSource(source)] in resp.interpretation
+    assert PROXY_ASSUMPTION_TEXT[HeightSource(source)] in resp.assumptions
 
 
 def test_proxy_height_must_match_proxy_value(ctx):
@@ -258,8 +260,11 @@ def default_output(start="2026-11-15T00:00:00Z", end="2026-12-15T00:00:00Z", hei
 def test_defaults_are_checked_and_disclosed():
     ctx = default_context(today=date(2026, 11, 15))
     resp = to_response(validate_output(default_output(), ctx), ctx)
-    assert "Window: 30 days from 2026-11-15 00:00 UTC (default; no dates were given)." in resp.interpretation
-    assert PROXY_ASSUMPTION_TEXT[HeightSource.default] in resp.interpretation
+    assert resp.assumptions[:2] == [
+        "Window: 30 days from 2026-11-15 00:00 UTC (default; no dates were given).",
+        PROXY_ASSUMPTION_TEXT[HeightSource.default],
+    ]
+    assert "Assumed:" not in resp.interpretation  # C8: disclosures have their own field now
 
 
 @pytest.mark.parametrize(
@@ -314,7 +319,7 @@ def search_output(slope=5.0, slope_source="safe_default") -> dict[str, Any]:
 
 def test_nearby_default_is_checked_and_disclosed(ctx):
     resp = to_response(validate_output(proximity_output(), ctx), ctx)
-    assert NEARBY_RADIUS_TEXT in resp.interpretation
+    assert NEARBY_RADIUS_TEXT in resp.assumptions
 
 
 def test_safe_default_echo_names_the_terrain_data(ctx):
@@ -322,15 +327,15 @@ def test_safe_default_echo_names_the_terrain_data(ctx):
     with pytest.raises(NLValidationError, match="slope_terrain"):
         to_response(validated, ctx)  # no terrain named: the echo can't be built
     resp = to_response(validated, ctx, slope_terrain="the PGDA 5 m south pole mosaic")
-    assert safe_slope_text("the PGDA 5 m south pole mosaic") in resp.interpretation
-    assert "under 5°" in resp.interpretation
+    assert resp.assumptions[0] == safe_slope_text("the PGDA 5 m south pole mosaic")
+    assert "under 5°" in resp.assumptions[0]
 
 
 def test_user_values_are_not_disclosed_as_defaults(ctx):
     resp = to_response(validate_output(search_output(slope=10.0, slope_source="user"), ctx), ctx)
-    assert "Safe:" not in resp.interpretation
+    assert not any(a.startswith("Safe:") for a in resp.assumptions)
     resp = to_response(validate_output(proximity_output(2_000.0, "user"), ctx), ctx)
-    assert NEARBY_RADIUS_TEXT not in resp.interpretation
+    assert NEARBY_RADIUS_TEXT not in resp.assumptions
 
 
 @pytest.mark.parametrize(
@@ -346,3 +351,128 @@ def test_user_values_are_not_disclosed_as_defaults(ctx):
 def test_slope_and_radius_sources_must_match_params(ctx, raw, problem):
     with pytest.raises(NLValidationError, match=problem):
         validate_output(raw, ctx)
+
+
+# ------------------------------------------- contract 0.7.0: clarify, terrain, site_summary, areas
+
+
+def test_clarification_becomes_the_contract_response(ctx):
+    out = {
+        "outcome": "clarify",
+        "interpretation": "A summary of a site; none selected.",
+        "question": "Which site?",
+    }
+    resp = to_response(validate_output(out, ctx), ctx)
+    assert isinstance(resp, NLClarification)
+    assert resp.question == "Which site?" and resp.interpretation.startswith("A summary")
+
+
+@pytest.mark.parametrize(
+    "out",
+    [
+        {"outcome": "clarify", "interpretation": "i"},  # no question
+        {"outcome": "clarify", "interpretation": "i", "question": "Which?", "query": {"operation": "sites"}},
+        {"outcome": "answer", "interpretation": "i", "question": "Which?", "query": {"operation": "sites"}},
+    ],
+)
+def test_clarify_is_consistent(ctx, out):
+    with pytest.raises(NLValidationError, match="schema"):
+        validate_output(out, ctx)
+
+
+def test_refusal_keeps_its_echo(ctx):
+    resp = to_response(validate_output(fixture_unsupported_output(), ctx), ctx)
+    assert isinstance(resp, NLUnsupported) and resp.interpretation
+
+
+def fixture_unsupported_output() -> dict[str, Any]:
+    return {
+        "outcome": "unsupported",
+        "interpretation": "Sites with no boulders >0.5 m in a 50 m ellipse.",
+        "limitations": [
+            {
+                "topic": "Boulders",
+                "citations": [
+                    {
+                        "dataset_id": "aussel_2025_boulders",
+                        "cannot_answer": "Any boulder information at the poles",
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def terrain_output(radius=1000.0, radius_source="around_default") -> dict[str, Any]:
+    return {
+        "outcome": "answer",
+        "interpretation": "Slope at and around Connecting ridge.",
+        "query": {
+            "operation": "terrain",
+            "params": {"location": {"site_id": "pgda-site01"}, "radius_m": radius},
+        },
+        "radius_source": radius_source,
+    }
+
+
+def test_around_default_is_checked_and_disclosed(ctx):
+    resp = to_response(validate_output(terrain_output(), ctx), ctx)
+    assert resp.assumptions == [AROUND_RADIUS_TEXT]
+    with pytest.raises(NLValidationError, match="around_default' requires radius = 1000"):
+        validate_output(terrain_output(radius=10_000.0), ctx)
+
+
+def test_site_summary_scenario_must_be_at_the_site(ctx):
+    out = {
+        "outcome": "answer",
+        "interpretation": "Summary of Connecting ridge.",
+        "query": {
+            "operation": "site_summary",
+            "params": {
+                "location": {"site_id": "pgda-site01"},
+                "radius_m": 10_000.0,
+                "scenario": {
+                    "location": {"lat": -85.0, "lon": 30.0},
+                    "unit_height_m": 2.0,
+                    "window_start": "2028-05-15T00:00:00Z",
+                    "window_end": "2028-06-14T00:00:00Z",
+                },
+            },
+        },
+        "radius_source": "nearby_default",
+        "height_source": "user",
+        "window_source": "user",
+    }
+    with pytest.raises(NLValidationError, match="scenario.location"):
+        validate_output(out, ctx)
+    out["query"]["params"]["scenario"]["location"] = {"site_id": "pgda-site01"}
+    validate_output(out, ctx)
+
+
+@pytest.mark.parametrize(
+    "area",
+    [
+        {"kind": "circle", "center": {"site_id": "pgda-site01"}, "radius_m": 2000.0},
+        {"kind": "cap", "pole": "south", "max_colatitude_deg": 6},
+        {"kind": "all"},
+    ],
+)
+def test_new_area_kinds_validate(ctx, area):
+    out = search_output(slope=10.0, slope_source="user")
+    out["query"]["params"]["area"] = area
+    if area["kind"] == "circle":
+        out["radius_source"] = "user"
+    validate_output(out, ctx)
+
+
+@pytest.mark.parametrize("op", sorted(ALLOWED_OPERATIONS, key=lambda o: o.value), ids=lambda o: o.value)
+def test_every_fill_schema_builds_and_its_refs_resolve(op):
+    schema = fill_json_schema(op)
+    for ref in _refs(schema):
+        assert ref.removeprefix("#/$defs/") in schema["$defs"], (op, ref)
+    assert json.dumps(schema)
+
+
+def test_sites_uses_the_contract_query_model():
+    assert OPERATION_PARAMS[Operation.sites] is SitesQuery
+    assert {Operation.terrain, Operation.site_summary} <= ALLOWED_OPERATIONS

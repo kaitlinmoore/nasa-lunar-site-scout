@@ -3,8 +3,8 @@
   "info": {
     "title": "Lunar Site Scout API",
     "description": "Contract v0. Not affiliated with or endorsed by NASA.",
-    "version": "0.6.0",
-    "x-contract-version": "0.6.0"
+    "version": "0.7.0",
+    "x-contract-version": "0.7.0"
   },
   "paths": {
     "/api/health": {
@@ -322,6 +322,61 @@
   },
   "components": {
     "schemas": {
+      "AllArea": {
+        "additionalProperties": false,
+        "description": "Wherever the terrain data covers (Kaitlin, 2026-11-15); the result states the coverage used.",
+        "properties": {
+          "kind": {
+            "const": "all",
+            "default": "all",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "title": "AllArea",
+        "type": "object"
+      },
+      "BBox": {
+        "additionalProperties": false,
+        "properties": {
+          "lat_min": {
+            "description": "Planetocentric latitude, deg",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat Min",
+            "type": "number"
+          },
+          "lat_max": {
+            "description": "Planetocentric latitude, deg",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat Max",
+            "type": "number"
+          },
+          "lon_min": {
+            "description": "East-positive longitude, deg, -180..180",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lon Min",
+            "type": "number"
+          },
+          "lon_max": {
+            "description": "East-positive longitude, deg, -180..180",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lon Max",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat_min",
+          "lat_max",
+          "lon_min",
+          "lon_max"
+        ],
+        "title": "BBox",
+        "type": "object"
+      },
       "BodyTrack": {
         "properties": {
           "azimuth_deg": {
@@ -375,6 +430,64 @@
         ],
         "title": "BodyTrack",
         "description": "Per-sample values for one body; every list has the length of `SeriesResponse.time`."
+      },
+      "CapArea": {
+        "additionalProperties": false,
+        "description": "A polar cap: everything within max_colatitude_deg of a pole (e.g. 6 = poleward of 84°).",
+        "properties": {
+          "kind": {
+            "const": "cap",
+            "default": "cap",
+            "title": "Kind",
+            "type": "string"
+          },
+          "pole": {
+            "enum": [
+              "south",
+              "north"
+            ],
+            "title": "Pole",
+            "type": "string"
+          },
+          "max_colatitude_deg": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 90.0,
+            "title": "Max Colatitude Deg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "pole",
+          "max_colatitude_deg"
+        ],
+        "title": "CapArea",
+        "type": "object"
+      },
+      "CircleArea": {
+        "additionalProperties": false,
+        "description": "Everything within radius_m of a centre, at the terrain data's own resolution (contract 0.7.0).",
+        "properties": {
+          "kind": {
+            "const": "circle",
+            "default": "circle",
+            "title": "Kind",
+            "type": "string"
+          },
+          "center": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "radius_m": {
+            "exclusiveMinimum": 0.0,
+            "title": "Radius M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "center",
+          "radius_m"
+        ],
+        "title": "CircleArea",
+        "type": "object"
       },
       "CommsMetrics": {
         "properties": {
@@ -572,7 +685,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.6.0"
+            "default": "0.7.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -826,7 +939,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.6.0"
+            "default": "0.7.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -993,11 +1106,38 @@
         "title": "FeatureType",
         "type": "string"
       },
+      "FeaturesQuery": {
+        "additionalProperties": false,
+        "description": "Query parameters of GET /api/features (bbox as lat_min,lat_max,lon_min,lon_max).",
+        "properties": {
+          "bbox": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BBox"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "types": {
+            "description": "Empty = every type",
+            "items": {
+              "$ref": "#/components/schemas/FeatureType"
+            },
+            "title": "Types",
+            "type": "array"
+          }
+        },
+        "title": "FeaturesQuery",
+        "type": "object"
+      },
       "FeaturesResponse": {
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.6.0",
+            "default": "0.7.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1101,7 +1241,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.6.0"
+            "default": "0.7.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1136,7 +1276,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.6.0"
+            "default": "0.7.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1258,7 +1398,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.6.0",
+            "default": "0.7.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1405,7 +1545,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.6.0"
+            "default": "0.7.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1544,7 +1684,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.6.0"
+            "default": "0.7.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -1608,7 +1748,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.6.0",
+            "default": "0.7.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1659,6 +1799,14 @@
             },
             "title": "Limitations",
             "type": "array"
+          },
+          "assumptions": {
+            "description": "Defaults and readings the user didn't state (e.g. a proxy height), shown with the echo",
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
           }
         },
         "required": [
@@ -1666,6 +1814,51 @@
           "structured_query"
         ],
         "title": "NLAnswer",
+        "type": "object"
+      },
+      "NLClarification": {
+        "additionalProperties": false,
+        "description": "The request can't be answered until the user says more (e.g. which site); nothing was run.",
+        "properties": {
+          "contract_version": {
+            "default": "0.7.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "interpretation": {
+            "description": "Echo of how the request was understood",
+            "title": "Interpretation",
+            "type": "string"
+          },
+          "question": {
+            "description": "What the user needs to say or select",
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "interpretation",
+          "question"
+        ],
+        "title": "NLClarification",
         "type": "object"
       },
       "NLRequest": {
@@ -1710,7 +1903,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.6.0",
+            "default": "0.7.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -1734,6 +1927,19 @@
           },
           "unsupported": {
             "$ref": "#/components/schemas/Limitation"
+          },
+          "interpretation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Echo of how the request was understood",
+            "title": "Interpretation"
           }
         },
         "required": [
@@ -1826,7 +2032,9 @@
           "compare",
           "features",
           "proximity",
-          "search"
+          "search",
+          "terrain",
+          "site_summary"
         ],
         "title": "Operation",
         "type": "string"
@@ -2015,7 +2223,7 @@
         "additionalProperties": false,
         "properties": {
           "contract_version": {
-            "default": "0.6.0",
+            "default": "0.7.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -2041,11 +2249,26 @@
             "$ref": "#/components/schemas/Location"
           },
           "results": {
+            "description": "Closest first, at most 10 (PROXIMITY_MAX_RESULTS)",
             "items": {
               "$ref": "#/components/schemas/FeatureDistance"
             },
             "title": "Results",
             "type": "array"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "How many features of the requested types lie within radius_m (results: the closest)",
+            "title": "Total"
           }
         },
         "required": [
@@ -2218,6 +2441,7 @@
               }
             ],
             "default": null,
+            "description": "Strict bound: candidates have slope < max_slope_deg (Kaitlin, 2026-11-15)",
             "title": "Max Slope Deg"
           },
           "min_flat_area_m2": {
@@ -2263,6 +2487,9 @@
           "area": {
             "discriminator": {
               "mapping": {
+                "all": "#/components/schemas/AllArea",
+                "cap": "#/components/schemas/CapArea",
+                "circle": "#/components/schemas/CircleArea",
                 "mask": "#/components/schemas/MaskArea",
                 "points": "#/components/schemas/PointsArea"
               },
@@ -2274,6 +2501,15 @@
               },
               {
                 "$ref": "#/components/schemas/MaskArea"
+              },
+              {
+                "$ref": "#/components/schemas/CircleArea"
+              },
+              {
+                "$ref": "#/components/schemas/CapArea"
+              },
+              {
+                "$ref": "#/components/schemas/AllArea"
               }
             ],
             "title": "Area"
@@ -2310,6 +2546,31 @@
             ],
             "default": null
           },
+          "slope_layer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TerrainLayer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The DEM the slopes were measured on"
+          },
+          "coverage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Where the search ran, in words (required for an AllArea search)",
+            "title": "Coverage"
+          },
           "limitations": {
             "items": {
               "type": "string"
@@ -2329,7 +2590,7 @@
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.6.0"
+            "default": "0.7.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2498,12 +2759,154 @@
         ],
         "title": "SiteCategory"
       },
+      "SiteSummaryRequest": {
+        "additionalProperties": false,
+        "description": "Body of POST /api/site_summary: what is known at and around one location.",
+        "properties": {
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "radius_m": {
+            "description": "Radius for the slope statistics and the nearby features, m",
+            "exclusiveMinimum": 0.0,
+            "title": "Radius M",
+            "type": "number"
+          },
+          "feature_types": {
+            "description": "Feature types to list; empty = every type",
+            "items": {
+              "$ref": "#/components/schemas/FeatureType"
+            },
+            "title": "Feature Types",
+            "type": "array"
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Scenario"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "For the metrics part; its location must be this request's location"
+          }
+        },
+        "required": [
+          "location",
+          "radius_m"
+        ],
+        "title": "SiteSummaryRequest",
+        "type": "object"
+      },
+      "SiteSummaryResponse": {
+        "additionalProperties": false,
+        "description": "Each part is null when it was not requested or has no result; limitations say which and why.",
+        "properties": {
+          "contract_version": {
+            "default": "0.7.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "radius_m": {
+            "title": "Radius M",
+            "type": "number"
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetricsResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "terrain": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TerrainResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "features": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProximityResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "location",
+          "radius_m"
+        ],
+        "title": "SiteSummaryResponse",
+        "type": "object"
+      },
+      "SitesQuery": {
+        "additionalProperties": false,
+        "description": "Query parameters of GET /api/sites.",
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SiteCategory"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "title": "SitesQuery",
+        "type": "object"
+      },
       "SitesResponse": {
         "properties": {
           "contract_version": {
             "type": "string",
             "title": "Contract Version",
-            "default": "0.6.0"
+            "default": "0.7.0"
           },
           "_placeholder": {
             "type": "boolean",
@@ -2625,7 +3028,7 @@
         "description": "index.json of the static fallback: every served scenario and where its files are.",
         "properties": {
           "contract_version": {
-            "default": "0.6.0",
+            "default": "0.7.0",
             "title": "Contract Version",
             "type": "string"
           },
@@ -2730,6 +3133,104 @@
           "resolution_m"
         ],
         "title": "TerrainLayer"
+      },
+      "TerrainRequest": {
+        "additionalProperties": false,
+        "description": "Body of POST /api/terrain: slope at a point and around it.",
+        "properties": {
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "radius_m": {
+            "description": "Radius of the circle the slope statistics cover, m",
+            "exclusiveMinimum": 0.0,
+            "title": "Radius M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "location",
+          "radius_m"
+        ],
+        "title": "TerrainRequest",
+        "type": "object"
+      },
+      "TerrainResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_version": {
+            "default": "0.7.0",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "_placeholder": {
+            "default": false,
+            "description": "True when the values are placeholders, not computed results.",
+            "title": "Placeholder",
+            "type": "boolean"
+          },
+          "_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "radius_m": {
+            "title": "Radius M",
+            "type": "number"
+          },
+          "slope_at_point_deg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Slope at the location, deg (definition: docs/methodology.md)",
+            "title": "Slope At Point Deg"
+          },
+          "slope_deg": {
+            "$ref": "#/components/schemas/Stat",
+            "description": "Slope over the DEM pixels within radius_m: min, max and mean, deg"
+          },
+          "slope_layer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TerrainLayer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The DEM the slopes were measured on (its resolution sets what they can show)"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "location",
+          "radius_m"
+        ],
+        "title": "TerrainResponse",
+        "type": "object"
       },
       "UnavailableDetail": {
         "properties": {

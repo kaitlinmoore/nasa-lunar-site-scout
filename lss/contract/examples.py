@@ -45,6 +45,7 @@ from lss.contract.models import (
     Location,
     MetricsResponse,
     NLAnswer,
+    NLClarification,
     NLUnsupported,
     Operation,
     PowerMetrics,
@@ -57,9 +58,11 @@ from lss.contract.models import (
     Site,
     SiteCategory,
     SitesResponse,
+    SiteSummaryResponse,
     Stat,
     StructuredQuery,
     TerrainLayer,
+    TerrainResponse,
 )
 
 PLACEHOLDER_NOTE = (
@@ -260,7 +263,30 @@ def features() -> FeaturesResponse:
 
 def proximity() -> ProximityResponse:
     return ProximityResponse(
-        location=SITE01, results=[FeatureDistance(feature=_crater(), distance_m=2100.0)], **MARK
+        location=SITE01, results=[FeatureDistance(feature=_crater(), distance_m=2100.0)], total=1, **MARK
+    )
+
+
+def terrain() -> TerrainResponse:
+    return TerrainResponse(
+        location=SITE01,
+        radius_m=1000.0,
+        slope_at_point_deg=1.5,
+        slope_deg=Stat(min=0.0, max=25.0, mean=8.0),
+        slope_layer=STACK[0],
+        limitations=["~90% of 5 m mosaic pixels are interpolated; single-pixel slopes are low confidence."],
+        **MARK,
+    )
+
+
+def site_summary() -> SiteSummaryResponse:
+    return SiteSummaryResponse(
+        location=SITE01,
+        radius_m=10_000.0,
+        metrics=metrics(),
+        terrain=terrain().model_copy(update={"radius_m": 10_000.0}),
+        features=proximity(),
+        **MARK,
     )
 
 
@@ -298,6 +324,7 @@ def nl_answer() -> NLAnswer:
             params={"scenario": SCENARIO.model_dump(mode="json")},
         ),
         result=metrics().model_dump(mode="json", by_alias=True),
+        assumptions=["Height 1 m: a proxy value for a rover, not the height of any specific rover."],
         **MARK,
     )
 
@@ -311,6 +338,15 @@ def nl_unsupported() -> NLUnsupported:
             ),
             datasets_considered=["pgda_81_mosaic_5m", "aussel_2025_boulders"],
         ),
+        interpretation="Candidate sites with no boulders larger than 0.5 m within a 50 m landing ellipse.",
+        **MARK,
+    )
+
+
+def nl_clarification() -> NLClarification:
+    return NLClarification(
+        interpretation="What is known at and around a site, but no site is selected.",
+        question="Which site? Select one on the globe or in the site list.",
         **MARK,
     )
 
@@ -327,9 +363,12 @@ EXAMPLES: dict[str, tuple] = {
     "compare.json": (compare, CompareResponse),
     "features.json": (features, FeaturesResponse),
     "proximity.json": (proximity, ProximityResponse),
+    "terrain.json": (terrain, TerrainResponse),
+    "site_summary.json": (site_summary, SiteSummaryResponse),
     "job.json": (job, Job),
     "nl_answer.json": (nl_answer, NLAnswer),
     "nl_unsupported.json": (nl_unsupported, NLUnsupported),
+    "nl_clarification.json": (nl_clarification, NLClarification),
 }
 
 

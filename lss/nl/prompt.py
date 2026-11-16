@@ -20,6 +20,7 @@ from lss.nl.schema import fill_json_schema, route_json_schema
 from lss.nl.validate import NLContext
 from lss.nl.vocabulary import (
     ALLOWED_OPERATIONS,
+    AROUND_RADIUS_M,
     DEFAULT_WINDOW,
     NEARBY_RADIUS_M,
     SAFE_MAX_SLOPE_DEG,
@@ -27,7 +28,7 @@ from lss.nl.vocabulary import (
     HeightSource,
 )
 
-PROMPT_VERSION = "p4-draft"
+PROMPT_VERSION = "p5-draft"
 
 ROUTE_SYSTEM = """\
 You are the first step of a natural-language interface to a terrain-aware lunar landing-site \
@@ -46,9 +47,13 @@ Rules:
    - proximity: straight-line distances from a site to nearby features (craters, permanently \
 shadowed regions, ice detections, hazards, landing sites, named features)
    - search: terrain-only area search (slope, flat area, distance to features) over an area
+   - terrain: slope at a point and around it
+   - site_summary: what is known at and around one site: its metrics, the slope around it and \
+nearby features
 2. outcome: "answer" = one operation answers the whole question; "partial" = one operation \
 answers part of it, and limitations say what's missing; "unsupported" = no operation helps \
-(operation null), and limitations say why.
+(operation null), and limitations say why; "clarify" = the question is about a site but none is \
+named or selected (operation null, no limitations): put what to ask the user in "question".
    If a registry entry says the data the operation relies on can't cover part of what the \
 question asks for (part of its size range, resolution, area or time span), the operation \
 answers only part of it: the outcome is "partial", and that entry is cited.
@@ -94,13 +99,25 @@ the user asks for a sampling step.
    - the query has no slope limit -> "not_applicable".
 6. Search distances (radius_m, max_feature_distance_m) and radius_source:
    - the user gave a distance -> that value in meters, "user";
-   - the user said "nearby", "near" or "around" and gave no distance -> {nearby_m} m, \
-"nearby_default";
+   - operation terrain (slope at and around a point) with no distance -> {around_m} m, \
+"around_default";
+   - otherwise, the user said "nearby", "near", "around" or "surrounding", or the operation is \
+site_summary, and gave no distance -> {nearby_m} m, "nearby_default";
    - the query has no search distance -> "not_applicable".
-7. Put any other reading you chose (e.g. how you interpreted a vague term) in "assumptions". \
-Proxy heights, default windows, the "safe" slope limit and the "nearby" distance are disclosed \
-automatically; don't repeat them.
-8. "interpretation" restates the query exactly as you filled it (site, height, dates, \
+7. Search areas (search.area), first match wins:
+   - the user gave a distance around a site or point -> {{"kind": "circle", "center": ..., \
+"radius_m": ...}};
+   - the user gave a distance from a pole in degrees ("within 6 degrees of the south pole") -> \
+{{"kind": "cap", "pole": "south", "max_colatitude_deg": 6}};
+   - the user named no area -> {{"kind": "all"}} (wherever the terrain data covers);
+   - points or a polygon only when the user gives their coordinates.
+8. site_summary: include "scenario" (for the metrics part) with the height and window rules above; \
+list feature_types only when the user asks about specific kinds of features (e.g. hazards -> \
+crater, hazard), otherwise leave it empty.
+9. Put any other reading you chose (e.g. how you interpreted a vague term) in "assumptions". \
+Proxy heights, default windows, the "safe" slope limit and the "nearby" / "around" distances are \
+disclosed automatically; don't repeat them.
+10. "interpretation" restates the query exactly as you filled it (site, height, dates, \
 thresholds), in one or two plain sentences.
 
 Return only JSON matching the schema."""
@@ -122,6 +139,7 @@ def fill_system_prompt() -> str:
         default_days=DEFAULT_WINDOW.days,
         safe_slope=f"{SAFE_MAX_SLOPE_DEG:g}",
         nearby_m=f"{NEARBY_RADIUS_M:g}",
+        around_m=f"{AROUND_RADIUS_M:g}",
     )
 
 

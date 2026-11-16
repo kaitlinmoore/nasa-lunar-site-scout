@@ -14,6 +14,9 @@ Scores (plan section 4.5, the project author's two measures), over `ready` items
   (b) refusal/partial-reason correctness, for items expecting limitations (partial / unsupported):
       output is valid, outcome matches, and the cited registry entries include every required
       citation and nothing outside required + optional.
+  Items expecting a clarification (outcome "clarify": the question names no site and none is
+  selected) count in (a): correct when the output is valid and asks instead of answering. (Claude's
+  placement, pending the project author's okay; the clarification is a query-routing decision.)
 Blocked items are skipped unless `--include-blocked` (then run and recorded, never scored).
 Scores are reported for all scored items and per split: dev (tuning) and holdout (never used
 for tuning; project author's rule, 2026-11-15).
@@ -192,6 +195,9 @@ def score_output(res: ItemResult, item: EvalItem, eval_set: EvalSet) -> None:
         return
     if v.output.outcome != exp.outcome:
         res.problems.append(f"outcome {res.outcome} != expected {exp.outcome.value}")
+    if exp.outcome == Outcome.clarify:
+        res.query_correct = v.output.outcome == Outcome.clarify
+        return
     if exp.outcome != Outcome.unsupported:
         ok, notes = _score_query(item, v, ctx)
         res.query_correct = ok and v.output.outcome == exp.outcome
@@ -206,7 +212,7 @@ def _finalize(res: ItemResult, item: EvalItem) -> None:
     exp = item.expected
     if res.valid is False and exp is not None:
         res.query_correct = False if exp.outcome != Outcome.unsupported else None
-        res.reason_correct = False if exp.outcome != Outcome.answer else None
+        res.reason_correct = False if exp.outcome not in (Outcome.answer, Outcome.clarify) else None
 
 
 def _score(results: list[ItemResult], attr: str) -> dict[str, Any]:

@@ -33,7 +33,7 @@ from pydantic import (
     model_validator,
 )
 
-CONTRACT_VERSION = "0.6.0"
+CONTRACT_VERSION = "0.7.0"
 
 Latitude = Annotated[float, Field(ge=-90.0, le=90.0, description="Planetocentric latitude, deg")]
 Longitude = Annotated[
@@ -552,9 +552,97 @@ class FeatureDistance(Model):
     distance_m: float = Field(description="Straight-line surface distance, m (not a drive route)")
 
 
+# The most features a proximity result lists (Kaitlin, 2026-11-15); `total` says how many there are.
+PROXIMITY_MAX_RESULTS = 10
+
+
 class ProximityResponse(Response):
     location: Location
-    results: list[FeatureDistance]
+    results: list[FeatureDistance] = Field(
+        description=f"Closest first, at most {PROXIMITY_MAX_RESULTS} (PROXIMITY_MAX_RESULTS)"
+    )
+    total: int | None = Field(
+        default=None,
+        ge=0,
+        description="How many features of the requested types lie within radius_m (results: the closest)",
+    )
+
+
+# ------------------------------------------------------- terrain statistics, site summary (contract 0.7.0)
+
+
+class TerrainRequest(Model):
+    """Body of POST /api/terrain: slope at a point and around it."""
+
+    location: Location
+    radius_m: float = Field(gt=0.0, description="Radius of the circle the slope statistics cover, m")
+
+
+class TerrainResponse(Response):
+    location: Location
+    radius_m: float
+    slope_at_point_deg: float | None = Field(
+        default=None, description="Slope at the location, deg (definition: docs/methodology.md)"
+    )
+    slope_deg: Stat = Field(
+        default_factory=Stat, description="Slope over the DEM pixels within radius_m: min, max and mean, deg"
+    )
+    slope_layer: TerrainLayer | None = Field(
+        default=None,
+        description="The DEM the slopes were measured on (its resolution sets what they can show)",
+    )
+    limitations: list[str] = Field(default_factory=list)
+
+
+class SiteSummaryRequest(Model):
+    """Body of POST /api/site_summary: what is known at and around one location."""
+
+    location: Location
+    radius_m: float = Field(gt=0.0, description="Radius for the slope statistics and the nearby features, m")
+    feature_types: list[FeatureType] = Field(
+        default_factory=list, description="Feature types to list; empty = every type"
+    )
+    scenario: Scenario | None = Field(
+        default=None, description="For the metrics part; its location must be this request's location"
+    )
+
+    @model_validator(mode="after")
+    def _same_location(self) -> SiteSummaryRequest:
+        sc = self.scenario
+        if sc is not None and (sc.location.lat, sc.location.lon) != (self.location.lat, self.location.lon):
+            raise ValueError("scenario.location must be the request's location")
+        return self
+
+
+class SiteSummaryResponse(Response):
+    """Each part is null when it was not requested or has no result; limitations say which and why."""
+
+    location: Location
+    radius_m: float
+    metrics: MetricsResponse | None = None
+    terrain: TerrainResponse | None = None
+    features: ProximityResponse | None = None
+    limitations: list[str] = Field(default_factory=list)
+
+
+class SitesQuery(Model):
+    """Query parameters of GET /api/sites."""
+
+    category: SiteCategory | None = None
+
+
+class BBox(Model):
+    lat_min: Latitude
+    lat_max: Latitude
+    lon_min: Longitude
+    lon_max: Longitude
+
+
+class FeaturesQuery(Model):
+    """Query parameters of GET /api/features (bbox as lat_min,lat_max,lon_min,lon_max)."""
+
+    bbox: BBox | None = None
+    types: list[FeatureType] = Field(default_factory=list, description="Empty = every type")
 
 
 # ------------------------------------------------------------- areas, search, jobs
@@ -574,13 +662,39 @@ class MaskArea(Model):
     area_id: str | None = Field(default=None, description="Id of a listed area, if any")
 
 
-Area = Annotated[PointsArea | MaskArea, Field(discriminator="kind")]
+class CircleArea(Model):
+    """Everything within radius_m of a centre, at the terrain data's own resolution (contract 0.7.0)."""
+
+    kind: Literal["circle"] = "circle"
+    center: Location
+    radius_m: float = Field(gt=0.0)
+
+
+class CapArea(Model):
+    """A polar cap: everything within max_colatitude_deg of a pole (e.g. 6 = poleward of 84°)."""
+
+    kind: Literal["cap"] = "cap"
+    pole: Literal["south", "north"]
+    max_colatitude_deg: float = Field(gt=0.0, le=90.0)
+
+
+class AllArea(Model):
+    """Wherever the terrain data covers (Kaitlin, 2026-11-15); the result states the coverage used."""
+
+    kind: Literal["all"] = "all"
+
+
+Area = Annotated[PointsArea | MaskArea | CircleArea | CapArea | AllArea, Field(discriminator="kind")]
 
 
 class SearchCriteria(Model):
     """Terrain-only in v0; time-dependent criteria are added later (plan section 3.3)."""
 
-    max_slope_deg: float | None = Field(default=None, gt=0.0)
+    max_slope_deg: float | None = Field(
+        default=None,
+        gt=0.0,
+        description="Strict bound: candidates have slope < max_slope_deg (Kaitlin, 2026-11-15)",
+    )
     min_flat_area_m2: float | None = Field(default=None, gt=0.0)
     near_feature_types: list[FeatureType] = Field(default_factory=list)
     max_feature_distance_m: float | None = Field(default=None, gt=0.0)
@@ -601,6 +715,10 @@ class SearchCandidate(Model):
 class SearchResult(Model):
     candidates: list[SearchCandidate]
     fidelity: FidelityLabel | None = None
+    slope_layer: TerrainLayer | None = Field(default=None, description="The DEM the slopes were measured on")
+    coverage: str | None = Field(
+        default=None, description="Where the search ran, in words (required for an AllArea search)"
+    )
     limitations: list[str] = Field(default_factory=list)
 
 
@@ -642,6 +760,8 @@ class Operation(StrEnum):
     features = "features"
     proximity = "proximity"
     search = "search"
+    terrain = "terrain"
+    site_summary = "site_summary"
 
 
 class StructuredQuery(Model):
@@ -665,13 +785,25 @@ class NLAnswer(Response):
     limitations: list[Limitation] = Field(
         default_factory=list, description="For partial answers: what was not answered and why"
     )
+    assumptions: list[str] = Field(
+        default_factory=list,
+        description="Defaults and readings the user didn't state (e.g. a proxy height), shown with the echo",
+    )
 
 
 class NLUnsupported(Response):
     unsupported: Limitation
+    interpretation: str | None = Field(default=None, description="Echo of how the request was understood")
 
 
-NLResponse = NLAnswer | NLUnsupported
+class NLClarification(Response):
+    """The request can't be answered until the user says more (e.g. which site); nothing was run."""
+
+    interpretation: str = Field(description="Echo of how the request was understood")
+    question: str = Field(description="What the user needs to say or select")
+
+
+NLResponse = NLAnswer | NLUnsupported | NLClarification
 
 
 # ------------------------------------------------------------------- error bodies

@@ -28,9 +28,23 @@ def test_blockers_are_known_request_ids():
 
 def test_contract_blocked_items_are_labeled():
     by_id = {i.id: i for i in EVAL.items}
-    assert "blocked on contract" in by_id["k2"].blocked_reasons
-    assert by_id["k8"].blocked_reasons == ["blocked on registry"]
+    assert by_id["k6"].blocked_reasons == ["blocked on contract"]  # C3 filter/rank
+    assert by_id["k7"].blocked_reasons == ["blocked on contract"]
     assert by_id["k5"].blocked_reasons == []
+
+
+def test_only_the_filter_rank_items_are_still_blocked():
+    """Contract 0.7.0 and the registry batch (03d24f4) unblocked everything except C3."""
+    blocked = {i.id: i.blocked_on for i in EVAL.items if i.status == ItemStatus.blocked}
+    assert blocked == {"k6": ["C3"], "k7": ["C3"]}
+
+
+def test_clarify_label_is_scored_in_a():
+    from lss.nl.eval import oracle_provider, run_item
+
+    item = next(i for i in EVAL.items if i.id == "k1-no-site")
+    res = run_item(item, oracle_provider(EVAL), EVAL)
+    assert res.outcome == "clarify" and res.query_correct is True and res.reason_correct is None
 
 
 @pytest.mark.parametrize("item", READY, ids=lambda i: i.id)
@@ -54,4 +68,5 @@ def test_holdout_set_covers_answers_and_refusals():
     assert all(i.source == Source.si_supplied for i in holdout)
     outcomes = {i.expected.outcome.value for i in holdout}
     assert {"answer", "unsupported"} <= outcomes
+    assert all(i.status == ItemStatus.ready for i in holdout)  # s11 unblocked by the registry batch
     assert "s13" not in {i.id for i in holdout}  # label changed after its output was seen

@@ -33,10 +33,13 @@ from lss.contract import (
 
 # Older contract versions whose served bodies (MetricsResponse, SeriesResponse) are unchanged in the current
 # contract. Files made with them are still served, stamped with the current version; any other version is
-# refused (503) until the file is regenerated. Maintained by the contract owner: on a bump that leaves those
-# models alone, add the previous version(s); on a bump that changes them, empty this set.
-#   0.5.0 -> 0.6.0: error-body models only.
-COMPATIBLE_VERSIONS = frozenset({"0.5.0"})
+# refused (503) until the file is regenerated. Maintained by the contract owner (Kaitlin, 2026-11-15):
+# - list a version only if its result format equals the current one: tests/api/test_served_format.py checks
+#   each against a snapshot in tests/api/served_formats/ (how to make one: lss/api/served_format.py);
+# - drop a version, and its snapshot, once stream A has regenerated its served files at a newer version.
+#   0.5.0: Site01 file from C1; drop when A regenerates it with horizons (request RA1).
+#   0.6.0: listed for files A writes before contract 0.7.0 reaches its worktree.
+COMPATIBLE_VERSIONS = frozenset({"0.5.0", "0.6.0"})
 
 
 class ServedFileError(ValueError):

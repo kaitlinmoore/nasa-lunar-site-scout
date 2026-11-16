@@ -52,6 +52,15 @@ def interpret(
 
     route = _parse(call(build_route_prompt(text, ctx, today)), NLRoute, "route")
     limitations = [lim.model_dump(mode="json") for lim in route.limitations]
+    if route.outcome == Outcome.clarify:
+        if route.operation is not None:
+            raise NLValidationError(["route: a clarify outcome has no operation"])
+        return {
+            "outcome": "clarify",
+            "interpretation": route.interpretation,
+            "question": route.question,
+            "limitations": limitations,
+        }
     if route.outcome == Outcome.unsupported:
         if route.operation is not None:
             raise NLValidationError(["route: an unsupported outcome has no operation"])

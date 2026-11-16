@@ -1,5 +1,5 @@
 {
-  "contract_version": "0.6.0",
+  "contract_version": "0.7.0",
   "_placeholder": true,
   "_note": "PLACEHOLDER: synthetic example values for contract v0, not computed results. Do not use for any analysis or display them as real.",
   "unsupported": {
@@ -8,5 +8,6 @@
       "pgda_81_mosaic_5m",
       "aussel_2025_boulders"
     ]
-  }
+  },
+  "interpretation": "Candidate sites with no boulders larger than 0.5 m within a 50 m landing ellipse."
 }

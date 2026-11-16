@@ -23,13 +23,14 @@ from pydantic import Field, model_validator
 from lss.contract import Model, Operation
 from lss.nl.vocabulary import OPERATION_PARAMS, HeightSource, RadiusSource, SlopeSource, WindowSource
 
-SCHEMA_VERSION = "nl-output-4"
+SCHEMA_VERSION = "nl-output-5"
 
 
 class Outcome(StrEnum):
     answer = "answer"  # fully answerable by the structured query
     partial = "partial"  # structured query answers part; limitations explain the rest
     unsupported = "unsupported"  # nothing answerable; limitations explain why
+    clarify = "clarify"  # can't proceed until the user says more (e.g. which site); `question` asks
 
 
 class SiteRef(Model):
@@ -65,9 +66,18 @@ class NLOutput(Model):
         default_factory=list, description="Defaults or readings the user didn't state, e.g. an assumed date"
     )
     limitations: list[NLLimitation] = Field(default_factory=list)
+    question: str | None = Field(default=None, description="For outcome 'clarify': what to ask the user")
 
     @model_validator(mode="after")
     def _consistent(self) -> NLOutput:
+        if self.outcome == Outcome.clarify:
+            if self.query is not None or self.limitations:
+                raise ValueError("a clarify outcome has no query and no limitations")
+            if not (self.question or "").strip():
+                raise ValueError("a clarify outcome needs a question")
+            return self
+        if self.question is not None:
+            raise ValueError("only a clarify outcome has a question")
         if self.outcome == Outcome.unsupported:
             if self.query is not None:
                 raise ValueError("an unsupported outcome has no query")
@@ -151,6 +161,7 @@ class NLRoute(Model):
     operation: Operation | None = None
     interpretation: str = Field(min_length=1)
     limitations: list[NLLimitation] = Field(default_factory=list)
+    question: str | None = Field(default=None, description="For outcome 'clarify': what to ask the user")
 
 
 class NLFill(Model):

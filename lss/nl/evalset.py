@@ -88,10 +88,13 @@ class EvalItem(Model):
                 raise ValueError(f"{self.id}: a ready item has no blocked_on")
             if self.expected is None:
                 raise ValueError(f"{self.id}: a ready item needs expected")
-            if self.expected.outcome != Outcome.unsupported and self.expected.query is None:
+            outcome = self.expected.outcome
+            if outcome in (Outcome.answer, Outcome.partial) and self.expected.query is None:
                 raise ValueError(f"{self.id}: a ready answer/partial item needs expected.query")
-            if self.expected.outcome != Outcome.answer and not self.expected.citations:
+            if outcome in (Outcome.partial, Outcome.unsupported) and not self.expected.citations:
                 raise ValueError(f"{self.id}: a ready partial/unsupported item needs citations")
+            if outcome == Outcome.clarify and (self.expected.query or self.expected.citations):
+                raise ValueError(f"{self.id}: a clarify item has no query and no citations")
         elif not self.blocked_on:
             raise ValueError(f"{self.id}: a blocked item must say what it is blocked on")
         return self
@@ -131,6 +134,9 @@ def label_output(item: EvalItem) -> dict | None:
     }
     if exp.query is not None:
         out["query"] = exp.query.model_dump(mode="json")
+    if exp.outcome == Outcome.clarify:
+        out["question"] = "Which site?"
+        return out
     if exp.outcome != Outcome.answer:
         cites = [c.model_dump() for c in exp.citations]
         out["limitations"] = [{"topic": item.text, "citations": cites}]

@@ -15,14 +15,14 @@
 #                  never written around a specific item. Holdout: s3, s5, s8, s16 (chosen after live
 #                  run 2, whose outputs had been seen; clean from run 3 on) and s11 (never run;
 #                  replaced s13 on 2026-11-15 because s13's label changed after its output was seen).
-#                  s11 is blocked (G-R4), so the holdout has no scorable refusal until it unblocks.
+#                  s11 became ready when the registry batch merged (03d24f4).
 #   blocked_on     request ids from reference/logs/nl-progress.md:
-#                    C*    blocked on contract (gaps held until Phase 2, when this stream owns the contract)
-#                    G-R*  blocked on registry (batch request to stream A, sent after A's C1 merges)
+#                    C*    blocked on contract (C1, C2, C4-C6, C8, C9 added in contract 0.7.0; open: C3, C7)
+#                    G-R*  blocked on registry (G-R1..G-R4 merged as 03d24f4; none open)
 #                    D-*   blocked on a default the project author hasn't decided yet (none open:
 #                          D-height, D-window, D-safe and D-radius were all decided 2026-11-15)
 #   expected       what a correct NL output is under the current contract + vocabulary:
-#     outcome      answer | partial | unsupported
+#     outcome      answer | partial | unsupported | clarify (asks the user, e.g. for a site)
 #     query        {operation, params}; locations may be {site_id: ...}
 #     params_match exact (default) | subset (only the keys given are checked)
 #     height_source  see lss.nl.vocabulary.HeightSource
@@ -41,29 +41,52 @@ items:
     text: What can we learn from this site and the surrounding location?
     context: {selected_site_id: pgda-site01}
     target: "Answer: site summary (metrics + nearby features)."
-    status: blocked
-    blocked_on: [C1]
+    status: ready
+    notes: >-
+      site_summary (contract 0.7.0, the project author's choice for C1). "Surrounding" with no distance is
+      the "nearby" default (10 km); the metrics part uses the default height and window (no scenario
+      selected), all disclosed by code.
     expected:
       outcome: answer
+      height_source: default
+      window_source: default
+      radius_source: nearby_default
+      query:
+        operation: site_summary
+        params:
+          location: {site_id: pgda-site01}
+          radius_m: 10000.0
+          scenario:
+            location: {site_id: pgda-site01}
+            unit_height_m: 5.0
+            window_start: "2026-11-15T00:00:00Z"
+            window_end: "2026-12-15T00:00:00Z"
 
   - id: k1-no-site
     source: kaitlin
     text: What can we learn from this site and the surrounding location?
     context: {}
     target: "Asks for a site, since none is selected (the second half of label #1)."
-    status: blocked
-    blocked_on: [C6]
-    notes: Same query as k1 with no site selected; the label covers both cases.
+    status: ready
+    notes: Same query as k1 with no site selected; the label covers both cases (NLClarification, C6).
+    expected:
+      outcome: clarify
 
   - id: k2
     source: kaitlin
     text: How steep is the terrain?
     context: {selected_site_id: pgda-site01}
     target: "Answer: slope at and around the site."
-    status: blocked
-    blocked_on: [C2]
+    status: ready
+    notes: terrain (C2). No distance given, so "around" is the 1 km default (D-around), disclosed by code.
     expected:
       outcome: answer
+      radius_source: around_default
+      query:
+        operation: terrain
+        params:
+          location: {site_id: pgda-site01}
+          radius_m: 1000.0
 
   - id: k3
     source: kaitlin
@@ -72,21 +95,20 @@ items:
     target: >-
       Partial: slopes, PGDA polar roughness maps, craters >=1-2 km. States that boulder data doesn't
       cover the pole.
-    status: blocked
-    blocked_on: [C2]
+    status: ready
     notes: >-
-      D-radius resolved 2026-11-15: "nearby" with no distance is 10 km, disclosed by code; results
-      closest first, capped (an engine/contract behavior, not an NL one). Still needs slope numbers (C2).
+      site_summary (C1) restricted to hazard features, so the answer has slopes and craters together (the
+      project author's C1 choice covers #3 as a partial). "Nearby" with no distance is 10 km (D-radius),
+      disclosed by code; features closest first, at most 10, with the total (C9).
     expected:
       outcome: partial
       radius_source: nearby_default
       query:
-        operation: proximity
+        operation: site_summary
         params:
           location: {site_id: pgda-site01}
-          types: [crater, hazard]
           radius_m: 10000.0
-      params_match: subset
+          feature_types: [crater, hazard]
       citations:
         - {dataset_id: aussel_2025_boulders, cannot_answer: Any boulder information at the poles}
       citations_optional:
@@ -103,15 +125,23 @@ items:
       Partial: answerable only within the 5 m mosaic (87-90 S), and low-confidence even there because
       ~90% of 5 m pixels are interpolated (Barker). Elsewhere, 100 m2 is smaller than one pixel and the
       tool says so.
-    status: blocked
-    blocked_on: [C5, G-R2]
+    status: ready
+    notes: A polar cap area (C5); the pixel-size and interpolation limits are the merged G-R2 wording.
     expected:
       outcome: partial
+      slope_source: user
       query:
         operation: search
         params:
+          area: {kind: cap, pole: south, max_colatitude_deg: 6}
           criteria: {max_slope_deg: 5, min_flat_area_m2: 100}
-      params_match: subset
+      citations:
+        - dataset_id: pgda_81_mosaic_5m
+          cannot_answer: High-confidence single-pixel slope (~90% of 5 m pixels are interpolated)
+        - dataset_id: pgda_90_south_pole_dems
+          cannot_answer: Flat areas smaller than one pixel (20 m pixel = 400 m²) equatorward of 87°S
+      citations_optional:
+        - {dataset_id: pgda_81_mosaic_5m, cannot_answer: Terrain equatorward of 87 S}
 
   - id: k5
     source: kaitlin
@@ -139,13 +169,15 @@ items:
       Before time-dependent area search exists: answer for curated sites in the region and say area
       search isn't available yet. Echo how "safe" was interpreted (slope limit).
     status: blocked
-    blocked_on: [C3, C2, G-R4]
+    blocked_on: [C3]
     notes: >-
       D-safe resolved 2026-11-15: "safe" with no slope limit is slope under 5 degrees, and the echo names
-      the terrain data the slope is measured on (from the engine's result).
+      the terrain data the slope is measured on (from the engine's result). Waits on filter/rank (C3).
     expected:
       outcome: partial
       slope_source: safe_default
+      citations:
+        - {dataset_id: lss_tool_capabilities, cannot_answer: Time-dependent area search (not available yet)}
 
   - id: k7
     source: kaitlin
@@ -157,9 +189,12 @@ items:
       Answer for curated/saved sites; echo the assumed date; note it is Sun elevation at the site, not
       along the approach trajectory.
     status: blocked
-    blocked_on: [C3, G-R4]
+    blocked_on: [C3]
     expected:
       outcome: partial
+      citations:
+        - dataset_id: lss_tool_capabilities
+          cannot_answer: Sun angle along a descent trajectory (Sun elevation is computed at the site)
 
   - id: k8
     source: kaitlin
@@ -171,8 +206,7 @@ items:
       Partial: night temperatures where polar Diviner products apply (poleward of 80). For 60-80, state
       that the tool has no temperature product for that range. Refuse the 20% part (needs a spacecraft
       thermal model).
-    status: blocked
-    blocked_on: [G-R1]
+    status: ready
     notes: >-
       Unsupported (not partial) until a thermal operation exists (C7, with S5): the Core vocabulary has no
       temperature query. The first citation uses the registry wording Kaitlin approved (G-R1).
@@ -194,11 +228,12 @@ items:
     target: >-
       Partial: PSR distance (straight-line, not a drive route). State that hydrogen data is too coarse
       for 1 km, and offer M3 surface-ice detections (~280 m) as a clearly labeled stand-in.
-    status: blocked
-    blocked_on: [C5, G-R3, G-R4]
+    status: ready
     notes: >-
       D-safe resolved 2026-11-15 (slope under 5 degrees; the echo names the terrain data). The 1 km is
-      the user's own distance, so radius_source is user, not the "nearby" default.
+      the user's own distance, so radius_source is user, not the "nearby" default. No region named, so
+      the area is "all" (the project author's C5 choice). Hydrogen and drive-route limits: merged G-R3 /
+      G-R4 wording.
     expected:
       outcome: partial
       slope_source: safe_default
@@ -206,11 +241,18 @@ items:
       query:
         operation: search
         params:
+          area: {kind: all}
           criteria:
             max_slope_deg: 5.0
             near_feature_types: [psr, ice_detection]
             max_feature_distance_m: 1000
-      params_match: subset
+      citations:
+        - dataset_id: orbital_neutron_hydrogen
+          cannot_answer: Hydrogen concentration at ~1 km scale (orbital neutron maps resolve ~10 km at best)
+        - {dataset_id: lss_tool_capabilities, cannot_answer: Drive routes or traverse distances (distances are straight-line)}
+      citations_optional:
+        - dataset_id: m3_surface_ice
+          cannot_answer: Subsurface hydrogen at km scale (neutron data are far coarser)
 
   # ---- SI-supplied items: drafted by Claude, approved by the project author 2026-11-15
   #      (reference/logs/nl-eval-candidates.md, s1-s15, plus s16 for the defaults).
@@ -376,27 +418,33 @@ items:
     source: si_supplied
     text: Find flat spots with slope under 10° within 2 km of Connecting ridge.
     target: "Partial: terrain-only search around a site."
-    status: blocked
-    blocked_on: [C5]
-    notes: A polygon around a site would make the LLM compute coordinates; needs a circle area (C5).
+    status: ready
+    notes: >-
+      A circle area around the site (C5). The partial's citation (the 5 m interpolation limit, as in k4)
+      is Claude-drafted, pending the project author's review.
     expected:
       outcome: partial
       slope_source: user
+      radius_source: user
       query:
         operation: search
         params:
+          area: {kind: circle, center: {site_id: pgda-site01}, radius_m: 2000.0}
           criteria: {max_slope_deg: 10.0}
-      params_match: subset
+      citations:
+        - dataset_id: pgda_81_mosaic_5m
+          cannot_answer: High-confidence single-pixel slope (~90% of 5 m pixels are interpolated)
 
   - id: s11
     source: si_supplied
     split: holdout
     text: What will the temperature be at Connecting ridge on January 1, 2029 at noon?
     target: "Unsupported: temperature queries are not supported yet (tool limit)."
-    status: blocked
-    blocked_on: [G-R4]
+    status: ready
     expected:
       outcome: unsupported
+      citations:
+        - {dataset_id: lss_tool_capabilities, cannot_answer: Temperature queries (not available yet)}
 
   - id: s12
     source: si_supplied
@@ -428,20 +476,22 @@ items:
     source: si_supplied
     text: Plan a drive route for a rover from Connecting ridge to the nearest permanently shadowed region.
     target: "Unsupported: drive routes are a tool limit (distances are straight-line)."
-    status: blocked
-    blocked_on: [G-R4]
+    status: ready
     notes: Approved as unsupported; a partial (straight-line PSR distance) is the alternative.
     expected:
       outcome: unsupported
+      citations:
+        - {dataset_id: lss_tool_capabilities, cannot_answer: Drive routes or traverse distances (distances are straight-line)}
 
   - id: s15
     source: si_supplied
     text: What's the weather like on Mars?
     target: "Unsupported: outside lunar landing-site planning (tool limit)."
-    status: blocked
-    blocked_on: [G-R4]
+    status: ready
     expected:
       outcome: unsupported
+      citations:
+        - {dataset_id: lss_tool_capabilities, cannot_answer: Questions outside lunar landing-site planning}
 
   - id: s16
     source: si_supplied

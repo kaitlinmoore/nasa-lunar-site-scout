@@ -79,12 +79,15 @@ def project_stage(out: Any, stage: str | None) -> Any:
         return out
     query = out.get("query") or {}
     if stage == "route":
-        return {
+        route = {
             "outcome": out["outcome"],
             "operation": query.get("operation"),
             "interpretation": out.get("interpretation", ""),
             "limitations": out.get("limitations", []),
         }
+        if out.get("question") is not None:
+            route["question"] = out["question"]
+        return route
     return {
         "interpretation": out.get("interpretation", ""),
         "params": query.get("params", {}),

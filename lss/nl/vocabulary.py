@@ -15,8 +15,12 @@ starting at the request's date (00:00 UTC). Both are disclosed in the answer.
 
 Defaults for vague terms (project author's decisions, 2026-11-15): "safe" with no slope limit
 means slope under 5 degrees (D-safe), and the echo names the terrain data the slope is measured
-on; "nearby" with no distance means within 10 km (D-radius), stated in the echo. Both are
-disclosed by code, not by the model.
+on; "nearby" with no distance means within 10 km (D-radius), stated in the echo. Slope "at and
+around" a site with no distance means within 1 km (D-around, 2026-11-15). All are disclosed by code,
+not by the model.
+
+Contract 0.7.0 added `terrain` (slope at and around a point) and `site_summary` (metrics, slope and
+nearby features at one site; the project author's choice for her query #1) to the vocabulary.
 """
 
 from __future__ import annotations
@@ -30,24 +34,14 @@ from lss.contract import (
     CompareRequest,
     HorizonRequest,
     LocateRequest,
-    Model,
     Operation,
     ProximityRequest,
     ScenarioRequest,
     SearchRequest,
-    SiteCategory,
+    SitesQuery,
+    SiteSummaryRequest,
+    TerrainRequest,
 )
-
-
-class SitesParams(Model):
-    """Query parameters of `GET /api/sites`.
-
-    Stopgap: the contract has no request model for this GET operation (contract gap C4,
-    `SitesQuery`, held until Phase 2). Replace this with the contract model once it exists.
-    """
-
-    category: SiteCategory | None = None
-
 
 # Operation -> model that `StructuredQuery.params` must validate against.
 OPERATION_PARAMS: dict[Operation, type[BaseModel]] = {
@@ -55,10 +49,12 @@ OPERATION_PARAMS: dict[Operation, type[BaseModel]] = {
     Operation.series: ScenarioRequest,
     Operation.compare: CompareRequest,
     Operation.horizon: HorizonRequest,
-    Operation.sites: SitesParams,
+    Operation.sites: SitesQuery,
     Operation.locate: LocateRequest,
     Operation.proximity: ProximityRequest,
     Operation.search: SearchRequest,
+    Operation.terrain: TerrainRequest,
+    Operation.site_summary: SiteSummaryRequest,
 }
 
 ALLOWED_OPERATIONS: frozenset[Operation] = frozenset(OPERATION_PARAMS)
@@ -124,24 +120,34 @@ class RadiusSource(StrEnum):
 
     user = "user"  # the user gave a distance
     nearby_default = "nearby_default"  # the user said "nearby" (or similar) and gave none (D-radius)
+    around_default = "around_default"  # slope "at and around" a site, no distance given (D-around)
     not_applicable = "not_applicable"  # the query has no search distance
 
 
 SAFE_MAX_SLOPE_DEG = 5.0
 NEARBY_RADIUS_M = 10_000.0
+AROUND_RADIUS_M = 1_000.0
 
 # Params that carry the slope limit / search distance, at any depth of `StructuredQuery.params`.
 SLOPE_KEYS: frozenset[str] = frozenset({"max_slope_deg"})
 RADIUS_KEYS: frozenset[str] = frozenset({"radius_m", "max_feature_distance_m"})
 
 NEARBY_RADIUS_TEXT = "Nearby: within 10 km (default; no distance was given)."
+# Claude-drafted on the same pattern as the approved "nearby" text; pending the project author's review.
+AROUND_RADIUS_TEXT = "Around: within 1 km (default; no distance was given)."
+
+# Default distances: the value each default source requires, and its disclosure.
+RADIUS_DEFAULTS: dict[RadiusSource, tuple[float, str]] = {
+    RadiusSource.nearby_default: (NEARBY_RADIUS_M, NEARBY_RADIUS_TEXT),
+    RadiusSource.around_default: (AROUND_RADIUS_M, AROUND_RADIUS_TEXT),
+}
 
 
 def safe_slope_text(terrain: str) -> str:
     """The D-safe disclosure. `terrain` names the terrain data the slope is measured on (from the
     engine's result); the project author's rule is that the echo always states it.
 
-    "under 5°" is provisional: when the engine's slope filter is built (contract note C9), word
-    this to match its bound ("under" if strict, "5° or less" if not), as the project author decided.
+    "under 5°" matches the contract: `SearchCriteria.max_slope_deg` is a strict bound (slope < limit;
+    the project author's decision, 2026-11-15, contract note C9).
     """
     return f"Safe: slope under 5°, measured on {terrain} (default; no slope limit was given)."
