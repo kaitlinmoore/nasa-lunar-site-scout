@@ -200,8 +200,10 @@ extent in each zip's `<region>_PolarLGRS_ACC_1km_S_Grid.shp` header, which equal
 1737.4 km sphere with scale factor 0.994 and false easting and northing of 500 km, so the engine's polar
 stereographic metres (scale factor 1, origin at the pole) are (grid metres − 500 km) / 0.994. Each region's
 metadata also publishes latitude and longitude bounds to 4 decimals; every one of the 36 values equals a box
-corner's latitude or longitude, as converted here, to 0.00005°, which checks the conversion. The release does not
-state the frame; the mean Earth frame is assumed and has not been checked.
+corner's latitude or longitude, as converted here, to 0.00005°, which checks the conversion. The release's
+metadata gives the datum as "Moon (2015) - Sphere" (semi-axis 1,737,400 m), and each grid's projection file names
+the same sphere. That fixes the radius, not the frame: the release does not state the body-fixed frame. The mean
+Earth frame is assumed and has not been checked.
 
 The boxes are 17 to 31 km on a side, except Mons Mouton Plateau (78 by 58 km), whose centre represents its region
 only loosely. A box centre is a geometric point, not a landing site: the slope at the centre on the finest map
