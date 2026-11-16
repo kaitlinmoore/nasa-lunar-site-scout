@@ -132,3 +132,29 @@ def test_static_copy_publishes_cached_answers_and_checks_them(tmp_path, data_dir
     assert (
         static == client.post("/api/nl", json=entry.request.model_dump(mode="json", exclude_none=True)).json()
     )
+
+
+def test_cached_compare_answers_from_before_0_13_get_compared_keys(tmp_path, monkeypatch):
+    """B's G3 walkthrough: k6/k7 were recorded at 0.12.0 (no compared_keys); the loader fills them."""
+    from lss.api import served
+    from lss.contract import NLAnswer, Scenario
+    from tests.api.test_thin_slice import WEB_SCENARIO
+
+    monkeypatch.setattr(served, "COMPATIBLE_VERSIONS", frozenset({"0.12.0"}))
+    sc2 = dict(WEB_SCENARIO, unit_height_m=2.0)
+    resp = NLAnswer(
+        contract_version="0.12.0",
+        interpretation="Compare two heights.",
+        structured_query={"operation": "compare", "params": {"scenarios": [WEB_SCENARIO, sc2]}},
+        result={"contract_version": "0.12.0", "compared": [WEB_SCENARIO, sc2], "items": [], "not_served": []},
+    )
+    entry = {
+        "format": 1,
+        "request": {"text": "Compare two heights"},
+        "response": resp.model_dump(mode="json", by_alias=True),
+    }
+    (tmp_path / "old.json").write_text(json.dumps(entry), encoding="utf-8")
+    (loaded,) = nl.load_cache_entries(tmp_path).values()
+    keys = loaded.response.result["compared_keys"]
+    assert keys == [Scenario.model_validate(s).key() for s in (WEB_SCENARIO, sc2)]
+    assert loaded.response.result["contract_version"] == loaded.response.contract_version != "0.12.0"

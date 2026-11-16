@@ -201,12 +201,27 @@ def load_cache_entries(directory: Path) -> dict[tuple, CachedAnswer]:
             )
         update: dict[str, Any] = {"contract_version": CONTRACT_VERSION}
         if isinstance(resp, NLAnswer) and isinstance(resp.result, dict) and "contract_version" in resp.result:
-            update["result"] = {**resp.result, "contract_version": CONTRACT_VERSION}
+            update["result"] = _upgrade_result(resp, {**resp.result, "contract_version": CONTRACT_VERSION})
         key = cache_key(req)
         if key in out:
             raise CacheFileError(f"{p.name} and {out[key].path.name} answer the same request")
         out[key] = CachedAnswer(req, resp.model_copy(update=update), p)
     return out
+
+
+def _upgrade_result(resp: NLAnswer, result: dict[str, Any]) -> dict[str, Any]:
+    """Bring a cached result made under an older compatible contract up to the current shape: a compare answer
+    from before 0.13.0 gets `compared_keys` (Scenario.key() of each `compared` entry, same order), which the
+    web matches columns by (stream B's G3 walkthrough, 2026-11-16)."""
+    from lss.contract import Operation, Scenario
+
+    if (
+        resp.structured_query.operation == Operation.compare
+        and result.get("compared")
+        and not result.get("compared_keys")
+    ):
+        result["compared_keys"] = [Scenario.model_validate(sc).key() for sc in result["compared"]]
+    return result
 
 
 def load_cache(directory: Path) -> dict[tuple, NLResult]:
