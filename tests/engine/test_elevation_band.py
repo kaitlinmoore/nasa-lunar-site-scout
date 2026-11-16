@@ -62,3 +62,25 @@ def test_site01_histogram_matches_its_elevation_statistics():
         e.mean, abs=0.01
     )  # within a bin's width
     assert band_fraction(h, 10.0, 25.0) == 0.0  # k7's band: the Sun never reaches 10 deg here
+
+
+def test_band_functions_import_without_spice_or_numba():
+    """C api's request RA10: the API reads histograms from served files and must not load the engine."""
+    import subprocess
+    import sys
+
+    code = (
+        "import sys\n"
+        "from lss.metrics.elevation_band import band_fraction, band_seconds\n"
+        "heavy = [m for m in ('spiceypy', 'numba', 'rasterio', 'lss.series', 'lss.ephem', 'lss.horizon',"
+        " 'lss.metrics.core') if m in sys.modules]\n"
+        "print(','.join(heavy))\n"
+    )
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
+    assert out.stdout.strip() == ""
+
+
+def test_package_exports_still_work():
+    import lss.metrics as m
+
+    assert m.band_fraction is band_fraction and callable(m.power_metrics) and "time_mean" in dir(m)
