@@ -32,6 +32,7 @@ import {
   readResult,
 } from './response'
 import { SiteSummaryView, TerrainView } from './TerrainViews'
+import Section from '../Section'
 
 const MAX_CHARS = __NL_MAX_TEXT_CHARS__
 
@@ -391,8 +392,7 @@ export default function NlBox({
   }
 
   return (
-    <section className="card nl-box">
-      <h2>Ask about this site</h2>
+    <Section id="questions" title="Ask about this site" className="nl-box">
       <p className="muted">
         Ask in plain words. A language model turns the question into one of this tool's queries; the numbers
         come from our precomputed results, not from the model.
@@ -469,6 +469,6 @@ export default function NlBox({
           {state.kind === 'error' && <ProblemView error={state.error} />}
         </div>
       )}
-    </section>
+    </Section>
   )
 }

@@ -16,6 +16,8 @@ import {
   midSentence,
 } from './format'
 import { MetricValue, Value } from './metrics'
+import Section from './Section'
+import type { SectionId } from './sections'
 import { useSiteNames } from './siteNames'
 import {
   COMMS_SPEC,
@@ -28,19 +30,20 @@ import {
 } from './metricSpec'
 
 function MetricTable<T extends object>({
+  id,
   title,
   metrics,
   spec,
   scenarioWindow,
 }: {
+  id: SectionId
   title: string
   metrics: T
   spec: MetricSpec<T>
   scenarioWindow: ScenarioWindow
 }) {
   return (
-    <section className="card">
-      <h2>{title}</h2>
+    <Section id={id} title={title}>
       <table className="metrics">
         <thead>
           <tr>
@@ -66,7 +69,7 @@ function MetricTable<T extends object>({
           ))}
         </tbody>
       </table>
-    </section>
+    </Section>
   )
 }
 
@@ -74,8 +77,7 @@ function Events({ events, step }: { events: MetricEvent[]; step: string }) {
   const sorted = [...events].sort((a, b) => Date.parse(a.time) - Date.parse(b.time))
   const refinedDoc = DOCS.Event?.refined
   return (
-    <section className="card">
-      <h2>Events</h2>
+    <Section id="events" title="Events">
       {sorted.length === 0 ? (
         <p className="muted">No events in this time window.</p>
       ) : (
@@ -107,14 +109,13 @@ function Events({ events, step }: { events: MetricEvent[]; step: string }) {
         {refinedDoc && <>Refined: {midSentence(refinedDoc)}. </>}
         Times are at the calculation's samples ({formatStepPlain(step)}) unless refined.
       </p>
-    </section>
+    </Section>
   )
 }
 
 function Fidelity({ fidelity }: { fidelity: FidelityLabel }) {
   return (
-    <section className="card">
-      <h2>Terrain fidelity</h2>
+    <Section id="fidelity" title="Terrain fidelity">
       <dl>
         <dt>Tier</dt>
         <dd>
@@ -131,7 +132,7 @@ function Fidelity({ fidelity }: { fidelity: FidelityLabel }) {
           <Value value={fidelity.far_field_resolution_m} field="far_field_resolution_m" />
         </dd>
       </dl>
-    </section>
+    </Section>
   )
 }
 
@@ -144,8 +145,7 @@ export default function SiteScreen({ data, children }: { data: MetricsResponse; 
   const scenarioWindow: ScenarioWindow = { start: scenario.window_start, end: scenario.window_end }
   return (
     <>
-      <section className="card">
-        <h2>Scenario</h2>
+      <Section id="scenario" title="Scenario">
         <dl>
           <dt>Site</dt>
           <dd>{names.at(location) ?? location.name ?? <span className="muted">unnamed location</span>}</dd>
@@ -181,11 +181,12 @@ export default function SiteScreen({ data, children }: { data: MetricsResponse; 
             </dd>
           </dl>
         </details>
-      </section>
+      </Section>
       {children}
       <div className="grid-2">
-        <MetricTable title="Power" metrics={data.power} spec={POWER_SPEC} scenarioWindow={scenarioWindow} />
+        <MetricTable id="power" title="Power" metrics={data.power} spec={POWER_SPEC} scenarioWindow={scenarioWindow} />
         <MetricTable
+          id="comms"
           title="Comms (direct to Earth)"
           metrics={data.comms}
           spec={COMMS_SPEC}

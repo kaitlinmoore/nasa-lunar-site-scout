@@ -27,6 +27,8 @@ import GlobeView from './globe/GlobeView'
 import { navigate, type Route, routeHref, useRoute } from './route'
 import { useUsingStaticCopy } from './api/staticFallback'
 import SavedView from './saved/SavedView'
+import Section from './Section'
+import { CollapsibleSections } from './sections'
 import NlBox from './nl/NlBox'
 
 // 2D site view (C5): OpenLayers + proj4 load as their own chunk, only where the map is shown.
@@ -146,19 +148,28 @@ function Nav({ route }: { route: Route }) {
   )
 }
 
+/** The site's short name and subtitle (siteNames.ts), at the head of its panel. */
+function SiteHeading({ site }: { site: Site }) {
+  const subtitle = subtitleOf(site)
+  return (
+    <div className="site-heading">
+      <h2 className="site-title">{displayName(site)}</h2>
+      {subtitle && <div className="site-subtitle">{subtitle}</div>}
+    </div>
+  )
+}
+
 /**
  * What and where the site is, from its `description` in /api/sites (stream A writes these).
  * An empty or missing description is simply left out.
  */
 function SiteIntro({ site }: { site: Site }) {
   const description = site.description?.trim()
-  const subtitle = subtitleOf(site)
+  if (!description) return null
   return (
-    <section className="site-intro">
-      <h2>{displayName(site)}</h2>
-      {subtitle && <div className="site-subtitle">{subtitle}</div>}
-      {description && <p>{description}</p>}
-    </section>
+    <Section id="about" title="About this site" className="site-intro">
+      <p>{description}</p>
+    </Section>
   )
 }
 
@@ -266,16 +277,16 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
   ) : !skyForSite || !skyData ? null : skyData.horizon ? (
     <SkyView horizon={skyData.horizon} series={skyData.series} />
   ) : (
-    <section className="card">
-      <h2>Horizon and sky</h2>
+    <Section id="sky" title="Horizon and sky">
       <p className="muted">
         This version has no terrain horizon for this location and unit height, so the sky view can't be drawn.
       </p>
-    </section>
+    </Section>
   )
 
   return (
-    <>
+    // Sections on this page collapse (layout pass item 2); the same cards elsewhere don't.
+    <CollapsibleSections.Provider value={true}>
       <SiteIntro site={site} />
       <SiteActions site={site} scenario={metricsForSite && data ? data.scenario : null} />
       <ContractCheck
@@ -324,7 +335,7 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
       </Suspense>
       {/* Questions (C7b), below the dashboard; a fresh box per site. It sends the chosen scenario. */}
       <NlBox key={site.id} site={site} scenario={entry ? entry.scenario : null} source={source} />
-    </>
+    </CollapsibleSections.Provider>
   )
 }
 
@@ -366,15 +377,19 @@ export default function App() {
         <GlobeView data={sites.data} focusSiteId={site ? site.id : null} source={source} />
         {siteId && (
           <aside className="site-panel" aria-label="Site details">
-            <button
-              type="button"
-              className="site-panel-close"
-              aria-label="Close site details"
-              title="Close (back to the whole Moon)"
-              onClick={() => navigate({ view: 'globe' })}
-            >
-              ✕
-            </button>
+            {/* The site's name stays in view while the panel scrolls (Kaitlin, 2026-11-23). */}
+            <div className="site-panel-head">
+              {site && <SiteHeading site={site} />}
+              <button
+                type="button"
+                className="site-panel-close"
+                aria-label="Close site details"
+                title="Close (back to the whole Moon)"
+                onClick={() => navigate({ view: 'globe' })}
+              >
+                ✕
+              </button>
+            </div>
             {site ? (
               <SitePage key={site.id} site={site} source={source} />
             ) : (

@@ -17,6 +17,7 @@ import {
   slopePalette,
   type TerrainView,
 } from './viewData'
+import Section from '../Section'
 
 type Load<T> = { kind: 'loading' } | { kind: 'ok'; data: T } | { kind: 'error'; error: unknown }
 
@@ -117,8 +118,7 @@ export default function TerrainSection({ site, source }: { site: Site; source: D
   }
 
   return (
-    <section className="card terrain-view">
-      <h2>Terrain map</h2>
+    <Section id="terrain" title="Terrain map" className="terrain-view">
       {list.length > 0 && (
         <div className="terrain-controls">
           <fieldset>
@@ -159,7 +159,7 @@ export default function TerrainSection({ site, source }: { site: Site; source: D
         </div>
       )}
       {body}
-    </section>
+    </Section>
   )
 }
 

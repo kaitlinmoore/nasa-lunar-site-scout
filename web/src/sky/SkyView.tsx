@@ -7,6 +7,7 @@ import { formatTerrainLayer } from '../format'
 import HorizonPlot from './HorizonPlot'
 import StateReadout from './StateReadout'
 import Timeline from './Timeline'
+import Section from '../Section'
 
 /** Why the horizon can't be drawn with this series, or null when they match. */
 function mismatch(horizon: HorizonProfile, series: SeriesResponse): string | null {
@@ -42,8 +43,7 @@ export default function SkyView({ horizon, series }: { horizon: HorizonProfile; 
   const placeholder = horizon._placeholder || series._placeholder
 
   return (
-    <section className="card">
-      <h2>Horizon and sky</h2>
+    <Section id="sky" title="Horizon and sky">
       <PlaceholderNotice horizon={horizon} series={series} />
       {problem ? (
         <div className="banner error" role="alert">
@@ -96,6 +96,6 @@ export default function SkyView({ horizon, series }: { horizon: HorizonProfile; 
           </div>
         </>
       )}
-    </section>
+    </Section>
   )
 }
