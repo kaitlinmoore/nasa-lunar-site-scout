@@ -121,6 +121,8 @@ The question box is scored on a labelled eval set (`tests/nl/eval_set.yaml`, 26 
 
 ## AI usage
 
+**About the term "SI":** the 2026 NASA Space Apps Challenge Project Submission Guide calls AI tools such as machine learning, chatbots, image generation and large language models "Super Intelligence (SI)", and requires that SI generation of code and data be acknowledged in descriptive text and metadata. This project follows that convention, so "SI-assisted" in file headers means "AI-assisted".
+
 This project was built with SI (AI) assistance from Claude (Anthropic). **The concept and features are the author's.**
 
 **Models and what each was used for:**
