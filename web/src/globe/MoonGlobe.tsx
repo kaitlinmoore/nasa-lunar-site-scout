@@ -44,7 +44,7 @@ import type { FeatureLabelRow } from './featureLabelData'
 import { attachFeatureLabels } from './featureLabels'
 import type { ScreenBox } from './declutter'
 import { globeLabelStyle, labelBoxSize, labelPadding } from './labelStyle'
-import { type MarkerCircle, poleLabelRightEdge } from './poleLabel'
+import { type PoleSide, placePoleLabel, type RelativeBox } from './poleLabel'
 import type { Site } from '../api/client'
 
 /** Cesium ion asset: "Cesium Moon" (imagery + LOLA terrain in one 3D tileset). */
@@ -366,21 +366,16 @@ export default function MoonGlobe({
       markers.push({ entity, position })
     }
 
-    // "South Pole" label at 90° S, left of its small point and kept clear of the site markers
-    // (placed every frame below; Kaitlin, 2026-11-16). Not a site: it can't be selected.
+    // "South Pole" label at 90° S, beside its small point and kept clear of the site markers, the
+    // site labels and the near-site names (placed every frame below, poleLabel.ts; Kaitlin,
+    // 2026-11-16 and layout pass 2026-11-23). Not a site: it can't be selected.
     const polePosition = Cartesian3.fromDegrees(0, -90)
     const poleColor = Color.fromCssColorString(token('--globe-pole') || 'white')
     const poleFont = token('--globe-pole-font') || '12px sans-serif'
     const poleRadius = tokenNumber('--globe-pole-size', 6) / 2 + outlineWidth
-    const poleLabelBox = (() => {
-      const ctx = document.createElement('canvas').getContext('2d')
-      if (ctx) ctx.font = poleFont
-      const m = ctx?.measureText(POLE_LABEL_TEXT)
-      const height = m ? m.actualBoundingBoxAscent + m.actualBoundingBoxDescent : 12
-      // + the dark backing around the text on both sides (labelStyle.ts)
-      const pad = labelPadding()
-      return { width: (m?.width ?? 70) + 2 * pad.x, height: height + 2 * pad.y }
-    })()
+    // The label's box on screen, backing included (labelStyle.ts), as the declutter measures it.
+    const poleLabelBox = labelBoxSize(POLE_LABEL_TEXT, poleFont)
+    const poleStart = -(poleRadius + POLE_LABEL_GAP_PX + poleLabelBox.width / 2)
     const poleEntity = v.entities.add(
       new Entity({
         id: SOUTH_POLE_ID,
@@ -396,9 +391,10 @@ export default function MoonGlobe({
         label: {
           text: POLE_LABEL_TEXT,
           ...globeLabelStyle(poleFont, poleColor),
+          // Centred on its pixel offset, which places it on one side of the point.
           verticalOrigin: VerticalOrigin.CENTER,
-          horizontalOrigin: HorizontalOrigin.RIGHT,
-          pixelOffset: new Cartesian2(-(poleRadius + POLE_LABEL_GAP_PX), 0),
+          horizontalOrigin: HorizontalOrigin.CENTER,
+          pixelOffset: new Cartesian2(poleStart, 0),
           heightReference: HeightReference.CLAMP_TO_3D_TILE,
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
         },
@@ -421,73 +417,78 @@ export default function MoonGlobe({
       if (changed) scene.requestRender()
     })
 
-    // Keep the "South Pole" label clear of the visible site markers (poleLabel.ts).
-    let poleLabelRight = Number.NaN
+    // Screen boxes of a visible site's marker and, when shown at this distance, its label.
+    const pad = labelPadding()
+    const siteBoxes = (m: { entity: Entity; position: Cartesian3 }, win: Cartesian2): ScreenBox[] => {
+      const boxes: ScreenBox[] = []
+      if (!m.entity.point) return boxes
+      const r =
+        (m.entity.point.pixelSize?.getValue() ?? markerSize) / 2 +
+        (m.entity.point.outlineWidth?.getValue() ?? outlineWidth)
+      boxes.push({ x0: win.x - r, y0: win.y - r, x1: win.x + r, y1: win.y + r })
+      const label = m.entity.label
+      if (!label || label.show?.getValue() === false) return boxes
+      if (Cartesian3.distance(scene.camera.positionWC, m.position) > SITE_LABEL_MAX_DISTANCE_M) return boxes
+      const size = labelBoxSize(String(label.text?.getValue() ?? ''), labelFont)
+      const bottom = win.y - labelOffset + pad.y
+      boxes.push({ x0: win.x - size.width / 2, y0: bottom - size.height, x1: win.x + size.width / 2, y1: bottom })
+      return boxes
+    }
+
+    // Keep the "South Pole" label clear of the visible site markers, their labels and the
+    // near-site names, on the side of the point where it fits closest (poleLabel.ts).
+    let poleOffset = { dx: poleStart, dy: 0 }
+    let poleSide: PoleSide | null = null
     scene.preRender.addEventListener(() => {
       const pole = SceneTransforms.worldToWindowCoordinates(scene, polePosition)
       if (!pole || !poleEntity.label) return
-      const circles: MarkerCircle[] = []
-      for (const m of markers) {
-        if (m.entity === poleEntity || !m.entity.show || !m.entity.point) continue
-        const win = SceneTransforms.worldToWindowCoordinates(scene, m.position)
-        if (!win) continue
-        const size = m.entity.point.pixelSize?.getValue() ?? markerSize
-        const outline = m.entity.point.outlineWidth?.getValue() ?? outlineWidth
-        circles.push({ dx: win.x - pole.x, dy: win.y - pole.y, r: size / 2 + outline })
-      }
-      const names = nearNamesRef.current().map((b) => ({
+      const relative = (b: ScreenBox): RelativeBox => ({
         x0: b.x0 - pole.x,
         y0: b.y0 - pole.y,
         x1: b.x1 - pole.x,
         y1: b.y1 - pole.y,
-      }))
-      const right = Math.round(
-        poleLabelRightEdge(circles, poleLabelBox, poleRadius, POLE_LABEL_GAP_PX, names),
-      )
-      if (right !== poleLabelRight) {
-        poleLabelRight = right
-        poleEntity.label.pixelOffset = new ConstantProperty(new Cartesian2(right, 0))
+      })
+      const obstacles: RelativeBox[] = []
+      for (const m of markers) {
+        if (m.entity === poleEntity || !m.entity.show) continue
+        const win = SceneTransforms.worldToWindowCoordinates(scene, m.position)
+        if (win) obstacles.push(...siteBoxes(m, win).map(relative))
+      }
+      obstacles.push(...nearNamesRef.current().map(relative))
+      const placed = placePoleLabel(obstacles, poleLabelBox, poleRadius, POLE_LABEL_GAP_PX, poleSide)
+      poleSide = placed.side
+      const dx = Math.round(placed.dx)
+      const dy = Math.round(placed.dy)
+      if (dx !== poleOffset.dx || dy !== poleOffset.dy) {
+        poleOffset = { dx, dy }
+        poleEntity.label.pixelOffset = new ConstantProperty(new Cartesian2(dx, dy))
         scene.requestRender()
       }
     })
 
     // What the feature names keep clear of (featureLabels.ts, declutter.ts): every visible marker, the
     // site labels shown at this distance, and the South Pole label.
-    const pad = labelPadding()
     obstaclesRef.current = () => {
       const boxes: ScreenBox[] = []
-      const camera = scene.camera.positionWC
       for (const m of markers) {
         if (!m.entity.show || !m.entity.point) continue
         const win = SceneTransforms.worldToWindowCoordinates(scene, m.position)
         if (!win) continue
-        const r =
-          (m.entity.point.pixelSize?.getValue() ?? markerSize) / 2 +
-          (m.entity.point.outlineWidth?.getValue() ?? outlineWidth)
-        boxes.push({ x0: win.x - r, y0: win.y - r, x1: win.x + r, y1: win.y + r })
         if (m.entity === poleEntity) {
-          const right =
-            win.x + (Number.isNaN(poleLabelRight) ? -(poleRadius + POLE_LABEL_GAP_PX) : poleLabelRight)
+          const r = poleRadius
+          boxes.push({ x0: win.x - r, y0: win.y - r, x1: win.x + r, y1: win.y + r })
+          // The same box placePoleLabel places (its width includes the backing).
+          const cx = win.x + poleOffset.dx
+          const cy = win.y + poleOffset.dy
           boxes.push({
-            // The same box poleLabelRightEdge places (its width includes the backing).
-            x0: right - poleLabelBox.width,
-            y0: win.y - poleLabelBox.height / 2,
-            x1: right,
-            y1: win.y + poleLabelBox.height / 2,
+            x0: cx - poleLabelBox.width / 2,
+            y0: cy - poleLabelBox.height / 2,
+            x1: cx + poleLabelBox.width / 2,
+            y1: cy + poleLabelBox.height / 2,
           })
           continue
         }
-        const label = m.entity.label
-        if (!label || label.show?.getValue() === false) continue
-        if (Cartesian3.distance(camera, m.position) > SITE_LABEL_MAX_DISTANCE_M) continue
-        const size = labelBoxSize(String(label.text?.getValue() ?? ''), labelFont)
-        const bottom = win.y - labelOffset + pad.y
-        boxes.push({
-          x0: win.x - size.width / 2,
-          y0: bottom - size.height,
-          x1: win.x + size.width / 2,
-          y1: bottom,
-        })
+        boxes.push(...siteBoxes(m, win))
       }
       return boxes
     }
