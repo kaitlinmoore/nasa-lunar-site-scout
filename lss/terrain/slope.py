@@ -20,6 +20,10 @@ Surface slope on a polar stereographic DEM (docs/methodology.md, "Slope").
   East-west, the difference spans n = round(1 / cos(lat)) columns on each side (`ew_offset_px`; n = 1 below
   48.19 deg), so its baseline does not shrink towards the poles below the 0.5 m height quantisation. No slope
   at the poles themselves, where east and north are undefined.
+- **Aspect and gradient**: the downhill azimuth (deg clockwise from north) and the east and north height
+  gradients, from exactly the same differences as the slope (`slope_aspect`, `slope_aspect_lonlat`,
+  `gradient_ps`, `gradient_lonlat`). On a polar stereographic map the map-axis gradient is turned to east
+  and north at each pixel's own position; at a pole, where they are undefined, the aspect is NaN.
 """
 
 from __future__ import annotations
@@ -116,7 +120,7 @@ def ew_offset_px(lat_deg) -> np.ndarray:
     return np.maximum(np.rint(np.minimum(inv, 2.0**31)), 1.0).astype(np.int64)
 
 
-def _gradient_lonlat(
+def gradient_lonlat(
     z: np.ndarray, res_deg: float, row_lats_deg: np.ndarray, radius_m: float = MOON_RADIUS_M
 ) -> tuple[np.ndarray, np.ndarray]:
     """East and north height gradients (m per ground metre) of the interior pixels of z on a latitude /
@@ -151,7 +155,7 @@ def slope_deg_lonlat(
     steps on the sphere: 2 R dphi north-south, and 2 n R cos(lat) dlambda east-west at each row's own
     latitude, n = ew_offset_px(lat) (a matched baseline: 1 at |lat| < 48.19 deg). Pixels whose east-west
     neighbours fall outside the grid get NaN."""
-    east, north = _gradient_lonlat(z, res_deg, row_lats_deg, radius_m)
+    east, north = gradient_lonlat(z, res_deg, row_lats_deg, radius_m)
     return np.degrees(np.arctan(np.hypot(east, north)))
 
 
@@ -204,3 +208,62 @@ def slope_stats_lonlat(grid: LonLatGrid, lat: float, lon: float, radius_m: float
         int(vals.size),
         float(grid.res),
     )
+
+
+# ----------------------------------------------------------------------------------------------------
+# Aspect and gradient (docs/methodology.md section 5.6.2). The same differences as `slope_deg` and
+# `slope_deg_lonlat`, so the slope returned here equals theirs exactly.
+
+
+def aspect_deg(east: np.ndarray, north: np.ndarray) -> np.ndarray:
+    """Downhill azimuth (deg, clockwise from north, in [0, 360)) of a surface whose height rises by `east`
+    and `north` metres per ground metre in those directions. NaN where the surface is flat or a gradient is
+    NaN."""
+    east, north = np.asarray(east, dtype=float), np.asarray(north, dtype=float)
+    az = np.mod(np.degrees(np.arctan2(-east, -north)), 360.0)
+    return np.where((east == 0.0) & (north == 0.0), np.nan, az)
+
+
+def gradient_ps(z: np.ndarray, step_m: float, k: float | np.ndarray = 1.0) -> tuple[np.ndarray, np.ndarray]:
+    """Height gradients (m per ground metre) of the interior pixels of z on a north-up polar stereographic
+    map, along the map's +x (columns) and +y (up the map, against rows) axes; shape (rows - 2, cols - 2).
+    The differences of `slope_deg`: tan(slope) = hypot of the two."""
+    ground = step_m / k
+    dzdx = (z[1:-1, 2:] - z[1:-1, :-2]) / (2.0 * ground)
+    dzdy = (z[2:, 1:-1] - z[:-2, 1:-1]) / (2.0 * ground)
+    return dzdx, -dzdy
+
+
+def slope_aspect(
+    z: np.ndarray, step_m: float, x_m: np.ndarray, y_m: np.ndarray, pole: str = "south"
+) -> tuple[np.ndarray, np.ndarray]:
+    """Slope (deg) and aspect (downhill azimuth, deg clockwise from north) of the interior pixels of z on a
+    north-up polar stereographic map; `x_m`, `y_m`: the map coordinates of those pixels' centres (shape
+    (rows - 2, cols - 2), or broadcastable to it). The slope is `slope_deg(z, step_m, scale_factor(x_m, y_m))`
+    exactly.
+
+    Map axes to east and north at each pixel: at distance rho from the pole, north points away from the south
+    pole, (x, y) / rho, and towards the north pole, -(x, y) / rho; east is north turned 90 deg clockwise. The
+    aspect is NaN at the pole itself (rho = 0), where east and north are undefined."""
+    if pole not in ("south", "north"):
+        raise ValueError("pole must be 'south' or 'north'")
+    x, y = np.asarray(x_m, dtype=float), np.asarray(y_m, dtype=float)
+    gx, gy = gradient_ps(z, step_m, scale_factor(x, y))
+    slope = np.degrees(np.arctan(np.hypot(gx, gy)))
+    rho = np.hypot(x, y)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        sign = 1.0 if pole == "south" else -1.0
+        nx, ny = sign * x / rho, sign * y / rho  # unit north in map axes
+    east = gx * ny - gy * nx  # unit east = (ny, -nx)
+    north = gx * nx + gy * ny
+    return slope, np.where(rho > 0.0, aspect_deg(east, north), np.nan)
+
+
+def slope_aspect_lonlat(
+    z: np.ndarray, res_deg: float, row_lats_deg: np.ndarray, radius_m: float = MOON_RADIUS_M
+) -> tuple[np.ndarray, np.ndarray]:
+    """Slope (deg) and aspect (downhill azimuth, deg clockwise from north) of the interior pixels of z on a
+    latitude/longitude grid, from `gradient_lonlat` (the matched east-west baseline). The slope is
+    `slope_deg_lonlat` exactly; both are NaN where the east-west neighbours fall outside the grid."""
+    east, north = gradient_lonlat(z, res_deg, row_lats_deg, radius_m)
+    return np.degrees(np.arctan(np.hypot(east, north))), aspect_deg(east, north)

@@ -802,6 +802,28 @@ The polar path above is unchanged.
 - `SLOPE_VERSION` is unchanged: the polar definition and statistics have not changed, and on LDEM_128 every
   served slope (all at |latitude| < 48.19°) is computed exactly as before.
 
+#### 5.6.2 Aspect and gradient
+
+`lss.terrain.slope` also gives the direction of the slope. Nothing served uses it yet.
+- **Same differences as the slope.** `gradient_ps` (polar stereographic maps, along the map's x and y axes)
+  and `gradient_lonlat` (latitude/longitude grids, east and north, with the matched east–west baseline of
+  section 5.6.1) return the height gradients that `slope_deg` and `slope_deg_lonlat` use. The slopes returned
+  by `slope_aspect` and `slope_aspect_lonlat` equal those functions' exactly (tested).
+- **Aspect:** the downhill azimuth, clockwise from north, in [0°, 360°): atan2(−∂z/∂east, −∂z/∂north). It is
+  undefined (NaN) on a flat pixel.
+- **East and north on a polar stereographic map.** At map position (x, y), at distance ρ from the pole, north
+  is (x, y)/ρ on the south polar map and −(x, y)/ρ on the north polar map; east is north turned 90° clockwise.
+  The map is conformal, so the map gradient turned into those directions gives the aspect. At the pole itself
+  (ρ = 0) east and north are undefined and the aspect is NaN; the slope is still defined there.
+- **Checks** (`tests/engine/test_aspect.py`). Planes of 7° defined in a point's tangent frame, rising towards
+  0°, 75° and 200° (and 300° on the polar grids):
+  - on a 5 m polar stereographic grid at 85.3°S, 89.5°S and 86°N, the pixel at the point has the plane's
+    aspect within 0.01° and every pixel the slope within 0.01°. Away from the point, the plane's aspect turns
+    with the meridians by |Δλ| sin|φ| (0.2° at 89.5°S, 50 m from the point), and every pixel stays within
+    that;
+  - on latitude/longitude grids at 0.5°, 26.1°, −45°, 70°, 89° and −89°, the pixel at the point has the
+    aspect within 0.05° and the slope within 0.01°.
+
 ### 5.7 Terrain images for the 2D site view (`lss.terrain.views`)
 
 Georeferenced PNGs on the DEM's own south polar stereographic grid (`scripts/terrain_views.py`; layout and views
