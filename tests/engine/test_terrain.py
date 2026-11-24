@@ -129,13 +129,77 @@ def test_resolver_polar_maps_only_and_unsupported():
     s85 = reg.resolve(-85.0, 30.0)
     assert [sl.spec.resolution_m for sl in s85.layers] == [80.0, 240.0]
     assert s85.layers[0].max_range_m == 100_000.0 and s85.layers[-1].max_range_m == reg.MAX_RANGE_M
-    s70 = reg.resolve(-70.0, 30.0)
-    assert [sl.spec.resolution_m for sl in s70.layers] == [240.0]
+    s74 = reg.resolve(-74.0, 30.0)  # the 240 m map holds the whole 400 km ray range
+    assert [(sl.spec.resolution_m, sl.max_range_m) for sl in s74.layers] == [(240.0, reg.MAX_RANGE_M)]
+    s70 = reg.resolve(-70.0, 30.0)  # it does not: the global layer beyond its full reach
+    assert [sl.spec.dataset_id for sl in s70.layers] == ["pgda_90_south_pole_dems", "lola_ldem_128"]
     assert s70.fidelity().tier == FidelityTier.low
     for lat, lon in [(0.0, 0.0), (45.0, 10.0), (89.0, 0.0)]:  # off the polar maps: the global layer (C7)
         s = reg.resolve(lat, lon)
         assert [sl.spec.dataset_id for sl in s.layers] == ["lola_ldem_128"]
         assert s.fidelity().tier == FidelityTier.low
+
+
+def _destination(lat, lon, bearing_deg, dist_m):
+    """Great-circle destination (standard spherical formula; independent of the resolver's cap geometry)."""
+    p1, l1, b, d = np.radians(lat), np.radians(lon), np.radians(bearing_deg), dist_m / MOON_RADIUS_M
+    p2 = np.arcsin(np.sin(p1) * np.cos(d) + np.cos(p1) * np.sin(d) * np.cos(b))
+    l2 = l1 + np.arctan2(np.sin(b) * np.sin(d) * np.cos(p1), np.cos(d) - np.sin(p1) * np.sin(p2))
+    return np.degrees(p2), np.degrees(l2)
+
+
+def _ring_on_map(spec, lat, lon, dist_m):
+    """True if every point of a 3600-bearing ring at dist_m lies one pixel inside the map (brute force)."""
+    x, y = ps_from_latlon(*_destination(lat, lon, np.arange(3600) * 0.1, dist_m), spec.pole)
+    left, bottom, right, top = spec.bounds_m
+    m = spec.resolution_m
+    return bool(np.all((x >= left + m) & (x <= right - m) & (y >= bottom + m) & (y <= top - m)))
+
+
+@pytest.mark.parametrize(
+    "lat, lon", [(-70.0, 0.0), (-65.0, 20.0), (-61.0, 45.0), (-72.0, -90.0), (-62.0, 170.0)]
+)
+def test_full_reach_matches_brute_force(lat, lon):
+    """The closed-form reach of the 240 m map (stereographic image of a cap is a circle) against rings of
+    great-circle destinations: every ring point is on the map at the reach; some leaves it 50 m further."""
+    reach = reg.full_reach_m(reg.POLAR_240M, lat, lon, reg.MAX_RANGE_M)
+    assert 0.0 < reach < reg.MAX_RANGE_M
+    assert _ring_on_map(reg.POLAR_240M, lat, lon, reach)
+    assert not _ring_on_map(reg.POLAR_240M, lat, lon, reach + 50.0)
+
+
+def test_full_reach_at_the_pole_and_off_the_map():
+    assert reg.full_reach_m(reg.POLAR_240M, -90.0, 0.0, reg.MAX_RANGE_M) == reg.MAX_RANGE_M
+    assert reg.full_reach_m(reg.POLAR_240M, -74.0, 0.0, reg.MAX_RANGE_M) == reg.MAX_RANGE_M
+    assert reg.full_reach_m(reg.POLAR_240M, -59.0, 0.0, reg.MAX_RANGE_M) == 0.0  # off the map
+
+
+@pytest.mark.parametrize("lat", [-70.0, -65.0, -61.0])
+def test_resolver_global_far_field_where_rays_leave_the_polar_maps(lat):
+    """Handoff 14 item 1: between about 73 S and 60 S, 400 km rays leave the 240 m map. The map is used out
+    to the distance it holds in every direction, then the global layer to the maximum range."""
+    st = reg.resolve(lat, 0.0)
+    reach = reg.full_reach_m(reg.POLAR_240M, lat, 0.0, reg.MAX_RANGE_M)
+    got = [(sl.spec.file_id, sl.role, sl.min_range_m, sl.max_range_m) for sl in st.layers]
+    assert got == [
+        ("ldem_60s_240m", "near_field", 0.0, reach),
+        ("ldem_128_img", "far_field", reach, reg.MAX_RANGE_M),
+    ]
+    assert st.layers[1].spec.centre == (lat, 0.0) and st.layers[1].spec.window_m == reg.MAX_RANGE_M
+    fid = st.fidelity()
+    assert fid.tier == FidelityTier.low and fid.near_field_resolution_m == 240.0
+    assert fid.summary == "240 m polar map near field, 237 m global map (LOLA LDEM_128) far field"
+
+
+def test_resolver_refuses_short_rays_without_a_global_layer():
+    from lss.horizon import HorizonUnavailable, horizon_at
+
+    st = reg.resolve(-70.0, 0.0, layers=reg.C1_LAYERS)
+    assert not st.supported and st.fidelity() is None
+    assert "leave the 240 m polar map after 303.1 km" in st.reason and "no global layer" in st.reason
+    with pytest.raises(HorizonUnavailable, match="leave the 240 m polar map"):  # before any DEM is read
+        horizon_at(-70.0, 0.0, 1.0, layers=reg.C1_LAYERS)
+    assert reg.resolve(-74.0, 0.0, layers=reg.C1_LAYERS).supported  # full reach: no global layer needed
 
 
 def test_resolver_short_max_range_uses_fewer_layers():

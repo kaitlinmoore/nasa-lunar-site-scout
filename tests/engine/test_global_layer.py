@@ -187,6 +187,23 @@ def test_horizon_at_apollo_11_on_the_global_layer():
     assert -1.0 < h.elevation_deg.min() and h.elevation_deg.max() < 5.0
 
 
+HAVE_240M = BY_ID[reg.POLAR_240M.file_id].path.is_file()
+
+
+@pytest.mark.skipif(not (HAVE_LDEM and HAVE_240M), reason="LDEM_128 or the 240 m polar map not downloaded")
+@pytest.mark.parametrize("lat", [-70.0, -65.0])
+def test_no_missing_samples_where_rays_leave_the_polar_maps(lat):
+    """Handoff 14 item 1. With the 240 m map alone to 400 km, 1.5% (70 S) and 7.1% (65 S) of the 1 m ray
+    samples had no terrain. With the global layer beyond the map's full reach, none is missing."""
+    st = reg.resolve(lat, 0.0)
+    h = compute_horizon(lat, 0.0, 1.0, segments_for(st), HorizonParams())
+    assert h.missing_samples == 0 and h.elevation_deg.size == 3600
+    old = reg.TerrainStack(st.location, (reg.StackLayer(reg.POLAR_240M, "near_field", 0.0, reg.MAX_RANGE_M),))
+    h_old = compute_horizon(lat, 0.0, 1.0, segments_for(old), HorizonParams())
+    assert h_old.missing_samples / h_old.total_samples > 0.01  # what the fix removes
+    assert h.surface_height_m == h_old.surface_height_m  # same near field
+
+
 # ------------------------------------------------------------------- the deployed API (no DEM files)
 
 

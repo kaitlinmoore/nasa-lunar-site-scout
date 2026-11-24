@@ -507,5 +507,5 @@ def horizon_at(
     params = params or HorizonParams()
     stack = resolve(lat, lon, params.max_range_m, layers)
     if not stack.supported:
-        raise HorizonUnavailable(f"no terrain layer covers ({lat}, {lon})")
+        raise HorizonUnavailable(stack.reason or f"no terrain layer covers ({lat}, {lon})")
     return compute_horizon(lat, lon, unit_height_m, segments_for(stack), params)

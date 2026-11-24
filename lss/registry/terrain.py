@@ -13,6 +13,11 @@ works where the DEM files are absent, e.g. in the deployed API, which serves cac
 Range split (where each layer is used along a ray; docs/methodology.md section 3): the covering
 layers are used finest first, each from where the previous one stops out to its own `use_to_m`; the
 last one always continues to the maximum ray range. The first layer is the near field.
+
+Full ray range: the last map layer must hold every point within the maximum ray range of the location. Where
+it does not (rays would leave it, as from the 240 m polar map north of about 73 deg S), the map layers are
+used out to the distance their last layer does hold in every direction (`full_reach_m`), and the global
+layer from there to the maximum range. Without a global layer such a location is refused (`reason`).
 """
 
 from __future__ import annotations
@@ -23,7 +28,7 @@ from functools import cache
 
 from lss.contract import FidelityLabel, FidelityTier, Location, TerrainLayer
 from lss.datafiles import get as datafile
-from lss.terrain.core import DemLayer, ps_from_latlon
+from lss.terrain.core import MOON_RADIUS_M, DemLayer, ps_from_latlon
 
 
 @dataclass(frozen=True)
@@ -162,6 +167,7 @@ class StackLayer:
 class TerrainStack:
     location: Location
     layers: tuple[StackLayer, ...]
+    reason: str | None = None  # why an empty stack is refused, when that is more than "no layer covers it"
 
     @property
     def supported(self) -> bool:
@@ -200,6 +206,44 @@ class TerrainStack:
         )
 
 
+def holds_cap(spec: LayerSpec, lat: float, lon: float, range_m: float) -> bool:
+    """True if every point within ray distance `range_m` of (lat, lon) lies on the map, at least one pixel
+    inside its edges (heights are bilinear between pixel centres, which stop half a pixel inside).
+
+    Exact: polar stereographic projection maps the cap of points within angular distance delta of the
+    location to a circle. On the location's meridian the cap spans colatitudes c - delta to c + delta (from
+    the projection's pole), so the circle's centre and radius follow from rho(t) = 2 R tan(t / 2), signed (a
+    cap over the pole has c - delta < 0).
+    """
+    left, bottom, right, top = spec.bounds_m
+    delta = range_m / MOON_RADIUS_M
+    colat = math.radians(90.0 + lat) if spec.pole == "south" else math.radians(90.0 - lat)
+    if colat + delta >= math.pi:  # the cap reaches the far pole: its image is unbounded
+        return False
+    rho_far = 2.0 * MOON_RADIUS_M * math.tan((colat + delta) / 2.0)
+    rho_near = 2.0 * MOON_RADIUS_M * math.tan((colat - delta) / 2.0)
+    x, y = (float(v) for v in ps_from_latlon(lat, lon, spec.pole))
+    rho = math.hypot(x, y)
+    ux, uy = (x / rho, y / rho) if rho > 0.0 else (0.0, 1.0)  # at the pole the centre is 0: any direction
+    mid, rad = 0.5 * (rho_far + rho_near), 0.5 * (rho_far - rho_near)
+    cx, cy, m = mid * ux, mid * uy, spec.resolution_m
+    return left + m <= cx - rad and cx + rad <= right - m and bottom + m <= cy - rad and cy + rad <= top - m
+
+
+def full_reach_m(spec: LayerSpec, lat: float, lon: float, max_range_m: float) -> float:
+    """The largest ray distance (<= max_range_m, to 1 m, rounded down) that the map holds from (lat, lon) in
+    every direction (`holds_cap`); 0 if it does not hold the point itself."""
+    if holds_cap(spec, lat, lon, max_range_m):
+        return float(max_range_m)
+    lo, hi = 0.0, float(max_range_m)
+    if not holds_cap(spec, lat, lon, lo):
+        return 0.0
+    while hi - lo > 1.0:  # caps are nested, so holds_cap is monotone in the range
+        mid = 0.5 * (lo + hi)
+        lo, hi = (mid, hi) if holds_cap(spec, lat, lon, mid) else (lo, mid)
+    return float(math.floor(lo))
+
+
 def resolve(
     lat: float,
     lon: float,
@@ -211,6 +255,10 @@ def resolve(
     A layer is a candidate only if the point lies inside it. A site tile is used only if it extends at
     least its `use_to_m` from the point in every direction, so rays never leave it early. One layer is
     kept per resolution (the first listed).
+
+    The last map layer must hold the whole ray range in every direction. Where it does not, the map layers
+    stop at the distance it does hold (`full_reach_m`) and the global layer is used from there to the
+    maximum range; without a global layer the location is refused (empty stack with a `reason`).
     """
     loc = Location(lat=lat, lon=lon)
     chosen: list[LayerSpec] = []
@@ -224,20 +272,38 @@ def resolve(
         if chosen and spec.resolution_m <= chosen[-1].resolution_m:
             continue
         chosen.append(spec)
+    fallback = [s for s in layers if isinstance(s, GlobalLayerSpec)]
+    around = (
+        [replace(fallback[0], centre=(float(lat), float(lon)), window_m=float(max_range_m))]
+        if fallback
+        else []
+    )
     if not chosen:  # C7: off every polar map, the global layer alone, read around this point
-        fallback = [s for s in layers if isinstance(s, GlobalLayerSpec)]
-        if fallback:
-            chosen = [replace(fallback[0], centre=(float(lat), float(lon)), window_m=float(max_range_m))]
+        chosen = around
+    limit = max_range_m  # how far along a ray the map layers are used
+    far: list[GlobalLayerSpec] = []
+    if chosen and not isinstance(chosen[-1], GlobalLayerSpec):
+        reach = full_reach_m(chosen[-1], lat, lon, max_range_m)
+        if reach < max_range_m:
+            if not around:
+                why = (
+                    f"rays from ({lat}, {lon}) leave the {chosen[-1].label} after {reach / 1000.0:.1f} km, "
+                    f"short of the {max_range_m / 1000.0:.0f} km ray range, and no global layer is available"
+                )
+                return TerrainStack(loc, (), reason=why)
+            limit, far = reach, around
 
     out: list[StackLayer] = []
     start = 0.0
     for i, spec in enumerate(chosen):
         last = i == len(chosen) - 1
-        stop = max_range_m if last or spec.use_to_m is None else min(spec.use_to_m, max_range_m)
+        stop = limit if last or spec.use_to_m is None else min(spec.use_to_m, limit)
         if stop <= start:
             continue
         out.append(StackLayer(spec, "near_field" if not out else "far_field", start, stop))
         start = stop
-        if stop >= max_range_m:
+        if stop >= limit:
             break
+    for spec in far:  # beyond the maps' full reach: the global layer, to the maximum range
+        out.append(StackLayer(spec, "near_field" if not out else "far_field", start, max_range_m))
     return TerrainStack(loc, tuple(out))

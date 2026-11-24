@@ -135,7 +135,7 @@ def cached_horizon(
     params = params or HorizonParams()
     stack = resolve(lat, lon, params.max_range_m, layers)
     if not stack.supported:
-        raise HorizonUnavailable(f"no terrain layer covers ({lat}, {lon})")
+        raise HorizonUnavailable(stack.reason or f"no terrain layer covers ({lat}, {lon})")
     spec = key_spec(lat, lon, unit_height_m, params, stack)
     path = cache_path(spec, directory)
     if not recompute and (h := load(path, spec)) is not None:
