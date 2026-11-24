@@ -273,7 +273,8 @@ Implemented in `lss/horizon/core.py` (numba ray caster) and `lss/horizon/cache.p
 - **Horizon.** For each azimuth, the horizon is the largest elevation over the ray samples. Between computed
   azimuths it is interpolated linearly.
 - **Heights along a ray.** Bilinear between pixel centres (section 1.2). Each ray distance has a designated
-  layer (5 m site map, then the 80 m map, then the 240 m map; section 1.2). If that layer has no data at a
+  layer (5 m site map, then the 80 m map, then the 240 m map; section 1.2; beyond the distance the 240 m map
+  holds in every direction, the global map, section 3.5). If that layer has no data at a
   sample, the next coarser layer is used. Samples that no layer covers are counted, never silently dropped.
   The count is stored with each cached horizon. A location where a whole azimuth has no data is rejected.
   `scripts/precompute_c1.py` refuses to write a served result whose horizon has any uncovered sample. At Site01
@@ -399,8 +400,28 @@ and sample s at east longitude 180 + (s − 23039.5)/128. The image's size is ch
 location, as the single layer of the stack, from the observer to the 400 km maximum range. Every location the
 polar maps cover keeps exactly the stack it had before (tested at all eight polar sites), so their results are
 unchanged. The fidelity tier is "low": the resolver gives "low" when the near field is coarser than 80 m. A
-location inside the polar maps whose rays leave them (north of about 73° S) keeps its polar stack; ray samples
-beyond the 240 m map are counted as missing, as before.
+location inside the polar maps whose rays leave them (north of about 73° S) keeps its polar near field, and the
+global layer is its far field: see "Full ray range" below.
+
+**Full ray range** (handoff 14 item 1, 2026-11-23). The last polar layer of a stack must hold every point within
+the 400 km ray range, at least one pixel inside its edges. Between about 73° S and 60° S the 240 m map does not,
+in some directions or all. There the polar layers are used out to the largest distance the 240 m map holds in
+every direction, and LDEM_128 from there to 400 km (`full_reach_m`, `resolve`). With the 240 m map used alone to
+400 km, as before, 1.5% of the ray samples of a 1 m observer had no terrain at 70° S, 0° E, 7.1% at 65° S and
+15.9% at 61° S. Now there are none. Where the old horizon had data it changes by at most 0.0011° (70° S),
+0.0007° (65° S) and 0.021° (61° S). The fidelity tier stays "low". A stack without a global layer at such a point
+is refused, with the distance at which rays leave the map as the reason.
+- **The distance.** Polar stereographic projection maps the cap of points within a ray distance of the location
+  to a circle. On the location's meridian the cap spans the colatitudes c − δ to c + δ, so the circle's centre and
+  radius follow from ρ(t) = 2R tan(t/2). The map holds the cap if the circle lies inside its bounds. The largest
+  such distance is found by bisection to 1 m and rounded down. At 70° S, 0° E it is 303.1 km.
+- **Tests** (`tests/engine/test_terrain.py`, `test_global_layer.py`). The distance agrees with rings of
+  great-circle destinations at five points: every ring point is on the map at that distance, and some leaves it
+  50 m further. The stacks at 70°, 65° and 61° S. The refusal without a global layer. On the real maps: no
+  missing sample at 70° S and 65° S, where the old stack had more than 1%.
+- **Served results are unchanged.** All 23 curated sites resolve to exactly the stack they had before. Their
+  polar maps hold the full ray range, and the Apollo sites use the global layer alone. The regression fixtures
+  pass unchanged.
 
 **Reading.** For each location the reader takes a window of the map covering every point within the maximum
 ray range: a latitude band of ±400 km and the longitude span that band needs, asin(sin δ / cos φ) each way
@@ -636,8 +657,9 @@ applied by default.
   fractions and periods agree). For a partly hidden disc, integrated column by column: along each column the
   chord above the horizon is integrated in closed form (uniform, or the limb-darkening law); across columns,
   the midpoint rule in φ with x = r sin φ over 192 columns, normalised by the same quadrature of the whole disc.
-  A disc point at horizontal offset x is at azimuth az + x / cos(el) (tangent plane on the sky; error below
-  1e-4° for these discs). Accuracy against closed-form circular segments: better than 1e-5 (tested). Against a
+  A disc point at horizontal offset x is at azimuth az + x / cos(el) (tangent plane on the sky; its error in the
+  fraction grows as tan(el), see "High elevations" below). Accuracy of the quadrature against closed-form
+  circular segments: better than 1e-5 (tested). Against a
   brute-force 2-D integration: 5e-5 for a horizon rising 4° within one 0.1° azimuth interval, 2e-3 for an
   extreme 20° rise. The served horizon changes by at most 0.039° between neighbouring azimuths.
 - **Durations and fractions** (illumination, Earth visibility, whole-disc, overlap, sunlit and longest
@@ -662,12 +684,38 @@ applied by default.
   - **Results.** The ray caster matches h₀ to 2·10⁻⁵°. There are 7 Sun and 8 Earth rises and sets. Every
     crossing is within |horizon error| / elevation rate + 2 s (at most 3.6 s, at a grazing Sun). The time
     fractions, Earth segment fractions, shadow count, longest shadow and Sun–Earth overlap all match.
-- **Limits (polar geometry).** Two approximations hold for bodies near the horizon, as at the poles. A disc
-  point's azimuth az + x / cos(el) degrades as a body nears the zenith. The azimuth arc assumes the azimuth
-  moves less than 180° between 60 s samples, which also fails near the zenith. Neither matters at the polar
-  sites: the Sun stays within about 6° of the horizontal and the Earth within about 11° (10.6° at the 85°S
-  sites, where the G2 review's exact-sphere fractions agree with ours). Both get a synthetic high-elevation test
-  before mid-latitude sites (C7).
+- **High elevations, up to the zenith** (`tests/engine/test_high_elevation.py`, handoff 14 item 3, 2026-11-23).
+  Two approximations were made for bodies near the horizon, as at the poles. A disc point at tangent-plane offset
+  (x, y) is put at azimuth az + x / cos(el) and elevation el + y. The azimuth arc unwraps the 60 s track, which
+  assumes the azimuth turns the short way between samples. Both are tested against exact geometry on the
+  celestial sphere: the disc is the cap of angular radius r around the centre direction, and each point's true
+  azimuth and elevation come from its unit vector.
+  - **Partly hidden discs.** The tangent-plane model's error in the visible fraction is about 0.1 × r × tan(el),
+    r in radians. This holds from 5° to 89° for the Sun (r = 0.27°) and the Earth (0.95°), on flat horizons
+    (against an exact ring integral) and jagged ones (against brute force on the sphere). For the Sun it is
+    4·10⁻⁵ at 5°, 1.3·10⁻⁴ at 15°, 8·10⁻⁴ at 60° and 0.027 at 89°. For the Earth it is 1.5·10⁻⁴ at 5° and
+    4.7·10⁻⁴ at 15°. The cause is the almucantar's curvature across the disc, which the tangent plane leaves out.
+  - **Visibility margins.** For a flat horizon the margins are exact, because the disc's top and bottom points
+    lie on its vertical through the centre. For sloped horizons their error is at most about r² tan(el) / 2:
+    1.7·10⁻⁴° for the Sun at 15°, and 0.0015° for the Earth at 11°. Both are within the accepted horizon error
+    of 0.01° (section 3.2).
+  - **Near the zenith.** A disc above the terrain is exactly whole (fraction 1, margins positive) at 80°, 89°,
+    89.9°, 89.99°, 89.999° and 90°, under horizons up to 30°. This holds even though az + x / cos(el) is far
+    from the true azimuth there, and above 89.73° the Sun's disc contains the zenith.
+  - **Azimuth arc.** Great-circle passes at the Sun's mean rate, 2°, 0.1°, 0.005° and 10⁻⁴° from the zenith,
+    north and south, give the closed-form arc. At 10⁻⁴°, 85 times closer than one 60 s step, the azimuth swings
+    by more than 170° between two samples and still turns the short way. End to end, a ten-day pass 0.005° from
+    the zenith under a horizon up to 20° gives no events, one visible period and every fraction exactly 1.
+  - **Where partly hidden discs occur in the served results.** Only where a body is within its radius of the
+    terrain horizon. At the polar sites the Sun stays within about 6° of the horizontal and the Earth within
+    about 11° (10.6° at the 85°S sites, where the G2 review's exact-sphere fractions agree with ours), whatever
+    the horizon (the highest served one is 15.7°, Artemis III De Gerlache Rim 2). At the Apollo sites the
+    highest horizon is 14.2° (Apollo 17; Apollo 15 13.5°), and the Earth stays between
+    43.5° and 80° elevation, always wholly above the terrain. In the served Apollo series the partly visible Sun
+    samples are at most 7.8° high (Apollo 15). Up to 15° the fraction error is below 1.5·10⁻⁴ (Sun) and
+    5·10⁻⁴ (Earth), and only during the minutes a disc is crossing the horizon. Measured on the real ephemeris,
+    the Sun's azimuth arc from the 60 s track equals the arc from a 2 s track in all twelve 1 m Apollo scenarios
+    of 10 and 30 days. Apollo 11 is among them, where the Sun reaches 89.7°.
 - **Cost.** The served scenario (30 days, both bodies) takes about 2 s with the horizon cached; two years of
   Sun-only visibility take about 35 s (development PC).
 
