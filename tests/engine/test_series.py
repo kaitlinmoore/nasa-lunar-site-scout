@@ -76,8 +76,11 @@ def test_limb_darkened_disc_mean_matches_integration():
 @pytest.mark.parametrize("limb", [False, True])
 def test_fraction_limits_and_half(limb):
     r, el = 0.27, 1.0
-    assert visible_fraction(flat(el - 1.0), 50.0, el, r, limb)[0] == 1.0
-    assert visible_fraction(flat(el + 1.0), 50.0, el, r, limb)[0] == 0.0
+    # Within rounding, not exact: the closed-form column integrals cancel only to rounding (a GitHub-hosted
+    # runner gave 4.4e-19 for the hidden limb-darkened disc). Served fractions of a whole visible or hidden
+    # disc are exactly 1 or 0: lss.series.core._fraction sets them from the margins.
+    assert visible_fraction(flat(el - 1.0), 50.0, el, r, limb)[0] == pytest.approx(1.0, abs=1e-12)
+    assert visible_fraction(flat(el + 1.0), 50.0, el, r, limb)[0] == pytest.approx(0.0, abs=1e-12)
     assert visible_fraction(flat(el), 50.0, el, r, limb)[0] == pytest.approx(0.5, abs=1e-12)  # symmetry
 
 
