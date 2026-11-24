@@ -758,10 +758,25 @@ The polar path above is unchanged.
 - **Ground steps differ by direction.** North–south, a pixel is R Δφ = 236.90 m. East–west, it is R cos φ Δλ at
   each row's own latitude: 236.9 m at the equator, 213 m at Apollo 15 (26.1°N). R is the 1737.4 km sphere the
   heights refer to.
+- **Matched east–west baseline.** The east–west difference is taken n columns either side,
+  dz/dx = (z[col + n] − z[col − n]) / (2 n R cos φ Δλ), with n = round(1 / cos φ), at least 1
+  (`ew_offset_px`). The east–west baseline then stays between 2/3 and 4/3 of the north–south one (474 m) at
+  every latitude. n = 1, the plain central difference, wherever |φ| < 48.19°, which includes every Apollo site;
+  n is 2 at 60°, 11 at 85°, 29 at 88° and 57 at 89°.
+  - Why: with n = 1 the baseline is 2 R cos φ Δλ, 41 m at 85° and 8 m at 89°. The heights are stored in 0.5 m
+    steps, so near the poles that step alone made slopes of several degrees. On LDEM_128 at 89° S, the median
+    10 km mean slope over 40 random longitudes was 18.2° with n = 1, against 9.7° on the 240 m polar map; with
+    the matched baseline it is 9.6°. The same happens near the north pole (the formula is symmetric).
+  - The window read for the statistics is widened east and west by n − 1 columns at the circle's most
+    poleward latitude, so every pixel within the circle has both neighbours. A pixel whose neighbours fall
+    outside the grid has no slope.
 - **Same outputs:** the slope of the pixel containing the point, and min, max and mean over the pixels whose
   centres lie within 1 km and within 10 km (great-circle distance). Edge pixels of the window are not used.
   A 1 km circle holds 56–63 pixels at the Apollo sites, and a 10 km circle 5,600–6,240.
-- **Not done near a pole:** a window that contains a pole is refused, because the east–west step vanishes there.
+- **At the poles:** east and north are undefined at the pole itself, so no slope is computed there. Statistics
+  are computed while the circle stays clear of the pixel row next to the pole (centred 0.0039° from it), and
+  refused from there on: for a 1 km circle, points within 0.037° of either pole; for 10 km, within 0.334°. A
+  window that would span every longitude is refused for the same reason.
 - **How to read them: regional slopes, low fidelity.** With ~237 m pixels, each slope is the average gradient
   over about 470 m (two pixels in each direction). Features smaller than about half a kilometre are not
   resolved, and slopes come out gentler than on the 5 m and 10 m maps used at the polar sites, so the two are
@@ -773,12 +788,19 @@ The polar path above is unchanged.
   - A cone's statistics count exactly the pixels within the circle, counted independently.
   - The same cone at 0.05°E, where the window is read in two slices across the 0/360 meridian, and at 90.05°E
     gives identical statistics. So does a point given as −0.02°E or 359.98°E.
-  - Where LDEM_128 and the 240 m polar map overlap, the two paths' 10 km mean slopes agree to 0.2–0.6° (2–14%)
-    at eight points between 65°S and 75°S (2026-11-16), LDEM_128 being slightly higher. The maxima are much
-    higher on LDEM_128 there, because its east–west step shrinks with latitude (100 m at 65°S, 61 m at 75°S),
-    so the steepest single pixels are measured over shorter baselines. At the Apollo sites (|latitude| ≤ 26.1°)
-    the east–west step is 0.90–1.00 of the north–south step.
-- `SLOPE_VERSION` is unchanged: the polar definition and statistics have not changed.
+  - Where LDEM_128 and the 240 m polar map overlap, the two paths' 10 km mean slopes agree within −2.8% to
+    +3.4% at seven points from 65°S to 89°S (2026-11-24; the test allows 5%). With n = 1 everywhere they
+    differed by +2% to +4% at 65–70°S, +11% at 85°S, +25% at 88°S and +66% to +140% at 89°S, and the 10 km
+    maxima reached 66–88° south of 85°S (now 27–31°, against 23–28° on the polar map).
+  - A plane of 5° in the point's tangent frame, with heights rounded to 0.5 m and read through the same
+    window code, gives 5 ± 0.15° at every pixel within 1 km and 10 km, and a mean of 5 ± 0.01°, at 85°N, 88°N,
+    89°N and 89°S. The 2-pixel difference misses that bound on the same heights.
+  - Below 48.19° the slopes are bit for bit those of the plain central difference (tested). The Apollo sites'
+    1 km and 10 km statistics recomputed with the matched baseline equal the served values exactly
+    (2026-11-24).
+  - At the Apollo sites (|latitude| ≤ 26.1°) the east–west step is 0.90–1.00 of the north–south step.
+- `SLOPE_VERSION` is unchanged: the polar definition and statistics have not changed, and on LDEM_128 every
+  served slope (all at |latitude| < 48.19°) is computed exactly as before.
 
 ### 5.7 Terrain images for the 2D site view (`lss.terrain.views`)
 

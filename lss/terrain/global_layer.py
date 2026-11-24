@@ -128,9 +128,11 @@ def window(
     radius_m: float,
     m: CylindricalMap = LDEM_128,
     margin_px: int = 2,
+    extra_cols: int = 0,
 ) -> LonLatGrid:
     """Heights (float32, m above 1737.4 km) of every pixel within `radius_m` (arc length) of (lat, lon), as a
-    LonLatGrid, with `margin_px` extra pixels on each side for bilinear interpolation at the edges.
+    LonLatGrid, with `margin_px` extra pixels on each side for bilinear interpolation at the edges, and
+    `extra_cols` more columns on the east and west sides (for wider east-west differences).
 
     The window is a latitude band [lat - d, lat + d], d = radius / R, clipped at the poles, and the longitude
     span that band needs at its highest |latitude|. If that reaches a pole or spans 360 deg, whole rows are
@@ -147,13 +149,13 @@ def window(
     # unless it contains a pole (sin delta >= cos phi), when it spans every longitude.
     s_delta, c_phi = math.sin(radius_m / MOON_RADIUS_M), math.cos(math.radians(lat))
     half_lon = 180.0 if s_delta >= c_phi else math.degrees(math.asin(s_delta / c_phi))
-    n_cols = 2 * int(math.ceil(half_lon * m.ppd)) + 2 * margin_px + 2
+    n_cols = 2 * int(math.ceil(half_lon * m.ppd)) + 2 * (margin_px + extra_cols) + 2
     wrap = half_lon >= 180.0 or n_cols >= m.samples
     if wrap:
         data = np.asarray(image[r0 : r1 + 1, :])
         lon0 = m.center_lon - (m.sample_offset + 0.5) / m.ppd  # outer west edge of sample 0
     else:
-        c_start = int(math.floor(float(m.col_of(lon)) - half_lon * m.ppd)) - margin_px
+        c_start = int(math.floor(float(m.col_of(lon)) - half_lon * m.ppd)) - margin_px - extra_cols
         c_end = c_start + n_cols  # exclusive
         cols = np.arange(c_start, c_end) % m.samples
         if cols[0] < cols[-1]:  # one contiguous slice
@@ -185,11 +187,24 @@ def global_slope_stats(
     lat: float, lon: float, radius_m: float, img: Path | None = None, label: Path | None = None
 ):
     """Slope at (lat, lon) and min / max / mean within radius_m on LDEM_128 (docs/methodology.md section
-    5.6.1): lss.terrain.slope.slope_stats_lonlat on a window covering the circle. For points off the polar
-    maps; at ~237 m pixels these are regional slopes (low fidelity). Memory-maps the 2.1 GB image."""
+    5.6.1): lss.terrain.slope.slope_stats_lonlat on a window covering the circle, widened east and west for
+    the matched east-west baseline at the circle's most poleward latitude. For points off the polar maps; at
+    ~237 m pixels these are regional slopes (low fidelity). Memory-maps the 2.1 GB image. Raises near a pole
+    (when the window would span every longitude)."""
     from lss.datafiles import BY_ID
-    from lss.terrain.slope import slope_stats_lonlat
 
     img = img or BY_ID["ldem_128_img"].path
     label = label or BY_ID["ldem_128_lbl"].path
-    return slope_stats_lonlat(window(open_image(img, label), lat, lon, radius_m), lat, lon, radius_m)
+    return image_slope_stats(open_image(img, label), lat, lon, radius_m)
+
+
+def image_slope_stats(
+    image: np.ndarray, lat: float, lon: float, radius_m: float, m: CylindricalMap = LDEM_128
+):
+    """`global_slope_stats` on an image already open (anything `window` can read)."""
+    from lss.terrain.slope import ew_offset_px, slope_stats_lonlat
+
+    poleward = min(abs(lat) + math.degrees(radius_m / MOON_RADIUS_M), 90.0)
+    extra = int(min(ew_offset_px(poleward), m.samples)) - 1  # the default margin already holds n = 1
+    grid = window(image, lat, lon, radius_m, m, extra_cols=extra)
+    return slope_stats_lonlat(grid, lat, lon, radius_m)

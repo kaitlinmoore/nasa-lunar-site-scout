@@ -17,6 +17,9 @@ Surface slope on a polar stereographic DEM (docs/methodology.md, "Slope").
   polar path above unchanged): the same central differences on a simple-cylindrical grid, with the ground step
   of each direction on the 1737.4 km sphere: R dphi north-south, R cos(lat) dlambda east-west at each row's
   latitude; statistics over pixel centres within that great-circle distance (`slope_stats_lonlat`).
+  East-west, the difference spans n = round(1 / cos(lat)) columns on each side (`ew_offset_px`; n = 1 below
+  48.19 deg), so its baseline does not shrink towards the poles below the 0.5 m height quantisation. No slope
+  at the poles themselves, where east and north are undefined.
 """
 
 from __future__ import annotations
@@ -103,17 +106,53 @@ def slope_stats(path: Path, x_m: float, y_m: float, radius_m: float) -> SlopeSta
 # only the ground steps differ: they are not equal in the two directions on a simple-cylindrical grid.
 
 
+def ew_offset_px(lat_deg) -> np.ndarray:
+    """Columns on each side used for the east-west difference at latitude `lat_deg`: n = round(1 / cos(lat)),
+    at least 1. The east-west baseline 2 n R cos(lat) dlambda is then 2/3 to 4/3 of the north-south baseline
+    2 R dphi, instead of shrinking towards the poles. n = 1 (the plain central difference) wherever
+    1 / cos(lat) < 1.5, i.e. |lat| < 48.19 deg. Capped at 2**31 near the pole, where cos(lat) vanishes."""
+    c = np.abs(np.cos(np.radians(np.asarray(lat_deg, dtype=float))))
+    inv = np.divide(1.0, c, out=np.full_like(c, np.inf), where=c > 0.0)
+    return np.maximum(np.rint(np.minimum(inv, 2.0**31)), 1.0).astype(np.int64)
+
+
+def _gradient_lonlat(
+    z: np.ndarray, res_deg: float, row_lats_deg: np.ndarray, radius_m: float = MOON_RADIUS_M
+) -> tuple[np.ndarray, np.ndarray]:
+    """East and north height gradients (m per ground metre) of the interior pixels of z on a latitude /
+    longitude grid; each of shape (rows - 2, cols - 2). North-south: z[row - 1] - z[row + 1] over 2 R dphi.
+    East-west: z[col + n] - z[col - n] over 2 n R cos(lat) dlambda, at each row's own latitude, with
+    n = ew_offset_px(lat). Pixels whose n-th neighbour on either side is outside the grid get NaN."""
+    z = np.asarray(z)
+    n_rows, n_cols = z.shape
+    lats = np.asarray(row_lats_deg, dtype=float)[1:-1]
+    step = np.radians(res_deg) * radius_m
+    dx = step * np.cos(np.radians(lats))[:, None]
+    n_px = ew_offset_px(lats)
+    east = np.full((n_rows - 2, n_cols - 2), np.nan)
+    zi = z[1:-1]
+    for n in np.unique(n_px):
+        if 2 * n >= n_cols:
+            continue  # no pixel of these rows has both neighbours in the grid
+        sel = n_px == n
+        # interior column j is grid column j + 1; it needs grid columns j + 1 - n and j + 1 + n
+        east[sel, n - 1 : n_cols - 1 - n] = (zi[sel, 2 * n :] - zi[sel, : n_cols - 2 * n]) / (
+            2.0 * (n * dx[sel])
+        )
+    north = (z[:-2, 1:-1] - z[2:, 1:-1]) / (2.0 * step)
+    return east, north
+
+
 def slope_deg_lonlat(
     z: np.ndarray, res_deg: float, row_lats_deg: np.ndarray, radius_m: float = MOON_RADIUS_M
 ) -> np.ndarray:
     """Slope (deg) of the interior pixels of z on a latitude/longitude grid by central differences; shape
-    (rows - 2, cols - 2). `row_lats_deg`: the latitude of each row's pixel centres. Ground steps on the
-    sphere: R * res north-south, R * cos(latitude) * res east-west at each row's own latitude."""
-    step = np.radians(res_deg) * radius_m
-    dx = step * np.cos(np.radians(np.asarray(row_lats_deg, dtype=float)[1:-1]))[:, None]
-    dzdx = (z[1:-1, 2:] - z[1:-1, :-2]) / (2.0 * dx)
-    dzdy = (z[2:, 1:-1] - z[:-2, 1:-1]) / (2.0 * step)
-    return np.degrees(np.arctan(np.hypot(dzdx, dzdy)))
+    (rows - 2, cols - 2). `row_lats_deg`: the latitude of each row's pixel centres (north at row 0). Ground
+    steps on the sphere: 2 R dphi north-south, and 2 n R cos(lat) dlambda east-west at each row's own
+    latitude, n = ew_offset_px(lat) (a matched baseline: 1 at |lat| < 48.19 deg). Pixels whose east-west
+    neighbours fall outside the grid get NaN."""
+    east, north = _gradient_lonlat(z, res_deg, row_lats_deg, radius_m)
+    return np.degrees(np.arctan(np.hypot(east, north)))
 
 
 def arc_m(lat1_deg, lon1_deg, lat2_deg, lon2_deg, radius_m: float = MOON_RADIUS_M) -> np.ndarray:
@@ -129,10 +168,12 @@ def arc_m(lat1_deg, lon1_deg, lat2_deg, lon2_deg, radius_m: float = MOON_RADIUS_
 def slope_stats_lonlat(grid: LonLatGrid, lat: float, lon: float, radius_m: float) -> SlopeStats:
     """Slope at (lat, lon) and over the pixels whose centres lie within radius_m (great-circle) of it, on a
     LonLatGrid window (lss.terrain.global_layer.window). Edge pixels of the window are not used. Raises if the
-    circle leaves the window, has no data, or the window contains a pole (east-west steps vanish there)."""
+    circle leaves the window (or a pixel in it has an east-west neighbour outside the window), has no data,
+    or the window spans every longitude (it contains a pole, where east and north are undefined)."""
     if grid.wrap:
         raise ValueError(
-            "windows that contain a pole are not supported (east-west ground steps vanish there)"
+            "windows that span every longitude (around a pole) are not supported: east and north are "
+            "undefined at the pole"
         )
     z = np.asarray(grid.array, dtype=np.float64)
     n_rows, n_cols = z.shape
@@ -143,7 +184,12 @@ def slope_stats_lonlat(grid: LonLatGrid, lat: float, lon: float, radius_m: float
     within_all = arc_m(lat, lon, lat_c, lon_c) <= radius_m
     if within_all[[0, -1], :].any() or within_all[:, [0, -1]].any():
         raise ValueError(f"a {radius_m:g} m circle around the point leaves the grid")
-    vals = s[within_all[1:-1, 1:-1]]
+    within = within_all[1:-1, 1:-1]
+    ew_px = ew_offset_px(lats[1:-1])[:, None]
+    cols = np.arange(1, n_cols - 1)[None, :]
+    if (within & ((cols - ew_px < 0) | (cols + ew_px > n_cols - 1))).any():
+        raise ValueError(f"the east-west neighbours of a pixel within {radius_m:g} m leave the grid")
+    vals = s[within]
     if vals.size == 0 or np.isnan(vals).any():
         raise ValueError(f"no data (or gaps) within {radius_m:g} m of the point")
     r = int(np.floor((grid.lat0 - lat) / grid.res_deg)) - 1

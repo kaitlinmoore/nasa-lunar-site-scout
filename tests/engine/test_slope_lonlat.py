@@ -14,8 +14,8 @@ import pytest
 
 from lss.datafiles import BY_ID
 from lss.terrain.core import LonLatGrid
-from lss.terrain.global_layer import LDEM_128, window
-from lss.terrain.slope import slope_deg_lonlat, slope_stats_lonlat
+from lss.terrain.global_layer import LDEM_128, image_slope_stats, window
+from lss.terrain.slope import ew_offset_px, slope_deg_lonlat, slope_stats_lonlat
 
 R = 1_737_400.0
 
@@ -44,13 +44,16 @@ def grid_around(lat0, lon0, res_deg, half_deg, height_fn):
 
 @pytest.mark.parametrize("lat0", [0.5, 45.0, -60.0, 70.0])
 def test_north_tilted_plane_exact_everywhere(lat0):
-    """z rises northward by tan(a) per metre of meridian arc: every interior pixel has slope a."""
+    """z rises northward by tan(a) per metre of meridian arc: every interior pixel has slope a, except the
+    n - 1 columns at each end whose east-west neighbours (n = ew_offset_px) are outside the grid (NaN)."""
     a = math.radians(9.0)
     g, lats, _ = grid_around(
         lat0, 20.0, 1 / 128, 0.2, lambda lat, lon: math.tan(a) * R * np.radians(lat - lat0)
     )
     s = slope_deg_lonlat(np.asarray(g.array, float), g.res_deg, lats)
-    assert np.allclose(s, 9.0, atol=1e-3)  # float32 heights
+    n = int(ew_offset_px(lat0))  # 1 at 0.5 and 45 deg, 2 at 60 deg, 3 at 70 deg (the same in every row here)
+    assert np.isnan(s[:, : n - 1]).all() and np.isnan(s[:, s.shape[1] - n + 1 :]).all()
+    assert np.allclose(s[:, n - 1 : s.shape[1] - n + 1], 9.0, atol=1e-3)  # float32 heights
 
 
 @pytest.mark.parametrize("lat0", [0.5, 26.1, -60.0, 70.0])
@@ -175,6 +178,124 @@ def test_seam_window_at_negative_longitude():
     assert a == b
 
 
+# --------------------------------------------- the matched east-west baseline, up to the poles
+
+
+def test_ew_offset_matches_the_north_south_baseline():
+    """n = round(1 / cos(lat)), at least 1: the east-west baseline 2 n R cos(lat) dlambda stays within 2/3 to
+    4/3 of the north-south one, 2 R dphi, at every pixel row of LDEM_128 from the equator to the last row
+    before each pole; and n = 1 (the plain central difference) below 48.19 deg."""
+    lats = (LDEM_128.line_offset - np.arange(LDEM_128.lines)) / LDEM_128.ppd
+    n = ew_offset_px(lats)
+    ratio = n * np.cos(np.radians(lats))
+    assert ratio.min() >= 2 / 3 - 1e-12 and ratio.max() <= 4 / 3 + 1e-12
+    assert np.array_equal(n, ew_offset_px(-lats))  # the same in both hemispheres
+    assert (n[np.abs(lats) < 48.19] == 1).all() and (n[np.abs(lats) > 48.2] >= 2).all()
+    assert [int(ew_offset_px(a)) for a in (0.0, 26.2, 60.0, 85.0, 88.0, 89.0, -89.0)] == [
+        1,
+        1,
+        2,
+        11,
+        29,
+        57,
+        57,
+    ]
+    assert int(ew_offset_px(90.0)) == 2**31  # finite at the pole itself
+
+
+def test_plain_central_difference_below_48_deg():
+    """Rows below 48.19 deg use exactly the 2-pixel central difference (bit for bit), so the Apollo sites'
+    statistics (|latitude| <= 26.2 deg) do not depend on the matched baseline."""
+    rng = np.random.default_rng(7)
+    z = rng.normal(0.0, 50.0, (60, 80))
+    res = 1 / 128
+    lats = 48.18 - np.arange(60) * 1.6  # 48.18 N to 46.2 S
+    step = math.radians(res) * R
+    dx = step * np.cos(np.radians(lats[1:-1]))[:, None]
+    plain = np.degrees(
+        np.arctan(
+            np.hypot(
+                (z[1:-1, 2:] - z[1:-1, :-2]) / (2.0 * dx),
+                (z[2:, 1:-1] - z[:-2, 1:-1]) / (2.0 * step),
+            )
+        )
+    )
+    assert np.array_equal(slope_deg_lonlat(z, res, lats), plain)
+
+
+def unit_vector(lat, lon):
+    p, lam = np.radians(lat), np.radians(lon)
+    return np.stack([np.cos(p) * np.cos(lam), np.cos(p) * np.sin(lam), np.sin(p)], axis=-1)
+
+
+def quantised_plane(lat0, lon0, slope_deg, uphill_az_deg, quantum_m=0.5):
+    """Heights of a plane through (lat0, lon0) in its local tangent frame (east and north metres from the
+    point's unit vector, independent of the code under test), rising towards azimuth `uphill_az_deg`, rounded
+    to `quantum_m` as LDEM_128's 0.5 m counts are."""
+    lam0, phi0 = math.radians(lon0), math.radians(lat0)
+    east = np.array([-math.sin(lam0), math.cos(lam0), 0.0])
+    north = np.array([-math.sin(phi0) * math.cos(lam0), -math.sin(phi0) * math.sin(lam0), math.cos(phi0)])
+    t, a = math.tan(math.radians(slope_deg)), math.radians(uphill_az_deg)
+
+    def f(lat, lon):
+        u = unit_vector(lat, lon)
+        z = 100.0 + t * R * ((u @ east) * math.sin(a) + (u @ north) * math.cos(a))
+        return np.round(z / quantum_m) * quantum_m
+
+    return f
+
+
+@pytest.mark.parametrize("lat0", [85.0, 88.0, 89.0, -89.0])
+@pytest.mark.parametrize("uphill_az", [90.0, 30.0])
+def test_quantised_plane_near_the_poles(lat0, uphill_az):
+    """A 5 deg plane with heights in 0.5 m steps, read through `window` like LDEM_128: every pixel within 1 km
+    and 10 km has slope 5 +- 0.15 deg, the mean 5 +- 0.01 deg. The plain 2-pixel east-west difference
+    (2 R cos(lat) dlambda: 41 m at 85 deg, 8 m at 89 deg) turns the 0.5 m steps into larger errors, beyond
+    that bound."""
+    img = ComputedImage(quantised_plane(lat0, 40.0, 5.0, uphill_az))
+    for r in (1_000.0, 10_000.0):
+        s = image_slope_stats(img, lat0, 40.0, r)
+        assert 4.85 <= s.min_deg <= s.max_deg <= 5.15
+        assert abs(s.at_point_deg - 5.0) <= 0.15
+        assert s.mean_deg == pytest.approx(5.0, abs=0.01)
+    g = window(img, lat0, 40.0, 10_000.0)
+    z = np.asarray(g.array, dtype=float)
+    lats = g.lat0 - (np.arange(z.shape[0]) + 0.5) * g.res_deg
+    step = math.radians(g.res_deg) * R
+    plain_east = (z[1:-1, 2:] - z[1:-1, :-2]) / (2.0 * step * np.cos(np.radians(lats[1:-1]))[:, None])
+    plain = np.degrees(np.arctan(np.hypot(plain_east, (z[2:, 1:-1] - z[:-2, 1:-1]) / (2.0 * step))))
+    assert np.abs(plain - 5.0).max() > 0.3
+
+
+@pytest.mark.parametrize("sign", [1.0, -1.0])
+def test_refused_where_the_circle_reaches_the_pole(sign):
+    """At the pole east and north are undefined. Statistics are computed until the circle reaches the pixel
+    row next to the pole (radius + about 0.004 deg), and refused from there on, in both hemispheres."""
+    img = ComputedImage(lambda lat, lon: np.zeros_like(lat))
+    for r, ok, refused in ((1_000.0, 89.963, 89.964), (10_000.0, 89.665, 89.666)):
+        assert image_slope_stats(img, sign * ok, 10.0, r).max_deg == 0.0
+        with pytest.raises(ValueError, match="leaves the grid|pole"):
+            image_slope_stats(img, sign * refused, 10.0, r)
+    with pytest.raises(ValueError, match="pole"):
+        image_slope_stats(img, sign * 90.0, 10.0, 1_000.0)
+
+
+def test_refuses_east_west_neighbours_outside_the_grid():
+    """A grid at 85 N (n = 11) wide enough for the 1 km circle (48 columns each way) but not for its pixels'
+    east-west neighbours; 11 more columns on each side are enough."""
+    res = 1 / 128
+
+    def grid(half_cols):
+        lat_top, lon_w = 85.0 + 8 * res, 20.0 - half_cols * res
+        return LonLatGrid(
+            np.zeros((16, 2 * half_cols), np.float32), lon_w, lat_top, res, math.radians(res) * R
+        )
+
+    with pytest.raises(ValueError, match="east-west neighbours"):
+        slope_stats_lonlat(grid(52), 85.0, 20.0, 1_000.0)
+    assert slope_stats_lonlat(grid(52 + 11), 85.0, 20.0, 1_000.0).max_deg == 0.0
+
+
 # ----------------------------------------------------------------------------- the real map
 
 IMG, LBL = BY_ID["ldem_128_img"].path, BY_ID["ldem_128_lbl"].path
@@ -195,10 +316,22 @@ def test_apollo_sites_on_ldem_128(lat, lon):
 
 @needs_ldem
 @pytest.mark.skipif(not BY_ID["ldem_60s_240m"].path.is_file(), reason="240 m polar map not downloaded")
-@pytest.mark.parametrize("lat, lon", [(-65.0, 0.0), (-65.0, 120.0), (-70.0, 45.0)])
+@pytest.mark.parametrize(
+    "lat, lon",
+    [
+        (-65.0, 0.0),
+        (-65.0, 120.0),
+        (-70.0, 45.0),
+        (-85.0, 200.0),
+        (-88.0, 0.0),
+        (-89.0, 90.0),
+        (-89.0, 300.0),
+    ],
+)
 def test_mean_slope_agrees_with_the_polar_path_on_the_240m_map(lat, lon):
-    """Where the 240 m polar map and LDEM_128 overlap, the two paths' 10 km mean slopes agree within 10%
-    (measured 2026-11-16: 2-5% at these points; LDEM_128 slightly higher: its east-west step is shorter)."""
+    """Where the 240 m polar map and LDEM_128 overlap, the two paths' 10 km mean slopes agree within 5%, up to
+    1 deg from the pole (measured 2026-11-24: -2.8% to +3.4% at these points). With a 2-pixel east-west
+    difference at every latitude, LDEM_128 was 11% higher at 85 S, 25% at 88 S and 66-140% at 89 S."""
     from lss.terrain.core import ps_from_latlon
     from lss.terrain.global_layer import global_slope_stats
     from lss.terrain.slope import slope_stats
@@ -206,4 +339,4 @@ def test_mean_slope_agrees_with_the_polar_path_on_the_240m_map(lat, lon):
     x, y = (float(v) for v in ps_from_latlon(lat, lon, "south"))
     polar = slope_stats(BY_ID["ldem_60s_240m"].path, x, y, 10_000.0)
     cyl = global_slope_stats(lat, lon, 10_000.0)
-    assert cyl.mean_deg == pytest.approx(polar.mean_deg, rel=0.10)
+    assert cyl.mean_deg == pytest.approx(polar.mean_deg, rel=0.05)
