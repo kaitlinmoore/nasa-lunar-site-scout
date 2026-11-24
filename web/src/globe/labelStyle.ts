@@ -1,8 +1,8 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 // One label style for everything the globe writes on the Moon: site names, the "South Pole" cue, and
 // later the IAU landmark labels (Kaitlin, 2026-11-16). The surface runs from black shadow to bright
-// grey, so a text outline alone isn't enough: each label also sits on a subtle dark backing. Plain on
-// purpose; the look waits for Kaitlin's layout pass, and every value is a token in index.css.
+// grey, so a text outline alone isn't enough: each label also sits on a subtle dark backing. Every
+// value is a token in index.css (theme "Penumbra" sets the fonts; the outline and backing stay).
 import { Cartesian2, Color, LabelStyle } from 'cesium'
 
 function token(name: string): string {
@@ -35,6 +35,20 @@ export function globeLabelStyle(font: string, fill: Color) {
     backgroundColor: Color.fromCssColorString(token('--globe-label-bg') || 'rgba(13, 17, 23, 0.72)'),
     backgroundPadding: new Cartesian2(pad.x, pad.y),
   }
+}
+
+/**
+ * Load the fonts the globe's labels use (self-hosted web fonts, main.tsx) before Cesium draws any
+ * label: Cesium rasterises a label's text when it's created, and a font that hasn't loaded yet
+ * would be drawn (and measured) in the fallback face. A font that fails to load is drawn in the
+ * fallback face; the globe isn't held back by it.
+ */
+export async function loadGlobeLabelFonts(): Promise<void> {
+  if (!('fonts' in document)) return
+  const fonts = ['--globe-label-font', '--globe-feature-label-font', '--globe-pole-font']
+    .map(token)
+    .filter((f) => f !== '')
+  await Promise.allSettled(fonts.map((f) => document.fonts.load(f)))
 }
 
 const sizes = new Map<string, { width: number; height: number }>()

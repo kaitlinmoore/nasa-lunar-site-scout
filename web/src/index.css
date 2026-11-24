@@ -1,32 +1,53 @@
 /* SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage". */
 /*
- * Placeholder look (Kaitlin, 2026-11-15: layout and style deferred to C5).
+ * Theme "Penumbra" (Kaitlin, 2026-11-23, layout pass): the light/shadow boundary the tool is
+ * about. Deep blue-black with a faint warm glow from one side, translucent panels, a serif
+ * display face (Fraunces) for names and section titles, Hanken Grotesk for text, gold for the
+ * Sun and for actions; the Moon floats on the page. Fonts are self-hosted (main.tsx).
  * All visual decisions live in the tokens below; rules underneath only reference tokens,
  * so an aesthetic pass means editing this block, not the components.
  */
 :root {
   /* typography */
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Hanken Grotesk Variable', system-ui, sans-serif;
+  --font-display: 'Fraunces Variable', Georgia, serif;
   --font-mono: ui-monospace, Consolas, monospace;
+  /* Fraunces axes: soft, large optical size for the big names; text optical size for titles */
+  --display-axes: 'SOFT' 50, 'opsz' 96;
+  --title-axes: 'opsz' 48;
   --text-xs: 0.75rem;
   --text-sm: 0.8rem;
   --text-md: 0.9rem;
-  --text-h2: 1.05rem;
-  --text-site-title: 1.4rem;
+  --text-h2: 1.2rem;
+  --text-metric: 1.02rem;
+  --text-app-title: 2.4rem;
+  --text-site-title: 2rem;
+  --tracking-caps: 0.2em;
+  --weight-regular: 400;
   --weight-medium: 500;
   --weight-bold: 600;
 
   /* colour: surfaces and text */
-  --color-bg: #0d1117;
-  --color-surface: #161b22;
-  --color-text: #e6e8ec;
-  --color-text-muted: #8b949e;
-  --color-border: #30363d;
-  --color-border-subtle: #21262d;
+  --color-bg: #070a14;
+  --color-surface: rgba(22, 28, 48, 0.55);
+  --color-surface-solid: #111628; /* the panel colour where a fill must be opaque (hollow plot markers, rings) */
+  --color-text: #ebe7df;
+  --color-text-muted: #9a9cb2;
+  --color-border: rgba(214, 205, 255, 0.11);
+  --color-border-subtle: rgba(214, 205, 255, 0.07);
+  /* page background: a warm glow from the upper left (sunlit side), a cool one lower right */
+  --page-glow-warm: rgba(242, 196, 109, 0.1);
+  --page-glow-cool: rgba(88, 120, 255, 0.08);
+  /* translucent panels */
+  --surface-blur: 14px;
+  --surface-inner-light: rgba(255, 255, 255, 0.04);
+  --surface-shadow: rgba(0, 0, 0, 0.8);
+  --panel-head-bg: rgba(7, 10, 20, 0.82);
+  --link-underline: rgba(242, 196, 109, 0.45);
 
   /* colour: status */
-  --color-accent: #79c0ff;
-  --color-accent-border: #388bfd;
+  --color-accent: #f2c46d;
+  --color-accent-border: #a9853f;
   --color-good: #56d364;
   --color-good-border: #2ea043;
   --color-warn: #e3b341;
@@ -36,16 +57,16 @@
   --color-bad-strong: #f85149;
   --color-bad-border: #da3633;
   --color-bad-bg: #2d1214;
-  --color-notice-border: #388bfd;
-  --color-notice-bg: #0d1d33;
+  --color-notice-border: #5b6fb5;
+  --color-notice-bg: rgba(40, 52, 100, 0.35);
 
   /* colour: sky view (C5) */
   --color-sun: #f2cc60;
   --color-earth: #58a6ff;
-  --color-terrain: #6e7681;
-  --color-terrain-line: #c9d1d9;
+  --color-terrain: #2b3148;
+  --color-terrain-line: #c4c2d6;
   --terrain-fill-opacity: 0.85;
-  --plot-grid: var(--color-border-subtle);
+  --plot-grid: rgba(214, 205, 255, 0.09);
   --plot-zero: var(--color-text-muted);
   --plot-font-size: 12px;
   --plot-track-width: 2;
@@ -56,36 +77,39 @@
   --event-mark: 10px;
 
   /* globe (C7a); read by MoonGlobe.tsx via getComputedStyle */
-  --globe-height: 32rem;
+  --globe-height: 38rem;
+  --globe-radius: 24px;
+  --globe-glow: rgba(242, 196, 109, 0.25);
   --globe-marker: #f2cc60;
-  --globe-marker-outline: #0d1117;
+  --globe-marker-outline: #070a14;
   --globe-marker-size: 12px;
   --globe-marker-outline-width: 2px;
-  --globe-label-font: 600 14px system-ui, sans-serif;
+  --globe-label-font: 600 14px 'Hanken Grotesk Variable', sans-serif;
   --globe-label-offset: 14px;
   /* every globe label (sites, South Pole, landmarks): dark outline + subtle dark backing (labelStyle.ts) */
-  --globe-label-outline: #0d1117;
+  --globe-label-outline: #070a14;
   --globe-label-outline-width: 3px;
-  --globe-label-bg: rgba(13, 17, 23, 0.72);
+  --globe-label-bg: rgba(7, 10, 20, 0.72);
   --globe-label-bg-padding-x: 6px;
   --globe-label-bg-padding-y: 3px;
   /* IAU feature names (featureLabels.ts): quieter than the site labels */
   --globe-feature-label: #d0d7de;
-  --globe-feature-label-font: 500 12px system-ui, sans-serif;
+  --globe-feature-label-font: italic 400 13px 'Fraunces Variable', serif;
   --globe-pin: #58a6ff;
   --globe-pin-size: 15px;
   --globe-pin-outline-width: 3px;
   --globe-pole: #c9d1d9;
   --globe-pole-size: 6px;
-  --globe-pole-font: 500 12px system-ui, sans-serif;
-  --globe-overlay-bg: rgba(13, 17, 23, 0.78);
+  --globe-pole-font: 500 12px 'Hanken Grotesk Variable', sans-serif;
+  --globe-overlay-bg: rgba(10, 13, 26, 0.86);
 
   /* controls (C6) */
-  --control-bg: #21262d;
-  --control-bg-hover: #30363d;
+  --control-bg: rgba(255, 255, 255, 0.05);
+  --control-bg-hover: rgba(255, 255, 255, 0.1);
   --control-border: var(--color-border);
   --control-text: var(--color-text);
-  --input-bg: var(--color-bg);
+  --input-bg: rgba(0, 0, 0, 0.3);
+  --option-bg: var(--color-surface-solid);
 
   /* spacing, shape, layout */
   --space-1: 0.25rem;
@@ -94,7 +118,8 @@
   --space-4: 1rem;
   --space-5: 1.25rem;
   --space-6: 1.5rem;
-  --radius: 8px;
+  --radius: 14px;
+  --radius-control: 8px;
   --radius-pill: 999px;
   --page-width: 64rem;
   --page-width-wide: 92rem;
@@ -106,15 +131,41 @@
 
   font-family: var(--font-sans);
   color: var(--color-text);
-  background: var(--color-bg);
+  background:
+    radial-gradient(120rem 60rem at -10% -20%, var(--page-glow-warm), transparent 55%),
+    radial-gradient(80rem 50rem at 110% 120%, var(--page-glow-cool), transparent 60%),
+    var(--color-bg);
+  background-attachment: fixed;
+  /* native controls (radios, checkboxes, sliders, scrollbars, select lists) in the theme */
+  color-scheme: dark;
+  accent-color: var(--color-accent);
 }
 
 body { margin: 0; }
 main.wide { max-width: var(--page-width-wide); }
 main { max-width: var(--page-width); margin: calc(2 * var(--space-5)) auto; padding: 0 var(--space-6); }
-h1 { font-weight: var(--weight-bold); letter-spacing: 0.01em; margin: 0; }
-.subtitle { margin: 0 0 var(--space-2); color: var(--color-text-muted); font-size: var(--text-h2); }
-h2 { font-size: var(--text-h2); font-weight: var(--weight-bold); margin: 0 0 var(--space-3); }
+h1 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-app-title);
+  font-variation-settings: var(--display-axes);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.subtitle {
+  margin: var(--space-1) 0 var(--space-2);
+  color: var(--color-accent);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  font-weight: var(--weight-regular);
+  font-variation-settings: var(--title-axes);
+  margin: 0 0 var(--space-3);
+}
 header { margin-bottom: var(--space-5); }
 .source { margin: 0; font-size: var(--text-md); }
 
@@ -128,6 +179,8 @@ dd { margin: 0; }
   border-radius: var(--radius);
   padding: var(--space-4) var(--space-5);
   margin-bottom: var(--space-4);
+  backdrop-filter: blur(var(--surface-blur));
+  box-shadow: 0 1px 0 var(--surface-inner-light) inset, 0 20px 40px -24px var(--surface-shadow);
 }
 .grid-2 {
   display: grid;
@@ -145,6 +198,7 @@ thead th {
 }
 tbody tr + tr th, tbody tr + tr td { border-top: 1px solid var(--color-border-subtle); }
 tbody th { font-weight: var(--weight-medium); }
+.metrics td { font-size: var(--text-metric); }
 
 .value, .stat { font-variant-numeric: tabular-nums; }
 .stat { display: flex; flex-direction: column; gap: 0.1rem; }
@@ -199,7 +253,7 @@ footer { margin-top: calc(2 * var(--space-6)); font-size: var(--text-md); }
 .plot-marker.plot-earth { stroke: var(--color-earth); }
 .plot-marker.plot-sun.is-visible { fill: var(--color-sun); }
 .plot-marker.plot-earth.is-visible { fill: var(--color-earth); }
-.plot-marker.is-hidden { fill: var(--color-surface); }
+.plot-marker.is-hidden { fill: var(--color-surface-solid); }
 .plot-watermark {
   fill: var(--color-warn);
   fill-opacity: var(--plot-watermark-opacity);
@@ -248,7 +302,7 @@ footer { margin-top: calc(2 * var(--space-6)); font-size: var(--text-md); }
 }
 .timeline-event.event-sun { background: var(--color-sun); }
 .timeline-event.event-earth { background: var(--color-earth); }
-.timeline-event.is-selected { box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-text); }
+.timeline-event.is-selected { box-shadow: 0 0 0 2px var(--color-surface-solid), 0 0 0 4px var(--color-text); }
 .timeline-event:focus-visible { outline: 2px solid var(--color-text); outline-offset: 2px; }
 .timeline-ends { display: flex; justify-content: space-between; font-size: var(--text-sm); }
 
@@ -258,12 +312,22 @@ footer { margin-top: calc(2 * var(--space-6)); font-size: var(--text-md); }
 
 /* ---- globe (C7a) ---- */
 .globe { position: relative; margin-bottom: var(--space-3); }
-.globe-canvas { height: var(--globe-height); border-radius: var(--radius); overflow: hidden; background: var(--color-bg); }
+.globe-canvas {
+  height: var(--globe-height);
+  border-radius: var(--globe-radius);
+  overflow: hidden;
+  background: var(--color-bg);
+  box-shadow: 0 0 0 1px var(--color-border), 0 30px 80px -30px var(--globe-glow);
+}
+/* The Moon floats on the page: its card has no surface, and its "Moon" heading is for screen
+   readers only (the globe and its caption say what it is). */
+.globe-layout > .card { background: none; border: 0; box-shadow: none; backdrop-filter: none; padding: 0; }
+.globe-layout > .card > h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .globe-status { position: absolute; left: var(--space-4); top: var(--space-4); right: var(--space-4); margin: 0; }
 .list-heading { font-size: var(--text-md); font-weight: var(--weight-bold); margin: var(--space-4) 0 var(--space-2); }
 .site-list { margin: 0; padding-left: var(--space-5); }
 .site-list li + li { margin-top: var(--space-1); }
-a { color: var(--color-accent); }
+a { color: var(--color-accent); text-underline-offset: 0.2em; text-decoration-color: var(--link-underline); }
 .back-link { margin: 0 0 var(--space-3); }
 
 /* ---- navigation, controls, saved + compare (C6) ---- */
@@ -276,8 +340,8 @@ button, .file-button {
   color: var(--control-text);
   background: var(--control-bg);
   border: 1px solid var(--control-border);
-  border-radius: var(--radius);
-  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-4);
   cursor: pointer;
 }
 button:hover:not(:disabled), .file-button:hover { background: var(--control-bg-hover); }
@@ -290,9 +354,11 @@ input, select {
   color: var(--control-text);
   background: var(--input-bg);
   border: 1px solid var(--control-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-control);
   padding: var(--space-1) var(--space-2);
 }
+/* The open list of a select is drawn by the browser: give it a solid background. */
+option { background: var(--option-bg); color: var(--control-text); }
 input[type='checkbox'] { padding: 0; }
 .file-button input[type='file'] { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .file-button { position: relative; display: inline-block; }
@@ -314,7 +380,7 @@ input[type='checkbox'] { padding: 0; }
 .site-intro { margin-bottom: var(--space-3); }
 .site-intro p { margin: 0 0 var(--space-1); max-width: 48rem; }
 /* The site's name and subtitle at the head of its panel. */
-.site-title { font-size: var(--text-site-title); font-weight: var(--weight-bold); margin: 0 0 var(--space-2); }
+.site-title { font-size: var(--text-site-title); font-variation-settings: var(--display-axes); letter-spacing: -0.01em; margin: 0 0 var(--space-2); }
 .site-heading .site-subtitle { margin-bottom: 0; }
 .utc-field { color: var(--color-text); font-size: var(--text-md); white-space: nowrap; }
 .globe-note {
@@ -357,7 +423,7 @@ input[type='checkbox'] { padding: 0; }
   background: var(--globe-overlay-bg);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
-.site-card h3 { margin: 0 var(--space-6) var(--space-2) 0; font-size: var(--text-h2); }
+.site-card h3 { margin: 0 var(--space-6) var(--space-2) 0; font-family: var(--font-display); font-size: var(--text-h2); font-weight: var(--weight-regular); font-variation-settings: var(--title-axes); }
 .site-card p { margin: 0 0 var(--space-3); font-size: var(--text-md); }
 .site-card button[aria-pressed='true'] { color: var(--globe-pin); }
 .site-card-close { position: absolute; top: var(--space-2); right: var(--space-2); padding: 0 var(--space-2); }
@@ -368,8 +434,8 @@ a.button {
   color: var(--control-text);
   background: var(--control-bg);
   border: 1px solid var(--control-border);
-  border-radius: var(--radius);
-  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-4);
   text-decoration: none;
 }
 a.button:hover { background: var(--control-bg-hover); }
@@ -399,7 +465,8 @@ a.button:hover { background: var(--control-bg-hover); }
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--color-bg);
+  background: var(--panel-head-bg);
+  backdrop-filter: blur(var(--surface-blur));
   border-bottom: 1px solid var(--color-border-subtle);
   margin-bottom: var(--space-3);
 }
@@ -451,7 +518,7 @@ textarea {
   color: var(--control-text);
   background: var(--input-bg);
   border: 1px solid var(--control-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-control);
   padding: var(--space-2);
 }
 .nl-form textarea { width: 100%; box-sizing: border-box; resize: vertical; }
@@ -527,6 +594,7 @@ textarea {
   width: 100%;
   padding: 0;
   border: 0;
+  border-radius: 0;
   background: none;
   color: inherit;
   font: inherit;

@@ -15,6 +15,7 @@ import { formatLatLon, truncateText } from '../format'
 import { displayName, subtitleOf } from '../siteNames'
 import { navigate, routeHref } from '../route'
 import { type FeatureLabels, loadFeatureLabels } from './featureLabelData'
+import { loadGlobeLabelFonts } from './labelStyle'
 import { type PinnedSite, useSaved } from '../saved/store'
 
 const MoonGlobe = lazy(() => import('./MoonGlobe'))
@@ -120,6 +121,15 @@ export default function GlobeView({
       cancelled = true
     }
   }, [source])
+  // The labels' web fonts, loaded before the globe draws any label (labelStyle.ts).
+  const [fontsReady, setFontsReady] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    void loadGlobeLabelFonts().then(() => !cancelled && setFontsReady(true))
+    return () => {
+      cancelled = true
+    }
+  }, [])
   const { doc, unpinSite } = useSaved()
   const pins: PinnedSite[] = doc.pinned_sites
   const pinnedIds = new Set(pins.map((p) => p.site_id))
@@ -152,7 +162,9 @@ export default function GlobeView({
           {data._note && <div className="muted">{data._note}</div>}
         </div>
       )}
-      {ION_TOKEN ? (
+      {ION_TOKEN && !fontsReady ? (
+        <p className="muted">Loading the globe…</p>
+      ) : ION_TOKEN ? (
         <Suspense fallback={<p className="muted">Loading the globe…</p>}>
           <MoonGlobe
             featureLabels={features?.rows ?? null}
