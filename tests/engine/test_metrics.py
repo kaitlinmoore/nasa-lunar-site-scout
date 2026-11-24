@@ -2,6 +2,7 @@
 """lss.metrics: definitions of methodology section 5 on synthetic series with known answers, plus the served
 C1 scenario on real data (kernels + DEMs)."""
 
+from dataclasses import fields, replace
 from datetime import UTC, datetime, timedelta
 
 import numpy as np
@@ -19,7 +20,16 @@ from lss.metrics import (
     time_mean,
 )
 from lss.registry.terrain import C1_LAYERS
-from lss.series import Period, SeriesParams, SeriesResult, body_visibility, compute_series, series_response
+from lss.series import (
+    Period,
+    SeriesParams,
+    SeriesResult,
+    body_visibility,
+    compute_series,
+    compute_visibility,
+    events,
+    series_response,
+)
 
 START = datetime(2028, 5, 15, tzinfo=UTC)
 
@@ -164,3 +174,42 @@ def test_served_metrics_do_not_depend_on_the_grid_step(served):
     c, d = comms_metrics(served), comms_metrics(fine)
     assert c.earth_visibility_fraction == pytest.approx(d.earth_visibility_fraction, abs=1e-6)
     assert c.longest_earth_gap_h == pytest.approx(d.longest_earth_gap_h, abs=1e-3)
+
+
+def same_body(a, b) -> bool:
+    """Two BodyVisibility results are identical: every grid array, period and refined time."""
+    grids = all(np.array_equal(getattr(a.grid, f.name), getattr(b.grid, f.name)) for f in fields(a.grid))
+    return grids and (a.visible, a.hidden, a.full, a.rises, a.sets) == (
+        b.visible,
+        b.hidden,
+        b.full,
+        b.rises,
+        b.sets,
+    )
+
+
+def test_selected_bodies_validated():
+    for bad in ((), ("MOON",), ("SUN", "MARS")):
+        with pytest.raises(ValueError, match="bodies"):
+            compute_visibility(-89.0, 0.0, 1.0, START, START + timedelta(hours=1), bodies=bad)
+
+
+@needs_data
+def test_sun_only_is_the_sun_of_the_full_call(served):
+    """compute_visibility(bodies=("SUN",)) gives exactly the Sun of the full call (and its power metrics and
+    Sun events), computes no Earth, and refuses what needs the Earth; likewise the Earth alone."""
+    loc = SCENARIO.location
+    args = (loc.lat, loc.lon, SCENARIO.unit_height_m, SCENARIO.window_start, SCENARIO.window_end)
+    sun = compute_visibility(*args, bodies=("SUN",))
+    assert sun.earth is None and same_body(sun.sun, served.sun)
+    assert power_metrics(sun) == power_metrics(served)
+    sun_kinds = {"sunrise", "sunset"}
+    assert events(sun) == [e for e in events(served) if e.kind.value in sun_kinds]
+    with pytest.raises(ValueError, match="EARTH"):
+        comms_metrics(sun)
+    with pytest.raises(ValueError, match="EARTH"):
+        series_response(replace(sun, scenario=SCENARIO))
+    earth = compute_visibility(*args, bodies=["earth"])
+    assert earth.sun is None and same_body(earth.earth, served.earth)
+    with pytest.raises(ValueError, match="SUN"):
+        power_metrics(earth)

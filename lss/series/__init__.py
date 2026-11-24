@@ -4,6 +4,7 @@ Visibility time series and event finding.
 """
 
 from lss.series.core import (
+    BODIES,
     SERIES_VERSION,
     BodyVisibility,
     Grid,
@@ -29,6 +30,7 @@ from lss.series.disc import (
 )
 
 __all__ = [
+    "BODIES",
     "LIMB_U2",
     "LIMB_V2",
     "LIMB_WAVELENGTH_NM",

@@ -15,7 +15,7 @@ leap second inside the window (none is scheduled; section 2), and ignores the pe
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 
@@ -28,6 +28,7 @@ from lss.registry.terrain import LAYERS, LayerSpec, resolve
 from lss.series.disc import margins, visible_fraction
 
 SERIES_VERSION = 1
+BODIES = ("SUN", "EARTH")
 CHUNK = 20_000  # samples per vectorised block (memory)
 
 # sample(t_s) -> (azimuth_deg, elevation_deg, angular_radius_deg), arrays like t_s
@@ -90,8 +91,8 @@ class SeriesResult:
     window_end: datetime
     horizon: Horizon
     observer_height_m: float  # above the 1737.4 km sphere: DEM surface + unit height
-    sun: BodyVisibility
-    earth: BodyVisibility
+    sun: BodyVisibility | None  # None if not computed (compute_visibility's `bodies`)
+    earth: BodyVisibility | None
     params: SeriesParams = field(default_factory=SeriesParams)
     scenario: Scenario | None = None  # None for internal runs the contract cannot express (0 m observer)
     layers: tuple[LayerSpec, ...] = LAYERS  # terrain layers the horizon was computed with
@@ -99,6 +100,12 @@ class SeriesResult:
     @property
     def duration_s(self) -> float:
         return (self.window_end - self.window_start).total_seconds()
+
+    def require(self, *names: str) -> None:
+        """Raise ValueError unless each named body ("SUN", "EARTH") was computed."""
+        missing = [n for n in names if getattr(self, n.lower()) is None]
+        if missing:
+            raise ValueError(f"needs {', '.join(missing)}, which compute_visibility was told not to compute")
 
 
 def _grid_times(duration_s: float, step_s: float) -> np.ndarray:
@@ -212,19 +219,31 @@ def compute_visibility(
     params: SeriesParams = SeriesParams(),
     horizon_params: HorizonParams | None = None,
     layers: tuple[LayerSpec, ...] = LAYERS,
+    *,
+    bodies: Iterable[str] = BODIES,
 ) -> SeriesResult:
     """Sun and Earth visibility at a site (horizon from the cache, or computed and cached).
 
     Accepts a 0 m observer, for the internal product 69 reproduction (methodology section 4.2); served
     results go through compute_series, whose Scenario requires a positive unit height.
+
+    `bodies`: which of "SUN" and "EARTH" to compute (case ignored; default both). A body left out is None in
+    the result, and is computed in no other way: each body's visibility depends only on its own ephemeris
+    and the horizon, so the Sun alone is identical to the Sun of a full call, in about half the time.
+    Metrics and responses that need a body left out raise ValueError.
     """
+    wanted = {str(b).upper() for b in bodies}
+    if not wanted or not wanted <= set(BODIES):
+        raise ValueError(f"bodies must be a non-empty subset of {BODIES}, got {tuple(bodies)}")
     hz = cached_horizon(lat, lon, unit_height_m, horizon_params, layers)
     observer_height_m = hz.observer_radius_m - MOON_RADIUS_M
     duration_s = (window_end - window_start).total_seconds()
     if duration_s <= 0:
         raise ValueError("window_end must be after window_start")
-    bodies = {}
+    bodies = dict.fromkeys(BODIES)
     for name, limb in (("SUN", True), ("EARTH", False)):
+        if name not in wanted:
+            continue
         sample = ephemeris_sampler(name, lat, lon, observer_height_m, window_start)
         bodies[name] = body_visibility(sample, hz.elevation_at, duration_s, limb, params)
     return SeriesResult(
@@ -264,13 +283,16 @@ def compute_series(
 
 
 def events(result: SeriesResult) -> list[Event]:
-    """Sunrise/sunset and Earthrise/Earthset inside the window, in time order (refined)."""
+    """Sunrise/sunset and Earthrise/Earthset inside the window, in time order (refined); only those of the
+    bodies computed."""
     start = result.window_start
     out = []
     for vis, rise, set_ in (
         (result.sun, EventKind.sunrise, EventKind.sunset),
         (result.earth, EventKind.earthrise, EventKind.earthset),
     ):
+        if vis is None:  # not computed
+            continue
         out += [(s, rise) for s in vis.rises] + [(s, set_) for s in vis.sets]
     out.sort(key=lambda e: e[0])
     return [Event(kind=k, time=start + timedelta(seconds=s), refined=True) for s, k in out]
@@ -281,6 +303,7 @@ def series_response(result: SeriesResult) -> SeriesResponse:
     sc = result.scenario
     if sc is None:
         raise ValueError("series_response needs a contract Scenario (use compute_series)")
+    result.require("SUN", "EARTH")
     step = sc.step.total_seconds()
     n = int(np.floor(result.duration_s / step + 1e-9)) + 1
     t_s = np.arange(n) * step

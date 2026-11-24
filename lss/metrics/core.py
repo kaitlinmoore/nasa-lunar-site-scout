@@ -71,6 +71,7 @@ def _first(times: list[float]) -> float | None:
 
 
 def power_metrics(res: SeriesResult) -> PowerMetrics:
+    res.require("SUN")
     sun, T = res.sun, res.duration_s
     g = sun.grid
     shadow_h, shadow_clipped = longest(sun.hidden)
@@ -90,6 +91,7 @@ def power_metrics(res: SeriesResult) -> PowerMetrics:
 
 
 def comms_metrics(res: SeriesResult) -> CommsMetrics:
+    res.require("SUN", "EARTH")  # the Sun for the Sun-Earth overlap
     earth, T = res.earth, res.duration_s
     g = earth.grid
     gap_h, gap_clipped = longest(earth.hidden)

@@ -647,6 +647,10 @@ applied by default.
 - **Internal grid.** Each body is sampled every 60 s over the window (`SeriesParams.grid_step_s`). Time axis:
   seconds since `window_start`, ephemeris time = et(`window_start`) + seconds. This assumes no leap second
   inside the window (none is scheduled) and ignores the periodic TDB − UTC terms (< 2 ms).
+- **Each body on its own.** A body's visibility depends only on its own ephemeris and the horizon.
+  `compute_visibility(..., bodies=("SUN",))` computes the Sun alone: identical to the Sun of a full call
+  (every sample, period and event; tested on the served Site01 scenario), in 1.2 s instead of 2.1 s there.
+  The Earth can be computed alone the same way. Served results compute both.
 - **Visibility margins.** Two continuous functions of time decide visibility, evaluated over 101 columns
   across the disc: *any part* = max over columns of (column top − horizon), positive iff some part is visible;
   *whole disc* = min over columns of (column bottom − horizon), ≥ 0 iff all of it is. Their sign changes
