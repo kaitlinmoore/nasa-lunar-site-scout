@@ -1,5 +1,6 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""Bodies high in the sky, up to the zenith (handoff 14 item 3; docs/methodology.md section 5.5, "Limits").
+"""Bodies high in the sky, up to the zenith (docs/methodology.md section 5.5, "High elevations, up to the
+zenith").
 
 lss.series.disc places a disc point at tangent-plane offsets (x horizontal, y vertical) at azimuth
 az + x / cos(el) and elevation el + y. Here that is compared with the exact geometry on the celestial sphere,

@@ -403,7 +403,7 @@ unchanged. The fidelity tier is "low": the resolver gives "low" when the near fi
 location inside the polar maps whose rays leave them (north of about 73° S) keeps its polar near field, and the
 global layer is its far field: see "Full ray range" below.
 
-**Full ray range** (handoff 14 item 1, 2026-11-23). The last polar layer of a stack must hold every point within
+**Full ray range** (2026-11-23). The last polar layer of a stack must hold every point within
 the 400 km ray range, at least one pixel inside its edges. Between about 73° S and 60° S the 240 m map does not,
 in some directions or all. There the polar layers are used out to the largest distance the 240 m map holds in
 every direction, and LDEM_128 from there to 400 km (`full_reach_m`, `resolve`). With the 240 m map used alone to
@@ -684,7 +684,7 @@ applied by default.
   - **Results.** The ray caster matches h₀ to 2·10⁻⁵°. There are 7 Sun and 8 Earth rises and sets. Every
     crossing is within |horizon error| / elevation rate + 2 s (at most 3.6 s, at a grazing Sun). The time
     fractions, Earth segment fractions, shadow count, longest shadow and Sun–Earth overlap all match.
-- **High elevations, up to the zenith** (`tests/engine/test_high_elevation.py`, handoff 14 item 3, 2026-11-23).
+- **High elevations, up to the zenith** (`tests/engine/test_high_elevation.py`, 2026-11-23).
   Two approximations were made for bodies near the horizon, as at the poles. A disc point at tangent-plane offset
   (x, y) is put at azimuth az + x / cos(el) and elevation el + y. The azimuth arc unwraps the 60 s track, which
   assumes the azimuth turns the short way between samples. Both are tested against exact geometry on the

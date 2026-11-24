@@ -176,7 +176,7 @@ def test_full_reach_at_the_pole_and_off_the_map():
 
 @pytest.mark.parametrize("lat", [-70.0, -65.0, -61.0])
 def test_resolver_global_far_field_where_rays_leave_the_polar_maps(lat):
-    """Handoff 14 item 1: between about 73 S and 60 S, 400 km rays leave the 240 m map. The map is used out
+    """Between about 73 S and 60 S, 400 km rays leave the 240 m map. The map is used out
     to the distance it holds in every direction, then the global layer to the maximum range."""
     st = reg.resolve(lat, 0.0)
     reach = reg.full_reach_m(reg.POLAR_240M, lat, 0.0, reg.MAX_RANGE_M)
