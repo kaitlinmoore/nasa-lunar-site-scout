@@ -2,9 +2,13 @@
 // NL answer views for contract 0.9.0: slope statistics (`terrain`) and the site summary
 // (`site_summary` = slope statistics + nearby features + metrics). Values are the API's, formatted
 // like the site screen's; a missing value says "not computed". Each result's own `limitations`
-// are shown with it.
+// are shown with it. A summary's metrics for the scenario already on the page's dashboard aren't
+// repeated (layout pass); they're one click away.
+import { useContext } from 'react'
 import type { Schemas } from '../api/client'
-import { formatLatLon } from '../format'
+import { formatLatLon, formatScenarioSummary } from '../format'
+import { scenarioId } from '../scenario'
+import { DashboardScenario } from './dashboardScenario'
 import { placeLabel, useSiteNames } from '../siteNames'
 import { StatValue, Value } from '../metrics'
 import { fieldDoc } from '../metricSpec'
@@ -13,6 +17,7 @@ import SiteScreen from '../SiteScreen'
 type TerrainResponse = Schemas['TerrainResponse']
 type ProximityResponse = Schemas['ProximityResponse']
 type SiteSummaryResponse = Schemas['SiteSummaryResponse']
+type MetricsResponse = Schemas['MetricsResponse']
 
 const FEATURE_TYPE_LABELS: Record<string, string> = {
   crater: 'crater',
@@ -128,6 +133,29 @@ function FeaturesView({ features }: { features: ProximityResponse }) {
   )
 }
 
+/**
+ * The summary's metrics. When they're for the scenario whose dashboard is on the page, the values
+ * are the dashboard's, so they're behind "Show them here" instead of repeated in full; any other
+ * scenario's metrics are shown as the site screen.
+ */
+function SummaryMetrics({ metrics }: { metrics: MetricsResponse }) {
+  const dashboard = useContext(DashboardScenario)
+  if (!dashboard || scenarioId(dashboard) !== scenarioId(metrics.scenario)) return <SiteScreen data={metrics} />
+  return (
+    <section className="card">
+      <h2>Metrics</h2>
+      <p>
+        For the scenario chosen above (<span className="value">{formatScenarioSummary(metrics.scenario)}</span>
+        ): the same values as this page's dashboard, so they aren't repeated here.
+      </p>
+      <details className="advanced">
+        <summary>Show them here</summary>
+        <SiteScreen data={metrics} />
+      </details>
+    </section>
+  )
+}
+
 /** A site summary (POST /api/site_summary): what the API has for a location, part by part. */
 export function SiteSummaryView({ summary }: { summary: SiteSummaryResponse }) {
   const names = useSiteNames()
@@ -141,7 +169,7 @@ export function SiteSummaryView({ summary }: { summary: SiteSummaryResponse }) {
       <ResultLimits limitations={summary.limitations} title="Not in this summary:" />
       {terrain && <TerrainView terrain={terrain} />}
       {features && <FeaturesView features={features} />}
-      {metrics && <SiteScreen data={metrics} />}
+      {metrics && <SummaryMetrics metrics={metrics} />}
       {!terrain && !features && !metrics && <p className="muted">The summary has no parts.</p>}
     </>
   )

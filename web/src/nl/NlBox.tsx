@@ -33,6 +33,7 @@ import {
 } from './response'
 import { SiteSummaryView, TerrainView } from './TerrainViews'
 import Section from '../Section'
+import { DashboardScenario } from './dashboardScenario'
 
 const MAX_CHARS = __NL_MAX_TEXT_CHARS__
 
@@ -392,83 +393,86 @@ export default function NlBox({
   }
 
   return (
-    <Section id="questions" title="Ask about this site" className="nl-box">
-      <p className="muted">
-        Ask in plain words. A language model turns the question into one of this tool's queries; the numbers
-        come from our precomputed results, not from the model.
-      </p>
-      {source === 'fixtures' && (
-        <div className="banner placeholder" role="note">
-          <strong>Fixture mode:</strong> your question isn't sent anywhere. The box shows one of the example
-          answers in <span className="mono">fixtures/</span>:{' '}
-          <select
-            aria-label="Example answer"
-            value={example}
-            onChange={(e) => setExample(e.target.value as NlExample)}
-          >
-            {EXAMPLES.map((x) => (
-              <option key={x.value} value={x.value}>
-                {x.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-      <form className="nl-form" onSubmit={submit}>
-        <textarea
-          aria-label="Your question"
-          rows={3}
-          maxLength={MAX_CHARS}
-          value={text}
-          placeholder={`For example: how long is the longest shadow at ${displayName(site)}?`}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) submit(e)
-          }}
-        />
-        <div className="nl-form-row">
-          <span className="muted">
-            {text.length} / {MAX_CHARS} characters
-          </span>
-          <button type="submit" disabled={!question || asking || waitUntil !== null}>
-            {asking ? 'Asking…' : 'Ask'}
-          </button>
-        </div>
-      </form>
-      {examples.length > 0 && (
-        <div className="nl-examples">
-          <span className="muted">Example questions (answers recorded in advance):</span>
-          <ul>
-            {examples.map((x) => {
-              const siteId = x.request.selected_site_id
-              return (
-                <li key={x.path}>
-                  <button
-                    type="button"
-                    className="link-button"
-                    disabled={asking}
-                    onClick={() => askExample(x)}
-                  >
-                    {x.request.text}
-                  </button>
-                  {siteId && <span className="muted"> (about {names.byId(siteId) ?? siteId})</span>}
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-      )}
-      {state.kind !== 'idle' && (
-        <div className="nl-answer" aria-live="polite">
-          <p className="nl-question">
-            <span className="muted">You asked:</span> “{state.question}”
-            {state.about && <span className="muted"> (about {state.about})</span>}
-          </p>
-          {state.kind === 'asking' && <p className="muted">Working on it…</p>}
-          {state.kind === 'done' && <OutcomeView outcome={state.outcome} />}
-          {state.kind === 'error' && <ProblemView error={state.error} />}
-        </div>
-      )}
-    </Section>
+    // The dashboard above is for `scenario`: answers needn't repeat it (TerrainViews.tsx).
+    <DashboardScenario.Provider value={scenario}>
+      <Section id="questions" title="Ask about this site" className="nl-box">
+        <p className="muted">
+          Ask in plain words. A language model turns the question into one of this tool's queries; the numbers
+          come from our precomputed results, not from the model.
+        </p>
+        {source === 'fixtures' && (
+          <div className="banner placeholder" role="note">
+            <strong>Fixture mode:</strong> your question isn't sent anywhere. The box shows one of the example
+            answers in <span className="mono">fixtures/</span>:{' '}
+            <select
+              aria-label="Example answer"
+              value={example}
+              onChange={(e) => setExample(e.target.value as NlExample)}
+            >
+              {EXAMPLES.map((x) => (
+                <option key={x.value} value={x.value}>
+                  {x.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <form className="nl-form" onSubmit={submit}>
+          <textarea
+            aria-label="Your question"
+            rows={3}
+            maxLength={MAX_CHARS}
+            value={text}
+            placeholder={`For example: how long is the longest shadow at ${displayName(site)}?`}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) submit(e)
+            }}
+          />
+          <div className="nl-form-row">
+            <span className="muted">
+              {text.length} / {MAX_CHARS} characters
+            </span>
+            <button type="submit" disabled={!question || asking || waitUntil !== null}>
+              {asking ? 'Asking…' : 'Ask'}
+            </button>
+          </div>
+        </form>
+        {examples.length > 0 && (
+          <div className="nl-examples">
+            <span className="muted">Example questions (answers recorded in advance):</span>
+            <ul>
+              {examples.map((x) => {
+                const siteId = x.request.selected_site_id
+                return (
+                  <li key={x.path}>
+                    <button
+                      type="button"
+                      className="link-button"
+                      disabled={asking}
+                      onClick={() => askExample(x)}
+                    >
+                      {x.request.text}
+                    </button>
+                    {siteId && <span className="muted"> (about {names.byId(siteId) ?? siteId})</span>}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
+        {state.kind !== 'idle' && (
+          <div className="nl-answer" aria-live="polite">
+            <p className="nl-question">
+              <span className="muted">You asked:</span> “{state.question}”
+              {state.about && <span className="muted"> (about {state.about})</span>}
+            </p>
+            {state.kind === 'asking' && <p className="muted">Working on it…</p>}
+            {state.kind === 'done' && <OutcomeView outcome={state.outcome} />}
+            {state.kind === 'error' && <ProblemView error={state.error} />}
+          </div>
+        )}
+      </Section>
+    </DashboardScenario.Provider>
   )
 }
