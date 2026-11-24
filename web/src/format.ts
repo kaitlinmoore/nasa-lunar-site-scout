@@ -8,6 +8,7 @@ import { durationSeconds } from './scenario'
 // Kaitlin's display decisions (2026-11-15): fractions as percent; precision h 1 dp, deg 2 dp,
 // % 1 dp; coordinates signed as sent; counts name what they count and the time window they cover;
 // "Time window" (not "window"), range first with exact UTC times second, step as "results every …".
+// Lengths (`_m`) of 1000 m or more in km, e.g. a 10000 m radius as "10 km" (layout pass, 2026-11-23).
 // Layout lives in the components and styling in index.css; all text formatting lives here.
 
 export type Unit = 'h' | 'deg' | 'fraction' | 'count' | 'm'
@@ -42,8 +43,18 @@ export function formatValue(value: number, unit: Unit, field: string): string {
       return `${value} ${value === 1 ? nouns[0] : nouns[1]}`
     }
     case 'm':
-      return `${value} m`
+      return formatMetres(value)
   }
+}
+
+/**
+ * A length sent in metres: below 1000 m as sent ("236.901 m"), from 1000 m in km ("10 km",
+ * "12.5 km"). The km value is the metres divided by 1000, not rounded (toPrecision(12) only drops
+ * binary noise such as 1.2345000000000002).
+ */
+export function formatMetres(value: number): string {
+  if (Math.abs(value) < 1000) return `${value} m`
+  return `${Number((value / 1000).toPrecision(12))} km`
 }
 
 /** ISO 8601 UTC timestamp as "2028-11-23 06:00 UTC" (seconds shown only when non-zero). */

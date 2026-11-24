@@ -105,7 +105,7 @@ A site is shown by its `short_name` (contract 0.9.0), with `subtitle` under it o
 
 - Values are shown exactly as sent (rounded for display; hover a value to see the API's number). Nothing is derived or defaulted, except the terrain horizon at a body's azimuth, which the contract defines as a linear interpolation of the profile (see Sky view).
 - `null` metrics show as "not computed", never as 0.
-- Units come from the contract's field-name convention (`_h` hours, `_deg` degrees, `_fraction` shown as %, `_m` meters). Counts (`_count`) name what they count and the scenario window they cover ("2 shadow periods, in the window …").
+- Units come from the contract's field-name convention (`_h` hours, `_deg` degrees, `_fraction` shown as %, `_m` meters; a length of 1000 m or more is shown in km, e.g. a 10000 m radius as "10 km", the metres divided by 1000 without rounding). Counts (`_count`) name what they count and the scenario window they cover ("2 shadow periods, in the window …").
 - Metric definitions are the contract's own field descriptions, read from `fixtures/openapi.json` at build time.
 - `_clipped` flags (contract 0.3.0) aren't rows of their own: each is a note under the longest-period duration it qualifies. `true` → "clipped to the window; the full period is longer"; `null` → "not computed"; `false` → no note.
 - `sunset_in_window` / `earthset_in_window` (contract 0.4.0): when the flag is `false`, `time_to_sunset_h` / `time_to_earthset_h` is null because the event doesn't happen in the window, and the value shows "no sunset in this window" / "no Earthset in this window". A null time with the flag `null` (or `true`) still shows "not computed".
