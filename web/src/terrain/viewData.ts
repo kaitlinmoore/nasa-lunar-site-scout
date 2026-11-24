@@ -76,9 +76,22 @@ export function checkView(v: TerrainView, siteId: string): TerrainView {
   return v
 }
 
-/** The page's palette: the app has a dark theme only (index.css), so stream A's dark palette. */
+/** The page's slope-class colours: the `--slope-class-<n>` tokens in index.css, one per class. */
+function tokenPalette(count: number): string[] | null {
+  const style = getComputedStyle(document.documentElement)
+  const colours = Array.from({ length: count }, (_, i) => style.getPropertyValue(`--slope-class-${i + 1}`).trim())
+  const extra = style.getPropertyValue(`--slope-class-${count + 1}`).trim()
+  return colours.every(isColour) && extra === '' ? colours : null
+}
+
+/**
+ * The page's palette for a view's slope classes: the theme's tokens (layout pass, 2026-11-23:
+ * the data's dark palette was five blues that were hard to tell apart over the hillshade) when
+ * there is exactly one token per class; otherwise stream A's dark palette (the app is dark only).
+ * Only the colours change: the classes, their order and their labels are the view's own.
+ */
 export function slopePalette(slope: NonNullable<TerrainView['slope']>): string[] {
-  return slope.palette_dark
+  return tokenPalette(slope.class_labels.length) ?? slope.palette_dark
 }
 
 /**

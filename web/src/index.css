@@ -74,6 +74,16 @@
   --plot-watermark-opacity: 0.18;
   --plot-watermark-size: 44px;
   --slider-thumb: 16px;
+
+  /* slope classes on the 2D site view (terrain/viewData.ts), gentlest to steepest: cool to hot, so
+     neighbouring classes differ in hue as well as lightness over the grey hillshade (layout pass,
+     2026-11-23; stream A's palette_dark was five blues). One colour per class, in class order;
+     a view with a different number of classes is drawn in its own palette_dark instead. */
+  --slope-class-1: #5b8def;
+  --slope-class-2: #a6ead0;
+  --slope-class-3: #f2c46d;
+  --slope-class-4: #e8622f;
+  --slope-class-5: #a8327f;
   --event-mark: 10px;
 
   /* globe (C7a); read by MoonGlobe.tsx via getComputedStyle */
