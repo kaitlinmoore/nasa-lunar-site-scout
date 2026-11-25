@@ -32,7 +32,7 @@ The decision it supports: **where to land and when.** It is built for mission pl
 
 The site list is [`lss/registry/sites.yaml`](lss/registry/sites.yaml) (served at `/api/sites`). It has **23 sites** in three groups (tables in the [glossary](docs/glossary.md#curated-sites)):
 
-- **8 south-pole sites** from the PGDA landing-site maps: Connecting Ridge, Shackleton Rim, Peak near Shackleton, de Gerlache Rim, Nobile Rim, Leibnitz Beta Plateau, Malapert Massif and de Gerlache–Kocher Massif. Their points come from Barker et al. (2021) and Mazarico et al. (2011) ([methodology §1.4](docs/methodology.md#14-curated-sites-c3)).
+- **8 south-pole sites** from the PGDA landing-site maps: Connecting Ridge, Shackleton Rim, Peak near Shackleton, de Gerlache Rim, Nobile Rim, Leibnitz Beta Plateau, Malapert Massif and de Gerlache–Kocher Massif. Their points come from Barker et al. (2021) and Mazarico et al. (2011) ([methodology §1.4](docs/methodology.md#14-curated-sites)).
 - **6 Apollo landing sites:** Apollo 11, 12, 14, 15, 16 and 17, at the position of each Lunar Module's descent stage as located in Lunar Reconnaissance Orbiter camera images (Wagner et al. 2017) ([§1.4.2](docs/methodology.md#142-apollo-landing-sites)).
 - **9 Artemis III candidate regions:** Peak near Cabeus B, Haworth, Malapert Massif, Mons Mouton Plateau, Mons Mouton, Nobile Rim 1, Nobile Rim 2, de Gerlache Rim 2 and Slater Plain, the regions NASA named on 28 October 2024 ([§1.4.3](docs/methodology.md#143-artemis-iii-candidate-regions)). In February 2026 NASA made Artemis III a crewed test flight in Earth orbit and planned the first landing for Artemis IV in 2028; NASA's Artemis IV page still shows the same nine regions. NASA gives no centre for a region. Each point here is the centre of the region's 1 km navigation grid from the U.S. Geological Survey (McClernan 2024): a geometric point, not a landing site. Their names on the globe end in "region", so they stay distinct from the south-pole sites of the same name.
 
@@ -44,9 +44,9 @@ How detailed the terrain behind each result is (its [fidelity label](docs/glossa
 |---|---|---|
 | South-pole sites | the 5 m PGDA site map, then the 80 m and 240 m polar maps | high |
 | Artemis III regions | Malapert Massif, Mons Mouton and Nobile Rim 1: the 5 m site maps (their centres lie on them); the other six: the 80 m and 240 m polar maps | high (3), medium (6) |
-| Apollo sites | the 237 m global LOLA map only ([§3.5](docs/methodology.md#35-global-coarse-layer-c7-horizons-off-the-polar-maps)) | low |
+| Apollo sites | the 237 m global LOLA map only ([§3.5](docs/methodology.md#35-global-coarse-layer-horizons-off-the-polar-maps)) | low |
 
-At the Apollo sites, "relief smaller than a few hundred metres is not in the horizon. The values describe the regional setting, not a particular spot on the ground" ([§6.5](docs/methodology.md#65-served-result-and-regression-fixture)). Their slope statistics are measured on the same 237 m map: "regional slopes, not comparable with the 5 m and 10 m values at the polar sites" ([§5.6.1](docs/methodology.md#561-slope-off-the-polar-maps-the-global-coarse-layer-c7)).
+At the Apollo sites, "relief smaller than a few hundred metres is not in the horizon. The values describe the regional setting, not a particular spot on the ground" ([§6.5](docs/methodology.md#65-served-result-and-regression-fixture)). Their slope statistics are measured on the same 237 m map: "regional slopes, not comparable with the 5 m and 10 m values at the polar sites" ([§5.6.1](docs/methodology.md#561-slope-off-the-polar-maps-the-global-coarse-layer)).
 
 ## How it works
 
@@ -59,7 +59,7 @@ Full detail, with every convention, test and number: [`docs/methodology.md`](doc
 
 ## Validation
 
-From [methodology §6](docs/methodology.md#6-validation-results-step-47). Every tolerance was fixed before its run; a miss is reported as a miss.
+From [methodology §6](docs/methodology.md#6-validation-results). Every tolerance was fixed before its run; a miss is reported as a miss.
 
 | Check | Tolerance | Result | Verdict |
 |---|---|---|---|

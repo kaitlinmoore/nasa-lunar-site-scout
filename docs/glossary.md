@@ -36,7 +36,7 @@ The compass direction of something in the sky, measured clockwise from north: 0�
 horizontal direction points away from the pole, so the requested longitude defines which direction is called
 north. The `sun_azimuth_deg` statistic reports the smallest arc containing the track, and no mean.
 [Methodology §2](methodology.md#2-frames-time-scales-and-topocentric-geometry),
-[§5.3](methodology.md#53-power-f3-powermetrics).
+[§5.3](methodology.md#53-power-powermetrics).
 
 ### Clipped period
 
@@ -131,7 +131,7 @@ use the 80 m and 240 m polar maps (medium) (methodology §1.4.3).
 Connecting Ridge is the ridge connecting the rims of Shackleton and de Gerlache craters. The four south-pole
 points at the Mazarico et al. coordinates lie on slopes of 6.6–8.0° on the 5 m maps, steeper than the RoI points
 (1.1–5.1°), because those coordinates were picked on a 240 m map.
-[Methodology §1.4](methodology.md#14-curated-sites-c3), [§1.4.2](methodology.md#142-apollo-landing-sites),
+[Methodology §1.4](methodology.md#14-curated-sites), [§1.4.2](methodology.md#142-apollo-landing-sites),
 [§1.4.3](methodology.md#143-artemis-iii-candidate-regions), [§1.3](methodology.md#13-the-served-site-site01-at-barker-et-al-2021-roi-4).
 
 ### de Gerlache Rim
@@ -181,7 +181,7 @@ Earth, so the terrain must not block it.
 *Detail:* the tool's communications metrics (`CommsMetrics`, shown under "Comms (direct to Earth)") measure
 when any part, or all, of the Earth disc is above the [terrain horizon](#terrain-horizon), and by how much
 ([Earth clearance](#earth-clearance)).
-[Methodology §5.4](methodology.md#54-communications-f4-commsmetrics).
+[Methodology §5.4](methodology.md#54-communications-commsmetrics).
 
 ### Diviner
 
@@ -206,7 +206,7 @@ How far above (or below) the surrounding terrain the centre of Earth appears, in
 *Detail:* `earth_clearance_deg` = Earth disc centre elevation minus the terrain horizon elevation at the same
 azimuth; positive means the centre is above the terrain. Reported as min, max and time mean over the window.
 The series carries it per sample as `clearance_deg`.
-[Methodology §5.4](methodology.md#54-communications-f4-commsmetrics).
+[Methodology §5.4](methodology.md#54-communications-commsmetrics).
 
 ### Earth gap
 
@@ -223,7 +223,7 @@ between two grid points; one that contains a grid point is found and refined."
 The moment Earth starts to appear above the terrain, and the moment it disappears behind it.
 *Detail:* Earthrise = the first part of the Earth disc coming above the terrain horizon; Earthset = the last
 visible part going below it. Event times are [refined](#refined-event) to 0.5 s.
-[Methodology §5.4](methodology.md#54-communications-f4-commsmetrics),
+[Methodology §5.4](methodology.md#54-communications-commsmetrics),
 [§5.5](methodology.md#55-computation-and-accuracy-lssseries-lssmetrics).
 
 ### Elevation
@@ -282,7 +282,7 @@ near field is coarser than 80 m." Checks of frame and datum: against Wagner et a
 Apollo descent stages, "LDEM_128 minus Wagner is −8.6, −2.1, +0.1, +6.1, +2.0 and −2.5 m"; against the PGDA
 240 m polar map at 12 points from 61° S to 86° S, "mean difference 0.9 m, mean |difference| 2.8 m, maximum
 7.0 m". See [simple cylindrical](#simple-cylindrical).
-[Methodology §3.5](methodology.md#35-global-coarse-layer-c7-horizons-off-the-polar-maps).
+[Methodology §3.5](methodology.md#35-global-coarse-layer-horizons-off-the-polar-maps).
 
 ### Haworth region
 
@@ -303,7 +303,7 @@ The share of the time window during which at least some of the Sun is visible fr
 *Detail:* `illumination_fraction` = sunlit time in the window divided by its length, where sunlit means any
 part of the solar disc above the terrain horizon (`f_sun > 0`). A partly hidden Sun counts as sunlit; how much
 of it is visible is in the [mean visible disc fraction](#mean-visible-disc-fraction).
-[Methodology §5.3](methodology.md#53-power-f3-powermetrics).
+[Methodology §5.3](methodology.md#53-power-powermetrics).
 
 ### LCIP and LCSP
 
@@ -323,7 +323,7 @@ product 69 maps were made from `LDEM_85S_060M`, which is not public; the interna
 PDS LOLA map `LDEM_75S_60M` instead. `LDEM_128` (PDS LOLA, 128 pixels per degree) is the
 [global coarse layer](#global-coarse-layer-low-fidelity) for locations off the polar maps. "MPP" is metres per
 pixel; the `_ADJ` maps are the newer, orbit-adjusted product 90 maps.
-[Methodology §1.2](methodology.md#12-terrain-nasa-gsfc-pgda-lola), [§3.5](methodology.md#35-global-coarse-layer-c7-horizons-off-the-polar-maps),
+[Methodology §1.2](methodology.md#12-terrain-nasa-gsfc-pgda-lola), [§3.5](methodology.md#35-global-coarse-layer-horizons-off-the-polar-maps),
 [§5.6](methodology.md#56-slope-lssterrainslope), [§6.3](methodology.md#63-pgda-product-69-internal-pass-never-served).
 
 ### Leap second
@@ -439,7 +439,7 @@ all the time).
 *Detail:* `mean_visible_disk_fraction` (UI: "Mean visible solar disc") = the time average of
 [`f_sun`](#visible-fraction-f_sun-f_earth) over the window. It is light-weighted (limb-darkened), not a
 geometric area fraction.
-[Methodology §5.3](methodology.md#53-power-f3-powermetrics).
+[Methodology §5.3](methodology.md#53-power-powermetrics).
 
 ### Mons Mouton
 
@@ -548,7 +548,7 @@ The numbers in site names such as "Site04" come from a 2011 ranking of the best-
 map; PGDA product 78 names its 5 m site maps by them, and Barker et al. (2021) use the same numbers. A site's
 subtitle says where its served point comes from: "PGDA Site04 · Barker 2021 RoI 1" is the centroid of that
 Barker region of interest; "PGDA Site06 · Mazarico 2011 rank 6" is the Mazarico et al. coordinate.
-[Methodology §1.4](methodology.md#14-curated-sites-c3).
+[Methodology §1.4](methodology.md#14-curated-sites).
 
 ### Placeholder data
 
@@ -638,7 +638,7 @@ interest, the centroid of the largest [RoI](#roi-region-of-interest); otherwise 
 coordinate, checked for slope on the 5 m map. The centroid is the centre of the 5 m pixel that contains the
 mean of the RoI's pixel centres; this reproduces all seven of Barker's tabulated Site01 centroids. At Site01 the
 served point is not the Mazarico et al. coordinate, which lies on an 8.6° slope on the 5 m map.
-[Methodology §1.4](methodology.md#14-curated-sites-c3), [§1.3](methodology.md#13-the-served-site-site01-at-barker-et-al-2021-roi-4).
+[Methodology §1.4](methodology.md#14-curated-sites), [§1.3](methodology.md#13-the-served-site-site01-at-barker-et-al-2021-roi-4).
 
 ### Shackleton Rim
 
@@ -669,7 +669,7 @@ maps used near the pole.
 circles: "For a lat/lon grid, each sample's latitude is asin(p_z) and its east longitude atan2(p_y, p_x). The
 height is bilinear in (longitude, latitude) between the four surrounding pixel centres." Pixels shrink east-west
 away from the equator: "an east-west pixel is 236.9 m × cos(latitude)".
-[Methodology §3.5](methodology.md#35-global-coarse-layer-c7-horizons-off-the-polar-maps).
+[Methodology §3.5](methodology.md#35-global-coarse-layer-horizons-off-the-polar-maps).
 
 ### Site summary
 
@@ -732,7 +732,7 @@ average gradient over about 470 m", so these are regional slopes, gentler than o
 comparable with them (methodology §5.6.1). The statistics are precomputed; the API serves them only for the
 locations and radii it lists.
 [Methodology §5.6](methodology.md#56-slope-lssterrainslope),
-[§5.6.1](methodology.md#561-slope-off-the-polar-maps-the-global-coarse-layer-c7).
+[§5.6.1](methodology.md#561-slope-off-the-polar-maps-the-global-coarse-layer).
 
 ### SPICE and kernels
 
@@ -748,7 +748,7 @@ are oriented. A kernel is one of those data files.
 The share of the window when the site has some sunlight and can also see Earth at the same time.
 *Detail:* `sun_earth_overlap_fraction` = time in the window with any part of both discs visible, divided by
 the window length.
-[Methodology §5.4](methodology.md#54-communications-f4-commsmetrics).
+[Methodology §5.4](methodology.md#54-communications-commsmetrics).
 
 ### Sun elevation band
 
@@ -762,7 +762,7 @@ Sun's elevation is between 0° and 2° for 15.5% of the 30-day window, and the S
 histogram holds "the seconds spent in each 0.1° bin over the
 window", from the 60 s internal grid with the elevation linear between grid points. In the API it is the compare
 metric `sun_elevation_band_fraction` (`SunElevationBand`; null, not computed, where a result has no histogram).
-[Methodology §5.3](methodology.md#53-power-f3-powermetrics).
+[Methodology §5.3](methodology.md#53-power-powermetrics).
 
 ### Sunrise and sunset
 
@@ -771,7 +771,7 @@ terrain.
 *Detail:* sunrise = the first part of the solar disc coming above the terrain horizon; sunset = the last
 visible part going below it. Measured against the terrain, not the level horizon. Times are
 [refined](#refined-event) to 0.5 s.
-[Methodology §5.3](methodology.md#53-power-f3-powermetrics),
+[Methodology §5.3](methodology.md#53-power-powermetrics),
 [§5.5](methodology.md#55-computation-and-accuracy-lssseries-lssmetrics).
 
 ### TDB and UTC
@@ -812,8 +812,8 @@ How long from the start of the window until the Sun (or Earth) next disappears b
 *Detail:* `time_to_sunset_h` / `time_to_earthset_h` = hours from `window_start` to the first sunset /
 Earthset. When there is none in the window they are null and `sunset_in_window` / `earthset_in_window` is
 false, and the UI says so ("no sunset in this window").
-[Methodology §5.3](methodology.md#53-power-f3-powermetrics),
-[§5.4](methodology.md#54-communications-f4-commsmetrics).
+[Methodology §5.3](methodology.md#53-power-powermetrics),
+[§5.4](methodology.md#54-communications-commsmetrics).
 
 ### Unit height
 
