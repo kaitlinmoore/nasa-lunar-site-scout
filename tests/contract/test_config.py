@@ -30,7 +30,7 @@ def test_default_data_dir(monkeypatch, tmp_path):
     monkeypatch.delenv("LSS_DATA_DIR", raising=False)
     config.get_settings.cache_clear()
     try:
-        assert config.get_settings().data_dir == Path(r"C:\dev\GitHub\lss-data")
+        assert config.get_settings().data_dir == Path(r"C:\dev\data\nasa-lunar-site-scout")
     finally:
         config.get_settings.cache_clear()
 
