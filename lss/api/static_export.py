@@ -53,7 +53,7 @@ from lss.contract import (
     TerrainViewsResponse,
 )
 
-INDEX_NOTE = "Static copy of the API's precomputed results, for when the API is unavailable (plan 4.7)."
+INDEX_NOTE = "Static copy of the API's precomputed results, for when the API is unavailable."
 
 
 class StaticExportError(RuntimeError):
