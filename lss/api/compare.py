@@ -1,9 +1,9 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Filter and rank on POST /api/compare (contract 0.10.0, NL gap C3; Kaitlin's decisions 2026-11-16, recorded
-in reference/logs/c3-design.md). Pure functions over served results: nothing here computes a new physical
+Filter and rank on POST /api/compare (contract 0.10.0; the project author's decisions, 2026-11-16). Pure
+functions over served results: nothing here computes a new physical
 quantity. Values come from the served MetricsResponse, the precomputed slope statistics, or (for
-SunElevationBand) stream A's Sun-elevation histogram in format-3 served files (RA7); null without one.
+SunElevationBand) the Sun-elevation histogram in format-3 served files; null without one.
 
 Rules:
 - `across` expands into one scenario per curated site, in registry order, after the request's `scenarios`;

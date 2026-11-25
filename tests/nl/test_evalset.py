@@ -27,7 +27,7 @@ def test_blockers_are_known_request_ids():
 
 
 def test_filter_rank_items_are_ready():
-    """Contract 0.10.0 (C3, filter and rank on compare) unblocked k6 and k7."""
+    """Contract 0.10.0 (filter and rank on compare) unblocked k6 and k7."""
     by_id = {i.id: i for i in EVAL.items}
     for item_id in ("k6", "k7"):
         assert by_id[item_id].status == ItemStatus.ready and by_id[item_id].blocked_reasons == []
@@ -35,7 +35,7 @@ def test_filter_rank_items_are_ready():
 
 
 def test_no_item_is_blocked():
-    """Contract 0.7.0, the registry batch (03d24f4) and contract 0.10.0 (C3) unblocked every item."""
+    """Contract 0.7.0, the registry batch (03d24f4) and contract 0.10.0 unblocked every item."""
     assert [i.id for i in EVAL.items if i.status == ItemStatus.blocked] == []
 
 

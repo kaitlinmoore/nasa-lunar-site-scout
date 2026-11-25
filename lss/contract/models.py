@@ -1,8 +1,8 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Contract v0: pydantic models for every request and response in plan section 4.3.
+Contract v0: pydantic models for every request and response of the API.
 
-Conventions (fixed here so every stream agrees):
+Conventions (fixed here so the engine, the API, the web client and the NL layer agree):
 - Coordinates are planetocentric degrees in the MOON_ME frame (DE421).
   Latitude is -90..90; longitude is east-positive, -180..180.
 - Times are timezone-aware UTC (ISO 8601 with "Z" or an offset).
@@ -12,7 +12,7 @@ Conventions (fixed here so every stream agrees):
 - Metric values are nullable: null means "not computed" (or not computable
   with the data available), never zero.
 
-Only the contract owner edits this file (plan section 10.3). Prefer additive changes.
+Only the contract owner edits this file. Prefer additive changes.
 """
 
 from __future__ import annotations
@@ -74,7 +74,7 @@ class Location(Model):
 
 
 class Scenario(Model):
-    """The unit of everything (plan section 3.1): results are keyed by `Scenario.key()`."""
+    """The unit of everything: results are keyed by `Scenario.key()`."""
 
     location: Location
     unit_height_m: float = Field(gt=0.0, description="Observer height above the DEM surface, m")
@@ -117,12 +117,13 @@ class Site(Model):
     name: str = Field(description="Full technical name, e.g. 'Site01 Connecting ridge (Barker 2021 RoI 4)'")
     short_name: str | None = Field(
         default=None,
-        description="Short display name in title case, e.g. 'Connecting Ridge' (contract 0.9.0; Kaitlin, "
-        "2026-11-16). Null: show name",
+        description="Short display name in title case, e.g. 'Connecting Ridge' (contract 0.9.0; the "
+        "project author, 2026-11-16). Null: show name",
     )
     regions: list[str] = Field(
         default_factory=list,
-        description="Region tags, e.g. 'shackleton' (contract 0.10.0; stream A's registry, Kaitlin approves)",
+        description="Region tags, e.g. 'shackleton' (contract 0.10.0; set in the site registry, approved by "
+        "the project author)",
     )
     subtitle: str | None = Field(
         default=None, description="Small line under the display name, e.g. 'PGDA Site01 · Barker 2021 RoI 4'"
@@ -156,7 +157,8 @@ class ScenarioEntry(Model):
 
 
 class ScenariosResponse(Response):
-    """Every precomputed scenario this API version serves (stream B's site page picker, Kaitlin's option b):
+    """Every precomputed scenario this API version serves (for the site page's scenario picker; the project
+    author's choice):
     by site in the site list's order, then by unit height, window start, window end, step."""
 
     scenarios: list[ScenarioEntry]
@@ -242,14 +244,14 @@ class LocateResponse(Response):
 
 class TerrainViewLayer(StrEnum):
     """Layers of the 2D site view's terrain images (GET /api/terrain/view/{site_id}/{view}/{layer}.png).
-    Only hillshade and slope are precomputed (Kaitlin, 2026-11-16); elevation is reserved."""
+    Only hillshade and slope are precomputed (the project author, 2026-11-16); elevation is reserved."""
 
     hillshade = "hillshade"
     slope = "slope"
     elevation = "elevation"
 
 
-# ---- terrain images for the 2D site view (contract 0.13.0; A's cache/terrain_view/, methodology 5.7) ----
+# ---- terrain images for the 2D site view (contract 0.13.0; cache/terrain_view/, methodology 5.7) ----
 
 
 class TerrainViewSource(Model):
@@ -274,8 +276,8 @@ class TerrainViewSlope(Model):
     )
     class_labels: list[str] = Field(description="One label per class value 0..n (PNG pixel value = class)")
     nodata: int = Field(description="PNG pixel value with no slope (show transparent)")
-    palette_light: list[str] = Field(description="Suggested colour per class, light theme (stream A)")
-    palette_dark: list[str] = Field(description="Suggested colour per class, dark theme (stream A)")
+    palette_light: list[str] = Field(description="Suggested colour per class, light theme")
+    palette_dark: list[str] = Field(description="Suggested colour per class, dark theme")
 
 
 class TerrainView(Model):
@@ -459,7 +461,7 @@ class Stat(Model):
 
 
 class PowerMetrics(Model):
-    """F3. Nullable: null = not computed. Exact definitions: docs/methodology.md section 5.
+    """Power metrics. Nullable: null = not computed. Exact definitions: docs/methodology.md section 5.
 
     Sunlit = any part of the solar disc above the terrain horizon; shadow = no part of it above. Sunlit and
     shadow periods tile the window. Periods that start before window_start or run past window_end are
@@ -540,7 +542,7 @@ class PowerMetrics(Model):
 
 
 class CommsMetrics(Model):
-    """F4 (direct-to-Earth at the unit height). Nullable: null = not computed. See methodology section 5.
+    """Direct-to-Earth comms at the unit height. Nullable: null = not computed. See methodology section 5.
 
     Earth visible = any part of the Earth disc above the terrain horizon; a gap = no part of it above.
     Gaps that start before window_start or run past window_end are clipped to the window.
@@ -610,7 +612,7 @@ class MetricsResponse(Response):
     fidelity: FidelityLabel | None = None
 
 
-# ---- filter and rank on compare (contract 0.10.0, NL gap C3; Kaitlin's decisions 2026-11-16) ----
+# ---- filter and rank on compare (contract 0.10.0; the project author's decisions, 2026-11-16) ----
 
 
 class MetricName(StrEnum):
@@ -642,9 +644,9 @@ class MetricName(StrEnum):
 
 
 class SunElevationBand(Model):
-    """Fraction of the window with the Sun's disc-centre apparent elevation in [min_deg, max_deg] (k7). The
+    """Fraction of the window with the Sun's disc-centre apparent elevation in [min_deg, max_deg]. The
     elevation is above the local horizontal plane at the site, whether or not terrain hides the Sun (the
-    terrain horizon is not applied), as for PowerMetrics.sun_elevation_deg. From stream A's Sun-elevation
+    terrain horizon is not applied), as for PowerMetrics.sun_elevation_deg. From the Sun-elevation
     histogram in the served files (methodology 5.3); null (not computed) where a result has none."""
 
     kind: Literal["sun_elevation_band_fraction"] = "sun_elevation_band_fraction"
@@ -696,8 +698,8 @@ class CompareRank(Model):
 
 
 class CompareAcross(Model):
-    """One scenario per curated site, expanded by the API (Kaitlin's C8 choice): the sites named, the sites
-    tagged with `region`, or every curated site if neither is given."""
+    """One scenario per curated site, expanded by the API (the project author's choice): the sites named, the
+    sites tagged with `region`, or every curated site if neither is given."""
 
     site_ids: list[str] = Field(default_factory=list)
     region: str | None = Field(default=None, description="A Site.regions tag, e.g. 'shackleton'")
@@ -792,7 +794,7 @@ class CompareResponse(Response):
     beyond_limit: int = Field(default=0, ge=0, description="Passing scenarios cut by rank.limit")
     compared_keys: list[str] = Field(
         default_factory=list,
-        description="Scenario.key() of each entry of `compared`, same order (contract 0.13.0; stream B)",
+        description="Scenario.key() of each entry of `compared`, same order (contract 0.13.0)",
     )
 
 
@@ -833,7 +835,7 @@ class FeatureDistance(Model):
     distance_m: float = Field(description="Straight-line surface distance, m (not a drive route)")
 
 
-# The most features a proximity result lists (Kaitlin, 2026-11-15); `total` says how many there are.
+# The most features a proximity result lists (the project author, 2026-11-15); `total` gives the count.
 PROXIMITY_MAX_RESULTS = 10
 
 
@@ -932,7 +934,7 @@ class FeaturesQuery(Model):
     types: list[FeatureType] = Field(default_factory=list, description="Empty = every type")
 
 
-# ---- IAU feature names for globe labels (contract 0.14.0; stream E's cache/features/iau_names.json) ----
+# ---- IAU feature names for globe labels (contract 0.14.0; cache/features/iau_names.json) ----
 
 FEATURE_LABEL_FIELDS = ("id", "name", "type", "lat", "lon", "diameter_km")
 SATELLITE_TYPE = "SF"  # IAU "Satellite Feature": lettered craters such as "Marco Polo P"
@@ -1005,7 +1007,8 @@ class CapArea(Model):
 
 
 class AllArea(Model):
-    """Wherever the terrain data covers (Kaitlin, 2026-11-15); the result states the coverage used."""
+    """Wherever the terrain data covers (the project author, 2026-11-15); the result states the coverage
+    used."""
 
     kind: Literal["all"] = "all"
 
@@ -1014,12 +1017,12 @@ Area = Annotated[PointsArea | MaskArea | CircleArea | CapArea | AllArea, Field(d
 
 
 class SearchCriteria(Model):
-    """Terrain-only in v0; time-dependent criteria are added later (plan section 3.3)."""
+    """Terrain-only in v0; time-dependent criteria may be added later."""
 
     max_slope_deg: float | None = Field(
         default=None,
         gt=0.0,
-        description="Strict bound: candidates have slope < max_slope_deg (Kaitlin, 2026-11-15)",
+        description="Strict bound: candidates have slope < max_slope_deg (the project author, 2026-11-15)",
     )
     min_flat_area_m2: float | None = Field(default=None, gt=0.0)
     near_feature_types: list[FeatureType] = Field(default_factory=list)
@@ -1065,7 +1068,7 @@ class Job(Response):
     error: str | None = None
 
 
-# ---------------------------------------------------------------------- NL (F11)
+# ---------------------------------------------------------------------- natural language (NL)
 
 
 # Longest NL question accepted (contract 0.8.0): bounds the cost of one request.
@@ -1137,7 +1140,7 @@ NLResponse = NLAnswer | NLUnsupported | NLClarification
 
 
 # ------------------------------------------------------------------- error bodies
-# The API serves precomputed results only (plan section 4.6). These are the bodies of its error responses
+# The API serves precomputed results only. These are the bodies of its error responses
 # (contract 0.6.0), in FastAPI's `{"detail": ...}` shape. They are not `Response`s: no contract_version or
 # placeholder flag.
 
@@ -1278,7 +1281,7 @@ class TerrainUnprocessableError(RootModel[TerrainNotServedError | InvalidRequest
 
 
 # ------------------------------------------------------------- static fallback
-# Plan section 4.7 (Kaitlin, 2026-11-15): the served results are also published as static files on the web
+# The project author, 2026-11-15: the served results are also published as static files on the web
 # host, for when the API is down. Paths are relative to the directory holding index.json.
 
 
@@ -1301,7 +1304,7 @@ class StaticTerrainEntry(Model):
 
 
 class StaticNLEntry(Model):
-    """A cached showcase answer (C8): the request it answers and the path of its NL response file."""
+    """A cached showcase answer: the request it answers and the path of its NL response file."""
 
     request: NLRequest
     path: str = Field(description="Path of the NLAnswer / NLUnsupported / NLClarification file")

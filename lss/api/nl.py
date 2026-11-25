@@ -1,18 +1,18 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-POST /api/nl (step C7b, plan section 4.5): a question in; the echo plus an answer, or "can't answer,
+POST /api/nl: a question in; the echo plus an answer, or "can't answer,
 because…", out.
 
 Flow per request:
-1. A cached showcase answer for exactly this question and selection is returned as is (plan section 4.6;
-   which questions are showcased is the project author's C8 decision). Cached answers cost nothing and are
+1. A cached showcase answer for exactly this question and selection is returned as is (which
+   questions are showcased is the project author's decision). Cached answers cost nothing and are
    not rate limited.
 2. Live questions are limited per client IP (5 per minute, 30 per UTC day) and by a daily spend cap
    ($2, estimated from token counts at list prices); the project author's values, 2026-11-16. Both are
    kept in memory, per API instance, and reset when an instance restarts: soft limits. The hard limit is
    the Anthropic Console's monthly limit on the demo key.
-3. `lss.nl.interpret` (route, then fill) with the refusal fallback on (her decision for the demo), then
-   `lss.nl.validate`. The LLM never computes numbers.
+3. `lss.nl.interpret` (route, then fill) with the refusal fallback on (the project author's decision for the
+   demo), then `lss.nl.validate`. The LLM never computes numbers.
 4. The structured query runs against the API's own precomputed results (the same functions as the
    endpoints). An operation the engine can't serve yet, or a scenario with no precomputed result, becomes
    a limitation on the answer; the echo and assumptions are still shown.
@@ -69,8 +69,8 @@ EFFORT = os.environ.get("LSS_NL_EFFORT", "low")
 RATE_LIMITED_REASON = "Too many questions from this connection. Please wait a little and try again."
 PAUSED_REASON = "Live questions are paused until tomorrow (UTC): the demo's daily limit has been reached."
 NL_UNAVAILABLE_REASON = "Live questions are temporarily unavailable. Please try again later."
-# Appended only when cached example answers exist (C8), so the text never promises examples that aren't
-# there (stream B, 2026-11-16). The short forms above: Claude-drafted, approved by the project author.
+# Appended only when cached example answers exist, so the text never promises examples that aren't there
+# (2026-11-16). The short forms above: Claude-drafted, approved by the project author.
 EXAMPLES_STILL_WORK = " The example questions still work."
 NOT_UNDERSTOOD_REASON = (
     "The question couldn't be turned into a query this tool supports. Try rephrasing it, or ask about one "
@@ -79,7 +79,7 @@ NOT_UNDERSTOOD_REASON = (
 NOT_AVAILABLE_YET = {
     Operation.proximity: "Distances to nearby features are not available in this version yet.",
     Operation.search: "Area search is not available in this version yet.",
-    # Served since contract 0.9.0 (stream A's RA4); kept for an API without terrain data installed.
+    # Served since contract 0.9.0; kept for an API without terrain data installed.
     Operation.terrain: "Slope statistics are not available in this version yet.",
     Operation.site_summary: "Site summaries are not available in this version yet.",
 }
@@ -178,7 +178,7 @@ class CachedAnswer:
 
 
 def load_cache_entries(directory: Path) -> dict[tuple, CachedAnswer]:
-    """Cached showcase answers (C8), one JSON file each: `{"format": 1, "request": NLRequest, "response":
+    """Cached showcase answers, one JSON file each: `{"format": 1, "request": NLRequest, "response":
     NLResponse, "provenance": {...}}` (written by `python -m lss.api.nl_cache`). The same version rules as
     served files: current or compatible contract version (re-stamped), no placeholder, no duplicate
     request."""
@@ -212,7 +212,7 @@ def load_cache_entries(directory: Path) -> dict[tuple, CachedAnswer]:
 def _upgrade_result(resp: NLAnswer, result: dict[str, Any]) -> dict[str, Any]:
     """Bring a cached result made under an older compatible contract up to the current shape: a compare answer
     from before 0.13.0 gets `compared_keys` (Scenario.key() of each `compared` entry, same order), which the
-    web matches columns by (stream B's G3 walkthrough, 2026-11-16)."""
+    web matches columns by (found in a walkthrough of the web client, 2026-11-16)."""
     from lss.contract import Operation, Scenario
 
     if (
@@ -240,7 +240,7 @@ class NLService:
     meter: SpendMeter = field(default_factory=lambda: SpendMeter(DAILY_SPEND_USD))
     cache: Mapping[tuple, NLResult] = field(default_factory=dict)
     # Reasons that refer to "the list with this message" -> their list-free versions: an NL answer lists
-    # nothing (stream B, 2026-11-16).
+    # nothing (2026-11-16).
     list_free_reasons: Mapping[str, str] = field(default_factory=dict)
     today: Callable[[], date] = field(default=lambda: datetime.now(UTC).date())
     _provider: Provider | None = None

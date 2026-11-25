@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Core NL vocabulary (step 4.2, decided by the project author 2026-11-15: "Option B").
+Core NL vocabulary (decided by the project author 2026-11-15).
 
 The LLM may emit a structured query for these operations only. Each maps to the
 contract request model its `params` must validate against. Everything else is
@@ -14,13 +14,13 @@ scenario, the lander proxy (5 m); with no dates and no selected scenario, a 30-d
 starting at the request's date (00:00 UTC). Both are disclosed in the answer.
 
 Defaults for vague terms (project author's decisions, 2026-11-15): "safe" with no slope limit
-means slope under 5 degrees (D-safe), and the echo names the terrain data the slope is measured
-on; "nearby" with no distance means within 10 km (D-radius), stated in the echo. Slope "at and
-around" a site with no distance means within 1 km (D-around, 2026-11-15). All are disclosed by code,
+means slope under 5 degrees, and the echo names the terrain data the slope is measured
+on; "nearby" with no distance means within 10 km, stated in the echo. Slope "at and
+around" a site with no distance means within 1 km (2026-11-15). All are disclosed by code,
 not by the model.
 
-Contract 0.7.0 added `terrain` (slope at and around a point) and `site_summary` (metrics, slope and
-nearby features at one site; the project author's choice for her query #1) to the vocabulary.
+Contract 0.7.0 added `terrain` (slope at and around a point) and `site_summary` (metrics, slope and nearby
+features at one site; the project author's choice for their first example query) to the vocabulary.
 """
 
 from __future__ import annotations
@@ -96,16 +96,16 @@ class WindowSource(StrEnum):
 
     user = "user"  # the user gave dates
     selected_scenario = "selected_scenario"  # taken from the scenario selected in the UI
-    default = "default"  # no dates: DEFAULT_WINDOW from the request's date (D-window)
-    ranking_default = "ranking_default"  # a ranking with no dates: the precomputed year (Kaitlin's C5 choice)
+    default = "default"  # no dates: DEFAULT_WINDOW from the request's date
+    ranking_default = "ranking_default"  # a ranking with no dates: the precomputed year
     not_applicable = "not_applicable"  # the operation has no window
 
 
 DEFAULT_WINDOW = timedelta(days=30)
 
 
-# Ranking questions with no dates use the precomputed year (Kaitlin, 2026-11-16, C3 design option C5):
-# exactly stream A's served 2028 window and step. Single-site questions keep DEFAULT_WINDOW (D-window).
+# Ranking questions with no dates use the precomputed year (the project author, 2026-11-16): exactly the
+# served 2028 window and step. Single-site questions keep DEFAULT_WINDOW.
 RANKING_WINDOW = (datetime(2028, 1, 1, tzinfo=UTC), datetime(2029, 1, 1, tzinfo=UTC), timedelta(hours=6))
 # Claude-drafted, approved by the project author (2026-11-16).
 RANKING_WINDOW_TEXT = (
@@ -133,7 +133,8 @@ def step_text(step: timedelta) -> str:
     return f"every {secs} s"
 
 
-# Disclosures when a selected scenario's values were used (filled in by code, B's G2 recheck 2026-11-16).
+# Disclosures when a selected scenario's values were used (filled in by code; found in a recheck of the NL
+# layer, 2026-11-16).
 # Claude-drafted, approved by the project author (2026-11-16).
 def selected_height_text(height_m: float) -> str:
     return f"Height {height_m:g} m: from the selected scenario."
@@ -143,7 +144,7 @@ def selected_window_text(start: datetime, end: datetime, step: timedelta) -> str
     return f"Window: {_when(start)} – {_when(end)} UTC, {step_text(step)}, from the selected scenario."
 
 
-# Disclosure for a Sun elevation band in a compare filter or rank (Fable G2 review m5, 2026-11-16).
+# Disclosure for a Sun elevation band in a compare filter or rank (second correctness review, 2026-11-16).
 # Claude-drafted, approved by the project author (2026-11-16).
 SUN_BAND_TEXT = (
     "Sun elevation: measured above the local horizontal at each site, whether or not terrain hides the Sun."
@@ -155,7 +156,7 @@ def default_window_text(start_iso_date: str) -> str:
 
 
 class SiteSource(StrEnum):
-    """Where a structured query's site came from (nl-output-6, after stream B's NL box testing)."""
+    """Where a structured query's site came from (nl-output-6, after testing the web client's NL box)."""
 
     user = "user"  # the user named the site (or gave coordinates)
     selected_site = "selected_site"  # the question named no site; the site selected in the UI was used
@@ -205,11 +206,11 @@ RADIUS_DEFAULTS: dict[RadiusSource, tuple[float, str]] = {
 
 
 def safe_slope_text(terrain: str) -> str:
-    """The D-safe disclosure. `terrain` names the terrain data the slope is measured on (from the
-    engine's result); the project author's rule is that the echo always states it.
+    """The disclosure for "safe" with no slope limit. `terrain` names the terrain data the slope is measured
+    on (from the engine's result); the project author's rule is that the echo always states it.
 
     "under 5°" matches the contract: `SearchCriteria.max_slope_deg` is a strict bound (slope < limit;
-    the project author's decision, 2026-11-15, contract note C9).
+    the project author's decision, 2026-11-15).
     """
     return f"Safe: slope under 5°, measured on {terrain} (default; no slope limit was given)."
 

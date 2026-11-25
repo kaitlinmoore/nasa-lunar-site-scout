@@ -8,8 +8,8 @@ and the natural-language layer can build against the contract before the engine 
 They are NOT computed results and must never be presented as such.
 
 Scope (the first served scenario): one PGDA site (Site01, Connecting Ridge), one unit
-height (1 m, chosen by Kaitlin to match Barker et al. 2021), one window (30 days from
-2028-05-15 UTC, covering one full 29.53-day synodic month; chosen by Kaitlin so the window has
+height (1 m, chosen by the project author to match Barker et al. 2021), one window (30 days from
+2028-05-15 UTC, covering one full 29.53-day synodic month; chosen by the project author so the window has
 shadow periods: from mid-July to mid-January every 30-day window is fully sunlit at RoI 4).
 
 The served Site01 point is the centroid of region of interest (RoI) 4 of Barker et al. (2021, Table 2),
@@ -77,10 +77,10 @@ SITE01_SOURCE = (
 
 # Barker et al. (2021) Table 2, RoI 4 centroid (PS -11287.5, -12167.5 m), converted on the 1737.4 km sphere.
 SITE01 = Location(lat=-89.452675, lon=-137.148653, name=SITE01_NAME)
-# The C1 thin-slice scenario. Exactly this scenario is precomputed and served by the deployed endpoint, which
-# matches requests on SCENARIO.key() (location without name, height, window and step). Window: Kaitlin,
-# 2026-11-15 (was 2028-11-15, which is fully sunlit at RoI 4). Step: 1 h, the plan's default sampling
-# (plan section 4.2; events are refined between samples).
+# The first served scenario. Exactly this scenario is precomputed and served by the deployed endpoint, which
+# matches requests on SCENARIO.key() (location without name, height, window and step). Window: the project
+# author, 2026-11-15 (was 2028-11-15, which is fully sunlit at RoI 4). Step: 1 h, the default sampling (events
+# are refined between samples).
 WINDOW_START = datetime(2028, 5, 15, tzinfo=UTC)
 WINDOW_END = WINDOW_START + timedelta(days=30)
 STEP = timedelta(hours=1)
@@ -113,7 +113,7 @@ def health() -> HealthResponse:
 
 
 def sites() -> SitesResponse:
-    """The curated sites from stream A's registry (lss/registry/sites.yaml): real content, not placeholder."""
+    """The curated sites from the site registry (lss/registry/sites.yaml): real content, not placeholder."""
     from lss.registry.sites import load_sites
 
     return SitesResponse(

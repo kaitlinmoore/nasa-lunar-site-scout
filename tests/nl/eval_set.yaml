@@ -1,14 +1,14 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 #
-# NL eval set (plan section 4.5; step 4.4). Loaded and validated by lss.nl.evalset.
+# NL eval set. Loaded and validated by lss.nl.evalset.
 #
 # Provenance (SI rule):
-#   source: kaitlin      -> the project author's example queries (scoping notes, Round 2 #14), verbatim,
-#                           with her expected outcomes (plan section 4.5, labels she edited).
+#   source: kaitlin      -> the project author's example queries, verbatim, with the project author's
+#                           expected outcomes (labels the project author edited).
 #   source: si_supplied  -> Claude-drafted queries the project author approved (s1-s16, 2026-11-15).
 #
 # Fields:
-#   target         the plan section 4.5 label (the outcome once every needed feature exists)
+#   target         the target label (the outcome once every needed feature exists)
 #   status         ready: scored now. blocked: listed with what it waits for; run but not scored.
 #   split          dev (default): used for prompt tuning. holdout: never used for tuning; scored
 #                  separately (project author, 2026-11-15). Prompt changes must be general rules,
@@ -16,12 +16,12 @@
 #                  run 2, whose outputs had been seen; clean from run 3 on) and s11 (never run;
 #                  replaced s13 on 2026-11-15 because s13's label changed after its output was seen).
 #                  s11 became ready when the registry batch merged (03d24f4).
-#   blocked_on     request ids from reference/logs/nl-progress.md:
-#                    C*    blocked on contract (C1, C2, C4-C6, C8, C9 added in contract 0.7.0; C3 in 0.10.0;
-#                          open: C7)
-#                    G-R*  blocked on registry (G-R1..G-R4 merged as 03d24f4; none open)
-#                    D-*   blocked on a default the project author hasn't decided yet (none open:
-#                          D-height, D-window, D-safe and D-radius were all decided 2026-11-15)
+#   blocked_on     ids of what an item waits for, by prefix (lss.nl.evalset.BLOCKER_KINDS):
+#                    C*    a contract change (none open: added in contracts 0.7.0 and 0.10.0; a thermal
+#                          operation is not planned, so the temperature item is labelled unsupported)
+#                    G-R*  a registry change (none open: merged as 03d24f4)
+#                    D-*   a default the project author hasn't decided yet (none open: the default height,
+#                          window, "safe" slope and "nearby" radius were all decided 2026-11-15)
 #   expected       what a correct NL output is under the current contract + vocabulary:
 #     outcome      answer | partial | unsupported | clarify (asks the user, e.g. for a site)
 #     query        {operation, params}; locations may be {site_id: ...}
@@ -46,9 +46,9 @@ items:
     target: "Answer: site summary (metrics + nearby features)."
     status: ready
     notes: >-
-      site_summary (contract 0.7.0, the project author's choice for C1). "Surrounding" with no distance is
-      the "nearby" default (10 km); the metrics part uses the default height and window (no scenario
-      selected), all disclosed by code.
+      site_summary (contract 0.7.0, the project author's choice for this query). "Surrounding" with no
+      distance is the "nearby" default (10 km); the metrics part uses the default height and window (no
+      scenario selected), all disclosed by code.
     expected:
       outcome: answer
       height_source: default
@@ -72,7 +72,7 @@ items:
     context: {}
     target: "Asks for a site, since none is selected (the second half of label #1)."
     status: ready
-    notes: Same query as k1 with no site selected; the label covers both cases (NLClarification, C6).
+    notes: Same query as k1 with no site selected; the label covers both cases (NLClarification).
     expected:
       outcome: clarify
 
@@ -82,7 +82,7 @@ items:
     context: {selected_site_id: pgda-site01}
     target: "Answer: slope at and around the site."
     status: ready
-    notes: terrain (C2). No distance given, so "around" is the 1 km default (D-around), disclosed by code.
+    notes: terrain. No distance given, so "around" is the 1 km default, disclosed by code.
     expected:
       outcome: answer
       radius_source: around_default
@@ -102,9 +102,9 @@ items:
       cover the pole.
     status: ready
     notes: >-
-      site_summary (C1) restricted to hazard features, so the answer has slopes and craters together (the
-      project author's C1 choice covers #3 as a partial). "Nearby" with no distance is 10 km (D-radius),
-      disclosed by code; features closest first, at most 10, with the total (C9).
+      site_summary restricted to hazard features, so the answer has slopes and craters together (the
+      project author's site_summary choice covers this query as a partial). "Nearby" with no distance is
+      10 km, disclosed by code; features closest first, at most 10, with the total.
     expected:
       outcome: partial
       radius_source: nearby_default
@@ -132,7 +132,7 @@ items:
       ~90% of 5 m pixels are interpolated (Barker). Elsewhere, 100 m2 is smaller than one pixel and the
       tool says so.
     status: ready
-    notes: A polar cap area (C5); the pixel-size and interpolation limits are the merged G-R2 wording.
+    notes: A polar cap area; the pixel-size and interpolation limits are the registry's merged wording.
     expected:
       outcome: partial
       slope_source: user
@@ -176,10 +176,11 @@ items:
       search isn't available yet. Echo how "safe" was interpreted (slope limit).
     status: ready
     notes: >-
-      C3 (contract 0.10.0) with the project author's design choices (2026-11-16): "continuous sunlight for at
-      least 10 days starting 15 Nov" = no shadow in 2028-11-15 + 10 days; the Shackleton region is a site
-      region tag; "safe" = slope at the site's point < 5 degrees (D-safe), the echo naming the map. No height
-      given: the 5 m lander proxy (D-height). Curated sites only (area search not available).
+      Filter and rank on compare (contract 0.10.0) with the project author's design choices (2026-11-16):
+      "continuous sunlight for at least 10 days starting 15 Nov" = no shadow in 2028-11-15 + 10 days; the
+      Shackleton region is a site region tag; "safe" = slope at the site's point < 5 degrees (the "safe"
+      default), the echo naming the map. No height given: the 5 m lander proxy (the default height). Curated
+      sites only (area search not available).
     expected:
       outcome: partial
       height_source: default
@@ -210,9 +211,10 @@ items:
       along the approach trajectory.
     status: ready
     notes: >-
-      C3 (contract 0.10.0) with the project author's design choices (2026-11-16): a ranking with no dates uses
-      the precomputed 2028 year (disclosed); rank by the fraction of time with the Sun at 10-25 degrees, after
-      dropping sites with none; top five; all curated sites; 5 m lander proxy (D-height).
+      Filter and rank on compare (contract 0.10.0) with the project author's design choices (2026-11-16): a
+      ranking with no dates uses the precomputed 2028 year (disclosed); rank by the fraction of time with the
+      Sun at 10-25 degrees, after dropping sites with none; top five; all curated sites; 5 m lander proxy (the
+      default height).
     expected:
       outcome: partial
       height_source: default
@@ -249,9 +251,9 @@ items:
       thermal model).
     status: ready
     notes: >-
-      Unsupported (not partial) until a thermal operation exists (C7, with S5): the Core vocabulary has no
-      temperature query. The Diviner range citation uses the registry wording Kaitlin approved (G-R1).
-      Either it or the tool's temperature limit (G-R4) is accepted (Kaitlin, 2026-11-16, after live run 4).
+      Unsupported (not partial) until a thermal operation exists: the Core vocabulary has no temperature
+      query. The Diviner range citation uses the registry wording the project author approved. Either it or
+      the tool's temperature limit is accepted (the project author, 2026-11-16, after live run 4).
     expected:
       outcome: unsupported
       citations:
@@ -274,10 +276,10 @@ items:
       for 1 km, and offer M3 surface-ice detections (~280 m) as a clearly labeled stand-in.
     status: ready
     notes: >-
-      D-safe resolved 2026-11-15 (slope under 5 degrees; the echo names the terrain data). The 1 km is
-      the user's own distance, so radius_source is user, not the "nearby" default. No region named, so
-      the area is "all" (the project author's C5 choice). Hydrogen and drive-route limits: merged G-R3 /
-      G-R4 wording.
+      The "safe" default was decided 2026-11-15 (slope under 5 degrees; the echo names the terrain data). The
+      1 km is the user's own distance, so radius_source is user, not the "nearby" default. No region named, so
+      the area is "all" (the project author's choice). Hydrogen and drive-route limits: the registry's merged
+      wording.
     expected:
       outcome: partial
       slope_source: safe_default
@@ -299,7 +301,7 @@ items:
           cannot_answer: Subsurface hydrogen at km scale (neutron data are far coarser)
 
   # ---- SI-supplied items: drafted by Claude, approved by the project author 2026-11-15
-  #      (reference/logs/nl-eval-candidates.md, s1-s15, plus s16 for the defaults).
+  #      (s1-s15, plus s16 for the defaults).
   #      Date convention (project author, 2026-11-15): a named end date includes that day,
   #      so the window ends at 00:00 UTC the next day; "during <month>" is the whole month.
 
@@ -464,7 +466,7 @@ items:
     target: "Partial: terrain-only search around a site."
     status: ready
     notes: >-
-      A circle area around the site (C5). The partial's citation (the 5 m interpolation limit, as in k4)
+      A circle area around the site. The partial's citation (the 5 m interpolation limit, as in k4)
       is Claude-drafted, approved by the project author (2026-11-16).
     expected:
       outcome: partial

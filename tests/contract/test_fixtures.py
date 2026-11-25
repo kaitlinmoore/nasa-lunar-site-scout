@@ -70,8 +70,9 @@ def test_scenario_rejects_bad_window():
         )
 
 
-# The C1 served scenario (precomputed; the endpoint matches requests on its key). Stream B sends exactly
-# this scenario, so changing it is a cross-stream change: update the precomputed result and tell B.
+# The first served scenario (precomputed; the endpoint matches requests on its key). The web client sends
+# exactly this scenario, so changing it changes the web client too, and the precomputed result must be
+# updated.
 C1_SCENARIO_KEY = "00010cfa5fef681c"
 
 
@@ -109,7 +110,7 @@ def test_c1_key_matches_a_browser_request_and_depends_on_every_field():
 
 
 def test_every_metric_field_has_a_description():
-    # Stream B shows these as on-screen definitions (read at build time from fixtures/openapi.json).
+    # The web client shows these as on-screen definitions (read at build time from fixtures/openapi.json).
     from lss.contract import CommsMetrics, PowerMetrics
     from lss.contract.models import BodyTrack
 
@@ -119,7 +120,8 @@ def test_every_metric_field_has_a_description():
 
 
 def test_horizon_and_tracks_state_the_same_frame():
-    # Stream B overlays the Sun/Earth tracks on the horizon profile: the alignment is stated, not assumed.
+    # The web client overlays the Sun/Earth tracks on the horizon profile: the alignment is stated, not
+    # assumed.
     from lss.contract.models import AZIMUTH_CONVENTION, ELEVATION_CONVENTION, BodyTrack, HorizonProfile
 
     for model in (BodyTrack, HorizonProfile):

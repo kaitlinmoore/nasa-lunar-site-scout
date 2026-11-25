@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Loader for the NL eval set (`tests/nl/eval_set.yaml`, step 4.4).
+Loader for the NL eval set (`tests/nl/eval_set.yaml`).
 """
 
 from __future__ import annotations
@@ -20,8 +20,8 @@ from lss.nl.vocabulary import HeightSource, RadiusSource, SiteSource, SlopeSourc
 
 EVAL_SET_PATH = REPO_ROOT / "tests" / "nl" / "eval_set.yaml"
 
-# `blocked_on` id prefix -> label. Contract gaps are held until Phase 2 (this stream owns the
-# contract then); registry requests go to stream A as one batch after its C1 work merges.
+# `blocked_on` id prefix -> label: a contract gap, a registry change, or a default awaiting the project
+# author's decision.
 BLOCKER_KINDS: tuple[tuple[str, str], ...] = (
     ("C", "blocked on contract"),
     ("G-R", "blocked on registry"),

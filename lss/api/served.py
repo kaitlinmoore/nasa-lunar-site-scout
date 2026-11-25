@@ -1,20 +1,21 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Precomputed results (plan section 4.6: cached results are allowed).
+Precomputed results: the API serves only results computed ahead of time.
 
-Stream A's precompute scripts write one file per served scenario to `LSS_DATA_DIR/cache/served/`; this
-module loads them, keyed by `Scenario.key()` (location, unit height, window and step all count). Nothing
-here touches DEMs or SPICE kernels, so the deployed API needs only these files.
+The precompute scripts (scripts/precompute_c1.py, scripts/precompute_c3.py) write one file per served scenario
+to `LSS_DATA_DIR/cache/served/`; this module loads them, keyed by `Scenario.key()` (location, unit height,
+window and step all count). Nothing here touches DEMs or SPICE kernels, so the deployed API needs only these
+files.
 
-File format (JSON object; owned here, written by stream A):
+File format (JSON object; owned here, written by the precompute scripts):
 - `format`: 1 or 2; `scenario_key`; `provenance` (free-form, not served);
 - `metrics`: a MetricsResponse body; `series`: a SeriesResponse body;
 - format 2 adds `horizon`: the HorizonProfile body for the scenario's location and unit height (optional;
   without it, /api/horizon has no profile for that location and height);
-- format 3 adds `sun_elevation_histogram` (stream A's RA7; methodology 5.3): `{quantity, bin_deg,
-  first_edge_deg, seconds: [...], total_seconds}`, the seconds the Sun's disc-centre apparent elevation spends
-  in each bin over the window (they sum to the window). Optional: without it, a compare on a Sun elevation
-  band has no value (not computed) for that scenario. Read with `band_fraction` below (A's function).
+- format 3 adds `sun_elevation_histogram` (methodology 5.3): `{quantity, bin_deg, first_edge_deg, seconds:
+  [...], total_seconds}`, the seconds the Sun's disc-centre apparent elevation spends in each bin over the
+  window (they sum to the window). Optional: without it, a compare on a Sun elevation band has no value (not
+  computed) for that scenario. Read with `band_fraction` below (lss.metrics.elevation_band).
 All bodies must be made with the same contract version.
 """
 
@@ -37,20 +38,20 @@ from lss.contract import (
     TerrainResponse,
 )
 
-# Stream A's band arithmetic; this module imports only numpy (lazy lss.metrics exports, A's RA10).
+# The engine's band arithmetic; this module imports only numpy (lss.metrics exports are lazy).
 from lss.metrics.elevation_band import band_fraction as elevation_band_fraction
 
 # Older contract versions whose served bodies (MetricsResponse, SeriesResponse, HorizonProfile,
 # TerrainResponse) are unchanged in the current contract. Files made with them are still served, stamped with
 # the current version; any other version is refused (503) until the file is regenerated. Maintained by
-# the contract owner (Kaitlin, 2026-11-15):
+# the contract owner (the project author, 2026-11-15):
 # - list a version only if its result format equals the current one: tests/api/test_served_format.py checks
 #   each against a snapshot in tests/api/served_formats/ (how to make one: lss/api/served_format.py);
-# - drop a version, and its snapshot, once stream A has regenerated its served files at a newer version.
-#   0.5.0 and 0.6.0 dropped 2026-11-16: A regenerated every served file (format 2, with horizons) at 0.7.0.
-#   0.7.0 and 0.8.0 dropped 2026-11-16: A regenerated every served and terrain file at 0.9.0 (RA5).
-#   0.10.0 and 0.11.0 dropped 2026-11-16: A regenerated every served file at 0.12.0 (format 3).
-#   0.9.0 dropped 2026-11-16: A regenerated the 16 terrain statistics at 0.12.0 (RA11).
+# - drop a version, and its snapshot, once the served files have been regenerated at a newer version.
+#   0.5.0 and 0.6.0 dropped 2026-11-16: every served file regenerated (format 2, with horizons) at 0.7.0.
+#   0.7.0 and 0.8.0 dropped 2026-11-16: every served and terrain file regenerated at 0.9.0.
+#   0.10.0 and 0.11.0 dropped 2026-11-16: every served file regenerated at 0.12.0 (format 3).
+#   0.9.0 dropped 2026-11-16: the 16 terrain statistics regenerated at 0.12.0.
 #   0.12.0: the installed served files and most cached NL answers (contract 0.13.0 only added the terrain
 #   views, CompareResponse.compared_keys and StaticIndex.terrain_views); drop once regenerated.
 #   0.13.0: the installed terrain statistics and two cached answers (contract 0.14.0 only added the feature
@@ -147,8 +148,8 @@ def _check_histogram(path: Path, hist: dict, series: SeriesResponse) -> None:
 
 
 def band_fraction(sv: Served, min_deg: float, max_deg: float) -> float | None:
-    """Fraction of the window with the Sun's elevation in [min_deg, max_deg] (A's `band_fraction`), or None
-    when the served file has no histogram (format < 3)."""
+    """Fraction of the window with the Sun's elevation in [min_deg, max_deg] (lss.metrics `band_fraction`), or
+    None when the served file has no histogram (format < 3)."""
     if sv.sun_elevation_histogram is None:
         return None
     return float(elevation_band_fraction(sv.sun_elevation_histogram, min_deg, max_deg))
@@ -195,7 +196,7 @@ def differences(asked: Scenario | HorizonRequest, served: Scenario) -> list[Scen
 
 
 # ----------------------------------------------------------- slope statistics (cache/terrain/)
-# Written by stream A (scripts/precompute_terrain.py): one file per site, `{"format": 1, "site_id",
+# Written by scripts/precompute_terrain.py: one file per site, `{"format": 1, "site_id",
 # "terrain": [TerrainResponse, ...], "provenance"}` (1 km on the 5 m site map, 10 km on the 10 m map).
 # Same rules as served files: current or compatible contract version, not placeholder, no duplicates.
 

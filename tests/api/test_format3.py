@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""Served-file format 3: the Sun-elevation histogram (stream A's RA7) and compare's Sun elevation band."""
+"""Served-file format 3: the Sun-elevation histogram and compare's Sun elevation band."""
 
 import json
 import os
@@ -15,7 +15,7 @@ from lss.config import get_settings
 from lss.contract import CompareResponse
 from tests.api.test_thin_slice import WEB_SCENARIO, write_served
 
-WINDOW_S = 30 * 86400.0  # the C1 scenario's window
+WINDOW_S = 30 * 86400.0  # the first served scenario's window
 
 
 def histogram(seconds_by_bin, first_edge=-2.0, total=WINDOW_S):

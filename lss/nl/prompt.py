@@ -3,7 +3,7 @@
 Prompts for the NL layer's two calls (see `lss.nl.schema`, "two-step call"):
   route: what kind of answer, which operation, and registry-cited limits;
   fill:  that operation's parameters and the interpretation shown to the user.
-DRAFT: iterated in step 4.7, and only run live with the project author's okay. System texts
+DRAFT: iterated against the eval set, and only run live with the project author's okay. System texts
 are stable (cacheable); per-request values (today, selection, question) go in the user
 message. Bump `PROMPT_VERSION` on every change, so eval results name the prompt they used.
 """
@@ -183,8 +183,8 @@ def fill_system_prompt() -> str:
 def _context(ctx: NLContext, today: date, registry: bool) -> dict[str, Any]:
     out: dict[str, Any] = {
         "today": today.isoformat(),
-        # Short display names (Kaitlin, 2026-11-16), so echoes read naturally; the subtitle helps match
-        # references such as "Site01". Full technical names stay in the API's results.
+        # Short display names (the project author, 2026-11-16), so echoes read naturally; the subtitle helps
+        # match references such as "Site01". Full technical names stay in the API's results.
         "sites": [
             {
                 "site_id": s.id,

@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""Static JSON fallback (plan section 4.7): the same bodies as the API, at the current contract version."""
+"""Static JSON fallback: the same bodies as the API, at the current contract version."""
 
 import json
 

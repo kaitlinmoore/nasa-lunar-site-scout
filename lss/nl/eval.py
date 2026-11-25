@@ -1,12 +1,12 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-NL eval harness (step 4.5; plan section 4.5).
+NL eval harness.
 
     uv run python -m lss.nl.eval                   # oracle provider: label self-check, no network
     uv run python -m lss.nl.eval --provider claude --live --model <id>   # needs the author's okay
     uv run python -m lss.nl.eval --rescore tests/nl/results/<file>.json   # current labels, no API
 
-Scores (plan section 4.5, the project author's two measures), over `ready` items only:
+Scores (the project author's two measures), over `ready` items only:
   (a) structured-query correctness, for items expecting a query (answer / partial):
       output is valid, outcome matches, operation matches, params match (exact, or the
       label's keys for `subset`), and the height / window / slope / radius / site sources match when

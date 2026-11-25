@@ -265,7 +265,8 @@ export interface components {
     schemas: {
         /**
          * AllArea
-         * @description Wherever the terrain data covers (Kaitlin, 2026-11-15); the result states the coverage used.
+         * @description Wherever the terrain data covers (the project author, 2026-11-15); the result states the coverage
+         *     used.
          */
         AllArea: {
             /**
@@ -357,7 +358,7 @@ export interface components {
         };
         /**
          * CommsMetrics
-         * @description F4 (direct-to-Earth at the unit height). Nullable: null = not computed. See methodology section 5.
+         * @description Direct-to-Earth comms at the unit height. Nullable: null = not computed. See methodology section 5.
          *
          *     Earth visible = any part of the Earth disc above the terrain horizon; a gap = no part of it above.
          *     Gaps that start before window_start or run past window_end are clipped to the window.
@@ -405,8 +406,8 @@ export interface components {
         };
         /**
          * CompareAcross
-         * @description One scenario per curated site, expanded by the API (Kaitlin's C8 choice): the sites named, the sites
-         *     tagged with `region`, or every curated site if neither is given.
+         * @description One scenario per curated site, expanded by the API (the project author's choice): the sites named, the
+         *     sites tagged with `region`, or every curated site if neither is given.
          */
         CompareAcross: {
             /** Site Ids */
@@ -585,7 +586,7 @@ export interface components {
             beyond_limit: number;
             /**
              * Compared Keys
-             * @description Scenario.key() of each entry of `compared`, same order (contract 0.13.0; stream B)
+             * @description Scenario.key() of each entry of `compared`, same order (contract 0.13.0)
              */
             compared_keys?: string[];
         };
@@ -1311,7 +1312,7 @@ export interface components {
         };
         /**
          * PowerMetrics
-         * @description F3. Nullable: null = not computed. Exact definitions: docs/methodology.md section 5.
+         * @description Power metrics. Nullable: null = not computed. Exact definitions: docs/methodology.md section 5.
          *
          *     Sunlit = any part of the solar disc above the terrain horizon; shadow = no part of it above. Sunlit and
          *     shadow periods tile the window. Periods that start before window_start or run past window_end are
@@ -1438,7 +1439,7 @@ export interface components {
         RootModel_Union_TerrainNotServedError__InvalidRequestError__: components["schemas"]["TerrainNotServedError"] | components["schemas"]["InvalidRequestError"];
         /**
          * Scenario
-         * @description The unit of everything (plan section 3.1): results are keyed by `Scenario.key()`.
+         * @description The unit of everything: results are keyed by `Scenario.key()`.
          */
         Scenario: {
             location: components["schemas"]["Location"];
@@ -1511,7 +1512,8 @@ export interface components {
         };
         /**
          * ScenariosResponse
-         * @description Every precomputed scenario this API version serves (stream B's site page picker, Kaitlin's option b):
+         * @description Every precomputed scenario this API version serves (for the site page's scenario picker; the project
+         *     author's choice):
          *     by site in the site list's order, then by unit height, window start, window end, step.
          */
         ScenariosResponse: {
@@ -1552,12 +1554,12 @@ export interface components {
         };
         /**
          * SearchCriteria
-         * @description Terrain-only in v0; time-dependent criteria are added later (plan section 3.3).
+         * @description Terrain-only in v0; time-dependent criteria may be added later.
          */
         SearchCriteria: {
             /**
              * Max Slope Deg
-             * @description Strict bound: candidates have slope < max_slope_deg (Kaitlin, 2026-11-15)
+             * @description Strict bound: candidates have slope < max_slope_deg (the project author, 2026-11-15)
              * @default null
              */
             max_slope_deg: number | null;
@@ -1656,12 +1658,12 @@ export interface components {
             name: string;
             /**
              * Short Name
-             * @description Short display name in title case, e.g. 'Connecting Ridge' (contract 0.9.0; Kaitlin, 2026-11-16). Null: show name
+             * @description Short display name in title case, e.g. 'Connecting Ridge' (contract 0.9.0; the project author, 2026-11-16). Null: show name
              */
             short_name?: string | null;
             /**
              * Regions
-             * @description Region tags, e.g. 'shackleton' (contract 0.10.0; stream A's registry, Kaitlin approves)
+             * @description Region tags, e.g. 'shackleton' (contract 0.10.0; set in the site registry, approved by the project author)
              */
             regions?: string[];
             /**
@@ -1867,7 +1869,7 @@ export interface components {
         };
         /**
          * StaticNLEntry
-         * @description A cached showcase answer (C8): the request it answers and the path of its NL response file.
+         * @description A cached showcase answer: the request it answers and the path of its NL response file.
          */
         StaticNLEntry: {
             request: components["schemas"]["NLRequest"];
@@ -1906,9 +1908,9 @@ export interface components {
         };
         /**
          * SunElevationBand
-         * @description Fraction of the window with the Sun's disc-centre apparent elevation in [min_deg, max_deg] (k7). The
+         * @description Fraction of the window with the Sun's disc-centre apparent elevation in [min_deg, max_deg]. The
          *     elevation is above the local horizontal plane at the site, whether or not terrain hides the Sun (the
-         *     terrain horizon is not applied), as for PowerMetrics.sun_elevation_deg. From stream A's Sun-elevation
+         *     terrain horizon is not applied), as for PowerMetrics.sun_elevation_deg. From the Sun-elevation
          *     histogram in the served files (methodology 5.3); null (not computed) where a result has none.
          */
         SunElevationBand: {
@@ -2076,7 +2078,7 @@ export interface components {
         /**
          * TerrainViewLayer
          * @description Layers of the 2D site view's terrain images (GET /api/terrain/view/{site_id}/{view}/{layer}.png).
-         *     Only hillshade and slope are precomputed (Kaitlin, 2026-11-16); elevation is reserved.
+         *     Only hillshade and slope are precomputed (the project author, 2026-11-16); elevation is reserved.
          * @enum {string}
          */
         TerrainViewLayer: "hillshade" | "slope" | "elevation";
@@ -2101,12 +2103,12 @@ export interface components {
             nodata: number;
             /**
              * Palette Light
-             * @description Suggested colour per class, light theme (stream A)
+             * @description Suggested colour per class, light theme
              */
             palette_light: string[];
             /**
              * Palette Dark
-             * @description Suggested colour per class, dark theme (stream A)
+             * @description Suggested colour per class, dark theme
              */
             palette_dark: string[];
         };

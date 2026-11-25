@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Static JSON fallback (plan section 4.7; Kaitlin, 2026-11-15): the API's precomputed results as static files
+Static JSON fallback (the project author, 2026-11-15): the API's precomputed results as static files
 on the web host, so the demo still works when the API is down.
 
     uv run python -m lss.api.static_export OUT_DIR [--served-dir DIR] [--terrain-dir DIR] [--check-api URL]
@@ -12,7 +12,7 @@ Writes, under OUT_DIR (deploy/deploy-web.sh uses web/dist/static-api):
 - `metrics/<scenario_key>.json`, `series/<scenario_key>.json`: what POST /api/metrics and /api/series return;
 - `horizon/<horizon_key>.json`: what POST /api/horizon returns, where a served file has a horizon;
 - `terrain/<terrain_key>.json`: what POST /api/terrain returns (precomputed slope statistics);
-- `nl/<name>.json`: the cached showcase answers (C8), what POST /api/nl returns for their requests;
+- `nl/<name>.json`: the cached showcase answers, what POST /api/nl returns for their requests;
 - `terrain_views.json` + `terrain_view/<site>/<view>/<layer>.png`: what GET /api/terrain/views and the image
   route return (contract 0.13.0);
 - `feature_labels.json`: every IAU feature name (satellite features included), what GET /api/features/labels
@@ -203,7 +203,7 @@ def check_api(index: StaticIndex, out_dir: Path, api_url: str) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Export the static JSON fallback (plan 4.7).")
+    parser = argparse.ArgumentParser(description="Export the static JSON fallback.")
     parser.add_argument("out_dir", type=Path)
     parser.add_argument("--served-dir", type=Path, default=None, help="default: LSS_DATA_DIR/cache/served")
     parser.add_argument("--terrain-dir", type=Path, default=None, help="default: LSS_DATA_DIR/cache/terrain")

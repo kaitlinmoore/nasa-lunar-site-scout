@@ -119,7 +119,8 @@ def test_every_listing_reason_has_a_list_free_version():
 
 
 def test_nl_with_a_selected_scenario_reaches_its_result(data_dir):
-    """B's G2 recheck: the model drops the step and changes the window; code restores the selection."""
+    """Found in a recheck of the NL layer: the model drops the step and changes the window; code restores the
+    selection."""
     from lss.contract import Scenario
 
     sel = Scenario.model_validate(dict(WEB_SCENARIO, unit_height_m=2.0))  # served (write_served_at 2 m)

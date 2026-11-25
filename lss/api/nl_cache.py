@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Cached showcase NL answers (C8, plan section 4.6): the questions the project author chooses are answered once
+Cached showcase NL answers: the questions the project author chooses are answered once
 and stored in LSS_DATA_DIR/cache/nl/, so the deployed POST /api/nl returns them instantly, at no cost, without
 rate limits, and even when the daily cap is reached or the model can't be reached. `deploy-api.sh` stages them
 into the image and `deploy-web.sh` publishes them in the static copy.
@@ -173,7 +173,7 @@ def list_entries(directory: Path | None = None) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="Cached showcase NL answers (C8).")
+    p = argparse.ArgumentParser(description="Cached showcase NL answers.")
     sub = p.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("add-from-run", help="replay a saved eval run's output for one item (no LLM call)")
     a.add_argument("results", type=Path)

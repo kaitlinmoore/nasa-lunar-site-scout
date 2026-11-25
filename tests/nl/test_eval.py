@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""Eval harness (step 4.5), with fake providers only: no network calls."""
+"""Eval harness, with fake providers only: no network calls."""
 
 from __future__ import annotations
 

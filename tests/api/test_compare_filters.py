@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""Filter, rank and the site template on POST /api/compare (contract 0.10.0, NL gap C3)."""
+"""Filter, rank and the site template on POST /api/compare (contract 0.10.0)."""
 
 import json
 from datetime import UTC, datetime
@@ -49,7 +49,7 @@ def test_value_of_reads_dotted_paths_slope_and_band():
     assert (
         compare.value_of(MetricName.slope_at_point_deg, m, lambda lat, lon: (1.5, "5 m PGDA site map")) == 1.5
     )
-    assert compare.value_of(SunElevationBand(min_deg=10, max_deg=25), m, NO_SLOPE) is None  # RA7 pending
+    assert compare.value_of(SunElevationBand(min_deg=10, max_deg=25), m, NO_SLOPE) is None  # no histogram
     assert compare.value_of(MetricName.time_to_sunset_h, m_with(1.0, time_to_sunset_h=None), NO_SLOPE) is None
 
 

@@ -1,7 +1,7 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 """IAU feature names for the globe labels (contract 0.14.0).
 
-Stream E's `scripts/fetch_iau_names.py` writes `LSS_DATA_DIR/cache/features/iau_names.json` (format 1): the
+`scripts/fetch_iau_names.py` writes `LSS_DATA_DIR/cache/features/iau_names.json` (format 1): the
 Gazetteer of Planetary Nomenclature's adopted Moon names as compact rows `[id, name, type, lat, lon,
 diameter_km]`. This module checks that file once and filters it per request; no engine imports.
 """

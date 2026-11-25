@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""POST /api/nl (C7b): fake providers only, no network calls."""
+"""POST /api/nl: fake providers only, no network calls."""
 
 import json
 from datetime import UTC, date, datetime, timedelta

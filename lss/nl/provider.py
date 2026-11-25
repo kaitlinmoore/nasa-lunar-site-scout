@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-LLM provider interface (plan section 4.5: thin and swappable, e.g. NVIDIA NIM later).
+LLM provider interface (thin and swappable, e.g. NVIDIA NIM later).
 
 A provider turns an `NLPrompt` into raw text that should be JSON matching
 `lss.nl.schema.llm_json_schema()`. It does no validation: `lss.nl.validate` does.

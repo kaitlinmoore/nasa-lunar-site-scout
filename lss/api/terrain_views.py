@@ -1,9 +1,9 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Precomputed terrain images for the 2D site view (contract 0.13.0; stream A's images, methodology 5.7).
+Precomputed terrain images for the 2D site view (contract 0.13.0; methodology 5.7).
 
-Stream A writes `LSS_DATA_DIR/cache/terrain_view/<site id>/<view>/` with `view.json` (format 1) and one
-8-bit greyscale PNG per layer (`hillshade.png`, `slope.png`). This module loads them into contract
+scripts/terrain_views.py writes `LSS_DATA_DIR/cache/terrain_view/<site id>/<view>/` with `view.json` (format
+1) and one 8-bit greyscale PNG per layer (`hillshade.png`, `slope.png`). This module loads them into contract
 `TerrainView`s and checks every file the API will serve:
 - the folder names match `site_id` / `view`, and the site is a curated site;
 - every layer's PNG exists, is 8-bit greyscale at the stated width and height, and carries no colour-profile

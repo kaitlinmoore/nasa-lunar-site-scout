@@ -777,7 +777,7 @@
     "schemas": {
       "AllArea": {
         "additionalProperties": false,
-        "description": "Wherever the terrain data covers (Kaitlin, 2026-11-15); the result states the coverage used.",
+        "description": "Wherever the terrain data covers (the project author, 2026-11-15); the result states the coverage\nused.",
         "properties": {
           "kind": {
             "const": "all",
@@ -1046,7 +1046,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "CommsMetrics",
-        "description": "F4 (direct-to-Earth at the unit height). Nullable: null = not computed. See methodology section 5.\n\nEarth visible = any part of the Earth disc above the terrain horizon; a gap = no part of it above.\nGaps that start before window_start or run past window_end are clipped to the window."
+        "description": "Direct-to-Earth comms at the unit height. Nullable: null = not computed. See methodology section 5.\n\nEarth visible = any part of the Earth disc above the terrain horizon; a gap = no part of it above.\nGaps that start before window_start or run past window_end are clipped to the window."
       },
       "CompareAcross": {
         "properties": {
@@ -1119,7 +1119,7 @@
           "window_start"
         ],
         "title": "CompareAcross",
-        "description": "One scenario per curated site, expanded by the API (Kaitlin's C8 choice): the sites named, the sites\ntagged with `region`, or every curated site if neither is given."
+        "description": "One scenario per curated site, expanded by the API (the project author's choice): the sites named, the\nsites tagged with `region`, or every curated site if neither is given."
       },
       "CompareFilteredOut": {
         "properties": {
@@ -1394,7 +1394,7 @@
             },
             "type": "array",
             "title": "Compared Keys",
-            "description": "Scenario.key() of each entry of `compared`, same order (contract 0.13.0; stream B)"
+            "description": "Scenario.key() of each entry of `compared`, same order (contract 0.13.0)"
           }
         },
         "additionalProperties": false,
@@ -3158,7 +3158,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "PowerMetrics",
-        "description": "F3. Nullable: null = not computed. Exact definitions: docs/methodology.md section 5.\n\nSunlit = any part of the solar disc above the terrain horizon; shadow = no part of it above. Sunlit and\nshadow periods tile the window. Periods that start before window_start or run past window_end are\nclipped to the window and still counted."
+        "description": "Power metrics. Nullable: null = not computed. Exact definitions: docs/methodology.md section 5.\n\nSunlit = any part of the solar disc above the terrain horizon; shadow = no part of it above. Sunlit and\nshadow periods tile the window. Periods that start before window_start or run past window_end are\nclipped to the window and still counted."
       },
       "ProximityRequest": {
         "additionalProperties": false,
@@ -3371,7 +3371,7 @@
           "window_end"
         ],
         "title": "Scenario",
-        "description": "The unit of everything (plan section 3.1): results are keyed by `Scenario.key()`."
+        "description": "The unit of everything: results are keyed by `Scenario.key()`."
       },
       "ScenarioEntry": {
         "properties": {
@@ -3496,7 +3496,7 @@
           "scenarios"
         ],
         "title": "ScenariosResponse",
-        "description": "Every precomputed scenario this API version serves (stream B's site page picker, Kaitlin's option b):\nby site in the site list's order, then by unit height, window start, window end, step."
+        "description": "Every precomputed scenario this API version serves (for the site page's scenario picker; the project\nauthor's choice):\nby site in the site list's order, then by unit height, window start, window end, step."
       },
       "SearchCandidate": {
         "additionalProperties": false,
@@ -3549,7 +3549,7 @@
       },
       "SearchCriteria": {
         "additionalProperties": false,
-        "description": "Terrain-only in v0; time-dependent criteria are added later (plan section 3.3).",
+        "description": "Terrain-only in v0; time-dependent criteria may be added later.",
         "properties": {
           "max_slope_deg": {
             "anyOf": [
@@ -3562,7 +3562,7 @@
               }
             ],
             "default": null,
-            "description": "Strict bound: candidates have slope < max_slope_deg (Kaitlin, 2026-11-15)",
+            "description": "Strict bound: candidates have slope < max_slope_deg (the project author, 2026-11-15)",
             "title": "Max Slope Deg"
           },
           "min_flat_area_m2": {
@@ -3825,7 +3825,7 @@
               }
             ],
             "title": "Short Name",
-            "description": "Short display name in title case, e.g. 'Connecting Ridge' (contract 0.9.0; Kaitlin, 2026-11-16). Null: show name"
+            "description": "Short display name in title case, e.g. 'Connecting Ridge' (contract 0.9.0; the project author, 2026-11-16). Null: show name"
           },
           "regions": {
             "items": {
@@ -3833,7 +3833,7 @@
             },
             "type": "array",
             "title": "Regions",
-            "description": "Region tags, e.g. 'shackleton' (contract 0.10.0; stream A's registry, Kaitlin approves)"
+            "description": "Region tags, e.g. 'shackleton' (contract 0.10.0; set in the site registry, approved by the project author)"
           },
           "subtitle": {
             "anyOf": [
@@ -4295,7 +4295,7 @@
       },
       "StaticNLEntry": {
         "additionalProperties": false,
-        "description": "A cached showcase answer (C8): the request it answers and the path of its NL response file.",
+        "description": "A cached showcase answer: the request it answers and the path of its NL response file.",
         "properties": {
           "request": {
             "$ref": "#/components/schemas/NLRequest"
@@ -4390,7 +4390,7 @@
           "max_deg"
         ],
         "title": "SunElevationBand",
-        "description": "Fraction of the window with the Sun's disc-centre apparent elevation in [min_deg, max_deg] (k7). The\nelevation is above the local horizontal plane at the site, whether or not terrain hides the Sun (the\nterrain horizon is not applied), as for PowerMetrics.sun_elevation_deg. From stream A's Sun-elevation\nhistogram in the served files (methodology 5.3); null (not computed) where a result has none."
+        "description": "Fraction of the window with the Sun's disc-centre apparent elevation in [min_deg, max_deg]. The\nelevation is above the local horizontal plane at the site, whether or not terrain hides the Sun (the\nterrain horizon is not applied), as for PowerMetrics.sun_elevation_deg. From the Sun-elevation\nhistogram in the served files (methodology 5.3); null (not computed) where a result has none."
       },
       "TerrainLayer": {
         "properties": {
@@ -4738,7 +4738,7 @@
           "elevation"
         ],
         "title": "TerrainViewLayer",
-        "description": "Layers of the 2D site view's terrain images (GET /api/terrain/view/{site_id}/{view}/{layer}.png).\nOnly hillshade and slope are precomputed (Kaitlin, 2026-11-16); elevation is reserved."
+        "description": "Layers of the 2D site view's terrain images (GET /api/terrain/view/{site_id}/{view}/{layer}.png).\nOnly hillshade and slope are precomputed (the project author, 2026-11-16); elevation is reserved."
       },
       "TerrainViewSlope": {
         "properties": {
@@ -4773,7 +4773,7 @@
             },
             "type": "array",
             "title": "Palette Light",
-            "description": "Suggested colour per class, light theme (stream A)"
+            "description": "Suggested colour per class, light theme"
           },
           "palette_dark": {
             "items": {
@@ -4781,7 +4781,7 @@
             },
             "type": "array",
             "title": "Palette Dark",
-            "description": "Suggested colour per class, dark theme (stream A)"
+            "description": "Suggested colour per class, dark theme"
           }
         },
         "additionalProperties": false,

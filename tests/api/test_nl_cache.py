@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""Cached showcase NL answers (C8): writer, strict loader, endpoint and static copy. Fakes only."""
+"""Cached showcase NL answers: writer, strict loader, endpoint and static copy. Fakes only."""
 
 import json
 
@@ -135,7 +135,8 @@ def test_static_copy_publishes_cached_answers_and_checks_them(tmp_path, data_dir
 
 
 def test_cached_compare_answers_from_before_0_13_get_compared_keys(tmp_path, monkeypatch):
-    """B's G3 walkthrough: k6/k7 were recorded at 0.12.0 (no compared_keys); the loader fills them."""
+    """Found in a web-client walkthrough: k6/k7 were recorded at 0.12.0 (no compared_keys); the loader fills
+    them."""
     from lss.api import served
     from lss.contract import NLAnswer, Scenario
     from tests.api.test_thin_slice import WEB_SCENARIO

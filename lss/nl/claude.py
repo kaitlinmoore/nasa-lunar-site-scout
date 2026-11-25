@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Claude provider for the NL layer (step 4.6). Server-side only; the key comes from
+Claude provider for the NL layer. Server-side only; the key comes from
 `get_settings().anthropic_api_key` and never reaches the browser.
 
 - Structured outputs: `output_config.format` with the NL schema, passed through

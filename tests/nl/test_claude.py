@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""Claude provider (step 4.6) against a stand-in client: no network calls, no API key needed."""
+"""Claude provider against a stand-in client: no network calls, no API key needed."""
 
 from __future__ import annotations
 

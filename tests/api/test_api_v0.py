@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""API v0 (plan section 4.3, step C4): datasets, locate, horizon, compare, and the OpenAPI error bodies."""
+"""API v0: datasets, locate, horizon, compare, and the OpenAPI error bodies."""
 
 import json
 
@@ -99,7 +99,7 @@ def test_locate_gives_the_stack_the_served_result_used():
 
 
 def test_locate_off_the_polar_maps_is_the_low_fidelity_global_layer():
-    # C7 (stream E, one-off exception): every valid location is covered, off the polar maps by the global
+    # Every valid location is covered, off the polar maps by the global
     # coarse layer (LOLA LDEM_128), so this is a 200 with a low fidelity label, no longer a 422.
     r = client().post("/api/locate", json={"lat": 0.0, "lon": 0.0})
     assert r.status_code == 200

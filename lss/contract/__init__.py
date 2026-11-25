@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-API contract (plan section 10.3). Only the contract owner edits this package.
+API contract. Only the contract owner edits this package.
 """
 
 from lss.contract.models import *  # noqa: F403

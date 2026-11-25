@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Validation of the LLM's output (step 4.3), and conversion to the contract's NL responses.
+Validation of the LLM's output, and conversion to the contract's NL responses.
 
 `validate_output` rejects anything the contract wouldn't accept:
 - the schema itself (`NLOutput`: unknown fields, inconsistent outcome);
@@ -341,9 +341,9 @@ def _uses_sun_band(params: dict[str, Any]) -> bool:
 
 def _fill_from_selection(value: Any, sel: dict[str, Any], height: bool, window: bool) -> Any:
     """Copy the selected scenario's unit height and/or window (start, end, step) into every place in the
-    params that has them, whatever the model wrote there (B's G2 recheck, 2026-11-16: a dropped step made a
-    served scenario unserved). A dict with `window_start` is a Scenario or a CompareAcross; both take a
-    step."""
+    params that has them, whatever the model wrote there (found in a recheck of the NL layer, 2026-11-16: a
+    dropped step made a served scenario unserved). A dict with `window_start` is a Scenario or a
+    CompareAcross; both take a step."""
     if isinstance(value, list):
         return [_fill_from_selection(v, sel, height, window) for v in value]
     if not isinstance(value, dict):
@@ -441,7 +441,7 @@ def _fragment(text: str) -> str:
 
 
 def _reason(topic: str, citations: Sequence[tuple[DatasetCapability, str]]) -> str:
-    """One sentence (stream B, 2026-11-16; wording Claude-drafted, approved by the project author):
+    """One sentence (2026-11-16; wording Claude-drafted, approved by the project author):
     "<topic>: not answerable with the available data and tools, which don't cover <a>, <b> or <c>."
     The registry entries cited are in `Limitation.datasets_considered`, so sources aren't repeated here."""
     parts = list(dict.fromkeys(_fragment(text) for _, text in citations))
@@ -488,7 +488,7 @@ def to_response(
 ) -> NLAnswer | NLUnsupported | NLClarification:
     """Build the contract response. `result` stays None: the engine fills it, never the LLM.
 
-    The disclosures go in `NLAnswer.assumptions` (contract 0.7.0, gap C8), shown with the echo.
+    The disclosures go in `NLAnswer.assumptions` (contract 0.7.0), shown with the echo.
     `slope_terrain` names the terrain data the slope was measured on; it is required when "safe" was
     read as the default slope limit (D-safe). It comes from the engine's result (the terrain layer the
     slope was computed on), so a "safe" query is only answered once that result exists.

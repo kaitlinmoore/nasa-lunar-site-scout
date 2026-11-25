@@ -1,6 +1,6 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 """IAU feature names for the globe labels (contract 0.14.0): the loader's checks, the filters, the route, the
-static copy. A small synthetic names file in E's format; no real data needed."""
+static copy. A small synthetic names file in the cache format; no real data needed."""
 
 import json
 import os

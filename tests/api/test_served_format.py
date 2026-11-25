@@ -3,7 +3,7 @@
 
 Each listed version needs a snapshot in tests/api/served_formats/<version>.json, made from that version's
 committed fixtures/openapi.json (commands in lss/api/served_format.py). When a version is dropped from
-COMPATIBLE_VERSIONS (e.g. once stream A has regenerated its served files), delete its snapshot too.
+COMPATIBLE_VERSIONS (e.g. once the served files have been regenerated), delete its snapshot too.
 """
 
 import json

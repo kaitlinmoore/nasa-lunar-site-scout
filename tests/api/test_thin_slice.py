@@ -1,5 +1,6 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""POST /api/metrics and /api/series (C1 thin slice): precomputed results only, matched on Scenario.key()."""
+"""POST /api/metrics and /api/series (the first served scenario): precomputed results only, matched on
+Scenario.key()."""
 
 import json
 import os
@@ -24,7 +25,8 @@ from lss.contract import (
 from lss.contract.examples import SCENARIO
 
 REGRESSION = REPO_ROOT / "tests" / "engine" / "fixtures" / "site01_roi4_c1.json"
-# Stream B sends exactly this (web/src/api/source.ts builds the live request from fixtures/metrics.json).
+# The web client sends exactly this (web/src/api/source.ts builds the live request from
+# fixtures/metrics.json).
 WEB_SCENARIO = json.loads((FIXTURES_DIR / "metrics.json").read_text(encoding="utf-8"))["scenario"]
 
 

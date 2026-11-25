@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""NL output schema + validation (step 4.3), checked against the committed fixtures."""
+"""NL output schema + validation, checked against the committed fixtures."""
 
 from __future__ import annotations
 
@@ -132,7 +132,7 @@ def test_boulder_refusal_matches_fixture_datasets(ctx):
     assert resp.unsupported.datasets_considered == expected
     reason = resp.unsupported.reason
     assert "any boulder information at the poles" in reason  # registry fragment, inside one sentence
-    assert reason.endswith(".") and not re.search(r"\.\s+[A-Z]", reason)  # one sentence (stream B)
+    assert reason.endswith(".") and not re.search(r"\.\s+[A-Z]", reason)  # one sentence
     assert "can't answer:" not in reason  # no stitched "<dataset> can't answer: ..." parts
 
 
@@ -238,7 +238,7 @@ def test_sites_query_validates_category(ctx):
         validate_output(ok, ctx)
 
 
-# ------------------------------------------------- defaults (D-height, D-window)
+# ------------------------------------------------- default height and window
 
 
 def default_output(start="2026-11-15T00:00:00Z", end="2026-12-15T00:00:00Z", height=5.0):
@@ -268,7 +268,7 @@ def test_defaults_are_checked_and_disclosed():
         "Window: 30 days from 2026-11-15 00:00 UTC (default; no dates were given).",
         PROXY_ASSUMPTION_TEXT[HeightSource.default],
     ]
-    assert "Assumed:" not in resp.interpretation  # C8: disclosures have their own field now
+    assert "Assumed:" not in resp.interpretation  # disclosures have their own field
 
 
 @pytest.mark.parametrize(
@@ -482,7 +482,7 @@ def test_sites_uses_the_contract_query_model():
     assert {Operation.terrain, Operation.site_summary} <= ALLOWED_OPERATIONS
 
 
-# ------------------------------------- nl-output-6: disclosures come only from code (stream B, 2026-11-16)
+# ------------------------------------- nl-output-6: disclosures come only from code (2026-11-16)
 
 
 def test_model_cannot_write_assumptions():
@@ -503,11 +503,11 @@ def test_selected_site_is_checked_and_disclosed_by_code():
         validate_output(out, ctx)  # params use pgda-site01, the selection is pgda-site04
     ctx = default_context(selected_site_id="pgda-site01")
     resp = to_response(validate_output(out, ctx), ctx)
-    # The registry's short name (lss/registry/sites.yaml, approved by Kaitlin 2026-11-16).
+    # The registry's short name (lss/registry/sites.yaml, approved by the project author 2026-11-16).
     assert resp.assumptions[0] == "Using the selected site, Connecting Ridge."
 
 
-# ------------------------------------------------ short display names (Kaitlin, 2026-11-16)
+# ------------------------------------------------ short display names (the project author, 2026-11-16)
 
 
 def _ctx_with_short_name(short="Connecting Ridge"):
@@ -557,7 +557,7 @@ def test_site_model_fields_are_optional():
     )
 
 
-# ------------------------------------------- C3: filters, rank, across (contract 0.10.0)
+# ------------------------------------------- filters, rank, across (contract 0.10.0)
 
 
 def ranking_output(**over) -> dict[str, Any]:
@@ -623,7 +623,7 @@ def test_safe_slope_in_a_compare_filter_is_checked():
         validate_output(k6_like(6.0), ctx)
 
 
-# ---------------------------- a selected scenario's values are filled in by code (B's G2 recheck, 2026-11-16)
+# ----------------- a selected scenario's values are filled in by code (found in an NL recheck, 2026-11-16)
 
 
 def _year_10m():
@@ -718,7 +718,7 @@ def test_step_text():
 
 
 def test_sun_band_answers_disclose_the_horizontal_not_the_terrain():
-    """Fable G2 review m5: band elevations are above the local horizontal, terrain or not."""
+    """Second correctness review: band elevations are above the local horizontal, terrain or not."""
     from lss.nl.vocabulary import SUN_BAND_TEXT
 
     band = {"min_deg": 10, "max_deg": 25}

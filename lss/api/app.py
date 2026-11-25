@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-FastAPI app, API v0 (plan section 4.3). Results are precomputed only (plan section 4.6; lss.api.served):
+FastAPI app, API v0. Results are precomputed only (lss.api.served):
 nothing is computed live, so the API needs no DEMs, kernels or numba.
 
 - `GET /api/health`; `GET /api/sites` (the curated site registry, lss/registry/sites.yaml);
@@ -11,11 +11,11 @@ nothing is computed live, so the API needs no DEMs, kernels or numba.
 - `POST /api/metrics`, `/api/series`: the precomputed result for a scenario, matched on `Scenario.key()`.
 - `POST /api/horizon`: the precomputed horizon profile for a location and unit height.
 - `POST /api/compare`: metrics for every served scenario of the request; the rest are listed as not served.
-- `POST /api/terrain`: precomputed slope statistics for a location and radius (stream A's cache/terrain/).
-- `POST /api/site_summary`: slope statistics, metrics for a served scenario, and (later, S3) nearby features.
+- `POST /api/terrain`: precomputed slope statistics for a location and radius (cache/terrain/).
+- `POST /api/site_summary`: slope statistics, metrics for a served scenario, and (later) nearby features.
 - `GET /api/terrain/views`, `GET /api/terrain/view/{site_id}/{view}/{layer}.png`: precomputed terrain
-  images for the 2D site view (stream A's cache/terrain_view/; contract 0.13.0).
-- `GET /api/features/labels`: IAU feature names for the globe labels, filtered (stream E's cache/features/;
+  images for the 2D site view (cache/terrain_view/; contract 0.13.0).
+- `GET /api/features/labels`: IAU feature names for the globe labels, filtered (cache/features/;
   contract 0.14.0).
 
 A valid request with no precomputed result gets a 422 with a plain-language reason and what is served; no
@@ -110,10 +110,10 @@ from lss.contract import (
     UnprocessableError,
 )
 
-# Visitor-facing wording. NOT_SERVED_REASON and UNAVAILABLE_REASON: Kaitlin, 2026-11-15.
-# HORIZON_NOT_SERVED_REASON and NO_TERRAIN_REASON: Claude-drafted, approved by her 2026-11-15.
-# COMPARE_NOT_SERVED_REASON: Claude-drafted, approved by her 2026-11-16. A compare answer lists no served
-# scenarios (stream B, 2026-11-16), so its reason must not refer to a list.
+# Visitor-facing wording. NOT_SERVED_REASON and UNAVAILABLE_REASON: the project author, 2026-11-15.
+# HORIZON_NOT_SERVED_REASON and NO_TERRAIN_REASON: Claude-drafted, approved by the project author 2026-11-15.
+# COMPARE_NOT_SERVED_REASON: Claude-drafted, approved by the project author 2026-11-16. A compare answer lists
+# no served scenarios (2026-11-16), so its reason must not refer to a list.
 # A 503's technical cause goes in `detail.technical`, never in the reason.
 NOT_SERVED_REASON = (
     "This version has precomputed results only for the scenarios listed with this message. A request must "
@@ -128,11 +128,12 @@ COMPARE_NOT_SERVED_REASON = (
     "scenarios, matched exactly on location, unit height, time window and time step."
 )
 NO_TERRAIN_REASON = "No terrain data in this version covers this location."
-# TERRAIN_NOT_SERVED_REASON (with the list): Kaitlin's wording, 2026-11-16.
-# SUMMARY_NO_TERRAIN_REASON (inside a site summary, no list): Claude-drafted, approved by her 2026-11-16.
+# TERRAIN_NOT_SERVED_REASON (with the list): the project author's wording, 2026-11-16.
+# SUMMARY_NO_TERRAIN_REASON (inside a site summary, no list): Claude-drafted, approved by the project author
+# 2026-11-16.
 TERRAIN_NOT_SERVED_REASON = "Slope statistics are available only for the locations and radii listed here."
 # Inside an NL answer nothing is listed, so the reasons that refer to a list are replaced by list-free ones
-# (stream B, 2026-11-16; as for the comparison). HORIZON_NO_LIST_REASON: Claude-drafted, approved.
+# (2026-11-16; as for the comparison). HORIZON_NO_LIST_REASON: Claude-drafted, approved.
 HORIZON_NO_LIST_REASON = "This version has no precomputed horizon profile for this location and unit height."
 SUMMARY_NO_TERRAIN_REASON = "This version has no precomputed slope statistics for this location and radius."
 UNAVAILABLE_REASON = (
@@ -142,7 +143,7 @@ UNAVAILABLE_REASON = (
 
 @lru_cache(maxsize=1)
 def _sites() -> SitesResponse:
-    """The curated site registry (stream A); fixtures/sites.json is generated from the same function."""
+    """The curated site registry; fixtures/sites.json is generated from the same function."""
     from lss.contract.examples import sites
 
     return sites()
@@ -288,7 +289,7 @@ def site_summary(req: SiteSummaryRequest) -> SiteSummaryResponse:
             metrics = served_for(req.scenario).metrics
         except HTTPException as e:
             limitations.append(COMPARE_NOT_SERVED_REASON if e.status_code == 422 else UNAVAILABLE_REASON)
-    limitations.append(nl_service.NOT_AVAILABLE_YET[Operation.proximity])  # features: S3
+    limitations.append(nl_service.NOT_AVAILABLE_YET[Operation.proximity])  # nearby features: not served yet
     return SiteSummaryResponse(
         location=req.location,
         radius_m=req.radius_m,
@@ -364,7 +365,7 @@ def _layer_label(dataset_id: str, resolution_m: float) -> str:
 
 def slope_at_point(lat: float, lon: float) -> tuple[float, str] | None:
     """(slope, map label) at a location from the precomputed statistics on the finest map there (5 m at
-    the PGDA sites, Kaitlin's C4 choice), or None."""
+    the PGDA sites, the project author's choice), or None."""
     try:
         found = _terrain()
     except ServedFileError:

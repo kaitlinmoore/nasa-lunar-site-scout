@@ -52,13 +52,14 @@ def test_sites_are_the_curated_registry():
     assert served == registry == fixture.sites and len(registry) >= 4
     assert list(default_context().sites) == registry
     site01 = next(s for s in registry if s.id == "pgda-site01")
-    assert site01.location == SCENARIO.location  # the served C1 scenario's key depends on it
+    assert site01.location == SCENARIO.location  # the first served scenario's key depends on it
     pgda = client.get("/api/sites", params={"category": "pgda"}).json()["sites"]
     assert [s["id"] for s in pgda] == [s.id for s in registry if s.category == "pgda"]
 
 
 def test_installed_results_match_stream_a_index():
-    """A's served-scenario index (cache/served_c3_index.json) lists exactly what the API loads, plus C1."""
+    """The served-scenario index (cache/served_c3_index.json) lists exactly what the API loads, plus the first
+    served scenario."""
     import json
     from pathlib import Path
 
@@ -69,7 +70,7 @@ def test_installed_results_match_stream_a_index():
 
     index_path = Path(get_settings().cache_dir) / "served_c3_index.json"
     if not index_path.is_file():
-        pytest.skip("stream A's served index not on this machine")
+        pytest.skip("the served-scenario index is not on this machine")
     index = {
         e["scenario_key"]: e["file"] for e in json.loads(index_path.read_text(encoding="utf-8"))["served"]
     }
