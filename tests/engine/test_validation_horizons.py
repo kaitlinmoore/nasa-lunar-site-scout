@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""Step 4.7: lss.ephem topocentric Sun and Earth az/el at the served site vs JPL Horizons.
+"""Validation: lss.ephem topocentric Sun and Earth az/el at the served site vs JPL Horizons.
 
 Reference values: tests/engine/fixtures/horizons_site01_roi4.json, fetched by scripts/horizons_check.py
 (Horizons DE441, MEAN_ME frame, apparent az/el). Tolerance and reasons: docs/methodology.md section 6.1.
@@ -18,7 +18,8 @@ from lss.datafiles import get as datafile
 from lss.ephem import core as ephem
 
 FIXTURE = Path(__file__).parent / "fixtures" / "horizons_site01_roi4.json"
-# A second site far from the pole at an eastern longitude (methodology 6.1, G2 review m3): Site06, 85.3S 37E.
+# A second site far from the pole at an eastern longitude (methodology 6.1, second correctness review):
+# Site06, 85.3S 37E.
 FIXTURE_SITE06 = Path(__file__).parent / "fixtures" / "horizons_pgda-site06.json"
 TOL_ARCSEC = 1.0  # on the angular separation; measured agreement is ~0.05 arcsec
 

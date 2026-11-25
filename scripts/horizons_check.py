@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Fetch JPL Horizons reference az/el for the Sun and Earth at the served C1 site (step 4.7).
+Fetch JPL Horizons reference az/el for the Sun and Earth at the first served site (methodology section 6.1).
 
     uv run python scripts/horizons_check.py          # writes tests/engine/fixtures/horizons_site01_roi4.json
     uv run python scripts/horizons_check.py --site pgda-site06   # writes .../horizons_pgda-site06.json
@@ -113,7 +113,7 @@ def parse(text: str, times: list[datetime]) -> tuple[dict, list[dict]]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--site", help="a curated site id (default: the served C1 scenario's location)")
+    ap.add_argument("--site", help="a curated site id (default: the first served scenario's site, Site01)")
     a = ap.parse_args(argv)
     times = epochs()
     east_lon, lat, alt_m = site(a.site)

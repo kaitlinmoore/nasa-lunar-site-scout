@@ -134,7 +134,7 @@ def test_resolver_polar_maps_only_and_unsupported():
     s70 = reg.resolve(-70.0, 30.0)  # it does not: the global layer beyond its full reach
     assert [sl.spec.dataset_id for sl in s70.layers] == ["pgda_90_south_pole_dems", "lola_ldem_128"]
     assert s70.fidelity().tier == FidelityTier.low
-    for lat, lon in [(0.0, 0.0), (45.0, 10.0), (89.0, 0.0)]:  # off the polar maps: the global layer (C7)
+    for lat, lon in [(0.0, 0.0), (45.0, 10.0), (89.0, 0.0)]:  # off the polar maps: the global layer
         s = reg.resolve(lat, lon)
         assert [sl.spec.dataset_id for sl in s.layers] == ["lola_ldem_128"]
         assert s.fidelity().tier == FidelityTier.low

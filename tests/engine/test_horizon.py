@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""lss.horizon: synthetic-DEM tests (plan section 5.2) and real-data cross-checks.
+"""lss.horizon: synthetic-DEM tests and real-data cross-checks.
 
 Synthetic terrain is built from the standard spherical distance and bearing formulas (haversine,
 initial bearing), independently of the ray caster's vector geometry, so the azimuth convention and the

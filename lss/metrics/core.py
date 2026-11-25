@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Power (F3) and DTE comms (F4) metrics from a series (definitions: docs/methodology.md section 5).
+Power and DTE comms metrics from a series (definitions: docs/methodology.md section 5).
 
 Durations and fractions come from the refined periods (lss.series), so they are not limited by the grid step.
 Time means (visible fraction, elevations, clearance) integrate the internal grid with the trapezoid rule.

@@ -1,10 +1,10 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Location -> terrain stack resolver (plan section 3.2).
+Location -> terrain stack resolver.
 
 The engine never hard-codes a region: every elevation layer is listed below with its extent, and a
-location gets whichever layers actually cover it, finest first. Adding terrain elsewhere (C7: global
-coarse layer, north pole) is a data change here, not an engine change.
+location gets whichever layers actually cover it, finest first. Adding terrain elsewhere (the global
+coarse layer, the north pole) is a data change here, not an engine change.
 
 Extents are static metadata (polar stereographic metres, copied from the files' GeoTIFF headers and
 checked against them by tests/engine/test_terrain.py when the files are present), so the resolver
@@ -94,7 +94,7 @@ def _site_tile(n: str, bounds: tuple[float, float, float, float]) -> LayerSpec:
     )
 
 
-# C3 sites (lss/registry/sites.yaml); bounds from the GeoTIFF headers (2026-11-15).
+# The other curated PGDA sites (lss/registry/sites.yaml); bounds from the GeoTIFF headers (2026-11-15).
 SITE_TILES_C3 = (
     _site_tile("04", (-9_000.0, -15_000.0, 7_000.0, 1_000.0)),
     _site_tile("07", (22_000.0, -28_000.0, 38_000.0, -12_000.0)),
@@ -108,12 +108,12 @@ SITE_TILES_C3 = (
 
 @dataclass(frozen=True)
 class GlobalLayerSpec(LayerSpec):
-    """The global coarse layer (C7, stream E; docs/methodology.md section 3.5): LOLA LDEM_128 on a latitude /
+    """The global coarse layer (docs/methodology.md section 3.5): LOLA LDEM_128 on a latitude /
     longitude grid, read by window around each point (lss.terrain.global_layer).
 
     Used only where no other layer covers the point (`resolve`), so every location the polar maps cover keeps
-    exactly the stack it had before C7. `resolve` returns a copy with `centre` and `window_m` set; `dem()`
-    then reads that window.
+    exactly the stack it had before the global layer was added. `resolve` returns a copy with `centre` and
+    `window_m` set; `dem()` then reads that window.
     """
 
     label_file_id: str = ""
@@ -144,7 +144,7 @@ GLOBAL_128 = GlobalLayerSpec(
     label_file_id="ldem_128_lbl",
 )
 
-# The C1 stack (the served Site01 result and its validation).
+# Site01's stack (the first served scenario and its validation).
 C1_LAYERS: tuple[LayerSpec, ...] = (SITE01_TILE, POLAR_80M, POLAR_240M)
 # Every layer the resolver may choose from. The first three are C1_LAYERS (scripts index them). The global
 # layer is last and is chosen only where no other layer covers the point.
@@ -263,7 +263,7 @@ def resolve(
     loc = Location(lat=lat, lon=lon)
     chosen: list[LayerSpec] = []
     for spec in sorted(layers, key=lambda s: s.resolution_m):  # stable: listing order breaks ties
-        if isinstance(spec, GlobalLayerSpec):  # C7: considered below, only if nothing else covers the point
+        if isinstance(spec, GlobalLayerSpec):  # considered below, only if nothing else covers the point
             continue
         x, y = ps_from_latlon(lat, lon, spec.pole)
         margin = (spec.use_to_m or 0.0) if spec.site_tile else 0.0
@@ -278,7 +278,7 @@ def resolve(
         if fallback
         else []
     )
-    if not chosen:  # C7: off every polar map, the global layer alone, read around this point
+    if not chosen:  # off every polar map, the global layer alone, read around this point
         chosen = around
     limit = max_range_m  # how far along a ray the map layers are used
     far: list[GlobalLayerSpec] = []

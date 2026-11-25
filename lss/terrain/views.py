@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Terrain images for the 2D site view (plan F6): hillshade and slope classes, as georeferenced PNGs on the
+Terrain images for the 2D site view: hillshade and slope classes, as georeferenced PNGs on the
 DEM's own polar stereographic grid.
 
 - **Hillshade:** cartographic shading for reading the relief, not the real Sun. Light from map azimuth 315°

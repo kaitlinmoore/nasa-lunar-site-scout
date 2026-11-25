@@ -1,11 +1,12 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Loader for the curated site registry (`sites.yaml`, owned by stream E, sites, since 2026-11-16).
+Loader for the curated site registry (`sites.yaml`).
 
 `load_sites()` returns contract `Site` objects (what /api/sites serves), every category. `site_points()`
-returns the engine's provenance (rule, 5 m tile, polar stereographic point) for the PGDA polar sites only,
-the entries with a `point`; used by C3's precompute and checked by tests/engine/test_sites.py. Sites
-elsewhere (e.g. the Apollo sites) have no product 78 tile and no `point`, so it does not list them.
+returns the engine's provenance (rule, 5 m tile, polar stereographic point) for the PGDA polar sites only, the
+entries with a `point`; used by the served-scenario precompute (scripts/precompute_c3.py) and checked by
+tests/engine/test_sites.py. Sites elsewhere (e.g. the Apollo sites) have no product 78 tile and no `point`, so
+it does not list them.
 """
 
 from __future__ import annotations

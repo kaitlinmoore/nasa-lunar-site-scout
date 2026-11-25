@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Compute the served C1 scenario (lss.contract.examples.SCENARIO) once and write:
+Compute the first served scenario (lss.contract.examples.SCENARIO) once and write:
 
 1. the served result, LSS_DATA_DIR/cache/served/c1_<scenario key>.json (format 2): the metrics, series and
    horizon responses with their provenance, which the API loads (it needs no DEMs or kernels; file format in
@@ -31,7 +31,7 @@ from lss.metrics import elevation_histogram, metrics_response
 from lss.registry.terrain import resolve
 from lss.series import SERIES_VERSION, compute_series, horizon_response, series_response
 
-FORMAT = 3  # lss/api/served.py: format 2 adds the horizon; 3 adds the Sun-elevation histogram (RA7)
+FORMAT = 3  # lss/api/served.py: format 2 adds the horizon; 3 adds the Sun-elevation histogram
 REGRESSION = Path(__file__).resolve().parents[1] / "tests" / "engine" / "fixtures" / "site01_roi4_c1.json"
 SERIES_EVERY = 6  # regression fixture keeps every 6th hourly sample
 HORIZON_EVERY = 10  # and every 10th horizon azimuth (1 deg)
@@ -67,7 +67,7 @@ def provenance(res) -> dict:
 
 
 def sun_histogram(res) -> dict:
-    """RA7: time histogram of the Sun's disc-centre elevation over the window (lss.metrics.elevation_band)."""
+    """Time histogram of the Sun's disc-centre elevation over the window (lss.metrics.elevation_band)."""
     g = res.sun.grid
     return elevation_histogram(g.t_s, g.elevation_deg).to_json()
 

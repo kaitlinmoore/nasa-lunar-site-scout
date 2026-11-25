@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""lss.metrics.elevation_band: Sun-elevation time histogram and band fractions (RA7; methodology 5.3)."""
+"""lss.metrics.elevation_band: Sun-elevation time histogram and band fractions (methodology 5.3)."""
 
 import numpy as np
 import pytest
@@ -61,11 +61,11 @@ def test_site01_histogram_matches_its_elevation_statistics():
     assert (centres * h.seconds).sum() / h.seconds.sum() == pytest.approx(
         e.mean, abs=0.01
     )  # within a bin's width
-    assert band_fraction(h, 10.0, 25.0) == 0.0  # k7's band: the Sun never reaches 10 deg here
+    assert band_fraction(h, 10.0, 25.0) == 0.0  # the descent-lighting band: the Sun never reaches 10 deg here
 
 
 def test_band_functions_import_without_spice_or_numba():
-    """C api's request RA10: the API reads histograms from served files and must not load the engine."""
+    """The API reads histograms from served files and must not load the engine."""
     import subprocess
     import sys
 

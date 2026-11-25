@@ -5,7 +5,7 @@ Surface slope on a polar stereographic DEM (docs/methodology.md, "Slope").
 - **Slope at a pixel**: central differences, the angle between the local surface and the plane normal to the
   sphere radius: tan(slope) = hypot(dz/dx, dz/dy), dz/dx = (z[col + 1] - z[col - 1]) / (2 dx), dz/dy likewise
   along rows. This is the definition of Barker et al. (2021)'s published 5 m slope maps (PGDA product 78
-  `*_slp.tif`): it reproduces Site01's map to a median 0.0001 deg (Kaitlin, 2026-11-15; tested).
+  `*_slp.tif`): it reproduces Site01's map to a median 0.0001 deg (the project author, 2026-11-15; tested).
 - **Ground distances**: the map is conformal and true at the pole; its scale factor is
   k = 1 + (rho / 2R)^2 at map distance rho from the pole (1.0002 at 88 S, 1.0037 at 83 S), so a map step
   dx is a ground step dx / k.
@@ -13,13 +13,12 @@ Surface slope on a polar stereographic DEM (docs/methodology.md, "Slope").
   (map distance / k at the point; < 1e-5 relative error within 10 km). Edge pixels of the window, which have
   no neighbour on every side, are not used.
 - **Slope at the point**: the slope of the pixel containing it.
-- **Latitude/longitude grids** (the global coarse layer, C7; stream E, one-off exception: insertions only, the
-  polar path above unchanged): the same central differences on a simple-cylindrical grid, with the ground step
-  of each direction on the 1737.4 km sphere: R dphi north-south, R cos(lat) dlambda east-west at each row's
-  latitude; statistics over pixel centres within that great-circle distance (`slope_stats_lonlat`).
-  East-west, the difference spans n = round(1 / cos(lat)) columns on each side (`ew_offset_px`; n = 1 below
-  48.19 deg), so its baseline does not shrink towards the poles below the 0.5 m height quantisation. No slope
-  at the poles themselves, where east and north are undefined.
+- **Latitude/longitude grids** (the global coarse layer): the same central differences on a simple-cylindrical
+  grid, with the ground step of each direction on the 1737.4 km sphere: R dphi north-south, R cos(lat) dlambda
+  east-west at each row's latitude; statistics over pixel centres within that great-circle distance
+  (`slope_stats_lonlat`). East-west, the difference spans n = round(1 / cos(lat)) columns on each side
+  (`ew_offset_px`; n = 1 below 48.19 deg), so its baseline does not shrink towards the poles below the 0.5 m
+  height quantisation. No slope at the poles themselves, where east and north are undefined.
 - **Aspect and gradient**: the downhill azimuth (deg clockwise from north) and the east and north height
   gradients, from exactly the same differences as the slope (`slope_aspect`, `slope_aspect_lonlat`,
   `gradient_ps`, `gradient_lonlat`). On a polar stereographic map the map-axis gradient is turned to east
@@ -106,8 +105,9 @@ def slope_stats(path: Path, x_m: float, y_m: float, radius_m: float) -> SlopeSta
 
 
 # ----------------------------------------------------------------------------------------------------
-# Latitude/longitude grids (C7, stream E; docs/methodology.md section 5.6.1). Same definition as `slope_deg`;
-# only the ground steps differ: they are not equal in the two directions on a simple-cylindrical grid.
+# Latitude/longitude grids (the global coarse layer; docs/methodology.md section 5.6.1). Same definition as
+# `slope_deg`; only the ground steps differ: they are not equal in the two directions on a simple-cylindrical
+# grid.
 
 
 def ew_offset_px(lat_deg) -> np.ndarray:

@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""C7: the ray caster on latitude/longitude grids (LonLatGrid and the lat/lon path in lss.horizon.core).
+"""The ray caster on latitude/longitude grids (LonLatGrid and the lat/lon path in lss.horizon.core).
 
 Synthetic terrain is built from the same independent spherical formulas as tests/engine/test_horizon.py
 (haversine distance and initial bearing per pixel centre), so the lat/lon lookup, the azimuth convention, the

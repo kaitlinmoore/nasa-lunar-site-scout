@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""End to end on a synthetic DEM (plan section 5.2, C3): terrain -> horizon -> visibility -> metrics.
+"""End to end on a synthetic DEM: terrain -> horizon -> visibility -> metrics.
 
 A ring ridge around a real polar site (88 S) gives a horizon that is the same at every azimuth and known
 analytically (h0, about 0.16 deg). The engine's whole path, the ray caster, the disc margins and their

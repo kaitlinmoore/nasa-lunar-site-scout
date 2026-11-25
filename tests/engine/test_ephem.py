@@ -1,7 +1,7 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 """lss.ephem: frames, time scales, topocentric az/el. Needs the SPICE kernels (skipped otherwise).
 
-The JPL Horizons comparison is a separate validation test (step 4.7).
+The JPL Horizons comparison is a separate validation test (tests/engine/test_validation_horizons.py).
 """
 
 from datetime import UTC, datetime, timedelta

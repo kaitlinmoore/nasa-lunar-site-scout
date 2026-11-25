@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Global coarse terrain layer (plan C7; docs/methodology.md section 3.5): the LOLA gridded DEM LDEM_128.
+Global coarse terrain layer (docs/methodology.md section 3.5): the LOLA gridded DEM LDEM_128.
 
 The product (PDS data set LRO-L-LOLA-4-GDR-V1.0, product version 3.0, 2017-09-15) is one raw image with a
 detached PDS3 label. Facts used here, all from the label and checked against it by `check_label`:

@@ -1,16 +1,18 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-C3 validation (docs/methodology.md section 6.3). Stages:
+Validation of the curated sites and the product 69 rerun (docs/methodology.md sections 6.3, 6.6.1, 6.7).
+Stages:
 
-  p69      PGDA product 69 rerun on a stand-in for product 69's own terrain. The map product 69's label
-           names (LDEM_85S_060M, 2016) is not public; the PDS LOLA map LDEM_75S_60M (V2.0, 2017) is used
-           instead, stated as a stand-in (Kaitlin, 2026-11-15). It lies on the same 60 m pixel grid as
-           product 69. Same 25 pixels, quantity and two start dates as the C1 pass, at 0 m and 2 m, because
+  p69      PGDA product 69 rerun on a stand-in for product 69's own terrain. The map product 69's label names
+           (LDEM_85S_060M, 2016) is not public; the PDS LOLA map LDEM_75S_60M (V2.0, 2017) is used instead,
+           stated as a stand-in (the project author, 2026-11-15). It lies on the same 60 m pixel grid as
+           product 69. Same 25 pixels, quantity and two start dates as the first pass, at 0 m and 2 m, because
            product 69's observer height is not stated. Never served.
   nearfield10m  What a 10 m near field (PGDA product 90, LDEM_83S_10MPP_ADJ, to 83 S) costs and loses against
            the 5 m site map, at the served Site01 point: the same scenario with the 10 m map in place of the
            5 m tile (same hand-over at 5 km), horizon and metrics compared, horizon time measured. For the
-           decision to use 10 m beyond the 5 m maps (Kaitlin, 2026-11-15: measure data and compute cost).
+           decision to use 10 m beyond the 5 m maps (the project author, 2026-11-15: measure data and
+           compute cost).
   roisites At Site04, 07 and 11, every 5th pixel of every Barker RoI (1 m, 2024-2025): the RoI definition
            (pixels > 70%), per-RoI averages for the supplement's box plots (read from figures), and the
            largest RoI's centroid, also at 5 m (LCIP; Barker's text: ~150-175 d).
@@ -21,9 +23,9 @@ C3 validation (docs/methodology.md section 6.3). Stages:
 
     uv run python scripts/validation_c3.py p69 summary
 
-Tolerances were fixed before the run: Sun mean |difference| <= 9.6 pp at either height, derived from the C1
-half-pixel diagnostic (validation_c1.P69_C3_TOL_PP); Earth <= 5 pp, as in C1. Results resume per item from
-LSS_DATA_DIR/cache/validation/p69c3.json.
+Tolerances were fixed before the run: Sun mean |difference| <= 9.6 pp at either height, derived from the first
+pass's half-pixel diagnostic (validation_c1.P69_C3_TOL_PP); Earth <= 5 pp, as in the first pass. Results
+resume per item from LSS_DATA_DIR/cache/validation/p69c3.json.
 """
 
 from __future__ import annotations
@@ -150,7 +152,7 @@ def summary() -> dict:
                 "start_date_spread_pp_max": float(100.0 * np.abs(by_start[0] - by_start[1]).max()),
                 "centre_pixel_pct": float(100.0 * ours[n // 2]),
                 "pass": bool(s["mean_abs_diff_pp"] <= tol),
-                # Labelled diagnostic, as in C1 (not a re-test): product 69's zero-valued pixel left out.
+                # Labelled diagnostic, as in the first pass (not a re-test): product 69's zero pixel left out.
                 "diagnostic_zero_pixel_excluded": _stats(ours, ref, nonzero),
             }
         res["pass_at_either_height"] = any(res[f"{h:g}m"]["pass"] for h in HEIGHTS_M)
@@ -477,7 +479,7 @@ def mazarico_summary() -> dict | None:
     return out
 
 
-# ------------------------------------------------------------ G2 review follow-ups (methodology 6.6, 6.7)
+# --------------------------------------- follow-ups to the second correctness review (methodology 6.6, 6.7)
 
 ACC_SITE_WINDOW = (C1.datetime(2028, 1, 1, tzinfo=C1.UTC), C1.datetime(2029, 1, 1, tzinfo=C1.UTC))
 ACC_SITE_GRID_S = 600.0  # the shifted runs and their baseline share this grid (the served files use 60 s)
@@ -499,7 +501,8 @@ def _partly_hidden_shares(body, dist_at):
 
 def stage_accuracy_sites(fresh: bool) -> None:
     """Section 6.6 at every PGDA site: 1 m over 2028, the horizon moved by -0.2 / +0.2 deg where terrain
-    closer than 1 km sets it, and what sets the horizon (G2 review M1)."""
+    closer than 1 km sets it, and what sets the horizon (second correctness review: accuracy beyond
+    Site01)."""
     from dataclasses import replace
 
     from lss.contract import Scenario
@@ -588,8 +591,9 @@ MAZ_RANK38 = (31.81, 85.42, 80.21, 83.34, 82.17, 85.80)
 
 
 def stage_maz20(fresh: bool) -> None:
-    """Site20's cluster (G2 review M2): Table 3's rank 38 with the matched setting and on the served stack,
-    and the matched setting at the 7 x 7 pixel centres of our 240 m map around the published point (0 m)."""
+    """Site20's cluster (second correctness review, on the Site20 explanation): Table 3's rank 38 with the
+    matched setting and on the served stack, and the matched setting at the 7 x 7 pixel centres of our 240 m
+    map around the published point (0 m)."""
     from lss.contract import Location, Scenario
     from lss.metrics import power_metrics
     from lss.registry.terrain import POLAR_240M
@@ -665,7 +669,7 @@ def maz20_summary() -> dict | None:
     }
 
 
-ROIFULL = ("pgda-site04", 3)  # the outlier in the figure comparison (G2 review m1)
+ROIFULL = ("pgda-site04", 3)  # the outlier in the figure comparison (second correctness review)
 
 
 def stage_roifull(fresh: bool) -> None:
@@ -700,7 +704,7 @@ def stage_roifull(fresh: bool) -> None:
 
 def roifull_summary() -> dict | None:
     """Site04 RoI 3, every pixel, against the every-5th sample and the figure read; and the sampling standard
-    error of every sampled RoI average (G2 review m1)."""
+    error of every sampled RoI average (second correctness review)."""
     full_path, samp_path = C1.vdir() / "roifull.json", C1.vdir() / "roisites.json"
     if not (full_path.is_file() and samp_path.is_file()):
         return None
@@ -744,7 +748,7 @@ def stage_summary(_fresh: bool) -> None:
     s["roifull"] = roifull_summary()
     C1.write_json(FIXTURE, s)
     p = s["product69_standin"]
-    print(f"surface vs C1's ADJ map: {p['surface_diff_m']}")
+    print(f"surface vs the first pass's ADJ map: {p['surface_diff_m']}")
     for body in BODIES:
         for h in HEIGHTS_M:
             r = p[body][f"{h:g}m"]
@@ -752,7 +756,7 @@ def stage_summary(_fresh: bool) -> None:
                 f"{body} {h:g} m: mean diff {r['mean_diff_pp']:+.2f} pp, "
                 f"mean |diff| {r['mean_abs_diff_pp']:.2f} pp, r {r['correlation']:.2f}, pass {r['pass']}"
             )
-        print(f"{body} C1 (ADJ map, 0 m): {p[body]['c1_adj_map']}")
+        print(f"{body} first pass (ADJ map, 0 m): {p[body]['c1_adj_map']}")
     print(f"written {FIXTURE}")
 
 

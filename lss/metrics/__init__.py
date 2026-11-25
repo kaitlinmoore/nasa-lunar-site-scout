@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Power (F3) and DTE comms (F4) metrics from a series.
+Power and DTE comms metrics from a series.
 
 Exports are loaded lazily (PEP 562), so `import lss.metrics.elevation_band` (the Sun-elevation band functions
 the API uses on served data) loads only numpy, not SPICE, numba or the terrain code that `lss.metrics.core`

@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Terrain horizon by ray casting (plan sections 3.2 and 4.2; docs/methodology.md section 3).
+Terrain horizon by ray casting (docs/methodology.md section 3).
 
 Geometry (exact on the 1737.4 km reference sphere, no small-angle approximation):
 - The observer is on the sphere normal at the site, at radius r_o = R + surface height + unit height.
@@ -11,10 +11,10 @@ Geometry (exact on the 1737.4 km reference sphere, no small-angle approximation)
   is used.
 - A terrain sample at height h (radius r = R + h) is seen at elevation
       tan(el) = (r cos(theta) - r_o) / (r sin(theta)),
-  measured from the observer's local horizontal plane. For small theta this is the plan's
-  atan((dh - d^2 / 2R) / d) with dh = r - r_o. The exact form is used because the approximation is
-  off by ~0.005 deg at short range (it uses R where the geometry has R + h) and ~0.03 deg for terrain
-  400 km away (tested).
+  measured from the observer's local horizontal plane. For small theta this is the usual approximation
+  atan((dh - d^2 / 2R) / d) with dh = r - r_o. The exact form is used because the approximation is off by
+  ~0.005 deg at short range (it uses R where the geometry has R + h) and ~0.03 deg for terrain 400 km away
+  (tested).
 - The horizon at azimuth A is the maximum elevation over the ray samples, from `min_range_m` to the
   maximum range. Heights are bilinear between pixel centres (lss.terrain). The spacing at distance d is
       min(sample_factor x pixel size of the layer in use, relative_step x d):
@@ -200,8 +200,8 @@ def _cast(
         out_missing[i] = missing
 
 
-# ----------------------------------------------------------------------------- lat/lon grids (C7)
-# Added by stream E for the global coarse layer (docs/methodology.md section 3.5). The polar stereographic
+# ---------------------------------------------------------------------------------------- lat/lon grids
+# Added for the global coarse layer (docs/methodology.md section 3.5). The polar stereographic
 # kernels above are not changed: stacks with only polar grids never reach this code.
 
 
@@ -347,7 +347,7 @@ def compute_horizon(
         raise ValueError("unit_height_m must be finite and >= 0")
     if not segments:
         raise HorizonUnavailable("no terrain covers this location")
-    if any(s.grid.pole == "lonlat" for s in segments):  # C7 (stream E): a lat/lon grid in the stack
+    if any(s.grid.pole == "lonlat" for s in segments):  # a lat/lon grid (global coarse layer) in the stack
         return _compute_horizon_lonlat(lat, lon, unit_height_m, segments, params)
     near = segments[0].grid
     surface = float(near.height_at_ps(*ps_from_latlon(lat, lon, near.pole))[0])
@@ -419,8 +419,8 @@ def _compute_horizon_lonlat(
     segments: list[Segment],
     params: HorizonParams,
 ) -> Horizon:
-    """compute_horizon for a stack that includes a lat/lon grid (C7, stream E). Same geometry, ray samples
-    and outputs; only the height lookup differs (`_cast_mixed`). Inputs are already checked."""
+    """compute_horizon for a stack that includes a lat/lon grid (the global coarse layer). Same geometry, ray
+    samples and outputs; only the height lookup differs (`_cast_mixed`). Inputs are already checked."""
     near = segments[0].grid
     if near.pole == "lonlat":
         surface = float(near.height_at_latlon(lat, lon)[0])

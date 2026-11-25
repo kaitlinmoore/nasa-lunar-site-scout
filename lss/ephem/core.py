@@ -2,7 +2,7 @@
 
 Ephemeris and frames: Sun and Earth as seen from a site on the Moon.
 
-Conventions (plan section 4.2; also in docs/methodology.md section 2):
+Conventions (also in docs/methodology.md section 2):
 - Frame: MOON_ME_DE421 (named explicitly; `MOON_ME` is only an alias for it). The PGDA elevation
   maps use this frame, so terrain and ephemeris need no alignment.
 - Kernels: DE421 era (see lss/datafiles.py). Supported instants are limited by the lunar orientation

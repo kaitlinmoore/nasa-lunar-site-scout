@@ -1,8 +1,8 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 #
-# Dataset capability registry (plan section 3.4). One entry per dataset.
+# Dataset capability registry. One entry per dataset.
 # Drives: fidelity labels in the UI, the NL layer's "can't answer, because..." responses,
-# and the submission's References / NASA Data fields. Mirrored in reference/challenge-resources.md Part 2.
+# and the submission's References / NASA Data fields.
 #
 # Schema: lss.contract.DatasetCapability. Coordinates: planetocentric deg, east-positive lon.
 # status: planned | used | dropped.
@@ -178,7 +178,7 @@ datasets:
     status: planned
 
   - id: lola_ldem_128
-    # C7, stream E (2026-11-16). Product, frame and datum checked from the PDS3 label (read directly) and against
+    # Added 2026-11-16. Product, frame and datum checked from the PDS3 label (read directly) and against
     # two independent references: Wagner et al. 2017 LM heights (within 9 m at all six Apollo sites) and PGDA
     # LDEM_60S_240MPP_ADJ (12 points 61-86 S: mean difference 0.9 m, max 7.0 m). docs/methodology.md section 3.5.
     # Smith et al. 2010: Crossref gives GRL 37(18), article 2010GL043751 (the L18204 id was not confirmed: not used).
@@ -222,7 +222,7 @@ datasets:
     resolution_m: 59
     resolution_note: 512 pixels/degree (~59 m at the equator)
     can_answer:
-      - Mid-latitude horizon and slope at ~60 m  # Strong tier (S2a)
+      - Mid-latitude horizon and slope at ~60 m  # planned mid-latitude terrain upgrade
     cannot_answer:
       - Polar terrain poleward of 60
     citation: >-
@@ -230,7 +230,7 @@ datasets:
       Altimeter and SELENE Terrain Camera. Icarus 273, 346-355. doi:10.1016/j.icarus.2015.07.039
     license: NASA-produced data (U.S. Government work). No license stated; the PGDA Data Usage Policy asks users to cite the paper (Barker et al. 2016) (checked 2026-11-15). URL checked (page title "High-resolution Lunar Topography (SLDEM2015)").
     status: planned
-    # VERIFY SLDEM2015 frame vs MOON_ME (plan section 9).
+    # VERIFY SLDEM2015 frame vs MOON_ME.
     notes: Frame alignment with MOON_ME not yet checked.
 
   - id: diviner_polar_temperature
@@ -243,7 +243,7 @@ datasets:
       lat_min: -90
       lat_max: -80
     resolution_m: 240
-    # VERIFY grid spacing and seasonal/local-time binning; product names and citation. Thermal work is S5.
+    # VERIFY grid spacing and seasonal/local-time binning; product names and citation. Not used yet: no thermal operation.
     resolution_note: Grid spacing and seasonal/local-time binning not yet checked
     can_answer:
       - Typical surface temperature range by season and time of day poleward of 80
@@ -280,7 +280,7 @@ datasets:
     status: planned
 
   - id: iau_gazetteer_moon
-    # Stream E (2026-11-16), for landmark labels on the 3D globe (Kaitlin). scripts/fetch_iau_names.py writes
+    # Added 2026-11-16, for landmark labels on the 3D globe (the project author). scripts/fetch_iau_names.py writes
     # LSS_DATA_DIR/cache/features/iau_names.json from the Moon centre-point shapefile (MOON_nomenclature_center_pts
     # .zip; 9,087 names, all "Adopted by IAU", on 2026-11-16). Checked: the shapefile's points equal its
     # center_lat/center_lon fields; Mons Mouton (Feature 16070) matches its Gazetteer page; Statio
@@ -409,7 +409,7 @@ datasets:
     can_answer:
       - Sun and Earth direction at any site and time 1900-2050 (UTC), in the DEMs' MOON_ME frame
     cannot_answer:
-      # Extending past 2050 is plan item X5.
+      # Extending past 2050 needs newer orientation kernels (not planned).
       - Dates after 2050-12-31 23:58:50 UTC (orientation kernel end); needs newer kernels + frame alignment
     citation: >-
       Folkner, W. M., Williams, J. G., & Boggs, D. H. (2008). The Planetary and Lunar Ephemeris DE 421.
@@ -426,7 +426,7 @@ datasets:
       with spiceypy (2026-11-14). Stored in LSS_DATA_DIR/kernels (gitignored); fetched by
       scripts/fetch_data.py.
 
-  # Not a dataset: the tool's own limits, so refusal reasons have one source (Kaitlin, 2026-11-15).
+  # Not a dataset: the tool's own limits, so refusal reasons have one source (the project author, 2026-11-15).
   # Lists of data sources (References, NASA Data) skip this entry: provider "This project".
   - id: lss_tool_capabilities
     name: Lunar Site Scout tool capabilities (not a dataset)

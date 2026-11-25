@@ -1,18 +1,17 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 #
-# Curated sites (plan F5), owned by stream E (sites) since 2026-11-16 (stream A before). lss.registry.sites
-# loads these as contract Site objects for /api/sites and fixtures/sites.json (stream C api generates those
-# from here).
+# Curated sites. lss.registry.sites loads these as contract Site objects for /api/sites and
+# fixtures/sites.json (both generated from here).
 #
 # Visitor-facing: name, short_name, subtitle, description and source. Keep internal notes in comments.
 # `regions`: region tags (contract Site.regions), used by /api/compare `across.region` and the NL layer. Each
-# tag's member list is Kaitlin's. shackleton (2026-11-16): Shackleton Rim, Connecting Ridge, Peak near
-# Shackleton, de Gerlache Rim.
+# tag's member list is the project author's. shackleton (2026-11-16): Shackleton Rim, Connecting Ridge, Peak
+# near Shackleton, de Gerlache Rim.
 #
-# Served point rule (Kaitlin, 2026-11-15): the centroid of the largest Barker et al. (2021) region of interest
-# (RoI) where the PGDA product 78 tile has RoIs; otherwise the Mazarico et al. (2011) coordinate, checked for
-# slope on the 5 m map. Barker's RoIs: connected 5 m pixels with average illumination > 70% at 1 m over
-# 2024-2025, area > 2500 m2. Centroid = centre of the 5 m pixel containing the mean of the RoI's pixel
+# Served point rule (the project author, 2026-11-15): the centroid of the largest Barker et al. (2021) region
+# of interest (RoI) where the PGDA product 78 tile has RoIs; otherwise the Mazarico et al. (2011) coordinate,
+# checked for slope on the 5 m map. Barker's RoIs: connected 5 m pixels with average illumination > 70% at 1 m
+# over 2024-2025, area > 2500 m2. Centroid = centre of the 5 m pixel containing the mean of the RoI's pixel
 # centres (lss.registry.rois): this reproduces all seven Table 2 centroids at Site01 exactly.
 #
 # `point` is engine provenance (not in the contract): how the location was found, and the 5 m tile.
@@ -116,9 +115,10 @@ sites:
       centroids at Site01). Site 11 of Mazarico, E., et al. (2011), Icarus 211, 1066-1081,
       doi:10.1016/j.icarus.2010.10.030.
 
-  # Site06, Site20, Site23, Site42: the sentences on the 5 m map in 2028 answer the G2 review (M3; M2 for
-  # Site20). Every number in them is pinned to the served files, the 5 m maps and A's validation fixture by
-  # tests/engine/test_sites_mazarico_text.py. Wording approved by Kaitlin 2026-11-16.
+  # Site06, Site20, Site23, Site42: the sentences on the 5 m map in 2028 answer the second correctness review
+  # (its findings on the Site20 explanation and on how far it applies to the other three Mazarico points). Every
+  # number in them is pinned to the served files, the 5 m maps and the validation fixture by
+  # tests/engine/test_sites_mazarico_text.py. Wording approved by the project author 2026-11-16.
   - id: pgda-site06
     name: Site06 Nobile rim 1 (Mazarico 2011 site 6)
     short_name: Nobile Rim
@@ -144,8 +144,9 @@ sites:
       y = 113.780 km on the 1737.4 km sphere). Site name and 5 m map: PGDA product 78 (Barker, M. K.,
       et al. (2021), Planet. Space Sci. 203, 105119, doi:10.1016/j.pss.2020.105119).
 
-  # Site20 description: the published-coordinate check (Kaitlin's rule, 2026-11-16; scripts/mazarico_node.py,
-  # docs/methodology.md section 1.4.1). Wording approved by Kaitlin 2026-11-16.
+  # Site20 description: the published-coordinate check (the project author's rule, 2026-11-16;
+  # scripts/mazarico_node.py, docs/methodology.md section 1.4.1). Wording approved by the project author
+  # 2026-11-16.
   - id: pgda-site20
     name: Site20 Leibnitz beta plateau (Mazarico 2011 site 20)
     short_name: Leibnitz Beta Plateau
@@ -226,14 +227,14 @@ sites:
       y = -56.149 km on the 1737.4 km sphere). Site name and 5 m map: PGDA product 78 (Barker, M. K.,
       et al. (2021), Planet. Space Sci. 203, 105119, doi:10.1016/j.pss.2020.105119).
 
-  # Apollo landing sites (Kaitlin, 2026-11-16): the Lunar Module descent stage position from Wagner et al. (2017),
-  # LROC NAC images, read from the LROC PDS archive table (LRO-L-LROC-5-RDR-V1.0, ANTHROPOGENIC_OBJECTS, DBF field
-  # LONGITUDE in -180..180) and identical on NASA NSSDCA's Apollo Landing Site Coordinates page ("planetocentric Mean
-  # Earth/Polar Axis Lunar Reference System - DE421 ephemeris"): the engine's MOON_ME / DE421 frame. Uncertainty is
-  # the table's "Uncertainty (m)" column. Place names and UT landing dates: NSSDCA mission pages. No `point`: there
-  # is no PGDA product 78 tile here, so site_points() (polar sites only) does not list these. dataset_ids:
-  # [lola_ldem_128], the global coarse layer (C7; docs/methodology.md sections 3.5, 5.6.1) that their horizons
-  # and slopes use (Kaitlin, 2026-11-16).
+  # Apollo landing sites (the project author, 2026-11-16): the Lunar Module descent stage position from Wagner et
+  # al. (2017), LROC NAC images, read from the LROC PDS archive table (LRO-L-LROC-5-RDR-V1.0,
+  # ANTHROPOGENIC_OBJECTS, DBF field LONGITUDE in -180..180) and identical on NASA NSSDCA's Apollo Landing Site
+  # Coordinates page ("planetocentric Mean Earth/Polar Axis Lunar Reference System - DE421 ephemeris"): the
+  # engine's MOON_ME / DE421 frame. Uncertainty is the table's "Uncertainty (m)" column. Place names and UT landing
+  # dates: NSSDCA mission pages. No `point`: there is no PGDA product 78 tile here, so site_points() (polar sites
+  # only) does not list these. dataset_ids: [lola_ldem_128], the global coarse layer (docs/methodology.md sections
+  # 3.5, 5.6.1) that their horizons and slopes use (the project author, 2026-11-16).
   - id: apollo-11
     name: Apollo 11 landing site (Lunar Module Eagle descent stage)
     short_name: Apollo 11
@@ -354,16 +355,16 @@ sites:
       Landing Site Coordinates page (planetocentric mean Earth/polar axis frame, DE421 ephemeris). Site name and
       landing date: NSSDCA, https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo17info.html.
 
-  # Artemis III candidate regions (plan 4.3; Kaitlin, 2026-11-16): NASA's nine regions of 28 October 2024
-  # (release 24-136), in the release's order. Point rule (Kaitlin): the centre of the region's 1 km grid box in
+  # Artemis III candidate regions (the project author, 2026-11-16): NASA's nine regions of 28 October 2024 (release
+  # 24-136), in the release's order. Point rule (the project author): the centre of the region's 1 km grid box in
   # McClernan (2024), doi:10.5066/P1MEQ6UK (ScienceBase item 671a6fa8d34efed5620f89f8), read from each zip's
   # <stem>_PolarLGRS_ACC_1km_S_Grid.shp header (= the dbf ULX/LRX/ULY/LRY extent; full rectangles of 1 km cells).
   # The grid's .prj: stereographic, latitude of origin -90, central meridian 0, scale factor 0.994, false
   # easting/northing 500 km, 1737.4 km sphere; so engine PS metres = (LPS - 500 km) / 0.994. The inverse is
   # checked against the bounds published in each region's 1 km XML (tests/engine/test_sites_artemis.py).
   # VERIFY: the frame of the USGS grids (not stated; LROC QuickMap regions, mean Earth assumed). No `point`:
-  # these are not product 78 tile sites. Wording approved by Kaitlin 2026-11-16 (short names end in " region"
-  # to stay distinct from the curated sites). docs/methodology.md section 1.4.3.
+  # these are not product 78 tile sites. Wording approved by the project author 2026-11-16 (short names end in
+  # " region" to stay distinct from the curated sites). docs/methodology.md section 1.4.3.
   - id: artemis3-peak-near-cabeus-b
     name: Peak near Cabeus B (Artemis III candidate region, NASA 2024)
     short_name: Peak near Cabeus B region

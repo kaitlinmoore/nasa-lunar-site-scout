@@ -1,7 +1,7 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Horizon cache in `LSS_DATA_DIR/cache/horizon/` (plan section 4.6: horizons depend only on location and
-unit height, so they are computed once and reused for any date window).
+Horizon cache in `LSS_DATA_DIR/cache/horizon/` (horizons depend only on location and unit height, so they are
+computed once and reused for any date window).
 
 The cache key is a SHA-256 of everything that changes the result: algorithm version, location, unit
 height, numerical settings, and the terrain stack (file ids, source URLs, ray-distance ranges). The key

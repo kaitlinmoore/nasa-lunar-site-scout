@@ -1,5 +1,6 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""Per-site regression fixtures (plan section 5.4): each C3 site's served 1 m result over the C1 window.
+"""Per-site regression fixtures: each other curated PGDA site's served 1 m result over the first
+served window.
 
 tests/engine/fixtures/c3/<site id>.json is written by scripts/regression_c3.py from the served files. A fresh
 computation must reproduce it, with the same tolerances as the Site01 fixture (test_regression_c1.py). An
@@ -74,7 +75,7 @@ def test_fresh_computation_reproduces_the_fixture(site_id):
 
 def test_one_horizon_recomputed_from_scratch(tmp_path):
     """The tests above read horizons from the cache; this one recomputes Site07's in an empty cache, so a
-    change to the ray caster that forgot to bump HORIZON_VERSION is caught (G2 review m7)."""
+    change to the ray caster that forgot to bump HORIZON_VERSION is caught (second correctness review)."""
     site_id = "pgda-site07"
     if site_id not in REFS or not _have_data(site_id):
         pytest.skip("Site07 fixture or data missing")

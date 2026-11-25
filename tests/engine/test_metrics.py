@@ -1,6 +1,6 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""lss.metrics: definitions of methodology section 5 on synthetic series with known answers, plus the served
-C1 scenario on real data (kernels + DEMs)."""
+"""lss.metrics: definitions of methodology section 5 on synthetic series with known answers, plus the first
+served scenario on real data (kernels + DEMs)."""
 
 from dataclasses import fields, replace
 from datetime import UTC, datetime, timedelta

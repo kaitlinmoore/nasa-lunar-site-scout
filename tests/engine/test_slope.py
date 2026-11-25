@@ -74,7 +74,7 @@ def _terrain_script():
 
 
 def test_terrain_radii_use_the_decided_layers():
-    """1 km on the 5 m site tile, 10 km on the 10 m polar map (Kaitlin, 2026-11-15)."""
+    """1 km on the 5 m site tile, 10 km on the 10 m polar map (the project author, 2026-11-15)."""
     m = _terrain_script()
     assert m.RADII_M == (1_000.0, 10_000.0)
     for tile in ("Site01", "Site04"):
@@ -114,7 +114,7 @@ def test_apollo_sites_use_the_global_map_with_the_approved_limitation():
     m = _terrain_script()
     assert m.on_global_map(get_site("apollo-11")) and not m.on_global_map(get_site("artemis3-haworth"))
     assert (m.GLOBAL_DATASET, m.GLOBAL_RES_M) == ("lola_ldem_128", 236.901)
-    assert m.LIMIT_GLOBAL == (  # E's draft, approved by Kaitlin (2026-11-16)
+    assert m.LIMIT_GLOBAL == (  # approved by the project author (2026-11-16)
         "Measured on the 237 m global map (LOLA LDEM_128): regional slopes over about 500 m; smaller "
         "features are not resolved, and values are not comparable with the 5 m and 10 m maps at the polar "
         "sites."

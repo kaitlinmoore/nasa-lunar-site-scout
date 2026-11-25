@@ -1,7 +1,7 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""Regression fixture: the validated served C1 result (Site01 RoI 4, 1 m, 2028-05-15 to 06-14, PT1H).
+"""Regression fixture: the validated first served result (Site01 RoI 4, 1 m, 2028-05-15 to 06-14, PT1H).
 
-tests/engine/fixtures/site01_roi4_c1.json is written by scripts/precompute_c1.py after the step 4.7
+tests/engine/fixtures/site01_roi4_c1.json is written by scripts/precompute_c1.py after the
 validation (docs/methodology.md section 6). A fresh computation must reproduce it; any change to the
 engine that moves these numbers must be deliberate (regenerate the fixture and say why in the commit).
 """

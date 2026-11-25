@@ -1,7 +1,7 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Per-site regression fixtures for C3 (plan section 5.4): for every curated site with a PGDA tile, other than
-Site01 (which has tests/engine/fixtures/site01_roi4_c1.json), the 1 m scenario over the C1 window (2028-05-15,
+Per-site regression fixtures: for every curated site with a PGDA tile, other than Site01 (which has
+tests/engine/fixtures/site01_roi4_c1.json), the 1 m scenario over the first served window (2028-05-15,
 30 days, PT1H), taken from its served file so the fixture is exactly what the API serves.
 
     tests/engine/fixtures/c3/<site id>.json: scenario key, metrics, the series every 24th sample and the

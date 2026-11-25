@@ -25,10 +25,10 @@ from lss.config import get_settings
 class Group(StrEnum):
     kernels = "kernels"
     site01 = "site01"
-    sites = "sites"  # C3: the other PGDA product 78 site tiles
+    sites = "sites"  # the other PGDA product 78 site tiles
     farfield = "farfield"
     validation = "validation"
-    global_ = "global"  # C7: the global coarse layer (LOLA LDEM_128, 2.1 GB), for points off the polar maps
+    global_ = "global"  # the global coarse layer (LOLA LDEM_128, 2.1 GB), for points off the polar maps
 
 
 class Kind(StrEnum):
@@ -105,7 +105,7 @@ PDS_LOLA_CYL = (
 SITE01_PS = (-11309.0, -12258.0)
 
 FILES: tuple[DataFile, ...] = (
-    # --- SPICE, DE421 era (plan section 4.2: matches the DEMs' MOON_ME / DE421 frame)
+    # --- SPICE, DE421 era (matches the DEMs' MOON_ME / DE421 frame)
     DataFile(
         "de421_spk",
         Group.kernels,
@@ -179,7 +179,7 @@ FILES: tuple[DataFile, ...] = (
         "pgda_78_site_dems",
         "Barker et al. 2021 RoI shapefiles, for the validation comparison.",
     ),
-    # --- Other PGDA product 78 sites (C3); Site06's RoI archive link is dead (2026-11-15)
+    # --- Other PGDA product 78 sites; Site06's RoI archive link is dead (2026-11-15)
     DataFile(
         "site04_dem",
         Group.sites,
@@ -234,7 +234,7 @@ FILES: tuple[DataFile, ...] = (
         "pgda_78_site_dems",
         "Barker et al. 2021 RoI shapefiles: the served point is the largest RoI's centroid.",
     ),
-    # Mazarico et al. (2011) Table 3 sites without RoIs (Kaitlin, 2026-11-15)
+    # Mazarico et al. (2011) Table 3 sites without RoIs (the project author, 2026-11-15)
     DataFile(
         "site06_dem",
         Group.sites,
@@ -336,7 +336,7 @@ FILES: tuple[DataFile, ...] = (
         "data/pgda90/clips/LDEM_83S_10MPP_ADJ_site01_20km.tif",
         "pgda_90_south_pole_dems",
         "10 m/pix near field (83-90 S), +-20 km window of a 5.1 GB COG: measures what a 10 m near field "
-        "costs and loses against the 5 m site map at Site01 (C3 cost step; Kaitlin 2026-11-15).",
+        "costs and loses against the 5 m site map at Site01 (the project author, 2026-11-15).",
         clip=Clip(*SITE01_PS, half_width_m=20_000.0),
     ),
     DataFile(
@@ -346,7 +346,8 @@ FILES: tuple[DataFile, ...] = (
         f"{PGDA}/LOLA_20mpp/LDEM_83S_10MPP_ADJ.TIF",
         "data/pgda90/clips/LDEM_83S_10MPP_ADJ_site04_12km.tif",
         "pgda_90_south_pole_dems",
-        "10 m/pix, +-12 km around the Site04 served point: 10 km slope statistics (RA4; Kaitlin 2026-11-15).",
+        "10 m/pix, +-12 km around the Site04 served point: 10 km slope statistics "
+        "(the project author, 2026-11-15).",
         clip=Clip(-2811.156, -6649.704, half_width_m=12_000.0),
     ),
     DataFile(
@@ -356,7 +357,8 @@ FILES: tuple[DataFile, ...] = (
         f"{PGDA}/LOLA_20mpp/LDEM_83S_10MPP_ADJ.TIF",
         "data/pgda90/clips/LDEM_83S_10MPP_ADJ_site07_12km.tif",
         "pgda_90_south_pole_dems",
-        "10 m/pix, +-12 km around the Site07 served point: 10 km slope statistics (RA4; Kaitlin 2026-11-15).",
+        "10 m/pix, +-12 km around the Site07 served point: 10 km slope statistics "
+        "(the project author, 2026-11-15).",
         clip=Clip(30063.429, -20107.659, half_width_m=12_000.0),
     ),
     DataFile(
@@ -366,7 +368,8 @@ FILES: tuple[DataFile, ...] = (
         f"{PGDA}/LOLA_20mpp/LDEM_83S_10MPP_ADJ.TIF",
         "data/pgda90/clips/LDEM_83S_10MPP_ADJ_site11_12km.tif",
         "pgda_90_south_pole_dems",
-        "10 m/pix, +-12 km around the Site11 served point: 10 km slope statistics (RA4; Kaitlin 2026-11-15).",
+        "10 m/pix, +-12 km around the Site11 served point: 10 km slope statistics "
+        "(the project author, 2026-11-15).",
         clip=Clip(-37541.121, 14881.646, half_width_m=12_000.0),
     ),
     DataFile(
@@ -376,7 +379,8 @@ FILES: tuple[DataFile, ...] = (
         f"{PGDA}/LOLA_20mpp/LDEM_83S_10MPP_ADJ.TIF",
         "data/pgda90/clips/LDEM_83S_10MPP_ADJ_site06_12km.tif",
         "pgda_90_south_pole_dems",
-        "10 m/pix, +-12 km around the Site06 served point: 10 km slope statistics (RA4; Kaitlin 2026-11-15).",
+        "10 m/pix, +-12 km around the Site06 served point: 10 km slope statistics "
+        "(the project author, 2026-11-15).",
         clip=Clip(85957.726, 113780.267, half_width_m=12_000.0),
     ),
     DataFile(
@@ -386,7 +390,8 @@ FILES: tuple[DataFile, ...] = (
         f"{PGDA}/LOLA_20mpp/LDEM_83S_10MPP_ADJ.TIF",
         "data/pgda90/clips/LDEM_83S_10MPP_ADJ_site20_12km.tif",
         "pgda_90_south_pole_dems",
-        "10 m/pix, +-12 km around the Site20 served point: 10 km slope statistics (RA4; Kaitlin 2026-11-15).",
+        "10 m/pix, +-12 km around the Site20 served point: 10 km slope statistics "
+        "(the project author, 2026-11-15).",
         clip=Clip(72919.046, 117927.84, half_width_m=12_000.0),
     ),
     DataFile(
@@ -396,7 +401,8 @@ FILES: tuple[DataFile, ...] = (
         f"{PGDA}/LOLA_20mpp/LDEM_83S_10MPP_ADJ.TIF",
         "data/pgda90/clips/LDEM_83S_10MPP_ADJ_site23_12km.tif",
         "pgda_90_south_pole_dems",
-        "10 m/pix, +-12 km around the Site23 served point: 10 km slope statistics (RA4; Kaitlin 2026-11-15).",
+        "10 m/pix, +-12 km around the Site23 served point: 10 km slope statistics "
+        "(the project author, 2026-11-15).",
         clip=Clip(-4906.252, 122155.02, half_width_m=12_000.0),
     ),
     DataFile(
@@ -406,10 +412,11 @@ FILES: tuple[DataFile, ...] = (
         f"{PGDA}/LOLA_20mpp/LDEM_83S_10MPP_ADJ.TIF",
         "data/pgda90/clips/LDEM_83S_10MPP_ADJ_site42_12km.tif",
         "pgda_90_south_pole_dems",
-        "10 m/pix, +-12 km around the Site42 served point: 10 km slope statistics (RA4; Kaitlin 2026-11-15).",
+        "10 m/pix, +-12 km around the Site42 served point: 10 km slope statistics "
+        "(the project author, 2026-11-15).",
         clip=Clip(-113360.357, -56149.321, half_width_m=12_000.0),
     ),
-    # Artemis III regions (stream E's registry): 10 m clips for their slope statistics
+    # Artemis III regions (in the site registry): 10 m clips for their slope statistics
     DataFile(
         "ldem_83s_10m_artemis3_peak_near_cabeus_b_clip",
         Group.sites,
@@ -508,8 +515,8 @@ FILES: tuple[DataFile, ...] = (
         "data/pds_lola/clips/LDEM_75S_60M_site01_150km.tif",
         "pds_lola_gdr",
         "PDS LOLA GDR 60 m polar map (V2.0, 2017), stand-in for product 69's own terrain (LDEM_85S_060M, "
-        "not public; Kaitlin 2026-11-15). Same 60 m pixel grid as product 69. +-150 km window, heights in m "
-        "above 1737.4 km (counts x 0.5).",
+        "not public; the project author, 2026-11-15). Same 60 m pixel grid as product 69. +-150 km window, "
+        "heights in m above 1737.4 km (counts x 0.5).",
         clip=Clip(
             *SITE01_PS,
             half_width_m=150_000.0,
@@ -517,7 +524,7 @@ FILES: tuple[DataFile, ...] = (
             scale=0.5,
         ),
     ),
-    # --- Global coarse layer (C7, stream E): LOLA LDEM_128 (LRO-L-LOLA-4-GDR-V1.0, product version 3.0,
+    # --- Global coarse layer: LOLA LDEM_128 (LRO-L-LOLA-4-GDR-V1.0, product version 3.0,
     # 2017-09-15), simple cylindrical, 128 px/deg, MEAN EARTH/POLAR AXIS OF DE421, int16 x 0.5 m above
     # 1737.4 km. Used whole (read by window around each point), never clipped.
     DataFile(

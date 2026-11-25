@@ -1,5 +1,6 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""Step 4.7 validation results (docs/methodology.md section 6), as committed by scripts/validation_c1.py.
+"""Validation results for the first served result (docs/methodology.md section 6), as committed by
+scripts/validation_c1.py.
 
 tests/engine/fixtures/validation_c1.json is the script's summary output: the Barker et al. (2021) RoI 4 bound,
 the internal PGDA product 69 pass and the ridge-top check. The runs take about an hour (532 horizons), so
@@ -148,7 +149,7 @@ def test_product69_supports_the_ridge_top_result():
     assert s["centre_pixel"]["ours_pct"] > flat + 10.0
 
 
-# ------------------------------------------------------------------ G1 review follow-ups
+# ------------------------------------------------------ follow-ups to the first correctness review
 
 
 def test_barker_70pct_contour_is_reproduced_on_both_sides():

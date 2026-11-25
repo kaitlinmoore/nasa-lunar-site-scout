@@ -2,7 +2,7 @@
 
 Loader for the dataset capability registry (`datasets.yaml`).
 
-The location -> terrain-stack resolver is added here by stream A (plan section 3.2).
+The location -> terrain-stack resolver is in lss/registry/terrain.py.
 """
 
 from __future__ import annotations

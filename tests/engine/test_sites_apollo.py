@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""The Apollo landing sites in the curated registry (lss/registry/sites.yaml; Kaitlin, 2026-11-16).
+"""The Apollo landing sites in the curated registry (lss/registry/sites.yaml; the project author, 2026-11-16).
 
 Coordinates are the Lunar Module descent stage positions of Wagner et al. (2017), Icarus 283, 92-103,
 doi:10.1016/j.icarus.2016.05.011, as listed in the LROC PDS archive table (LRO-L-LROC-5-RDR-V1.0,
@@ -49,7 +49,7 @@ def test_apollo_sites_are_served_but_not_polar_tile_sites():
     for sid, s in apollo_sites().items():
         assert sid not in points
         assert s.dataset_ids == ["lola_ldem_128"] and not s.has_dem_clones and s.regions == []
-        # the dataset listed is the one the terrain resolver uses there (the global coarse layer, C7)
+        # the dataset listed is the one the terrain resolver uses there (the global coarse layer)
         st = resolve(s.location.lat, s.location.lon)
         assert [tl.dataset_id for tl in st.contract_layers()] == s.dataset_ids
     assert sorted(points) == sorted(s.id for s in load_sites() if s.category == SiteCategory.pgda)

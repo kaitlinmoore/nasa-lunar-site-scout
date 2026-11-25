@@ -5,7 +5,7 @@ Measurements behind docs/methodology.md section 5, made with the lss.series / ls
 1. Limb-darkened vs geometric time-mean solar fraction (served point, 1 m, Barker's 2024-01-01 to 2026-01-01).
 2. Shadow periods over that period: count, and how many are short (horizon flickers).
 3. Real horizon profile vs Barker's flat cut at the disc centre's azimuth: mean fraction and short periods.
-4. Internal grid step: the served C1 scenario at 60 s (default) vs 15 s.
+4. Internal grid step: the first served scenario at 60 s (default) vs 15 s.
 
     uv run python scripts/series_checks.py            # writes LSS_DATA_DIR/cache/series_checks.json
 

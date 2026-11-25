@@ -1,7 +1,7 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
 Time histogram of the Sun's elevation, for "fraction of the window with the Sun's elevation in [a, b]"
-(C api's request RA7; docs/methodology.md section 5.3).
+(docs/methodology.md section 5.3).
 
 - **Quantity:** the apparent elevation of the Sun's disc centre above the local horizontal plane
   (section 2), the same quantity as `PowerMetrics.sun_elevation_deg`. No atmospheric refraction (the Moon has

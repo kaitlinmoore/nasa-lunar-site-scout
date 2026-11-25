@@ -1,15 +1,15 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Terrain images for the 2D site view (plan F6; lss.terrain.views): for each curated site with a PGDA tile and
+Terrain images for the 2D site view (lss.terrain.views): for each curated site with a PGDA tile and
 each view, a square centred on the served point, on the DEM's own south polar stereographic grid (map up = the
 grid's +y axis, not geographic north):
 
   2km   2 x 2 km from the site's 5 m map (PGDA product 78)                     -> 400 x 400 px at 5 m
   20km  20 x 20 km from the 10 m polar map (PGDA product 90), 2 x 2 block means  -> 1000 x 1000 px at 20 m
 
-(Kaitlin, 2026-11-16.) Output per view, in LSS_DATA_DIR/cache/terrain_view/<site id>/<view>/: hillshade.png
-(8-bit grey), slope.png (8-bit class number, 255 = no data) and view.json (bounds, projection, pixel size,
-source and the encodings). The slope classes are computed at the view's own pixel size.
+(The project author, 2026-11-16.) Output per view, in LSS_DATA_DIR/cache/terrain_view/<site id>/<view>/:
+hillshade.png (8-bit grey), slope.png (8-bit class number, 255 = no data) and view.json (bounds, projection,
+pixel size, source and the encodings). The slope classes are computed at the view's own pixel size.
 
     uv run python scripts/terrain_views.py [--sites pgda-site01 ...]
 """

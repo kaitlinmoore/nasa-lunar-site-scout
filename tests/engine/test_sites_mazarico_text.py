@@ -1,13 +1,13 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""Every number in the four Mazarico sites' descriptions (lss/registry/sites.yaml; G2 review M3 and M2,
-wording approved by Kaitlin 2026-11-16) against the data it comes from:
+"""Every number in the four Mazarico sites' descriptions (lss/registry/sites.yaml; prompted by the
+second correctness review, wording approved by the project author 2026-11-16) against the data it comes from:
 
-- 2028 results at 1, 2, 5 and 10 m: stream A's served files
+- 2028 results at 1, 2, 5 and 10 m: the served files
   (LSS_DATA_DIR/cache/served/c3_<site>_<h>m_20280101_366d.json): `mean_visible_disk_fraction` ("of the Sun's
   disc in view on average", Table 3's quantity),
   `illumination_fraction` ("some of the Sun is in view"), `earth_visibility_fraction`, Sun elevation, horizon;
 - the slope at the point: the site's 5 m map (lss.terrain.slope, methodology section 5.6);
-- Mazarico's method on the 240 m map: stream A's validation fixture (tests/engine/fixtures/validation_c3.json,
+- Mazarico's method on the 240 m map: the validation fixture (tests/engine/fixtures/validation_c3.json,
   matched setting) and, for Site20's nearest grid points, scripts/mazarico_node.py's output.
 
 Percentages are rounded half up to whole numbers, as written, from the exact values (not from one-decimal
@@ -59,7 +59,8 @@ def earth(site_id, h):
 
 
 def matched(rank: int, height: str) -> tuple[int, int]:
-    """(ours, Table 3) for average illumination with the Mazarico-matched setting, from A's fixture."""
+    """(ours, Table 3) for average illumination with the Mazarico-matched setting, from the validation
+    fixture."""
     row = next(r for r in FIXTURE[f"{height}_avg_ill_pct"]["rows"] if r["rank"] == rank)
     return whole(row["ours"]), whole(row["mazarico"])
 

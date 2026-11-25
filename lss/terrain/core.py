@@ -76,7 +76,7 @@ class Grid(NamedTuple):
 class LonLatGrid(NamedTuple):
     """An elevation raster on a planetocentric latitude / east-longitude grid (simple cylindrical), in memory.
 
-    Added for the global coarse layer (C7, stream E; lss.terrain.global_layer, docs/methodology.md section
+    Added for the global coarse layer (lss.terrain.global_layer, docs/methodology.md section
     3.5). Pixel-registered like `Grid`: a value belongs to its pixel's centre; heights between centres are
     bilinear in (longitude, latitude).
 

@@ -1,5 +1,6 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""C3 validation results (docs/methodology.md sections 3.2 and 6.3), as committed by scripts/validation_c3.py.
+"""Validation results for the curated sites (docs/methodology.md sections 3.2 and 6.3), as committed by
+scripts/validation_c3.py.
 
 The runs take about 45 minutes, so they are not repeated here; these tests check the committed results
 against the tolerances fixed before the runs.
@@ -105,7 +106,7 @@ def x_off(row):
     return row["mazarico"] - row["ours"]
 
 
-# ------------------------------------------------------- G2 review follow-ups (methodology 6.6.1, 6.7)
+# ---------------------------------- follow-ups to the second correctness review (methodology 6.6.1, 6.7)
 
 
 def test_accuracy_at_every_pgda_site():

@@ -1,5 +1,6 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""The Artemis III candidate regions in the curated registry (lss/registry/sites.yaml; Kaitlin, 2026-11-16).
+"""The Artemis III candidate regions in the curated registry (lss/registry/sites.yaml; the project author,
+2026-11-16).
 
 Region names: NASA release 24-136 (28 October 2024), in its order. Each point is the centre of the region's
 1 km grid box in McClernan (2024), U.S. Geological Survey data release doi:10.5066/P1MEQ6UK. The table below

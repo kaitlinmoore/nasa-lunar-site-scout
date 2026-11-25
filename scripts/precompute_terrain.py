@@ -1,7 +1,7 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Precomputed slope statistics for the curated sites (C api's request RA4; docs/methodology.md section 5.6), for
-the `terrain` and `site_summary` operations.
+Precomputed slope statistics for the curated sites (docs/methodology.md section 5.6), for the `terrain` and
+`site_summary` operations.
 
 For each site in lss/registry/sites.yaml, one file LSS_DATA_DIR/cache/terrain/<site id>.json:
 
@@ -9,8 +9,8 @@ For each site in lss/registry/sites.yaml, one file LSS_DATA_DIR/cache/terrain/<s
      "provenance": {...}}
 
 1 km is measured on the site's 5 m tile (PGDA product 78); 10 km on a clip of the 10 m polar map (PGDA product
-90, LDEM_83S_10MPP_ADJ), over the whole circle (Kaitlin, 2026-11-15). Sites whose files are missing are
-skipped with a message.
+90, LDEM_83S_10MPP_ADJ), over the whole circle (the project author, 2026-11-15). Sites whose files are missing
+are skipped with a message.
 
     uv run python scripts/precompute_terrain.py [--sites artemis3-haworth ...]
 
@@ -33,7 +33,7 @@ from lss.registry.sites import load_sites, site_points
 from lss.terrain.slope import SLOPE_VERSION, slope_stats
 
 FORMAT = 1
-RADII_M = (1_000.0, 10_000.0)  # the "around" and "nearby" defaults (C api)
+RADII_M = (1_000.0, 10_000.0)  # the "around" and "nearby" defaults of the NL layer
 LIMIT_MAX = (
     "The maximum is the steepest single pixel within the radius (often a crater wall), not a typical value."
 )
@@ -41,14 +41,14 @@ LIMIT_5M = (
     "About 90% of 5 m pixels are interpolated between LOLA tracks (Barker et al. 2021): single-pixel slopes "
     "are low confidence (median RMS slope error 1.9 deg)."
 )
-# Sites off the polar maps (the Apollo sites): the 237 m global map (E's lat/lon path, methodology 5.6.1).
+# Sites off the polar maps (the Apollo sites): the 237 m global map (the lat/lon path, methodology 5.6.1).
 GLOBAL_DATASET = "lola_ldem_128"
 GLOBAL_RES_M = 236.901
 GLOBAL_FILE_ID = "ldem_128_img"
 LIMIT_GLOBAL = (
     "Measured on the 237 m global map (LOLA LDEM_128): regional slopes over about 500 m; smaller features "
     "are not resolved, and values are not comparable with the 5 m and 10 m maps at the polar sites."
-)  # E's draft, approved by Kaitlin (2026-11-16)
+)  # approved by the project author (2026-11-16)
 LIMIT_10M = (
     "Measured on a 10 m map: slopes are gentler than on the 5 m site map, and features smaller than about "
     "20 m are not resolved."

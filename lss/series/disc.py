@@ -19,10 +19,10 @@ from __future__ import annotations
 
 import numpy as np
 
-# Solar limb darkening at 550 nm (Kaitlin, 2026-11-15): I(mu)/I(1) = 1 - U2 - V2 + U2 mu + V2 mu^2, with mu
-# the cosine of the angle between the solar surface normal and the line of sight. Allen, C. W. (1973),
-# Astrophysical Quantities, 3rd ed., section 81 "Solar limb darkening", p. 171, row 0.55 um (u2, v2).
-# The only place these coefficients are defined.
+# Solar limb darkening at 550 nm (the project author, 2026-11-15): I(mu)/I(1) = 1 - U2 - V2 + U2 mu + V2 mu^2,
+# with mu the cosine of the angle between the solar surface normal and the line of sight. Allen, C. W. (1973),
+# Astrophysical Quantities, 3rd ed., section 81 "Solar limb darkening", p. 171, row 0.55 um (u2, v2). The only
+# place these coefficients are defined.
 LIMB_U2 = 0.93
 LIMB_V2 = -0.23
 LIMB_WAVELENGTH_NM = 550.0

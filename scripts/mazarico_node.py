@@ -1,7 +1,7 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
 Served point for a Mazarico et al. (2011) site whose published coordinate does not reproduce Table 3
-(rule approved by Kaitlin, 2026-11-16; docs/methodology.md section 1.4.1).
+(rule approved by the project author, 2026-11-16; docs/methodology.md section 1.4.1).
 
 Table 3 gives each point to 0.01 deg, so the grid node Mazarico computed lies inside that rounding cell
 (near the pole, about 303 m in latitude but only ~24 m in longitude at 85.4 S). The rule:
@@ -20,7 +20,7 @@ Table 3 gives each point to 0.01 deg, so the grid node Mazarico computed lies in
    the published coordinate is kept (and its description revised).
 6. The slope at the point on the site's 5 m map is reported (section 5.6), as for the other sites.
 
-The section 6.7 tolerances and Table 3 are read from stream A's validation (tests/engine/fixtures/
+The section 6.7 tolerances and Table 3 are read from the validation (tests/engine/fixtures/
 validation_c3.json, scripts/validation_c3.py), unchanged. Output: LSS_DATA_DIR/cache/sites/
 mazarico_node_rank<N>.json (horizons cached beside it).
 

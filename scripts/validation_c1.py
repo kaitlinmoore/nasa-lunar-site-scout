@@ -1,6 +1,6 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Step 4.7 validation of the served C1 result (docs/methodology.md section 6). Stages:
+Validation of the first served result (docs/methodology.md section 6). Stages:
 
   barker   Barker et al. (2021) RoI 4 bound: every 5 m pixel in the RoI 4 outline, 1 m, Sun,
            2024-01-01 to 2026-01-01, averaged over the RoI as in Barker's Table 2 A rows (and C rows).
@@ -69,8 +69,9 @@ P69_STARTS = (datetime(2000, 1, 1, tzinfo=UTC), datetime(2024, 1, 1, tzinfo=UTC)
 P69_STEP_S = 3600.0  # product 69: "percentage of [hourly] timesteps"
 P69_HALF = 2  # 5 x 5 pixels around the one containing the RoI 4 centroid
 P69_TOL_PP = 5.0  # mean |difference| over the 5 x 5 pixels, percentage points (fixed before the run)
-# For the C3 rerun on product 69's own terrain (LDEM_85S_060M), at 0 m and 2 m: derived BEFORE that run from
-# the half-pixel diagnostic (mean |change|, 9 central pixels x 4 directions = 9.55 pp; methodology 6.3).
+# For the rerun on product 69's own terrain (LDEM_85S_060M; scripts/validation_c3.py), at 0 m and 2 m: derived
+# BEFORE that run from the half-pixel diagnostic (mean |change|, 9 central pixels x 4 directions = 9.55 pp;
+# methodology 6.3).
 P69_C3_TOL_PP = 9.6
 P69_C3_HEIGHTS_M = (0.0, 2.0)
 P69_CLIP = LayerSpec(
@@ -93,9 +94,10 @@ FIG15_ROI4 = {
     0.0: -1.9, 22.5: -1.6, 45.0: -0.85, 67.5: -1.5, 90.0: -2.0, 112.5: -2.2, 135.0: -0.9, 157.5: -1.6,
     180.0: -1.7, 202.5: -0.9, 225.0: 0.1, 247.5: 0.15, 270.0: -0.3, 292.5: -1.2, 315.0: -1.9, 337.5: -1.5,
 }  # fmt: skip
-# Fig. 15, RoI 4 panel, re-read around the two angles where the eye reading above differed from ours by
-# 0.77 deg (G1 review, finding m3): the far-field (black) line digitised column by column from a 1200 dpi
-# render (pixel medians; axes from the panel's gridlines). Far field sets the horizon at all these angles.
+# Fig. 15, RoI 4 panel, re-read around the two angles where the eye reading above differed from ours by 0.77
+# deg (raised by the first correctness review): the far-field (black) line digitised column by column from a
+# 1200 dpi render (pixel medians; axes from the panel's gridlines). Far field sets the horizon at all these
+# angles.
 FIG15_ROI4_DIGITISED = {
     85.0: -0.96, 87.5: -0.95, 90.0: -1.13, 92.5: -1.70, 95.0: -2.00,
     335.0: -2.46, 337.5: -2.32, 342.5: -1.53, 345.0: -1.42,
@@ -530,7 +532,7 @@ def p69shift_summary() -> dict | None:
                 "product69_within_shift_range": bool(lo <= ref <= hi),
             }
         )
-    # Every (pixel, direction) change: the basis of the C3 rerun's tolerance (methodology section 6.3).
+    # Every (pixel, direction) change: the basis of the rerun's tolerance (methodology section 6.3).
     changes = np.array(
         [
             100.0 * v["time_steps_visible"] - r["ours_pct"]
@@ -583,8 +585,9 @@ def p69_summary() -> dict:
             "mean_diff_pp": float(diff[ok].mean()),
             "mean_abs_diff_pp": float(np.abs(diff[ok]).mean()),
             "correlation": float(np.corrcoef(mean_ours[ok], ref[ok])[0, 1]),
-            # Diagnostic requested after the miss (Kaitlin, 2026-11-15), not a re-test: the same statistics
-            # without product 69's pixel(s) that read exactly 0 in both its Sun and Earth maps (an artefact).
+            # Diagnostic requested after the miss (the project author, 2026-11-15), not a re-test: the same
+            # statistics without product 69's pixel(s) that read exactly 0 in both its Sun and Earth maps (an
+            # artefact).
             "diagnostic_zero_pixel_excluded": {
                 "pixels_excluded": int((ok & ~nonzero).sum()),
                 "mean_diff_pp": float(diff[nonzero].mean()),

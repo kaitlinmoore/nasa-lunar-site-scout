@@ -21,7 +21,7 @@ def test_sites_load_as_contract_sites():
 
 
 def test_site01_is_what_the_api_serves_today():
-    """C api will generate /api/sites from the registry; Site01 must not change when it does."""
+    """/api/sites is generated from the registry; Site01 must stay what the API has served from the start."""
     reg = {s.id: s for s in load_sites()}["pgda-site01"]
     assert reg == fixture_sites().sites[0]
     assert (reg.location.lat, reg.location.lon) == (SCENARIO.location.lat, SCENARIO.location.lon)

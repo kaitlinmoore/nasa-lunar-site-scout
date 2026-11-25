@@ -1,5 +1,5 @@
 # SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-"""C7: the global coarse layer (LOLA LDEM_128): label checks, pixel mapping, windows, resolver path, and
+"""The global coarse layer (LOLA LDEM_128): label checks, pixel mapping, windows, resolver path, and
 spot checks on the real map at the Apollo sites (skipped when LDEM_128 is not downloaded)."""
 
 import numpy as np

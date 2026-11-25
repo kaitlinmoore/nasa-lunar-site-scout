@@ -1,7 +1,7 @@
 """SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 
-Official IAU names of lunar surface features, for labels on the 3D globe (Kaitlin, 2026-11-16; registry entry
-`iau_gazetteer_moon` in lss/registry/datasets.yaml).
+Official IAU names of lunar surface features, for labels on the 3D globe (the project author, 2026-11-16;
+registry entry `iau_gazetteer_moon` in lss/registry/datasets.yaml).
 
 Downloads the Moon centre-point shapefile of the Gazetteer of Planetary Nomenclature (IAU Working Group for
 Planetary System Nomenclature, maintained by the USGS Astrogeology Science Center; public domain) and writes
