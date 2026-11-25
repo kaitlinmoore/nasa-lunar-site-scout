@@ -22,7 +22,7 @@ NL_SECRET="${LSS_NL_SECRET:-lss-anthropic-demo-key}"
 # Precomputed served results live in the shared data folder, outside the repo.
 # deploy-api.sh stages them into bundle/served/ (gitignored) so Cloud Build can copy them
 # into the image at /data/cache/served (LSS_DATA_DIR=/data in the container).
-LSS_DATA_DIR_POSIX="$(cygpath -u "${LSS_DATA_DIR:-C:\\dev\\GitHub\\lss-data}" 2>/dev/null || echo "${LSS_DATA_DIR:-/c/dev/GitHub/lss-data}")"
+LSS_DATA_DIR_POSIX="$(cygpath -u "${LSS_DATA_DIR:-C:\\dev\\data\\nasa-lunar-site-scout}" 2>/dev/null || echo "${LSS_DATA_DIR:-/c/dev/data/nasa-lunar-site-scout}")"
 SERVED_SRC="${LSS_DATA_DIR_POSIX}/cache/served"
 TERRAIN_SRC="${LSS_DATA_DIR_POSIX}/cache/terrain"
 # Cached showcase NL answers, written by `uv run python -m lss.api.nl_cache`; may be empty.

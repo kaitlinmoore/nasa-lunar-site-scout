@@ -24,7 +24,7 @@ from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FIXTURES_DIR = REPO_ROOT / "fixtures"
-DEFAULT_DATA_DIR = Path(r"C:\dev\GitHub\lss-data")
+DEFAULT_DATA_DIR = Path(r"C:\dev\data\nasa-lunar-site-scout")
 
 
 def env_file_path() -> Path:
