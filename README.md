@@ -129,9 +129,9 @@ This project was built with SI (AI) assistance from Claude (Anthropic). **The co
 - **Claude Opus 5.5:** all development sessions (Claude Code: engine, API and natural-language layer, web, docs) and the research, planning and orchestration chats. It is also the model the live question box calls (`claude-opus-5-5`) and the model scored in the eval above.
 - **Claude Fable 5.2:** an independent correctness review of the horizon, frames and metric definitions at the G1 checkpoint. Its findings were applied by the engine stream. A second Fable 5.2 review at the G2 checkpoint (2026-11-16) covered the validation of the other curated sites; its findings were also applied by the engine stream (methodology §6.6.1 and §6.7, among others).
 
-**What Claude generated:** the code and tests; drafts of the methodology, references, glossary and this README; data research (finding and checking datasets and papers); the architecture and build-plan recommendations; drafts of the visitor-facing texts. The list of candidate metrics was supplied by Claude at the author's request, and she chose the metrics from it.
+**What Claude generated:** the code and tests; drafts of the methodology, references, glossary and this README; data research (finding and checking datasets and papers); architecture and build-plan recommendations; drafts of visitor-facing texts.
 
-**What the author decided:** the concept, the features and their scope; the validation design (one check against Barker et al. 2021 and one against PGDA product 69); the metric definitions; the served sites, heights and windows, and the rule for each site's point; the limb-darkening law; the layout and design. She approved every visitor-facing text and edited some of them, and she authored every commit.
+**What the author decided:** the concept, the features and their scope; the validation design; the metric definitions; the served sites, heights and windows, and the rule for each site's point; the limb-darkening law; the layout and design. Approved and edited visitor-facing text, authored all commits.
 
 **Labels:** source and data files written with Claude carry a header saying so. In the app, the question box says that a language model turns the question into a query and that the numbers come from the precomputed results, not from the model; the model is Claude Opus 5.5 (above).
 
