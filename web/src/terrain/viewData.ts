@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Terrain images for the 2D site view (C5, Phase 2 step 3.6), contract 0.13.0:
+// Terrain images for the 2D site view, contract 0.13.0:
 // GET /api/terrain/views?site_id= lists a site's views (TerrainView), and each image is
 // GET /api/terrain/view/{site_id}/{view}/{layer}.png (an 8-bit greyscale PNG; a 404 says why in plain
 // words). When the live API gives no usable answer, the static copy has the same:
@@ -85,9 +85,9 @@ function tokenPalette(count: number): string[] | null {
 }
 
 /**
- * The page's palette for a view's slope classes: the theme's tokens (layout pass, 2026-11-23:
+ * The page's palette for a view's slope classes: the theme's tokens (2026-11-23:
  * the data's dark palette was five blues that were hard to tell apart over the hillshade) when
- * there is exactly one token per class; otherwise stream A's dark palette (the app is dark only).
+ * there is exactly one token per class; otherwise the view's dark palette (the app is dark only).
  * Only the colours change: the classes, their order and their labels are the view's own.
  */
 export function slopePalette(slope: NonNullable<TerrainView['slope']>): string[] {

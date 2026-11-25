@@ -9,7 +9,7 @@
 // - Field descriptions from the contract (fixtures/openapi.json) are injected as
 //   __FIELD_DOCS__ so the UI shows the contract's own definitions, not hand-copied ones.
 // - The dev server may read ../fixtures (fixture mode, see web/README.md).
-// - Cesium (C7a globe): its static runtime files (Workers, ThirdParty, Assets, Widgets) are
+// - Cesium (globe): its static runtime files (Workers, ThirdParty, Assets, Widgets) are
 //   copied to /cesium/ and CESIUM_BASE_URL points there (Cesium's documented Vite setup).
 //   The token is logged by length only, never printed.
 import { existsSync, readFileSync } from 'node:fs'

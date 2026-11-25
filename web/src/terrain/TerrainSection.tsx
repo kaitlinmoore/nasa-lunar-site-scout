@@ -1,6 +1,6 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// 2D site view (C5, Phase 2 step 3.6): the site's precomputed terrain images (contract 0.13.0),
-// hillshade with the slope classes on top, in a plain card (layout waits for Kaitlin's layout pass).
+// 2D site view: the site's precomputed terrain images (contract 0.13.0),
+// hillshade with the slope classes on top, in a plain card.
 // A separate chunk, so OpenLayers and proj4 load only with the site panel.
 import { useEffect, useMemo, useState } from 'react'
 import { ApiError, type Site } from '../api/client'

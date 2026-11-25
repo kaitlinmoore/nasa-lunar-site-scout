@@ -19,15 +19,15 @@ WEB_ORIGINS="${WEB_URL},https://${WEB_SITE}.firebaseapp.com"
 # monthly limit set in the Anthropic Console). Created once with deploy/setup-nl-secret.sh.
 NL_SECRET="${LSS_NL_SECRET:-lss-anthropic-demo-key}"
 
-# Precomputed served results (plan 4.6) live in the shared data folder, outside the repo.
+# Precomputed served results live in the shared data folder, outside the repo.
 # deploy-api.sh stages them into bundle/served/ (gitignored) so Cloud Build can copy them
 # into the image at /data/cache/served (LSS_DATA_DIR=/data in the container).
 LSS_DATA_DIR_POSIX="$(cygpath -u "${LSS_DATA_DIR:-C:\\dev\\GitHub\\lss-data}" 2>/dev/null || echo "${LSS_DATA_DIR:-/c/dev/GitHub/lss-data}")"
 SERVED_SRC="${LSS_DATA_DIR_POSIX}/cache/served"
 TERRAIN_SRC="${LSS_DATA_DIR_POSIX}/cache/terrain"
-# Cached showcase NL answers (C8), written by `uv run python -m lss.api.nl_cache`; may be empty.
+# Cached showcase NL answers, written by `uv run python -m lss.api.nl_cache`; may be empty.
 NL_CACHE_SRC="${LSS_DATA_DIR_POSIX}/cache/nl"
-# Terrain images for the 2D site view (stream A; contract 0.13.0): <site>/<view>/{view.json,*.png}.
+# Terrain images for the 2D site view (scripts/terrain_views.py; contract 0.13.0): <site>/<view>/{view.json,*.png}.
 TERRAIN_VIEW_SRC="${LSS_DATA_DIR_POSIX}/cache/terrain_view"
-# IAU feature names for the globe labels (stream E's scripts/fetch_iau_names.py; contract 0.14.0).
+# IAU feature names for the globe labels (scripts/fetch_iau_names.py; contract 0.14.0).
 FEATURES_SRC="${LSS_DATA_DIR_POSIX}/cache/features"

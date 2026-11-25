@@ -235,7 +235,7 @@ They give the regions' names and points, not data any number is computed from.
 
 | Credit | Where it must appear | Status |
 |---|---|---|
-| "Data provided by: NASA and the USGS Astrogeology Science Center" (Cesium Moon) | With the globe, and in this list | CesiumJS shows data attribution by default (behind a "Data attribution" link) and the app does not hide it. On-screen wording checked against this list at the G1 deploy (2026-11-15): matches. |
+| "Data provided by: NASA and the USGS Astrogeology Science Center" (Cesium Moon) | With the globe, and in this list | CesiumJS shows data attribution by default (behind a "Data attribution" link) and the app does not hide it. On-screen wording checked against this list at deploy (2026-11-15): matches. |
 | Cesium ion logo | With the globe | The guide requires it to be shown prominently. CesiumJS shows it by default and the app does not hide it. |
 | Citation of Barker et al. (2021), Barker et al. (2023), Mazarico et al. (2011) | Wherever results from PGDA products 78, 90 and 69 are presented | Section 1.1 |
 | Citation of the PDS LOLA data set (Neumann 2010; bundle DOI 10.17189/tnyt-7007) | Wherever the product 69 rerun is presented | Section 1.1 |

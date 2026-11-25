@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Horizon/sky plot (C5): terrain horizon profile (elevation vs azimuth) with the Sun and Earth
+// Horizon/sky plot: terrain horizon profile (elevation vs azimuth) with the Sun and Earth
 // tracks over the window and their positions at the selected sample. SVG; colours from CSS
 // tokens via classes. Values are plotted exactly as sent; nothing is interpolated.
 import { useMemo } from 'react'

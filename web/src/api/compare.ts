@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Live comparison mapping (Phase 2 step 3.3), and the keyed mapping for comparisons with filters, a rank
+// Live comparison mapping, and the keyed mapping for comparisons with filters, a rank
 // or a site template (NL answers). Pure, no build-time values, so it can be unit-tested.
 import { scenarioId } from '../scenario'
 import type { components } from './schema'

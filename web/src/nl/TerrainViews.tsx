@@ -3,7 +3,7 @@
 // (`site_summary` = slope statistics + nearby features + metrics). Values are the API's, formatted
 // like the site screen's; a missing value says "not computed". Each result's own `limitations`
 // are shown with it. A summary's metrics for the scenario already on the page's dashboard aren't
-// repeated (layout pass); they're one click away.
+// repeated; they're one click away.
 import { useContext } from 'react'
 import type { Schemas } from '../api/client'
 import { formatLatLon, formatScenarioSummary } from '../format'

@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Side-by-side comparison (C6): one column per scenario, the site screen's metric rows, values
+// Side-by-side comparison: one column per scenario, the site screen's metric rows, values
 // rendered exactly as on the site screen. A scenario without a result says so in its column.
 import type { ReactNode } from 'react'
 import type { MetricsResponse } from '../api/client'

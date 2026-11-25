@@ -1,6 +1,6 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 // One label style for everything the globe writes on the Moon: site names, the "South Pole" cue, and
-// later the IAU landmark labels (Kaitlin, 2026-11-16). The surface runs from black shadow to bright
+// later the IAU landmark labels (the project author, 2026-11-16). The surface runs from black shadow to bright
 // grey, so a text outline alone isn't enough: each label also sits on a subtle dark backing. Every
 // value is a token in index.css (theme "Penumbra" sets the fonts; the outline and backing stay).
 import { Cartesian2, Color, LabelStyle } from 'cesium'

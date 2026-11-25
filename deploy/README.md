@@ -22,15 +22,15 @@ Deploy the API first: the web build reads the API URL from Cloud Run.
 
 ## Precomputed results in the API image
 
-The API serves precomputed results only (plan 4.6; C1 serves one scenario). They live in the shared
-data folder (`LSS_DATA_DIR/cache/served/*.json`, written by `scripts/precompute_c1.py`), outside the
+The API serves precomputed results only. They live in the shared
+data folder (`LSS_DATA_DIR/cache/served/*.json`, written by `scripts/precompute_c1.py` and `scripts/precompute_c3.py`), outside the
 repo. `deploy-api.sh` copies them into `bundle/served/` (gitignored), checks them with the same loader
 the API uses (contract version, scenario keys, not placeholder), and the `Dockerfile` copies them to
 `/data/cache/served`. A file made with an older contract version is still served if that version is in
 `COMPATIBLE_VERSIONS` (`lss/api/served.py`, kept by the contract owner); otherwise rerun the precompute
 after the contract bump, then redeploy.
 
-## Static JSON fallback (plan 4.7)
+## Static JSON fallback
 
 `deploy-web.sh` also publishes the precomputed results as static files on the web host, at
 `https://penumbra-luna.web.app/static-api/`, so the demo still works when the API is down:
@@ -94,7 +94,7 @@ fails the build if the image has no CA certificates (`lss.api.nl.ca_certificates
 
 ## Terrain images for the 2D site view (contract 0.13.0)
 
-Stream A writes them to `LSS_DATA_DIR/cache/terrain_view/<site id>/<view>/` (`view.json`, `hillshade.png`,
+`scripts/terrain_views.py` writes them to `LSS_DATA_DIR/cache/terrain_view/<site id>/<view>/` (`view.json`, `hillshade.png`,
 `slope.png`; views `2km` and `20km`; about 5.6 MB for the 8 PGDA sites). `deploy-api.sh` stages the folder into
 `bundle/terrain_view/` and checks it with the API's loader (8-bit greyscale PNGs of the stated size, no
 colour-profile chunks, centre within one pixel of the site's served point); the `Dockerfile` copies it to
@@ -103,21 +103,21 @@ colour-profile chunks, centre within one pixel of the site's served point); the 
 
 ## IAU feature names for the globe labels (contract 0.14.0)
 
-Stream E's `scripts/fetch_iau_names.py` writes `LSS_DATA_DIR/cache/features/iau_names.json` (9,087 IAU-adopted
+`scripts/fetch_iau_names.py` writes `LSS_DATA_DIR/cache/features/iau_names.json` (9,087 IAU-adopted
 names, 465 KB). `deploy-api.sh` stages it into `bundle/features/` and checks it with the API's loader; the
 `Dockerfile` copies it to `/data/cache/features`. `GET /api/features/labels` filters it (type, minimum diameter,
 satellite features, box, limit; gzip over 1 KB). `deploy-web.sh` publishes every name as `feature_labels.json`
 in the static copy (about 200 KB gzipped) and checks it against the deployed API.
 
-## Cached showcase answers (C8)
+## Cached showcase answers
 
-The project owner chooses the showcase questions (candidates: `reference/logs/c8-candidates.md`, private).
+The project owner chooses the showcase questions.
 Each becomes one file in `LSS_DATA_DIR/cache/nl/`, then goes live with the usual two deploys:
 
 ```bash
 # a question from a saved eval run: replays its saved model output, no LLM call, no cost
 uv run python -m lss.api.nl_cache add-from-run tests/nl/results/<run>.json <item id>
-# a question of her own: one live call through the demo's pipeline (with her okay)
+# a new question: one live call through the demo's pipeline (with the project owner's okay)
 uv run python -m lss.api.nl_cache add "How steep is the terrain?" --site pgda-site01 --live
 uv run python -m lss.api.nl_cache list          # what is cached; `remove <name>` drops one
 bash deploy/deploy-api.sh                       # stages cache/nl into the image (checked as the API loads it)
@@ -136,7 +136,7 @@ configuration holding this project's account and project, so the machine's defau
 configuration is never used or changed. Override with `LSS_GCLOUD_CONFIG`,
 `LSS_GCP_PROJECT` or `LSS_GCP_REGION` if needed.
 
-## One-time setup (already done in C0; repeat only on a new machine)
+## One-time setup (already done; repeat only on a new machine)
 
 ```bash
 gcloud config configurations create lss --no-activate
@@ -146,7 +146,7 @@ npx --yes firebase-tools@15 login               # same Google account
 ```
 
 The project needs billing linked and these APIs enabled: Cloud Run, Cloud Build,
-Artifact Registry. Firebase must be added to the project (in C0 this needed the Firebase
+Artifact Registry. Firebase must be added to the project (the first time, this needed the Firebase
 console, because the CLI returned 403 until the account accepted the Firebase terms).
 
 Firebase no longer auto-creates a default Hosting site (since 2026-10-15), so create it

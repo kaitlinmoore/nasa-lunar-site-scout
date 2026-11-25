@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Metric specs shared by the site screen and the comparison (C6): row order, labels, which flag
+// Metric specs shared by the site screen and the comparison: row order, labels, which flag
 // qualifies which field, and the contract's field descriptions. Components are in metrics.tsx.
 import type { CommsMetrics, PowerMetrics } from './api/client'
 import { NO_EARTHSET_IN_WINDOW, NO_SUNSET_IN_WINDOW } from './format'

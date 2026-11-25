@@ -1,12 +1,12 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// C7a globe view: the Cesium Moon with clickable curated-site markers (lazy chunk), plus a
+// Globe view: the Cesium Moon with clickable curated-site markers (lazy chunk), plus a
 // plain list of the same sites. The list is the accessible equivalent of the markers (canvas
 // markers can't be reached by keyboard or screen reader) and keeps working if WebGL or the
 // Cesium token fails.
-// Site selection (Kaitlin, 2026-11-15, layout (c)): clicking a marker or a list entry shows a
+// Site selection (the project author, 2026-11-15): clicking a marker or a list entry shows a
 // card on the globe (name, start of the description, "See details"); "See details" opens the
 // site's side panel beside the globe (`?site=<id>`), and the globe zooms toward the site.
-// Pinned sites (Kaitlin, 2026-11-15) live here: a distinct marker, a Pin/Unpin button on the card,
+// Pinned sites (the project author, 2026-11-15) live here: a distinct marker, a Pin/Unpin button on the card,
 // and a "Pinned" group first in the site list.
 import { lazy, Suspense, useEffect, useState } from 'react'
 import type { Site, SitesResponse } from '../api/client'
@@ -182,7 +182,7 @@ export default function GlobeView({
           The globe needs a Cesium ion token, and this build has none. The site list below still works.
         </p>
       )}
-      {/* Caption wording chosen by Kaitlin (2026-11-15); expert detail behind "Details". */}
+      {/* Caption wording chosen by the project author (2026-11-15); expert detail behind "Details". */}
       <p className="globe-caption">
         Near the Moon's south pole the Sun skims the horizon, so a few metres of height or a nearby hill
         decide between light and shadow. Choose a site to see it worked out from our own terrain calculations;

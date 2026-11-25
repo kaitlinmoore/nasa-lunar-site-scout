@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// The site page's scenario picker (G2; Kaitlin approved a plain height / window picker, 2026-11-16):
+// The site page's scenario picker (the project author approved a plain height / window picker, 2026-11-16):
 // a site's precomputed scenarios (GET /api/scenarios, contract 0.11.0) grouped by time window, each
 // with the unit heights it has. Pure, so it can be unit-tested in Node.
 import type { components } from './api/schema'
@@ -58,7 +58,7 @@ export function siteWindows(entries: ScenarioEntry[], siteId: string): WindowOpt
 export type Choice = { windowKey: string; unit_height_m: number }
 
 /**
- * The window the picker opens on when the site has it (Kaitlin, 2026-11-16): the 30 days from
+ * The window the picker opens on when the site has it (the project author, 2026-11-16): the 30 days from
  * 15 May 2028 (any step). The other windows are still offered.
  */
 export const PREFERRED_WINDOW = { start: '2028-05-15T00:00:00Z', days: 30 }

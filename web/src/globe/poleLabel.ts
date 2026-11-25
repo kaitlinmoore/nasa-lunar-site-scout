@@ -1,7 +1,7 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Where the "South Pole" cue label goes. Kaitlin, 2026-11-16: beside the pole point, clear of the
-// site markers (and of the names of the landmarks near the sites), so nothing covers it. Layout pass
-// (2026-11-23): stepping only leftwards took it far from the point when zoomed in (120 km: past
+// Where the "South Pole" cue label goes. The project author, 2026-11-16: beside the pole point, clear of the
+// site markers (and of the names of the landmarks near the sites), so nothing covers it. Changed
+// 2026-11-23: stepping only leftwards took it far from the point when zoomed in (120 km: past
 // Shackleton, reading as a label of the ground beside it), so it now tries all four sides and uses
 // the one where it fits closest to the point; it never covers the point itself, and site labels
 // count as obstacles too. Pure (screen pixels only), so it can be unit-tested in Node.

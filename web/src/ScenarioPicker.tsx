@@ -1,6 +1,6 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// The site page's scenario picker (G2): a plain time-window and unit-height choice among the site's
-// precomputed scenarios (Kaitlin approved it plain, 2026-11-16; polish waits for her layout pass).
+// The site page's scenario picker: a plain time-window and unit-height choice among the site's
+// precomputed scenarios (the project author approved it plain, 2026-11-16).
 // Only what is precomputed can be chosen: each window lists the heights it has.
 import type { ScenarioEntry } from './api/client'
 import { formatDateRange, formatHeight, formatLength, formatStepPlain } from './format'

@@ -1,6 +1,6 @@
 /* SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage". */
 /*
- * Theme "Penumbra" (Kaitlin, 2026-11-23, layout pass): the light/shadow boundary the tool is
+ * Theme "Penumbra" (the project author, 2026-11-23): the light/shadow boundary the tool is
  * about. Deep blue-black with a faint warm glow from one side, translucent panels, a serif
  * display face (Fraunces) for names and section titles, Hanken Grotesk for text, gold for the
  * Sun and for actions; the Moon floats on the page. Fonts are self-hosted (main.tsx).
@@ -60,7 +60,7 @@
   --color-notice-border: #5b6fb5;
   --color-notice-bg: rgba(40, 52, 100, 0.35);
 
-  /* colour: sky view (C5) */
+  /* colour: sky view */
   --color-sun: #f2cc60;
   --color-earth: #58a6ff;
   --color-terrain: #2b3148;
@@ -76,8 +76,8 @@
   --slider-thumb: 16px;
 
   /* slope classes on the 2D site view (terrain/viewData.ts), gentlest to steepest: cool to hot, so
-     neighbouring classes differ in hue as well as lightness over the grey hillshade (layout pass,
-     2026-11-23; stream A's palette_dark was five blues). One colour per class, in class order;
+     neighbouring classes differ in hue as well as lightness over the grey hillshade
+     (2026-11-23; the views' palette_dark was five blues). One colour per class, in class order;
      a view with a different number of classes is drawn in its own palette_dark instead. */
   --slope-class-1: #5b8def;
   --slope-class-2: #a6ead0;
@@ -86,7 +86,7 @@
   --slope-class-5: #a8327f;
   --event-mark: 10px;
 
-  /* globe (C7a); read by MoonGlobe.tsx via getComputedStyle */
+  /* globe; read by MoonGlobe.tsx via getComputedStyle */
   --globe-height: 38rem;
   --globe-radius: 24px;
   --globe-glow: rgba(242, 196, 109, 0.25);
@@ -113,7 +113,7 @@
   --globe-pole-font: 500 12px 'Hanken Grotesk Variable', sans-serif;
   --globe-overlay-bg: rgba(10, 13, 26, 0.86);
 
-  /* controls (C6) */
+  /* controls */
   --control-bg: rgba(255, 255, 255, 0.05);
   --control-bg-hover: rgba(255, 255, 255, 0.1);
   --control-border: var(--color-border);
@@ -247,7 +247,7 @@ tbody th { font-weight: var(--weight-medium); }
 .error { color: var(--color-bad-strong); }
 footer { margin-top: calc(2 * var(--space-6)); font-size: var(--text-md); }
 
-/* ---- sky view (C5) ---- */
+/* ---- sky view ---- */
 .sky-plot { display: block; width: 100%; height: auto; font-size: var(--plot-font-size); }
 .plot-grid { stroke: var(--plot-grid); stroke-width: 1; }
 .plot-zero { stroke: var(--plot-zero); stroke-width: 1; stroke-dasharray: 4 4; }
@@ -320,7 +320,7 @@ footer { margin-top: calc(2 * var(--space-6)); font-size: var(--text-md); }
 .readout-defs { margin-top: var(--space-3); font-size: var(--text-sm); }
 .sky-notes p { margin: var(--space-2) 0 0; }
 
-/* ---- globe (C7a) ---- */
+/* ---- globe ---- */
 .globe { position: relative; margin-bottom: var(--space-3); }
 .globe-canvas {
   height: var(--globe-height);
@@ -340,7 +340,7 @@ footer { margin-top: calc(2 * var(--space-6)); font-size: var(--text-md); }
 a { color: var(--color-accent); text-underline-offset: 0.2em; text-decoration-color: var(--link-underline); }
 .back-link { margin: 0 0 var(--space-3); }
 
-/* ---- navigation, controls, saved + compare (C6) ---- */
+/* ---- navigation, controls, saved + compare ---- */
 .nav { display: flex; gap: var(--space-4); margin-top: var(--space-2); font-size: var(--text-md); }
 .nav a[aria-current='page'] { color: var(--color-text); font-weight: var(--weight-bold); text-decoration: none; }
 
@@ -422,7 +422,7 @@ input[type='checkbox'] { padding: 0; }
 .advanced summary { cursor: pointer; width: fit-content; color: var(--color-text-muted); }
 .advanced dl { margin-top: var(--space-2); }
 
-/* ---- site selection: card on the globe, side panel (Kaitlin, 2026-11-15, layout (c)) ---- */
+/* ---- site selection: card on the globe, side panel (the project author, 2026-11-15) ---- */
 .globe-card-anchor { position: absolute; left: 0; top: 0; visibility: hidden; z-index: 2; }
 .site-card {
   position: relative;
@@ -465,7 +465,7 @@ a.button:hover { background: var(--control-bg-hover); }
   padding-right: var(--space-2);
 }
 /* Name, subtitle and ✕, frozen at the top of the panel while the rest scrolls under it
-   (Kaitlin, 2026-11-23); stacked on narrow screens, it sticks to the top of the window. */
+   (the project author, 2026-11-23); stacked on narrow screens, it sticks to the top of the window. */
 .site-panel-head {
   display: flex;
   justify-content: space-between;
@@ -489,7 +489,7 @@ a.button:hover { background: var(--control-bg-hover); }
   .site-panel { max-height: none; overflow: visible; }
 }
 
-/* Chooser when one click hits several site markers (readiness fix P3). Opens toward the side of
+/* Chooser when one click hits several site markers. Opens toward the side of
    the canvas with room: .flip-x / .flip-y flip it left / up of the click point. */
 .globe-chooser {
   position: absolute;
@@ -521,7 +521,7 @@ a.button:hover { background: var(--control-bg-hover); }
 .globe-chooser li + li { margin-top: var(--space-1); }
 .globe-chooser .link-button { text-align: left; font-size: var(--text-md); }
 
-/* Question box (C7b), below the dashboard on the site screen. */
+/* Question box, below the dashboard on the site screen. */
 textarea {
   font: inherit;
   font-size: var(--text-md);
@@ -557,7 +557,7 @@ textarea {
   margin: calc(-1 * var(--space-1)) 0 var(--space-2);
 }
 
-/* The site page's scenario picker (G2): plain, polish waits for the layout pass. */
+/* The site page's scenario picker: plain. */
 .scenario-picker {
   display: flex;
   flex-wrap: wrap;
@@ -574,13 +574,13 @@ textarea {
 }
 .scenario-picker select { color: var(--control-text); }
 
-/* Cached example questions under the NL box (C8): plain, polish waits for the layout pass. */
+/* Cached example questions under the NL box: plain. */
 .nl-examples { margin-top: var(--space-3); font-size: var(--text-sm); }
 .nl-examples ul { margin: var(--space-1) 0 0; padding-left: var(--space-5); }
 .nl-examples li + li { margin-top: var(--space-1); }
 .nl-examples .link-button { font-size: var(--text-md); text-align: left; }
 
-/* 2D site view (C5): plain, until the layout pass. */
+/* 2D site view: plain. */
 .terrain-controls { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); align-items: center; margin: var(--space-2) 0; font-size: var(--text-sm); }
 .terrain-controls fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
 .terrain-map-wrap { position: relative; }
@@ -593,7 +593,7 @@ textarea {
 .terrain-site-swatch { display: inline-block; width: 0.8em; height: 0.8em; border: 2px solid #fff; border-radius: 50%; vertical-align: middle; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* Collapsible sections on the site page (layout pass item 2; Section.tsx). The title is a
+/* Collapsible sections on the site page (Section.tsx). The title is a
    full-width button; the chevron points right when collapsed, down when open. */
 .collapsible > h2 { margin: 0; }
 .collapsible:not(.is-collapsed) > h2 { margin-bottom: var(--space-3); }

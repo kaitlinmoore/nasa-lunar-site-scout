@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// C1 thin-slice site screen: one scenario's metrics, events and fidelity, exactly as the API
+// Site screen: one scenario's metrics, events and fidelity, exactly as the API
 // (or fixture) sent them. null = "not computed", never 0. Definitions come from the contract.
 import type { ReactNode } from 'react'
 import type { FidelityLabel, MetricEvent, MetricsResponse } from './api/client'

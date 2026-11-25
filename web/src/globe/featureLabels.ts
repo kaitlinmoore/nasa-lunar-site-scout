@@ -2,7 +2,7 @@
 // IAU feature names on the globe (contract 0.14.0), in the shared label style (labelStyle.ts) but
 // quieter than the site labels: their own colour and font, centred on the feature, no marker.
 //
-// Zoom rule (Kaitlin, 2026-11-16):
+// Zoom rule (the project author, 2026-11-16):
 // - A name shows while the camera is within FEATURE_ZOOM.distancePerDiameter (12) × its diameter of the
 //   feature's centre: the bigger the feature, the further out its name appears.
 // - Craters and montes that contain or neighbour a curated site (rim within nearSite.neighbourKm of the

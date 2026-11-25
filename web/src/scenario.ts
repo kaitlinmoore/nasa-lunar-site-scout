@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Scenario helpers for save + compare (C6): validation that mirrors the contract's Scenario
+// Scenario helpers for save + compare: validation that mirrors the contract's Scenario
 // rules (lss/contract/models.py), and a structural id used to de-duplicate saved scenarios and
 // to match fixture results. The id is web-side only; it is NOT the server's `scenario_key`.
 import type { Scenario, SiteLocation } from './api/client'

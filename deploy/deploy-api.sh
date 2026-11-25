@@ -11,11 +11,11 @@ source deploy/config.sh
 rm -rf bundle/served
 mkdir -p bundle/served
 cp "$SERVED_SRC"/*.json bundle/served/
-# Precomputed slope statistics (stream A's cache/terrain/), staged the same way.
+# Precomputed slope statistics (cache/terrain/), staged the same way.
 rm -rf bundle/terrain
 mkdir -p bundle/terrain
 cp "$TERRAIN_SRC"/*.json bundle/terrain/
-# Cached showcase NL answers (C8), staged the same way; none is fine (the .keep keeps the folder in the
+# Cached showcase NL answers, staged the same way; none is fine (the .keep keeps the folder in the
 # build context, so the Dockerfile's COPY always has a source).
 rm -rf bundle/nl
 mkdir -p bundle/nl

@@ -45,7 +45,7 @@ export function dataSource(): DataSource {
 }
 
 /**
- * The example response in fixtures/metrics.json (C api's fixture). Fixture mode's only scenario;
+ * The example response in fixtures/metrics.json (the API's committed fixture). Fixture mode's only scenario;
  * its scenario is also the saved-scenario form's default. Loaded on demand (a separate chunk).
  */
 async function exampleFixture(): Promise<MetricsResponse> {
@@ -60,7 +60,7 @@ export async function thinSliceScenario(): Promise<Scenario> {
 const FIXTURE_ONLY_EXAMPLE = 'Fixture mode has only the example scenario in fixtures/metrics.json.'
 
 /**
- * Every precomputed scenario with its curated site (G2; GET /api/scenarios, contract 0.11.0), with
+ * Every precomputed scenario with its curated site (GET /api/scenarios, contract 0.11.0), with
  * the static copy as fallback. Fixture mode: the example scenario, under the curated site at its
  * location. Fetched once per page load and shared by every site page.
  */
@@ -109,7 +109,7 @@ export async function loadMetrics(source: DataSource, entry: ScenarioEntry): Pro
 }
 
 /**
- * Series and horizon for the sky view (C5; live in Phase 2 step 3.2) of one precomputed scenario.
+ * Series and horizon for the sky view of one precomputed scenario.
  * `horizon` is null when the scenario's location and height have no horizon profile.
  */
 export async function loadSky(
@@ -145,9 +145,9 @@ export async function loadSky(
   )
 }
 
-/** Curated sites for the globe (C7a): fixtures/sites.json, or GET /api/sites in live mode. */
+/** Curated sites for the globe: fixtures/sites.json, or GET /api/sites in live mode. */
 export async function loadSites(source: DataSource): Promise<SitesResponse> {
-  // Dev-only readiness test (Phase 2 step 3.5): `?source=fixtures&testSites=crowded` loads a
+  // Dev-only test with crowded sites: `?source=fixtures&testSites=crowded` loads a
   // made-up list of 31 sites (27 crowded near the south pole) from web/test-data. Production
   // builds drop this branch (import.meta.env.DEV is false there).
   if (
@@ -171,7 +171,7 @@ const FIXTURE_NO_RESULT = 'No result in fixture mode: only the scenarios in fixt
  * Live calls fall back to the static copy (/static-api/) when the API gives no usable answer
  * (staticFallback.ts); the page then shows a notice.
  *
- * Compare (C6; live in Phase 2 step 3.3): metrics for each requested scenario, in request order.
+ * Compare: metrics for each requested scenario, in request order.
  * - Fixtures: fixtures/compare.json answers a scenario only if it is exactly one of its items.
  * - Live: POST /api/compare. `items` holds the served scenarios in request order and `not_served`
  *   the others by request index (contract 0.6.0). Each item is checked to be exactly the scenario
@@ -214,11 +214,11 @@ async function liveCompare(scenarios: Scenario[]): Promise<ComparisonResult> {
   return mapCompareResponse(scenarios, response)
 }
 
-/** Which committed example answer fixture mode shows (C api's fixtures/nl_*.json). */
+/** Which committed example answer fixture mode shows (the committed fixtures/nl_*.json). */
 export type NlExample = 'answer' | 'unsupported' | 'clarification'
 
 /**
- * Ask a question (C7b). Live: POST /api/nl. There's no saved copy of live answers, so no static
+ * Ask a question. Live: POST /api/nl. There's no saved copy of live answers, so no static
  * fallback. Fixtures: the question isn't sent anywhere; the chosen example answer is returned.
  */
 export async function askNl(source: DataSource, request: NLRequest, example: NlExample): Promise<unknown> {
@@ -233,9 +233,9 @@ export async function askNl(source: DataSource, request: NLRequest, example: NlE
 }
 
 /**
- * The cached example questions (C8): the static copy's `nl_answers` (contract 0.12.0), so the list
- * follows C api's recordings and nothing is hard-coded. The live API has no endpoint for the list
- * yet (requested from C api); until then a page without the static copy (e.g. the dev server) shows
+ * The cached example questions: the static copy's `nl_answers` (contract 0.12.0), so the list
+ * follows the recorded answers and nothing is hard-coded. The live API has no endpoint for the list
+ * yet; until then a page without the static copy (e.g. the dev server) shows
  * no examples. Fixture mode has its own example selector instead. Fetched once per page load.
  */
 let nlExamples: Promise<StaticNLEntry[]> | null = null

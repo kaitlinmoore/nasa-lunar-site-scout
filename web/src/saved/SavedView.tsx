@@ -1,7 +1,7 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Saved items and comparison (C6). Minimal layout on purpose (Kaitlin judges it later).
+// Saved items and comparison. Minimal layout on purpose.
 // - Saved scenarios (browser storage), export/import as portable JSON. Pinned sites are kept in
-//   the same document (so export/import carry them) but shown on the globe, not here (Kaitlin,
+//   the same document (so export/import carry them) but shown on the globe, not here (the project author,
 //   2026-11-15: the globe is for "where", this page for "where + when").
 // - A small form makes scenarios for several sites × several dates.
 // - The comparison is the saved scenarios ticked for it, side by side.
@@ -36,7 +36,7 @@ function ScenarioForm({ sites, defaults }: { sites: Site[]; defaults: Scenario |
   const [siteId, setSiteId] = useState(sites[0]?.id ?? '')
   const [height, setHeight] = useState(defaults ? String(defaults.unit_height_m) : '')
   // Times are typed and shown explicitly in UTC ("YYYY-MM-DD HH:MM"), never in the browser's
-  // local format (Kaitlin, 2026-11-15).
+  // local format (the project author, 2026-11-15).
   const [start, setStart] = useState(defaults ? formatUtcInput(defaults.window_start) : '')
   const [end, setEnd] = useState(defaults ? formatUtcInput(defaults.window_end) : '')
   const [step, setStep] = useState(defaults?.step ?? 'PT1H')

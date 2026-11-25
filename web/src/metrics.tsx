@@ -1,6 +1,6 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 // Shared metric components: the value cell (stats, flags, counts, nulls). Used by the site
-// screen and the comparison (C6) so a value reads the same everywhere. null = "not computed".
+// screen and the comparison so a value reads the same everywhere. null = "not computed".
 import type { Stat } from './api/client'
 import { CLIPPED_NOTE, CLIPPED_UNKNOWN_NOTE, formatWindowQualifier, unitOf } from './format'
 import { fieldDoc, type InWindow, type MetricSpec, type ScenarioWindow } from './metricSpec'

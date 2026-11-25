@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// The terrain images' map grid (stream A's view.json `proj4`): south polar stereographic on the lunar
+// The terrain images' map grid (the view.json `proj4`): south polar stereographic on the lunar
 // sphere. proj4 converts between the grid and lat/lon on the SAME sphere, so no Earth datum is ever
 // involved. Anything else is refused rather than drawn with the wrong geometry.
 //

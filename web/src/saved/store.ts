@@ -1,7 +1,7 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Saved items (C6, plan §3.7): pinned sites and saved scenarios as one portable JSON document,
+// Saved items: pinned sites and saved scenarios as one portable JSON document,
 // kept in browser storage and exported/imported as a file in the same format. A comparison is
-// the list of saved scenarios selected for it (`compare_ids`, plan §3.1).
+// the list of saved scenarios selected for it (`compare_ids`).
 import { useSyncExternalStore } from 'react'
 import type { Scenario, SiteLocation } from '../api/client'
 import { scenarioId, validateLocation, validateScenario } from '../scenario'

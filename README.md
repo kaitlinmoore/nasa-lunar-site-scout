@@ -127,7 +127,7 @@ This project was built with SI (AI) assistance from Claude (Anthropic). **The co
 
 **Models and what each was used for:**
 - **Claude Opus 5.5:** all development sessions (Claude Code: engine, API and natural-language layer, web, docs) and the research, planning and orchestration chats. It is also the model the live question box calls (`claude-opus-5-5`) and the model scored in the eval above.
-- **Claude Fable 5.2:** an independent correctness review of the horizon, frames and metric definitions at the G1 checkpoint. Its findings were applied by the engine stream. A second Fable 5.2 review at the G2 checkpoint (2026-11-16) covered the validation of the other curated sites; its findings were also applied by the engine stream (methodology §6.6.1 and §6.7, among others).
+- **Claude Fable 5.2:** an independent correctness review of the horizon, frames and metric definitions (signed off 2026-11-15). Its findings were applied in the engine. A second Fable 5.2 review (2026-11-16) covered the validation of the other curated sites; its findings were also applied in the engine (methodology §6.6.1 and §6.7, among others).
 
 **What Claude generated:** the code and tests; drafts of the methodology, references, glossary and this README; data research (finding and checking datasets and papers); architecture and build-plan recommendations; drafts of visitor-facing texts.
 

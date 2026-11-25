@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Sky view (C5): horizon/sky plot + timeline + state readout, sharing one selected sample.
+// Sky view: horizon/sky plot + timeline + state readout, sharing one selected sample.
 // Refuses to plot a horizon and a series that belong to different locations or heights.
 import { useMemo, useState } from 'react'
 import type { HorizonProfile, MetricEvent, SeriesResponse } from '../api/client'

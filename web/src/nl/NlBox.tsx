@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// The question box (C7b UI, Phase 2 step 3.7 / G3), below the dashboard on the site screen.
+// The question box, below the dashboard on the site screen.
 //
 // A question goes to POST /api/nl with the selected site (and its computed scenario, if it has one).
 // The language model only turns the question into one of the API's queries; the numbers in an answer
@@ -339,7 +339,7 @@ export default function NlBox({
     return () => window.clearTimeout(t)
   }, [waitUntil])
 
-  // The cached example questions (C8), from the static copy; none in fixture mode.
+  // The cached example questions, from the static copy; none in fixture mode.
   const [examples, setExamples] = useState<StaticNLEntry[]>([])
   useEffect(() => {
     let cancelled = false

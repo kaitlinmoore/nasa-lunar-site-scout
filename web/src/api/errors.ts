@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// API error classification (4.4; typed from contract 0.6.0 in Phase 2 step 3.4). No build-time
+// API error classification (typed from contract 0.6.0). No build-time
 // values here, so it can be unit-tested in Node.
 //
 // The error bodies are contract models (lss/contract/models.py). A 422 from /api/metrics,

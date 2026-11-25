@@ -1,6 +1,6 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Collapsible sections of the site page (layout pass, Kaitlin's idea): which ones exist, which
-// start open, and the visitor's choices kept in this browser (Kaitlin, 2026-11-23: all open
+// Collapsible sections of the site page (the project author's idea): which ones exist, which
+// start open, and the visitor's choices kept in this browser (the project author, 2026-11-23: all open
 // except Events and Terrain fidelity; remembered per browser, the same for every site). The card
 // itself is Section.tsx.
 import { createContext } from 'react'

@@ -15,9 +15,9 @@ COPY lss ./lss
 COPY fixtures ./fixtures
 # Precomputed served results, staged by deploy/deploy-api.sh (LSS_DATA_DIR=/data).
 COPY bundle/served /data/cache/served
-# Precomputed slope statistics (stream A's cache/terrain/), staged by deploy/deploy-api.sh.
+# Precomputed slope statistics (cache/terrain/), staged by deploy/deploy-api.sh.
 COPY bundle/terrain /data/cache/terrain
-# Cached showcase NL answers (C8), staged by deploy/deploy-api.sh (may hold only .keep).
+# Cached showcase NL answers, staged by deploy/deploy-api.sh (may hold only .keep).
 COPY bundle/nl /data/cache/nl
 # Terrain images for the 2D site view (contract 0.13.0), staged by deploy/deploy-api.sh.
 COPY bundle/terrain_view /data/cache/terrain_view

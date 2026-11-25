@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Timeline (C5): scrub the scenario window. The slider steps through the series samples the
+// Timeline: scrub the scenario window. The slider steps through the series samples the
 // API sent (no interpolation between them). An event mark selects that event: the event's own
 // time from the API is shown (refined to the second where the API refined it), while the plot
 // and readout move to the nearest sample, labelled as such.

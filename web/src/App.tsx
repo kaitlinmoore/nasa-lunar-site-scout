@@ -1,7 +1,7 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 // App shell: header (data source, contract versions), the current view, footer.
-// Views (src/route.ts): the globe (default, C7a), a site's screen (`?site=<id>`) and the saved
-// items + comparison (`?view=saved`, C6).
+// Views (src/route.ts): the globe (default), a site's screen (`?site=<id>`) and the saved
+// items + comparison (`?view=saved`).
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import {
   API_BASE,
@@ -31,7 +31,7 @@ import Section from './Section'
 import { CollapsibleSections } from './sections'
 import NlBox from './nl/NlBox'
 
-// 2D site view (C5): OpenLayers + proj4 load as their own chunk, only where the map is shown.
+// 2D site view: OpenLayers + proj4 load as their own chunk, only where the map is shown.
 const TerrainSection = lazy(() => import('./terrain/TerrainSection'))
 import { displayName, SiteNamesContext, siteNames, subtitleOf } from './siteNames'
 import { useSaved } from './saved/store'
@@ -69,13 +69,13 @@ function useLoad<T>(load: (source: DataSource) => Promise<T>, source: DataSource
 
 /**
  * Developer info (data source, contract versions): shown in dev builds only. It means nothing to
- * public visitors (Kaitlin, 2026-11-15). The contract-mismatch warning is shown in every build.
+ * public visitors (the project author, 2026-11-15). The contract-mismatch warning is shown in every build.
  */
 const SHOW_DEV_INFO = import.meta.env.DEV
 
 /**
  * Shown while any part of the page comes from the static copy because the live API isn't
- * answering (Kaitlin, 2026-11-15: switch-over with a visible notice). Wording: SI draft.
+ * answering (the project author, 2026-11-15: switch-over with a visible notice). Wording: Claude-drafted.
  */
 function StaticCopyNotice() {
   if (!useUsingStaticCopy()) return null
@@ -127,7 +127,7 @@ function NavLink({ to, current, children }: { to: Route; current: Route; childre
 }
 
 /**
- * Main menu. "Saved scenarios" appears only once a scenario is saved (Kaitlin, 2026-11-15): a new
+ * Main menu. "Saved scenarios" appears only once a scenario is saved (the project author, 2026-11-15): a new
  * visitor doesn't see a link to an empty list before they know saving exists. It also shows while
  * you're on that page. Pinned sites live on the globe, so they don't count here.
  */
@@ -160,7 +160,7 @@ function SiteHeading({ site }: { site: Site }) {
 }
 
 /**
- * What and where the site is, from its `description` in /api/sites (stream A writes these).
+ * What and where the site is, from its `description` in /api/sites (lss/registry/sites.yaml).
  * An empty or missing description is simply left out.
  */
 function SiteIntro({ site }: { site: Site }) {
@@ -173,7 +173,7 @@ function SiteIntro({ site }: { site: Site }) {
   )
 }
 
-/** Pin the site; save the displayed scenario (C6). */
+/** Pin the site; save the displayed scenario. */
 function SiteActions({ site, scenario }: { site: Site; scenario: Scenario | null }) {
   const saved = useSaved()
   const pinned = saved.isPinned(site.id)
@@ -196,7 +196,7 @@ function SiteActions({ site, scenario }: { site: Site; scenario: Scenario | null
           {isSaved ? 'Scenario saved' : 'Save this scenario'}
         </button>
       )}
-      {/* Where saving happens is where the saved list gets introduced (Kaitlin, 2026-11-15). */}
+      {/* Where saving happens is where the saved list gets introduced (the project author, 2026-11-15). */}
       {isSaved && (
         <a
           href={routeHref({ view: 'saved' })}
@@ -248,7 +248,7 @@ function useScenarioLoad<T>(
 }
 
 /**
- * A site's page (G2): its precomputed scenarios from GET /api/scenarios, a plain window / height
+ * A site's page: its precomputed scenarios from GET /api/scenarios, a plain window / height
  * picker, and the chosen scenario's dashboard. Only this site's scenarios are loaded.
  */
 function SitePage({ site, source }: { site: Site; source: DataSource }) {
@@ -269,7 +269,7 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
   const metricsForSite = data !== null && sameLocation(data.scenario.location, site.location)
   const skyForSite = skyData !== null && sameLocation(skyData.series.scenario.location, site.location)
 
-  // Horizon and sky for the chosen scenario: /api/series + /api/horizon (Phase 2 step 3.2).
+  // Horizon and sky for the chosen scenario: /api/series + /api/horizon.
   const skySection = !sky ? null : sky.kind === 'loading' ? (
     <p className="muted">Loading horizon and series…</p>
   ) : sky.kind === 'error' ? (
@@ -285,7 +285,7 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
   )
 
   return (
-    // Sections on this page collapse (layout pass item 2); the same cards elsewhere don't.
+    // Sections on this page collapse; the same cards elsewhere don't.
     <CollapsibleSections.Provider value={true}>
       <SiteIntro site={site} />
       <SiteActions site={site} scenario={metricsForSite && data ? data.scenario : null} />
@@ -329,11 +329,11 @@ function SitePage({ site, source }: { site: Site; source: DataSource }) {
           <SiteScreen data={data}>{skySection}</SiteScreen>
         </>
       )}
-      {/* 2D site view (C5): the site's terrain images (contract 0.13.0), static copy as fallback. */}
+      {/* 2D site view: the site's terrain images (contract 0.13.0), static copy as fallback. */}
       <Suspense fallback={<p className="muted">Loading the terrain map…</p>}>
         <TerrainSection key={site.id} site={site} source={source} />
       </Suspense>
-      {/* Questions (C7b), below the dashboard; a fresh box per site. It sends the chosen scenario. */}
+      {/* Questions, below the dashboard; a fresh box per site. It sends the chosen scenario. */}
       <NlBox key={site.id} site={site} scenario={entry ? entry.scenario : null} source={source} />
     </CollapsibleSections.Provider>
   )
@@ -368,7 +368,7 @@ export default function App() {
   } else if (sites.kind === 'loading') body = <p className="muted">Loading sites…</p>
   else if (sites.kind === 'error') body = <ApiProblemView what="the curated sites" error={sites.error} />
   else {
-    // Globe and site share one layout (Kaitlin, 2026-11-15, layout (c)): the globe stays mounted,
+    // Globe and site share one layout (the project author, 2026-11-15): the globe stays mounted,
     // and a site's screen opens in a side panel beside it, so you keep your place on the Moon.
     const siteId = route.view === 'site' ? route.siteId : null
     const site = siteId ? sites.data.sites.find((s) => s.id === siteId) : undefined
@@ -377,7 +377,7 @@ export default function App() {
         <GlobeView data={sites.data} focusSiteId={site ? site.id : null} source={source} />
         {siteId && (
           <aside className="site-panel" aria-label="Site details">
-            {/* The site's name stays in view while the panel scrolls (Kaitlin, 2026-11-23). */}
+            {/* The site's name stays in view while the panel scrolls (the project author, 2026-11-23). */}
             <div className="site-panel-head">
               {site && <SiteHeading site={site} />}
               <button

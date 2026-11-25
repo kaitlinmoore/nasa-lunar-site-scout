@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Screen-space declutter for the globe's names (Kaitlin, 2026-11-16): names are placed in priority
+// Screen-space declutter for the globe's names (the project author, 2026-11-16): names are placed in priority
 // order, and a name that would overlap anything already placed (a site marker or label, the South Pole
 // label, or a name placed before it) is hidden. Pure (screen pixels only), so it can be unit-tested in Node.
 

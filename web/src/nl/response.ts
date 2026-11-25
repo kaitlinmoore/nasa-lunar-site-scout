@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Answers from POST /api/nl (C7b UI, contract 0.8.0). Pure, so it can be unit-tested in Node.
+// Answers from POST /api/nl (contract 0.8.0). Pure, so it can be unit-tested in Node.
 //
 // A 200 is one of three contract models: NLAnswer (has `structured_query`), NLUnsupported (has
 // `unsupported`) or NLClarification (has `question`). An answer's `result` is "the operation's

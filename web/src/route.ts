@@ -1,6 +1,6 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
 // Minimal URL routing (no router dependency): `?site=<id>` opens that site's screen,
-// `?view=saved` the saved items and comparison (C6); otherwise the globe (C7a). Other query
+// `?view=saved` the saved items and comparison; otherwise the globe. Other query
 // params (e.g. `?source=fixtures`) are kept when navigating, and back/forward work.
 import { useEffect, useState } from 'react'
 

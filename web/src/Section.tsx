@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// A titled card on the site page that can be collapsed and expanded (layout pass, Kaitlin's idea).
+// A titled card on the site page that can be collapsed and expanded (the project author's idea).
 // Collapsing applies only on the site page itself (`CollapsibleSections` = true there); cards
 // inside a section (e.g. an NL answer's dashboard) stay plain. Defaults and memory: sections.ts.
 import { type ReactNode, useContext, useId, useState } from 'react'

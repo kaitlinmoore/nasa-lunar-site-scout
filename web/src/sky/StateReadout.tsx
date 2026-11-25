@@ -1,7 +1,7 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Sun / Earth / horizon state at the selected sample (C5). Sun/Earth numbers are the values the
+// Sun / Earth / horizon state at the selected sample. Sun/Earth numbers are the values the
 // API sent at that sample. The terrain horizon at each body's azimuth is interpolated linearly
-// between the neighbouring profile samples, as the contract specifies (Kaitlin, 2026-11-15), so
+// between the neighbouring profile samples, as the contract specifies (the project author, 2026-11-15), so
 // it's the same value the engine uses; the readout names the samples it came from.
 import type { BodyTrack, HorizonProfile } from '../api/client'
 import { formatInterpolatedBetween, formatProfileSample } from '../format'

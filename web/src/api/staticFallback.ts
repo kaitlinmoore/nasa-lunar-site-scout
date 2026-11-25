@@ -1,6 +1,6 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// Static fallback (plan §4.7; Kaitlin, 2026-11-15: the web switches over, with a visible notice).
-// At web deploy, C api exports the API's served results as static JSON under /static-api/ on the
+// Static fallback (the project author, 2026-11-15: the web switches over, with a visible notice).
+// At web deploy, lss.api.static_export exports the API's served results as static JSON under /static-api/ on the
 // web host (index.json = contract StaticIndex; paths are relative to it). When the live API gives
 // no usable answer (no connection, 5xx), the web reads these files instead and says so.
 // Firebase answers a missing file with the web page itself (status 200), so every file's content
@@ -109,7 +109,7 @@ export async function staticMetrics(scenario: Scenario): Promise<MetricsResponse
   return getStaticJson<MetricsResponse>(entry.metrics)
 }
 
-/** The cached showcase questions (C8; contract 0.12.0), each with the request it answers. */
+/** The cached showcase questions (contract 0.12.0), each with the request it answers. */
 export async function staticNlExamples(): Promise<StaticNLEntry[]> {
   return (await staticIndex()).nl_answers ?? []
 }

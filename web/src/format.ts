@@ -4,11 +4,11 @@ import { durationSeconds } from './scenario'
 // Display formatting. Units follow the contract's field-name convention
 // (lss/contract/models.py: degrees and meters unless the name says `_h`, `_km`, ...).
 // Only values the API sent are formatted; nothing is defaulted. The one kind of derived value
-// allowed is plain arithmetic on what the API sent, e.g. a window's length (Kaitlin, 2026-11-15).
-// Kaitlin's display decisions (2026-11-15): fractions as percent; precision h 1 dp, deg 2 dp,
+// allowed is plain arithmetic on what the API sent, e.g. a window's length (the project author, 2026-11-15).
+// The project author's display decisions (2026-11-15): fractions as percent; precision h 1 dp, deg 2 dp,
 // % 1 dp; coordinates signed as sent; counts name what they count and the time window they cover;
 // "Time window" (not "window"), range first with exact UTC times second, step as "results every …".
-// Lengths (`_m`) of 1000 m or more in km, e.g. a 10000 m radius as "10 km" (layout pass, 2026-11-23).
+// Lengths (`_m`) of 1000 m or more in km, e.g. a 10000 m radius as "10 km" (2026-11-23).
 // Layout lives in the components and styling in index.css; all text formatting lives here.
 
 export type Unit = 'h' | 'deg' | 'fraction' | 'count' | 'm'
@@ -195,9 +195,9 @@ export function parseUtcInput(text: string): string | null {
   return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 16) !== iso.slice(0, 16) ? null : iso
 }
 
-// ---- Time window in plain words (Kaitlin, 2026-11-15: "Time window"; range first, exact UTC
+// ---- Time window in plain words (the project author, 2026-11-15: "Time window"; range first, exact UTC
 // times second; total length; step as "results every hour"). Length is plain arithmetic on the
-// two times the API sent, which she allowed.
+// two times the API sent, which the project author allowed.
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 

@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// C7a minimal globe: Cesium Moon (ion asset 2684829), display only.
+// Minimal globe: Cesium Moon (ion asset 2684829), display only.
 // - No numbers come from Cesium. Its terrain sits ~2.5 km above LOLA heights, so site markers are
 //   clamped to the rendered surface (CLAMP_TO_3D_TILE) and every value shown elsewhere comes
 //   from our API.
@@ -8,7 +8,7 @@
 // - Lighting is a "flashlight" that follows the camera, and Cesium's Sun and Moon are hidden:
 //   Cesium's own Sun direction would paint illumination that isn't ours, and illumination is
 //   exactly what this tool computes.
-// - Site selection (Kaitlin, 2026-11-15, layout (c)): a click shows a card anchored next to the
+// - Site selection (the project author, 2026-11-15): a click shows a card anchored next to the
 //   marker (`card`, positioned here after every render); "See details" opens the side panel and
 //   the globe zooms toward the site (`focusSiteId`); closing it returns to the whole Moon.
 // Loaded lazily (a separate chunk) so the site screen never pays for Cesium.
@@ -100,7 +100,7 @@ type Status = { kind: 'loading' } | { kind: 'ready' } | { kind: 'error'; message
 /** On-screen zoom buttons: each press moves this fraction of the current height (within limits). */
 const BUTTON_ZOOM = { inFraction: 0.35, outFraction: 0.6 }
 
-/** Place labels are in title case (Kaitlin, 2026-11-16), like the sites' short names. */
+/** Place labels are in title case (the project author, 2026-11-16), like the sites' short names. */
 const POLE_LABEL_TEXT = 'South Pole'
 /** Entity id of the "South Pole" label; it isn't a site and can't be selected. */
 const SOUTH_POLE_ID = 'south-pole-label'
@@ -118,8 +118,8 @@ const FOCUS_VIEW = { pitchDeg: -55, rangeM: 900_000, durationS: 1.2 }
 const CARD = { gap: 36, margin: 8, raise: 24 }
 
 /**
- * Site labels show only when the camera is this close to the site (Kaitlin, 2026-11-15, readiness
- * fix P2): further out, the polar sites' labels pile into an unreadable stack. The crowded-site test
+ * Site labels show only when the camera is this close to the site (the project author, 2026-11-15,
+ * after a test with crowded sites): further out, the polar sites' labels pile into an unreadable stack. The crowded-site test
  * separated the markers at about 180 km. The "South Pole" cue label isn't affected.
  */
 const SITE_LABEL_MAX_DISTANCE_M = 300_000
@@ -127,7 +127,7 @@ const SITE_LABEL_MAX_DISTANCE_M = 300_000
 /** Click tolerance in CSS pixels around the cursor when collecting the markers it hits. */
 const PICK_SIZE_PX = 10
 
-/** Several site markers under one click (readiness fix P3): a chooser at the click point. */
+/** Several site markers under one click (found in a test with crowded sites): a chooser at the click point. */
 type Chooser = { x: number; y: number; ids: string[]; flipX: boolean; flipY: boolean }
 
 type Controls = {
@@ -183,7 +183,7 @@ export default function MoonGlobe({
   const nearNamesRef = useRef<() => ScreenBox[]>(() => [])
   const [status, setStatus] = useState<Status>({ kind: 'loading' })
   // "You're looking at the Moon's south pole" note: shown at the start view, hidden once the
-  // view moves, shown again after Reset (Kaitlin, 2026-11-15: both the pole label and this note).
+  // view moves, shown again after Reset (the project author, 2026-11-15: both the pole label and this note).
   const [poleNote, setPoleNote] = useState(true)
   const [chooser, setChooser] = useState<Chooser | null>(null)
 
@@ -367,8 +367,8 @@ export default function MoonGlobe({
     }
 
     // "South Pole" label at 90° S, beside its small point and kept clear of the site markers, the
-    // site labels and the near-site names (placed every frame below, poleLabel.ts; Kaitlin,
-    // 2026-11-16 and layout pass 2026-11-23). Not a site: it can't be selected.
+    // site labels and the near-site names (placed every frame below, poleLabel.ts; the project author,
+    // 2026-11-16 and 2026-11-23). Not a site: it can't be selected.
     const polePosition = Cartesian3.fromDegrees(0, -90)
     const poleColor = Color.fromCssColorString(token('--globe-pole') || 'white')
     const poleFont = token('--globe-pole-font') || '12px sans-serif'
@@ -528,7 +528,7 @@ export default function MoonGlobe({
     scene.postRender.addEventListener(placeCard)
 
     // While a site's card is open, hide that site's own marker label: the card shows the name,
-    // and the label would sit under the card (Kaitlin's follow-up, Phase 2 step 3.1).
+    // and the label would sit under the card (the project author's follow-up).
     const syncLabels = () => {
       for (const site of sites) {
         const label = v.entities.getById(site.id)?.label
@@ -537,7 +537,7 @@ export default function MoonGlobe({
     }
 
     // Click: every site marker under the cursor (within PICK_SIZE_PX). One -> its card; several ->
-    // a chooser listing them (readiness fix P3; the top marker alone hid the others); none -> no
+    // a chooser listing them (the top marker alone hid the others); none -> no
     // card. Pointer cursor over site markers.
     const siteIds = new Set(sites.map((s) => s.id))
     const siteOrder = new Map(sites.map((s, i) => [s.id, i]))

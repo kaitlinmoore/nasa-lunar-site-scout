@@ -1,5 +1,5 @@
 // SI-assisted: generated with Claude (Anthropic) and reviewed by the project author. See README "AI usage".
-// What a site is called on screen (contract 0.9.0; Kaitlin, 2026-11-16): its `short_name`, with
+// What a site is called on screen (contract 0.9.0; the project author, 2026-11-16): its `short_name`, with
 // `subtitle` under it on the site card and panel, falling back to the full `name` when the short
 // name is empty. Names come from the site list (/api/sites), never from results: a result's
 // `location.name` is used only for a location that isn't a curated site.
