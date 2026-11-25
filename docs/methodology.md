@@ -803,8 +803,10 @@ The polar path above is unchanged.
     1 km and 10 km statistics recomputed with the matched baseline equal the served values exactly
     (2026-11-24).
   - At the Apollo sites (|latitude| ≤ 26.1°) the east–west step is 0.90–1.00 of the north–south step.
-- `SLOPE_VERSION` is unchanged: the polar definition and statistics have not changed, and on LDEM_128 every
-  served slope (all at |latitude| < 48.19°) is computed exactly as before.
+- `SLOPE_VERSION` is 2 (2026-11-24): the lat/lon definition changed north and south of 48.19°, so caches
+  keyed by the version do not reuse older values. The polar definition is unchanged, and every served slope
+  (all at |latitude| < 48.19° on LDEM_128) is bit for bit the same; terrain files written before the change
+  record version 1.
 
 #### 5.6.2 Aspect and gradient
 

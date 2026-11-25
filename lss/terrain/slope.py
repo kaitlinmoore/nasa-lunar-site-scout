@@ -39,7 +39,7 @@ from lss.ephem import MOON_RADIUS_M
 if TYPE_CHECKING:
     from lss.terrain.core import LonLatGrid
 
-SLOPE_VERSION = 1  # bump when the definition or the statistics change
+SLOPE_VERSION = 2  # bump when the definition or the statistics change
 
 
 def scale_factor(x_m, y_m) -> np.ndarray:
