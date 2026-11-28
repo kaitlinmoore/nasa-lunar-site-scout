@@ -18,17 +18,21 @@ Full ray range: the last map layer must hold every point within the maximum ray 
 it does not (rays would leave it, as from the 240 m polar map north of about 73 deg S), the map layers are
 used out to the distance their last layer does hold in every direction (`full_reach_m`), and the global
 layer from there to the maximum range. Without a global layer such a location is refused (`reason`).
+
+Area maps too large to load whole (the 10 m polar map) are read by window around each location
+(`WindowedLayerSpec`) and used only where they hold every point out to their `use_to_m`. They are opt-in: the
+10 m map is in `LAYERS_10M`, not in the default `LAYERS`.
 """
 
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass, replace
-from functools import cache
+from functools import cache, lru_cache
 
 from lss.contract import FidelityLabel, FidelityTier, Location, TerrainLayer
 from lss.datafiles import get as datafile
-from lss.terrain.core import MOON_RADIUS_M, DemLayer, ps_from_latlon
+from lss.terrain.core import MOON_RADIUS_M, DemLayer, DemWindow, ps_from_latlon
 
 
 @dataclass(frozen=True)
@@ -144,11 +148,75 @@ GLOBAL_128 = GlobalLayerSpec(
     label_file_id="ldem_128_lbl",
 )
 
+
+@dataclass(frozen=True)
+class WindowedLayerSpec(LayerSpec):
+    """An area map too large to load whole, read by window around each point: the 10 m polar map (5.1 GB
+    file, 7.5 GB as float32).
+
+    `resolve` keeps it only where it holds every point within its `use_to_m` of the location (`holds_cap`,
+    an exact test of the map's footprint, which is its whole square: every pixel has data), and returns a copy
+    with `centre` and `window_m` set. `dem()` then gives the file's header (`path`, `meta`, `pole`, as for
+    any layer) and a `grid` of the pixels within `window_m` of the centre, plus a margin. On the listed spec,
+    `dem()` gives the header only.
+    """
+
+    centre: tuple[float, float] | None = None  # (lat, lon) of the point the window is read around
+    window_m: float = 0.0  # ray distance the window holds (the layer's range in the stack)
+
+    def pixel_window(self) -> tuple[int, int, int, int] | None:
+        """(col0, row0, n_cols, n_rows) of the file holding every point within `window_m` of `centre` (the
+        circle `cap_circle` gives), with 2 pixels' margin for bilinear interpolation; None without a
+        centre."""
+        if self.centre is None:
+            return None
+        left, bottom, right, top = self.bounds_m
+        res = self.resolution_m
+        width, height = round((right - left) / res), round((top - bottom) / res)
+        circle = cap_circle(self.pole, *self.centre, self.window_m)
+        if circle is None:
+            raise ValueError("the window would reach the far pole")
+        cx, cy, rad = circle
+        col0 = max(math.floor((cx - rad - left) / res) - 2, 0)
+        col1 = min(math.ceil((cx + rad - left) / res) + 2, width)
+        row0 = max(math.floor((top - (cy + rad)) / res) - 2, 0)
+        row1 = min(math.ceil((top - (cy - rad)) / res) + 2, height)
+        return col0, row0, col1 - col0, row1 - row0
+
+    def dem(self) -> DemWindow:
+        return _dem_window(self.file_id, self.dataset_id, self.pole, self.pixel_window())
+
+
+@lru_cache(maxsize=4)
+def _dem_window(
+    file_id: str, dataset_id: str, pole: str, window: tuple[int, int, int, int] | None
+) -> DemWindow:
+    """A window of a file, kept for a few points per process (the header is shared through `_dem`)."""
+    return DemWindow(_dem(file_id, dataset_id, pole), window)
+
+
+# The PGDA product 90 10 m map (to 83 S; Barker et al. 2023), as an area near field. Bounds from the GeoTIFF
+# header (2026-11-27). Used to 5 km, as the site tiles: horizons then differ from those with the 10 m map
+# to 20 km by at most 0.023 deg (95th percentile 0.005 deg) at eight points 88-83 S, and at a site tile the
+# tile covers the same 5 km, so the 10 m map takes no part (docs/methodology.md section 3.2).
+POLAR_10M = WindowedLayerSpec(
+    "ldem_83s_10m",
+    "pgda_90_south_pole_dems",
+    10.0,
+    "south",
+    (-216_400.0, -216_400.0, 216_400.0, 216_400.0),
+    "10 m polar map",
+    use_to_m=5_000.0,
+)
+
 # Site01's stack (the first served scenario and its validation).
 C1_LAYERS: tuple[LayerSpec, ...] = (SITE01_TILE, POLAR_80M, POLAR_240M)
 # Every layer the resolver may choose from. The first three are C1_LAYERS (scripts index them). The global
 # layer is last and is chosen only where no other layer covers the point.
 LAYERS: tuple[LayerSpec, ...] = (*C1_LAYERS, *SITE_TILES_C3, GLOBAL_128)
+# Opt-in: the default layers plus the 10 m polar map, after the site tiles and before the global layer. The
+# default `LAYERS` leave it out, so every location keeps its default stack and horizon cache key.
+LAYERS_10M: tuple[LayerSpec, ...] = (*C1_LAYERS, *SITE_TILES_C3, POLAR_10M, GLOBAL_128)
 
 # The `use_to_m` defaults follow Barker et al. (2021): 5 m within 5 km, 80 m to 100 km, 240 m beyond.
 # Checked, with the maximum ray range, by scripts/horizon_convergence.py (docs/methodology.md section 3.2).
@@ -190,7 +258,9 @@ class TerrainStack:
         near = self.layers[0].spec
         far = [sl.spec for sl in self.layers[1:]]
         coarsest_far = max((s.resolution_m for s in far), default=None)
-        if near.resolution_m <= 5 and far:
+        # High: a near field of 10 m or finer and a far field: the 5 m site maps and the 10 m polar map,
+        # whose metrics at Site01 stay within the 5 m map's terrain-error band (docs/methodology.md 3.2).
+        if near.resolution_m <= 10 and far:
             tier = FidelityTier.high
         elif near.resolution_m <= 80:
             tier = FidelityTier.medium
@@ -206,27 +276,39 @@ class TerrainStack:
         )
 
 
-def holds_cap(spec: LayerSpec, lat: float, lon: float, range_m: float) -> bool:
-    """True if every point within ray distance `range_m` of (lat, lon) lies on the map, at least one pixel
-    inside its edges (heights are bilinear between pixel centres, which stop half a pixel inside).
+def cap_circle(pole: str, lat: float, lon: float, range_m: float) -> tuple[float, float, float] | None:
+    """Centre (x, y) and radius, in polar stereographic metres of `pole`, of the image of every point within
+    ray distance `range_m` of (lat, lon); None if that cap reaches the far pole (its image is unbounded).
 
     Exact: polar stereographic projection maps the cap of points within angular distance delta of the
     location to a circle. On the location's meridian the cap spans colatitudes c - delta to c + delta (from
     the projection's pole), so the circle's centre and radius follow from rho(t) = 2 R tan(t / 2), signed (a
     cap over the pole has c - delta < 0).
     """
-    left, bottom, right, top = spec.bounds_m
     delta = range_m / MOON_RADIUS_M
-    colat = math.radians(90.0 + lat) if spec.pole == "south" else math.radians(90.0 - lat)
-    if colat + delta >= math.pi:  # the cap reaches the far pole: its image is unbounded
-        return False
+    colat = math.radians(90.0 + lat) if pole == "south" else math.radians(90.0 - lat)
+    if colat + delta >= math.pi:
+        return None
     rho_far = 2.0 * MOON_RADIUS_M * math.tan((colat + delta) / 2.0)
     rho_near = 2.0 * MOON_RADIUS_M * math.tan((colat - delta) / 2.0)
-    x, y = (float(v) for v in ps_from_latlon(lat, lon, spec.pole))
+    x, y = (float(v) for v in ps_from_latlon(lat, lon, pole))
     rho = math.hypot(x, y)
     ux, uy = (x / rho, y / rho) if rho > 0.0 else (0.0, 1.0)  # at the pole the centre is 0: any direction
     mid, rad = 0.5 * (rho_far + rho_near), 0.5 * (rho_far - rho_near)
-    cx, cy, m = mid * ux, mid * uy, spec.resolution_m
+    return mid * ux, mid * uy, rad
+
+
+def holds_cap(spec: LayerSpec, lat: float, lon: float, range_m: float) -> bool:
+    """True if every point within ray distance `range_m` of (lat, lon) lies on the map, at least one pixel
+    inside its edges (heights are bilinear between pixel centres, which stop half a pixel inside). Exact for
+    a map with data in every pixel (`cap_circle`).
+    """
+    left, bottom, right, top = spec.bounds_m
+    circle = cap_circle(spec.pole, lat, lon, range_m)
+    if circle is None:
+        return False
+    cx, cy, rad = circle
+    m = spec.resolution_m
     return left + m <= cx - rad and cx + rad <= right - m and bottom + m <= cy - rad and cy + rad <= top - m
 
 
@@ -253,8 +335,10 @@ def resolve(
     """The layers that cover (lat, lon), finest first, with the ray-distance range each is used over.
 
     A layer is a candidate only if the point lies inside it. A site tile is used only if it extends at
-    least its `use_to_m` from the point in every direction, so rays never leave it early. One layer is
-    kept per resolution (the first listed).
+    least its `use_to_m` from the point in every direction, so rays never leave it early; a windowed area map
+    (`WindowedLayerSpec`) only if it holds every point within its `use_to_m` (`holds_cap`). One layer is
+    kept per resolution (the first listed). A windowed layer in the stack is a copy that reads its window
+    around (lat, lon), out to the ray distance it is used for.
 
     The last map layer must hold the whole ray range in every direction. Where it does not, the map layers
     stop at the distance it does hold (`full_reach_m`) and the global layer is used from there to the
@@ -268,6 +352,10 @@ def resolve(
         x, y = ps_from_latlon(lat, lon, spec.pole)
         margin = (spec.use_to_m or 0.0) if spec.site_tile else 0.0
         if not spec.covers(float(x), float(y), margin):
+            continue
+        if isinstance(spec, WindowedLayerSpec) and not holds_cap(
+            spec, lat, lon, spec.use_to_m or max_range_m
+        ):  # rays would leave the windowed map before they hand over
             continue
         if chosen and spec.resolution_m <= chosen[-1].resolution_m:
             continue
@@ -300,6 +388,8 @@ def resolve(
         stop = limit if last or spec.use_to_m is None else min(spec.use_to_m, limit)
         if stop <= start:
             continue
+        if isinstance(spec, WindowedLayerSpec):
+            spec = replace(spec, centre=(float(lat), float(lon)), window_m=float(stop))
         out.append(StackLayer(spec, "near_field" if not out else "far_field", start, stop))
         start = stop
         if stop >= limit:

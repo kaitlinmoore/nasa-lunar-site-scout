@@ -42,6 +42,7 @@ in MOON_ME / DE421, float32 heights in metres above the sphere, NaN = no data (c
 | Near field | PGDA 78, `Site01_final_adj_5mpp_surf.tif` | 5 m | 16 × 16 km tile (PS x −19…−3 km, y −20…−4 km) | Site01 horizon, near range |
 | Far field | PGDA 90, `LDEM_80S_80MPP_ADJ.TIF` | 80 m | ±304 km from the pole (80–90°S) | Middle range |
 | Far field | PGDA 90, `LDEM_60S_240MPP_ADJ.TIF` | 240 m | ±931 km (60–90°S) | Long range, beyond the 80 m grid |
+| Near field, opt-in | PGDA 90, `LDEM_83S_10MPP_ADJ.TIF` | 10 m | ±216.4 km (83–90°S; 79.94°S at the corners) | Near range where no 5 m tile is finer, only with the layer list `LAYERS_10M` (section 3.2); not in the default layers |
 | Validation only | PGDA 90, `LDEM_60S_60MPP_ADJ.TIF`, ±150 km window around Site01 | 60 m | ±150 km | Internal reproduction of PGDA product 69 (section 4.2) |
 
 **Why this stack:** it mirrors the nested-grid approach used for the PGDA site illumination results (Barker et
@@ -346,6 +347,49 @@ Site01 point was recomputed with the PGDA product 90 10 m map (`LDEM_83S_10MPP_A
 - **Cost:** about 3.5 s per horizon, the same as with the 5 m tile.
 - **Data:** the map is 5.1 GB (43,280 × 43,280 float32, 7.5 GB in memory), and its download took 31 minutes
   here. A ±20 km clip is 36 MB.
+
+**The 10 m map as an area near field** (`POLAR_10M`, layer list `LAYERS_10M`; the project author, 2026-11-25:
+opt-in, for points away from the curated sites). The whole map (`data/pgda90/LDEM_83S_10MPP_ADJ.TIF`, catalog
+id `ldem_83s_10m`, SHA-256 pinned in `lss/datafiles.py`) is listed after the site tiles and before the global
+layer. The default layers leave it out, so every location keeps its default stack and horizon cache key, and no
+served result changes.
+- **Footprint.** All 7,225 tiles of 512 × 512 pixels were read at full resolution: no pixel is no-data, so the
+  footprint is the whole ±216.4 km square. The resolver keeps the map only where it holds every point within its
+  hand-over distance, at least one pixel inside its edges: the exact test of section 3.5 ("Full ray range"),
+  not the bounding box. At 83°S on a map axis the square's edge is 3.9 km away, so such a point keeps the 80 m
+  near field; in the square's corners the map reaches 79.94°S.
+- **Where the 10 m map hands over to the 80 m map.** Horizons at eight points away from the curated sites
+  (88°, 87.5°, 87°, 86°, 85.5°, 85°, 84° and 83.6°S, at eight longitudes), each with the 10 m map used to 2, 5,
+  10 or 40 km, against a reference with it used to 20 km (then the 80 m and 240 m maps as usual), at every
+  0.1° azimuth (`resolve` and `compute_horizon` with the 10 m layer's `use_to_m` set to each value):
+
+  | 10 m map used to | 1 m observer: max | 95th pct. | median | 10 m observer: max | 95th pct. | Time per horizon (1 m) |
+  |---|---|---|---|---|---|---|
+  | not used (80 m near field) | 4.27° | 2.26° | 0.005° | 0.31° | 0.12° | 6.0 s |
+  | 2 km | 0.068° | 0.018° | 0.0002° | 0.066° | 0.019° | 5.6 s |
+  | **5 km** | **0.023°** | **0.0053°** | **0** | **0.023°** | **0.0061°** | **5.5 s** |
+  | 10 km | 0.020° | 0.0021° | 0 | 0.021° | 0.0030° | 6.0 s |
+  | 40 km | 0.018° | 0.0029° | 0 | 0.018° | 0.0034° | 9.7 s |
+
+  Used to 5 km, as the site tiles are, the 10 m map gives horizons within 0.023° of the 20 km reference (95th
+  percentile 0.005°). Using it further changes little: the reference itself moves by up to 0.018° when the
+  10 m map is used to 40 km instead. At a site tile the tile already covers those 5 km, so the 10 m map takes no
+  part there and the stack is the default one. **`use_to_m` = 5 km.** Without the 10 m map, the 80 m near field
+  is off by up to 4.3° for a 1 m observer.
+- **Reading.** Only a window is read: the pixels within the hand-over distance of the point (the circle of
+  section 3.5's cap test), plus two pixels, about 1,000 × 1,000 pixels (4 MB) for 5 km. It takes 0.06 s.
+  `dem()` keeps the interface of the other layers: `.path`, `.pole` and `.meta` of the whole file.
+- **Memory.** Peak working set of one process computing horizons: 811 MiB with the default layers, 813 MiB with
+  `LAYERS_10M`, the same over ten points (a few windows are kept per process). Loaded whole, the map would take
+  7.5 GB.
+- **Fidelity.** A near field of 10 m or finer with a far field is "high" (section 1.2 and the paragraph above:
+  at Site01 the 10 m map's metrics stay within the 5 m map's terrain-error band). The summary names the map:
+  "10 m polar map near field, 80 m polar map / 240 m polar map far field".
+- **Tests** (`tests/engine/test_terrain_10m.py`): the 23 curated sites' stacks under the default layers, pinned;
+  with `LAYERS_10M` only the six Artemis III regions off the 5 m tiles change; points at the pole, inside, in a
+  corner, 20 m either side of the hand-over margin, near the edge and off the map; the window against rings of
+  great-circle destinations; the header, the interface and the window's heights on the real map; no missing ray
+  sample at 89.99°, 88°, 85°, 83.5° and 82.5°S.
 
 **Timing:** wall-clock, measured on the development PC (24 logical CPUs, numba parallel over azimuths), with the DEMs
 already in memory; reference settings take 34–38 s. The first call in a process also reads the DEMs, about 0.5 GB for the three layers.

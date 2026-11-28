@@ -163,3 +163,23 @@ def test_download_resumes_or_restarts(tmp_path, honour_ranges):
         assert part.read_bytes() == payload
     finally:
         server.shutdown()
+
+
+def test_pinned_sha256_is_checked(tmp_path):
+    """A catalog entry that pins a SHA-256 keeps a download only with exactly that hash; others keep any."""
+    import dataclasses
+    import hashlib
+
+    from lss.datafiles import get
+
+    pinned = [f for f in FILES if f.sha256]
+    assert [f.id for f in pinned] == ["ldem_83s_10m"]
+    assert all(len(f.sha256) == 64 and int(f.sha256, 16) >= 0 for f in pinned)
+    p = tmp_path / "x.tif"
+    p.write_bytes(b"II*\x00 some bytes")
+    digest = hashlib.sha256(p.read_bytes()).hexdigest()
+    f = get("ldem_83s_10m")
+    with pytest.raises(RuntimeError, match="differs from the catalog"):
+        fetch_data.check_sha256(f, p)
+    assert fetch_data.check_sha256(dataclasses.replace(f, sha256=digest), p) == digest
+    assert fetch_data.check_sha256(dataclasses.replace(f, sha256=""), p) == digest

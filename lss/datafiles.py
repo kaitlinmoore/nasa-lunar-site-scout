@@ -29,6 +29,7 @@ class Group(StrEnum):
     farfield = "farfield"
     validation = "validation"
     global_ = "global"  # the global coarse layer (LOLA LDEM_128, 2.1 GB), for points off the polar maps
+    nearfield = "nearfield"  # area near-field maps read by window (the whole 10 m polar map, 5.1 GB)
 
 
 class Kind(StrEnum):
@@ -84,6 +85,7 @@ class DataFile:
     dataset_id: str  # registry id in lss/registry/datasets.yaml
     note: str = ""
     clip: Clip | None = None
+    sha256: str = ""  # expected SHA-256 of a whole-file download, when pinned; checked before it is kept
 
     @property
     def path(self) -> Path:
@@ -291,6 +293,21 @@ FILES: tuple[DataFile, ...] = (
         "240 m/pix, 60-90 S (+-931 km).",
     ),
     # --- Validation (internal only): PGDA product 69 maps + 60 m terrain for the like-with-like pass
+    # --- Area near field (PGDA product 90): the whole 10 m map, read by window around each point, never
+    # loaded whole (lss.registry.terrain.POLAR_10M; opt-in, not in the default layers). Barker et al. (2023).
+    DataFile(
+        "ldem_83s_10m",
+        Group.nearfield,
+        Kind.tiff,
+        f"{PGDA}/LOLA_20mpp/LDEM_83S_10MPP_ADJ.TIF",
+        "data/pgda90/LDEM_83S_10MPP_ADJ.TIF",
+        "pgda_90_south_pole_dems",
+        "10 m/pix, 83-90 S (+-216.4 km from the pole, to 79.94 S at the corners; every pixel has data, "
+        "checked at full resolution 2026-11-27). 5,116,709,568 bytes; 7.5 GB as float32, so it is read by "
+        "window. "
+        "Barker, M. K., et al. (2023), Planetary Science Journal 4(9), 183, doi:10.3847/PSJ/acf3e1.",
+        sha256="6c548d47896e238616149cfe336a1174eb9c070e34e8b605425fc40f768bde51",
+    ),
     DataFile(
         "p69_sun_85s_60m",
         Group.validation,

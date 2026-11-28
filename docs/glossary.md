@@ -257,7 +257,7 @@ range were set by a convergence test. The UI shows the near-field and far-field 
 
 A short tag telling you how detailed the terrain behind a result is: high, medium or low.
 *Detail:* `FidelityLabel` = a tier and a summary such as "5 m polar DEM near field". The tier is high when the
-near field is 5 m or finer and a far field is present, medium when the near field is 80 m or finer, low
+near field is 10 m or finer and a far field is present, medium when the near field is 80 m or finer, low
 otherwise (`lss/registry/terrain.py`). Locations on the [global coarse layer](#global-coarse-layer-low-fidelity)
 are "low" (methodology §3.5). By site group: the south-pole sites are high, the Apollo sites low, and the
 Artemis III regions high (three) or medium (six) (see [Curated sites](#curated-sites)).

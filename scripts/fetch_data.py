@@ -10,7 +10,8 @@ Download the engine's external data into LSS_DATA_DIR (reproducible, idempotent)
 The file catalog lives in `lss/datafiles.py`. Each file is written to `<name>.part`, checked
 (HTTP status, byte count, leading bytes: some servers answer a missing file with HTTP 200 and an
 HTML page), then renamed into place. `LSS_DATA_DIR/MANIFEST.json` records URL, size, SHA-256 and
-retrieval time; a rerun skips files that are present and match their manifest entry.
+retrieval time; a rerun skips files that are present and match their manifest entry. A file whose catalog
+entry pins a SHA-256 is kept only if the download has exactly that hash.
 
 Files with a `clip` are cut from a large GeoTIFF: the whole source is downloaded (one plain
 HTTP stream) to `LSS_DATA_DIR/tmp/`, the window is cut locally and saved as a tiled,
@@ -88,6 +89,14 @@ def check_head(f: DataFile, path: Path) -> None:
         head = fh.read(16)
     if not looks_like(f.kind, head):
         raise RuntimeError(f"{f.id}: downloaded bytes are not a {f.kind} file (starts {head[:16]!r})")
+
+
+def check_sha256(f: DataFile, path: Path) -> str:
+    """The file's SHA-256; raises if the catalog pins a different one."""
+    digest = sha256(path)
+    if f.sha256 and digest != f.sha256:
+        raise RuntimeError(f"{f.id}: SHA-256 {digest} differs from the catalog's {f.sha256}")
+    return digest
 
 
 def download_url(url: str, part: Path, label: str, resume: bool = False) -> None:
@@ -235,6 +244,7 @@ def fetch(f: DataFile, manifest: dict, force: bool, keep_source: bool = False) -
         try:
             (clip if f.clip else download)(f, part, keep_source)
             check_head(f, part)
+            digest = check_sha256(f, part)
             break
         except Exception as e:  # noqa: BLE001 - report and retry any transport/parse failure
             part.unlink(missing_ok=True)
@@ -248,7 +258,7 @@ def fetch(f: DataFile, manifest: dict, force: bool, keep_source: bool = False) -
         "relpath": f.relpath,
         "dataset_id": f.dataset_id,
         "size": f.path.stat().st_size,
-        "sha256": sha256(f.path),
+        "sha256": digest,
         "retrieved_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
     save_manifest(manifest)
@@ -290,7 +300,7 @@ def main(argv: list[str] | None = None) -> int:
             if not entry or not f.path.is_file():
                 print(f"  MISSING  {f.id}")
                 bad += 1
-            elif sha256(f.path) != entry["sha256"]:
+            elif (digest := sha256(f.path)) != entry["sha256"] or (f.sha256 and digest != f.sha256):
                 print(f"  CHANGED  {f.id}")
                 bad += 1
             else:

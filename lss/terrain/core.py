@@ -190,6 +190,80 @@ class DemLayer:
         return self.height_at_ps(*ps_from_latlon(lat_deg, lon_deg, self.pole))
 
 
+@dataclass
+class DemWindow:
+    """A window of a polar stereographic DEM file around one point, for files too large to load whole (the
+    10 m polar map: 7.5 GB as float32).
+
+    `path`, `meta`, `pole`, `resolution_m`, `bounds`, `to_pixel` and `contains` describe the whole file,
+    exactly as `DemLayer`'s do, so a caller can still read its own small window from `path`. `grid` holds only
+    the pixels in `window` = (col0, row0, n_cols, n_rows) of the file, read on first use (one windowed read
+    of the tiled GeoTIFF); heights (`height_at_ps`, `height_at`) are bilinear on it. Without a window (None)
+    only the header is available.
+    """
+
+    layer: DemLayer
+    window: tuple[int, int, int, int] | None = None
+    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
+
+    @property
+    def dataset_id(self) -> str:
+        return self.layer.dataset_id
+
+    @property
+    def path(self) -> Path:
+        return self.layer.path
+
+    @property
+    def pole(self) -> str:
+        return self.layer.pole
+
+    @property
+    def meta(self) -> dict:
+        return self.layer.meta
+
+    @property
+    def resolution_m(self) -> float:
+        return self.layer.resolution_m
+
+    @property
+    def bounds(self) -> tuple[float, float, float, float]:
+        return self.layer.bounds
+
+    def to_pixel(self, x_m, y_m):
+        return self.layer.to_pixel(x_m, y_m)
+
+    def contains(self, x_m, y_m, margin_m: float = 0.0) -> np.ndarray:
+        return self.layer.contains(x_m, y_m, margin_m)
+
+    @cached_property
+    def grid(self) -> Grid:
+        """The window as a Grid (float32 heights, no-data -> NaN), in the file's PS metres."""
+        import rasterio
+        from rasterio.windows import Window
+
+        if self.window is None:
+            raise ValueError(f"{self.path.name}: no window to read (the whole file is never loaded)")
+        col0, row0, n_cols, n_rows = self.window
+        m = self.meta
+        if col0 < 0 or row0 < 0 or col0 + n_cols > m["width"] or row0 + n_rows > m["height"]:
+            raise ValueError(f"{self.path.name}: window {self.window} leaves the map")
+        with self._lock, rasterio.open(self.path) as d:
+            a = d.read(1, window=Window(col0, row0, n_cols, n_rows)).astype(np.float32, copy=False)
+        if m["nodata"] is not None and not np.isnan(m["nodata"]):
+            a = np.where(a == m["nodata"], np.float32(np.nan), a)
+        if m["scale"] != 1.0 or m["offset"] != 0.0:
+            a = a * np.float32(m["scale"]) + np.float32(m["offset"])
+        return Grid(a, m["x0"] + col0 * m["res"], m["y0"] - row0 * m["res"], m["res"], self.pole)
+
+    def height_at_ps(self, x_m, y_m) -> np.ndarray:
+        """Bilinear height (m above the sphere) at PS points; NaN outside the window or next to no-data."""
+        return self.grid.height_at_ps(x_m, y_m)
+
+    def height_at(self, lat_deg, lon_deg) -> np.ndarray:
+        return self.height_at_ps(*ps_from_latlon(lat_deg, lon_deg, self.pole))
+
+
 def bilinear(a: np.ndarray, col, row) -> np.ndarray:
     """Bilinear interpolation of `a` at fractional pixel-centre coordinates; NaN outside the grid."""
     col, row = np.atleast_1d(np.asarray(col, dtype=float)), np.atleast_1d(np.asarray(row, dtype=float))
