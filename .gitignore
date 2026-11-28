@@ -11,6 +11,8 @@ wheels/
 
 # Local working notes and handoffs (never committed)
 reference/
+handoffs/
+CLAUDE.local.md
 
 # Secrets (Cesium ion token, LLM API keys, Earthdata creds)
 .env
