@@ -876,6 +876,14 @@ The polar path above is unchanged.
   is (x, y)/ρ on the south polar map and −(x, y)/ρ on the north polar map; east is north turned 90° clockwise.
   The map is conformal, so the map gradient turned into those directions gives the aspect. At the pole itself
   (ρ = 0) east and north are undefined and the aspect is NaN; the slope is still defined there.
+- **Which point's east and north** (2026-11-27). By default each pixel's gradient is turned to the east and
+  north of that pixel's centre. A caller comparing the aspect with azimuths computed at another position, such
+  as the Sun's azimuth at the point itself, which lies somewhere inside its pixel, passes that position:
+  `slope_aspect(..., frame_x_m=x, frame_y_m=y)`. The gradient, and so the slope, stays the pixel's; only the
+  turn to east and north changes. The two frames differ by the angle between the two meridians, about
+  (offset across the meridian) / ρ: within an 80 m pixel at most 0.011° at 80°S and 0.053° at 88°S, but
+  2.3–3.2° 1 km from the pole. A pixel centred on the pole has an aspect in the frame of any other point
+  inside it. Without the arguments the results are exactly as before.
 - **Checks** (`tests/engine/test_aspect.py`). Planes of 7° defined in a point's tangent frame, rising towards
   0°, 75° and 200° (and 300° on the polar grids):
   - on a 5 m polar stereographic grid at 85.3°S, 89.5°S and 86°N, the pixel at the point has the plane's
@@ -883,7 +891,13 @@ The polar path above is unchanged.
     with the meridians by |Δλ| sin|φ| (0.2° at 89.5°S, 50 m from the point), and every pixel stays within
     that;
   - on latitude/longitude grids at 0.5°, 26.1°, −45°, 70°, 89° and −89°, the pixel at the point has the
-    aspect within 0.05° and the slope within 0.01°.
+    aspect within 0.05° and the slope within 0.01°;
+  - the frame: planes through a point off its pixel's centre, 600 m, 3 km, 60.7 km (88°S) and 151.7 km (85°S,
+    on a 10 m grid) from the south pole and 900 m from the north pole. In the point's frame the pixel has the
+    plane's aspect within 0.001°. In the pixel centre's frame it differs by exactly the turn of the meridians
+    between them (within 0.001°; more than 1° within 1 km of the pole). The slope is the same in both frames
+    and equals `slope_deg`'s exactly; the default equals an explicit frame at the pixel centres. A pixel
+    centred on the pole has an aspect in the frame of a point 3 m away.
 
 ### 5.7 Terrain images for the 2D site view (`lss.terrain.views`)
 

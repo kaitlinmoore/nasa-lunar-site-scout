@@ -22,7 +22,8 @@ Surface slope on a polar stereographic DEM (docs/methodology.md, "Slope").
 - **Aspect and gradient**: the downhill azimuth (deg clockwise from north) and the east and north height
   gradients, from exactly the same differences as the slope (`slope_aspect`, `slope_aspect_lonlat`,
   `gradient_ps`, `gradient_lonlat`). On a polar stereographic map the map-axis gradient is turned to east
-  and north at each pixel's own position; at a pole, where they are undefined, the aspect is NaN.
+  and north at each pixel's own position, or at a position the caller gives (`slope_aspect(frame_x_m=,
+  frame_y_m=)`, e.g. the point inside its pixel); at a pole, where they are undefined, the aspect is NaN.
 """
 
 from __future__ import annotations
@@ -235,25 +236,45 @@ def gradient_ps(z: np.ndarray, step_m: float, k: float | np.ndarray = 1.0) -> tu
 
 
 def slope_aspect(
-    z: np.ndarray, step_m: float, x_m: np.ndarray, y_m: np.ndarray, pole: str = "south"
+    z: np.ndarray,
+    step_m: float,
+    x_m: np.ndarray,
+    y_m: np.ndarray,
+    pole: str = "south",
+    *,
+    frame_x_m: np.ndarray | float | None = None,
+    frame_y_m: np.ndarray | float | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Slope (deg) and aspect (downhill azimuth, deg clockwise from north) of the interior pixels of z on a
     north-up polar stereographic map; `x_m`, `y_m`: the map coordinates of those pixels' centres (shape
     (rows - 2, cols - 2), or broadcastable to it). The slope is `slope_deg(z, step_m, scale_factor(x_m, y_m))`
     exactly.
 
-    Map axes to east and north at each pixel: at distance rho from the pole, north points away from the south
-    pole, (x, y) / rho, and towards the north pole, -(x, y) / rho; east is north turned 90 deg clockwise. The
-    aspect is NaN at the pole itself (rho = 0), where east and north are undefined."""
+    Map axes to east and north at a map position: at distance rho from the pole, north points away from the
+    south pole, (x, y) / rho, and towards the north pole, -(x, y) / rho; east is north turned 90 deg
+    clockwise. The aspect is NaN where that position is the pole itself (rho = 0), where east and north are
+    undefined.
+
+    The frame: by default the aspect is in the east and north of each pixel's own centre. `frame_x_m`,
+    `frame_y_m` (both or neither; broadcastable like `x_m`) give another map position for that frame, e.g. the
+    point itself inside its pixel, for comparison with azimuths computed there (the Sun's). The gradient is
+    still the pixel's; only the turn to east and north changes, by the angle between the two meridians: about
+    (offset across the meridian) / (distance from the pole). Within an 80 m pixel that is at most 0.011 deg
+    at 80 S and 0.053 deg at 88 S, and 2.3 to 3.2 deg 1 km from the pole. The slope does not depend on the
+    frame."""
     if pole not in ("south", "north"):
         raise ValueError("pole must be 'south' or 'north'")
+    if (frame_x_m is None) != (frame_y_m is None):
+        raise ValueError("give both frame_x_m and frame_y_m, or neither")
     x, y = np.asarray(x_m, dtype=float), np.asarray(y_m, dtype=float)
     gx, gy = gradient_ps(z, step_m, scale_factor(x, y))
     slope = np.degrees(np.arctan(np.hypot(gx, gy)))
+    if frame_x_m is not None:
+        x, y = np.asarray(frame_x_m, dtype=float), np.asarray(frame_y_m, dtype=float)
     rho = np.hypot(x, y)
     with np.errstate(invalid="ignore", divide="ignore"):
         sign = 1.0 if pole == "south" else -1.0
-        nx, ny = sign * x / rho, sign * y / rho  # unit north in map axes
+        nx, ny = sign * x / rho, sign * y / rho  # unit north in map axes, at the frame's position
     east = gx * ny - gy * nx  # unit east = (ny, -nx)
     north = gx * nx + gy * ny
     return slope, np.where(rho > 0.0, aspect_deg(east, north), np.nan)

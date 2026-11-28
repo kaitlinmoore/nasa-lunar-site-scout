@@ -158,3 +158,63 @@ def test_ps_aspect_undefined_at_the_pole(pole):
 def test_ps_rejects_an_unknown_pole():
     with pytest.raises(ValueError, match="pole"):
         slope_aspect(np.zeros((3, 3)), 5.0, np.zeros((1, 1)), np.zeros((1, 1)), "east")
+
+
+# ----------------------------------------------------------------------------- the frame of the aspect
+
+
+def map_turn_deg(x_from, y_from, x_to, y_to):
+    """Signed angle (deg) from one position's meridian direction to another's, on a PS map."""
+    return float((math.degrees(math.atan2(x_to, y_to) - math.atan2(x_from, y_from)) + 180.0) % 360.0 - 180.0)
+
+
+@pytest.mark.parametrize(
+    "pole, rho_m, lon0, step",
+    [
+        ("south", 600.0, 37.0, 80.0),  # 600 m from the pole: the frames differ by degrees
+        ("south", 3_000.0, -120.0, 80.0),
+        ("south", 60_660.0, 200.0, 80.0),  # 88 S
+        ("south", 151_700.0, 15.0, 10.0),  # 85 S, on a 10 m grid
+        ("north", 900.0, 300.0, 80.0),
+    ],
+)
+@pytest.mark.parametrize("uphill_az", [0.0, 75.0, 200.0])
+def test_ps_aspect_in_the_frame_of_a_point_inside_the_pixel(pole, rho_m, lon0, step, uphill_az):
+    """A plane through a point P that is not at its pixel's centre C, rising towards `uphill_az` in P's own
+    tangent frame. With the frame at P, the aspect of P's pixel is the plane's (uphill + 180) within 0.001
+    deg. In C's frame (the default) it differs by the turn of the meridians from P to C. The slope is the
+    same in both and equals slope_deg's exactly, and the default equals an explicit frame at the centres."""
+    sign = 1.0 if pole == "south" else -1.0
+    lam = math.radians(lon0)
+    xp, yp = rho_m * math.sin(lam), sign * rho_m * math.cos(lam)
+    xc, yc = xp + 0.43 * step, yp - 0.31 * step  # P inside C's pixel, off its centre
+    lat_p, _ = latlon_from_ps(xp, yp, pole)
+    z, X, Y = ps_grid(xc, yc, step, 3, tangent_plane(float(lat_p), lon0, 7.0, uphill_az), pole)
+    slope, aspect = slope_aspect(z, step, X, Y, pole)
+    slope_p, aspect_p = slope_aspect(z, step, X, Y, pole, frame_x_m=xp, frame_y_m=yp)
+    assert np.array_equal(slope_p, slope) and np.array_equal(slope, slope_deg(z, step, scale_factor(X, Y)))
+    same_c, aspect_c = slope_aspect(z, step, X, Y, pole, frame_x_m=X, frame_y_m=Y)
+    assert np.array_equal(aspect_c, aspect) and np.array_equal(same_c, slope)
+    want = (uphill_az + 180.0) % 360.0
+    assert az_diff(aspect_p[2, 2], want) < 0.001  # P's pixel: the centre of the 5 x 5 interior
+    # From P's frame to C's: the aspect is measured from C's north, which is turned from P's by the meridians
+    # (the same sign at both poles: north there is -(x, y) / rho, a constant 180 deg from the south's).
+    turn = map_turn_deg(xp, yp, xc, yc)
+    assert az_diff(aspect[2, 2], (want - turn) % 360.0) < 0.001
+    if rho_m < 1_000.0:
+        assert abs(turn) > 1.0  # what the frame argument fixes near the pole
+
+
+def test_ps_aspect_frame_at_the_pole_and_near_it():
+    """A pixel centred on the pole has no aspect in its own frame, but has one in the frame of a point 3 m
+    from the pole inside it; a frame exactly at the pole has none. Half a frame is refused."""
+    lat_p, lon_p = latlon_from_ps(2.0, -2.2, "south")
+    z, X, Y = ps_grid(0.0, 0.0, 10.0, 3, tangent_plane(float(lat_p), float(lon_p), 5.0, 120.0), "south")
+    _, aspect = slope_aspect(z, 10.0, X, Y)
+    assert np.isnan(aspect[2, 2])
+    _, aspect_p = slope_aspect(z, 10.0, X, Y, frame_x_m=2.0, frame_y_m=-2.2)
+    assert az_diff(aspect_p[2, 2], 300.0) < 0.001
+    _, at_pole = slope_aspect(z, 10.0, X, Y, frame_x_m=0.0, frame_y_m=0.0)
+    assert np.isnan(at_pole).all()
+    with pytest.raises(ValueError, match="both"):
+        slope_aspect(z, 10.0, X, Y, frame_x_m=2.0)
