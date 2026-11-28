@@ -80,7 +80,8 @@ class LonLatGrid(NamedTuple):
     3.5). Pixel-registered like `Grid`: a value belongs to its pixel's centre; heights between centres are
     bilinear in (longitude, latitude).
 
-    `lon0`, `lat0` are the outer west and north edges (deg). Longitudes are measured eastward from `lon0`
+    `lon0`, `lat0` are the outer west and north edges (deg); a window across the north pole has a line beyond
+    it, so lat0 > 90 there (lss.terrain.global_layer.window). Longitudes are measured eastward from `lon0`
     modulo 360, so a window may straddle the 0/360 meridian. `res_deg` is the pixel size in degrees (the
     same in latitude and longitude). `res` is the spacing in metres used to step rays over this grid
     (lss.horizon.core.ray_samples), set by the reader. `wrap`: the columns span the full 360 deg, so the last

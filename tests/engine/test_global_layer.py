@@ -118,6 +118,36 @@ def test_window_containing_a_pole_takes_whole_rows():
     assert g.lat0 == pytest.approx(90.0)
 
 
+def test_window_across_a_pole_adds_the_edge_line_half_way_round():
+    """Line 0's centres stop half a pixel short of the north pole (and the last line's short of the south
+    pole). For horizons (`across_poles`) the window adds that line rotated by 180 deg beyond it, so every
+    point up to the pole lies between two lines: heights there are linear along the meridian through the pole,
+    between opposite pixels. Without the option the window is the map's rows alone."""
+    img = small_image()
+    for lat, edge, added in [(88.0, 0, 0), (-88.0, SMALL.lines - 1, -1)]:
+        g = window(img, lat, 10.0, 200_000.0, SMALL, margin_px=1, across_poles=True)
+        plain = window(img, lat, 10.0, 200_000.0, SMALL, margin_px=1)
+        assert g.wrap and plain.wrap and g.array.shape[0] == plain.array.shape[0] + 1
+        assert np.array_equal(g.array[1:] if added == 0 else g.array[:-1], plain.array)
+        rolled = 0.5 * np.roll(img[edge], SMALL.samples // 2)
+        assert np.array_equal(g.array[added], rolled.astype(np.float32))
+    g = window(img, 88.0, 10.0, 200_000.0, SMALL, margin_px=1, across_poles=True)
+    assert g.lat0 == pytest.approx(91.0)  # the added line, then line 0 of the map
+    # At the pole itself, from any longitude: the mean of the two opposite centres of line 0.
+    for lon in (0.5, 10.5, 179.5, 300.5):
+        c, c_opp = int(SMALL.col_of(lon)), int(SMALL.col_of(lon + 180.0))
+        want = 0.5 * (0.5 * img[0, c] + 0.5 * img[0, c_opp])
+        assert float(g.height_at_latlon(90.0, lon)[0]) == pytest.approx(want)
+    # Between line 0's centres and the pole: linear between them, nothing missing.
+    lats = np.linspace(89.5, 90.0, 6)
+    h = g.height_at_latlon(lats, np.full(lats.shape, 10.5))
+    assert np.isfinite(h).all()
+    assert np.allclose(np.diff(h), np.diff(h)[0])
+    # A window short of the first line keeps its rows as before (no line added).
+    g = window(img, 60.0, 10.0, 200_000.0, SMALL, margin_px=1, across_poles=True)
+    assert not g.wrap and g.lat0 == pytest.approx(69.0)  # 66.6 N, rounded out to a line, plus one
+
+
 def test_open_image_checks_label_and_size(tmp_path):
     lbl = tmp_path / "small.lbl"
     lbl.write_text("PRODUCT_ID = SMALL\n")
@@ -202,6 +232,22 @@ def test_no_missing_samples_where_rays_leave_the_polar_maps(lat):
     h_old = compute_horizon(lat, 0.0, 1.0, segments_for(old), HorizonParams())
     assert h_old.missing_samples / h_old.total_samples > 0.01  # what the fix removes
     assert h.surface_height_m == h_old.surface_height_m  # same near field
+
+
+@needs_ldem
+@pytest.mark.parametrize(
+    "lat, lon, layers",
+    [(77.0, 0.0, None), (85.0, 137.0, None), (89.0, 0.0, None), (89.9, -90.0, None), (-89.0, 60.0, "global")],
+)
+def test_no_missing_samples_on_rays_across_a_pole(lat, lon, layers):
+    """From 76.81 deg towards either pole, 400 km rays cross it. LDEM_128's pixel centres stop 1/256 deg
+    (118 m) short of the pole, and the samples beyond them had no terrain (2 of 30,164,400 at 77-85 N, 12 at
+    89 N, 1375 at 89.9 N). With the line across the pole in the window there are none. South of 76.81 S the
+    240 m polar map holds the whole ray range, so only a stack of LDEM_128 alone reaches its south pole."""
+    st = reg.resolve(lat, lon) if layers is None else reg.resolve(lat, lon, layers=(reg.GLOBAL_128,))
+    assert [sl.spec.file_id for sl in st.layers] == ["ldem_128_img"]
+    h = compute_horizon(lat, lon, 1.0, segments_for(st), HorizonParams())
+    assert h.missing_samples == 0 and h.total_samples == 30_164_400
 
 
 # ------------------------------------------------------------------- the deployed API (no DEM files)

@@ -14,7 +14,8 @@ detached PDS3 label. Facts used here, all from the label and checked against it 
 
 The 2.1 GB image is memory-mapped, never loaded whole: a horizon reads a window that covers its maximum ray
 range around the point (`window`). Windows that would reach a pole, or span all longitudes, take whole
-rows (`LonLatGrid.wrap`); others may straddle the 0/360 meridian (columns taken modulo 46080).
+rows (`LonLatGrid.wrap`), and for horizons the edge line again beyond a pole they reach; others may straddle
+the 0/360 meridian (columns taken modulo 46080).
 """
 
 from __future__ import annotations
@@ -129,6 +130,8 @@ def window(
     m: CylindricalMap = LDEM_128,
     margin_px: int = 2,
     extra_cols: int = 0,
+    *,
+    across_poles: bool = False,
 ) -> LonLatGrid:
     """Heights (float32, m above 1737.4 km) of every pixel within `radius_m` (arc length) of (lat, lon), as a
     LonLatGrid, with `margin_px` extra pixels on each side for bilinear interpolation at the edges, and
@@ -137,11 +140,22 @@ def window(
     The window is a latitude band [lat - d, lat + d], d = radius / R, clipped at the poles, and the longitude
     span that band needs at its highest |latitude|. If that reaches a pole or spans 360 deg, whole rows are
     taken (wrap = True).
+
+    `across_poles` (for horizons, whose rays may pass over a pole): the first line's centres lie 1/(2 ppd)
+    deg short of the north pole, and the last line's short of the south pole, so a point between them and
+    the pole has no line beyond it to interpolate with. With `across_poles`, a window whose band (with its
+    margin) reaches the first or the last line takes whole rows and adds one line beyond it: that same line
+    half-way round (longitude + 180 deg), which is the next line of pixel centres along every meridian
+    through the pole. A window across the north pole then has lat0 = 90 + 1/ppd: its line 0 is the added
+    one. Without it (the default; slopes, which are refused at the poles) windows are as before.
     """
     d_deg = math.degrees(radius_m / MOON_RADIUS_M)
     lat_n, lat_s = min(lat + d_deg, 90.0), max(lat - d_deg, -90.0)
-    r0 = max(int(math.floor(float(m.row_of(lat_n)))) - margin_px, 0)
-    r1 = min(int(math.ceil(float(m.row_of(lat_s)))) + margin_px, m.lines - 1)
+    r0_band = int(math.floor(float(m.row_of(lat_n)))) - margin_px
+    r1_band = int(math.ceil(float(m.row_of(lat_s)))) + margin_px
+    # The band reaches the first / last line, and a line across that pole is wanted.
+    across_n, across_s = across_poles and r0_band < 0, across_poles and r1_band > m.lines - 1
+    r0, r1 = max(r0_band, 0), min(r1_band, m.lines - 1)
     lat0 = (m.line_offset - r0) / m.ppd + 0.5 / m.ppd  # outer north edge of line r0
     res_deg = 1.0 / m.ppd
 
@@ -150,7 +164,7 @@ def window(
     s_delta, c_phi = math.sin(radius_m / MOON_RADIUS_M), math.cos(math.radians(lat))
     half_lon = 180.0 if s_delta >= c_phi else math.degrees(math.asin(s_delta / c_phi))
     n_cols = 2 * int(math.ceil(half_lon * m.ppd)) + 2 * (margin_px + extra_cols) + 2
-    wrap = half_lon >= 180.0 or n_cols >= m.samples
+    wrap = half_lon >= 180.0 or n_cols >= m.samples or across_n or across_s
     if wrap:
         data = np.asarray(image[r0 : r1 + 1, :])
         lon0 = m.center_lon - (m.sample_offset + 0.5) / m.ppd  # outer west edge of sample 0
@@ -167,6 +181,15 @@ def window(
             )
         lon0 = m.center_lon + (c_start - m.sample_offset - 0.5) / m.ppd
     heights = data.astype(np.float32) * np.float32(m.scale)
+    if across_n or across_s:  # the line beyond each pole: the edge line, half-way round
+        if m.samples % 2:
+            raise ValueError("a line across the pole needs an even number of samples (half-way round)")
+        half = m.samples // 2
+        if across_n:
+            heights = np.concatenate([np.roll(heights[:1], half, axis=1), heights])
+            lat0 += res_deg
+        if across_s:
+            heights = np.concatenate([heights, np.roll(heights[-1:], half, axis=1)])
     return LonLatGrid(np.ascontiguousarray(heights), float(lon0), float(lat0), res_deg, m.map_scale_m, wrap)
 
 
@@ -179,8 +202,9 @@ class GlobalWindow:
 
 @lru_cache(maxsize=4)
 def cached_window(img: Path, label: Path, lat: float, lon: float, radius_m: float) -> GlobalWindow:
-    """`window` of the LDEM_128 image at `img` (label at `label`), kept for a few points per process."""
-    return GlobalWindow(window(open_image(img, label), lat, lon, radius_m))
+    """`window` of the LDEM_128 image at `img` (label at `label`) for a horizon (with the line across a pole
+    its rays may cross), kept for a few points per process."""
+    return GlobalWindow(window(open_image(img, label), lat, lon, radius_m, across_poles=True))
 
 
 def global_slope_stats(

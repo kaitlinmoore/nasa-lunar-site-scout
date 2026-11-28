@@ -470,6 +470,19 @@ ray range: a latitude band of ±400 km and the longitude span that band needs, a
 for a range of δ radians at latitude φ, plus two pixels. Windows that contain a pole take whole rows, with the
 last column next to the first. Windows may straddle the 0/360° meridian.
 
+**Across a pole** (2026-11-27). The first line's pixel centres lie 1/256° (118 m) short of the north pole, and
+the last line's short of the south pole. A ray sample between them and the pole had no line beyond it to
+interpolate with, so it had no terrain. From 76.81° towards a pole, 400 km rays cross it: on the default
+layers 2 of 30,164,400 samples of a 1 m observer were missing at 77–85° N, 4 at 88° N, 12 at 89° N and 1,375 at
+89.9° N, at every longitude tried. A horizon's window that reaches the first or the last line now takes whole
+rows and adds that line again beyond it, rotated by 180° of longitude: along every meridian through the pole, that is the
+next line of pixel centres. Heights near the pole are then linear along the meridian between the two opposite
+centres. Results: no missing sample at 76.5–90° N (0°, 137° E and 90° W), and at 85° S and 89° S on LDEM_128
+alone. Wherever the old horizon had data, it is unchanged at every azimuth (bit-identical at 77, 85, 89 and
+89.9° N). No served result changes: no served site lies north of 26° N, and south of 76.81° S the 240 m polar
+map holds the whole ray range, so no default stack sends rays to LDEM_128's south pole. Windows for slopes
+(section 5.6.1), which are refused at the poles, are read as before.
+
 **How rays are stepped on the lat/lon grid** (`lss/horizon/core.py`, `_height_lonlat`). The geometry of
 section 3.1 is unchanged: each ray is a great circle, and its samples are unit vectors p in MOON_ME. For a lat/lon
 grid, each sample's latitude is asin(p_z) and its east longitude atan2(p_y, p_x). The height is bilinear in
@@ -490,8 +503,8 @@ largest at Apollo 16). One horizon takes about 3 s.
 - on the real map: heights at the six Lunar Modules within 10 m of Wagner et al.; a full horizon at Apollo 11.
 
 **Limits.** The label states that coverage is incomplete (GMT "surface" was used "to compensate for incomplete
-coverage") and that there "may be edge artifacts" at its 45° latitude band boundaries. Rays through the half-pixel cap at a pole find no data there
-(counted as missing). North of 60° latitude the east-west pixel is smaller than the ray spacing.
+coverage") and that there "may be edge artifacts" at its 45° latitude band boundaries. Near a pole, heights within 118 m of it are
+interpolated across it ("Across a pole" above). North of 60° latitude the east-west pixel is smaller than the ray spacing.
 
 ## 4. Validation references
 
